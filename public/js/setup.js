@@ -35,8 +35,10 @@ window.addEventListener("click", function(event){
 }, false); 
 
 //widget event
-function addWidget(id){
+function addWidget(type){
 	let event = new Event("add_widget");
-	event.id = id;
+	event.widget_type = type;
 	window.dispatchEvent(event);
+	
+	document.getElementById("modal_add_element").style.display = "none";
 }

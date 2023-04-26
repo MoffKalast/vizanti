@@ -33,23 +33,27 @@ html, body {
 	transform: scale(1.05);
 }
 
+#icon_container {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+	grid-auto-flow: rows;
+	height: 100%;
+	justify-content: start;
+	align-content: start;
+	width: 200vw;
+}
+  
 #icon_bar {
-	padding: 5px;
-	
 	background-color: rgba(0, 0, 0, 0.7);
-
 	height: 70px;
 	width: 100%;
-
+	overflow: hidden;
 	overflow-x: scroll;
 	overflow-y: hidden;
 	scrollbar-color: #424242 #999999;
 	scrollbar-width: thin;
-
-	display: inline-block;
-
+	display: block;
 	position: relative;
-
 	transition: height 0.1s;
 	z-index: 10;
 }
@@ -269,11 +273,16 @@ button {
 	font-size: 1.0rem;
 
 	border-radius: 6px;
-	border: 3px solid #784b4b; 
+	border: 3px solid #757575; 
 	border-radius: 2px;
 	font-family: Monospace;
 
 	color: white;
+	background-color: #484848;
+}
+
+.delete_button {
+	border: 3px solid #784b4b; 
 	background-color: #4d2626;
 }
 

@@ -28,6 +28,13 @@ export class View {
 		});
 	}
 
+	reset(){
+		this.center = { x: 0,y: 0};
+		this.scale = 50.0;
+		this.drag_start = undefined;
+		window.dispatchEvent(new Event("view_changed"));
+	}
+
 	mapToScreen(coords) {
 		return {
 			x: (coords.x - this.center.x) * this.scale + window.innerWidth / 2,

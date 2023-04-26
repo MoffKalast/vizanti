@@ -19,17 +19,38 @@
 		document.addEventListener('touchend', iconBarMouseUp);
 	}
 
+	function calculateWidth() {
+		const iconBar = document.getElementById('icon_bar');
+		const iconContainer = document.getElementById('icon_container');
+
+		if(iconBar.style.height == ""){
+			iconBar.style.height = "75px";
+			iconContainer.style.height = "75px";
+		}
+
+		const numRows = Math.ceil(parseInt(iconBar.style.height) / 60)-1;
+		const totalIcons = iconContainer.children.length;
+		let requiredWidth = Math.ceil(totalIcons / numRows) * 60 + 10; // icon width;
+
+		if (requiredWidth < window.innerWidth)
+			requiredWidth = window.innerWidth;
+
+		iconContainer.style.width = requiredWidth + 'px';
+	}
+
 	function iconBarMouseMove(event) {
 		const iconBar = document.getElementById('icon_bar');
+		const iconContainer = document.getElementById('icon_container');
 		let newpos = event.touches && event.touches[0] ? event.touches[0].clientY : event.clientY;
-		newpos = parseInt(newpos/60)*60
+		newpos = parseInt(newpos / 60) * 60;
 
-		if(newpos < 60)
-			newpos = 60;
-		else if(newpos > 360)
-			newpos = 360
+		if (newpos < 60) newpos = 60;
+		else if (newpos > 360) newpos = 360;
 
-		iconBar.style.height = (newpos+10) + 'px';
+		iconBar.style.height = (newpos + 15) + 'px';
+		iconContainer.style.height = iconBar.style.height;
+
+		calculateWidth();
 	}
 
 	function iconBarMouseUp() {
@@ -39,4 +60,7 @@
 		document.removeEventListener('mouseup', iconBarMouseUp);
 		document.removeEventListener('touchend', iconBarMouseUp);
 	}
+
+	window.addEventListener('icons_changed', calculateWidth);
+	window.addEventListener('resize', calculateWidth);
 </script>

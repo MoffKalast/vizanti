@@ -1,11 +1,9 @@
 import { view } from '/js/modules/view.js';
 import { settings } from '/js/modules/persistent.js';
 
-let ordinal = parseInt("{navbarOrdinal}");
-
 document.getElementById("{uniqueID}_remove").addEventListener("click", function(event){
 	let e = new Event("remove_widget");
-	e.ordinal = ordinal;
+	e.uniqueID = "{uniqueID}";
 	window.dispatchEvent(e);
 });
 

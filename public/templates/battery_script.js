@@ -15,11 +15,9 @@ function save_settings(){
 	settings.save();
 }
 
-let ordinal = parseInt("{navbarOrdinal}");
-
 document.getElementById("{uniqueID}_remove").addEventListener("click", function(event){
 	let e = new Event("remove_widget");
-	e.ordinal = ordinal;
+	e.uniqueID = "{uniqueID}";
 	window.dispatchEvent(e);
 });
 
@@ -70,6 +68,9 @@ let batterytopic = undefined;
 
 function connect(){
 
+	if(topic == "")
+		return;
+
 	if(batterytopic !== undefined){
 		batterytopic.unsubscribe(listener);
 	}
@@ -81,6 +82,7 @@ function connect(){
 	});
 	
 	listener = batterytopic.subscribe((msg) => {
+
 		if(msg.percentage <= 0.2){
 			icon.src = "assets/battery_20.svg";
 		}
@@ -107,6 +109,8 @@ function connect(){
 		text_health.innerText = "Health: "+HEALTH[msg.power_supply_health];
 		text_chemistry.innerText = "Type: "+CHEMISTRY[msg.power_supply_technology];
 	});
+
+	save_settings();
 }
 
 async function loadTopics(){
@@ -127,14 +131,17 @@ async function loadTopics(){
 			selectionbox.innerHTML = topiclist
 			selectionbox.value = topic;
 		}
-	}	
+	}
+	connect();
 }
-
 
 selectionbox.addEventListener("change", (event) => {
 	topic = selectionbox.value;
 	connect();
-	save_settings();
+});
+
+selectionbox.addEventListener("click", (event) => {
+	connect();
 });
 
 icon.addEventListener("click", (event) => {
@@ -142,5 +149,3 @@ icon.addEventListener("click", (event) => {
 });
 
 loadTopics();
-connect();
-save_settings();
