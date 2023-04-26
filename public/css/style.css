@@ -1,0 +1,303 @@
+html, body {
+	min-height: 100%;
+	margin: 0;
+	height: 100%;
+
+	color: white;
+	background-color: #273444;
+
+	font-family: Monospace;
+
+	font-size: 1.0rem;
+	text-rendering: optimizeLegibility;
+
+	overflow: hidden;
+}
+
+/* Icon bar */
+
+.icon {
+	display: inline-block;
+	width: 50px;
+	height: 50px;
+	margin: 5px;
+	border-radius: 15px;
+
+	background-color: rgba(124, 124, 124, 0.3);
+
+	transition: linear  0.2s;
+}
+
+.icon:hover {
+	background-color: rgba(185, 185, 185, 0.3);
+	transform: scale(1.05);
+}
+
+#icon_bar {
+	padding: 5px;
+	
+	background-color: rgba(0, 0, 0, 0.7);
+
+	height: 70px;
+	width: 100%;
+
+	overflow-x: scroll;
+	overflow-y: hidden;
+	scrollbar-color: #424242 #999999;
+	scrollbar-width: thin;
+
+	display: inline-block;
+
+	position: relative;
+
+	transition: height 0.1s;
+	z-index: 10;
+}
+
+#icon_bar::-webkit-scrollbar {
+	height: 7px;
+}
+
+#icon_bar::-webkit-scrollbar-thumb {
+	background-color: #999999;
+	border-radius: 5px;
+}
+
+#icon_bar::-webkit-scrollbar-track {
+	background-color: #424242;
+}
+
+#icon_bar_handle {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 100vw;
+	height: 5px;
+	background-color:rgb(14, 19, 34);
+	cursor: grab;
+}
+
+/* Modal windows */
+
+#modal_container{
+	height: 100%;
+	width: 100%;
+	position: fixed;
+	left: 0;
+	top: 0;
+	pointer-events: none;
+	z-index: 20;
+}
+
+.modal_outer{
+	position: absolute;
+	display: none; /*flex;*/
+
+	align-items: flex-start;
+	justify-content: center;
+
+	left: 0;
+	top: 0;
+
+	width: 100%;
+	height: 100%;
+	min-height: 100%;
+	
+	overflow: auto;
+	scrollbar-color: #424242 #999999;
+	scrollbar-width: thin;
+
+	background-color: rgba(0, 0, 0, 0.4);
+	pointer-events: auto;
+}
+
+.modal_outer::-webkit-scrollbar {
+	width: 6px;
+}
+
+.modal_outer::-webkit-scrollbar-thumb {
+	background-color: #999999;
+	border-radius: 3px;
+}
+
+.modal_outer::-webkit-scrollbar-track {
+	background-color: #424242;
+}
+
+.modal_inner {
+	position: relative;
+
+	background-color: #273444;
+	height: auto;
+
+	border-style: outset;
+	border-radius: 15px;
+	padding: 15px;
+
+	max-width: 90%;
+	min-width: 50%;
+	margin: 50px;
+	pointer-events: auto;
+}
+
+/* Media query for non-touch devices (usually desktop) */
+@media (pointer: fine) {
+	.modal_inner {
+		max-width: 50%;
+	}
+}
+
+
+/*Add widget cards*/
+
+.widget_entry {
+	display: flex;
+	align-items: center;
+	padding-top: 5px;
+	padding-bottom: 5px;
+	border-radius: 10px;
+	width: 100%;
+}
+
+.widget_entry:hover {
+	background-color: rgba(185, 185, 185, 0.3);
+}
+
+.card_icon {
+	flex: 0 0 40px;
+	width: 40px;
+	height: 40px;
+	margin-right: 1rem; /* Add margin to the right of the icon */
+}
+
+.card {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	flex: 1; /* This will make the card take the remaining space in the container */
+	min-width: 0; /* This is necessary for text-overflow to work properly in flex container */
+}
+
+.card_title {
+	margin-bottom: 0.5rem;
+}
+
+.card_desc {
+	width: 100%;
+	margin: 0;
+	font-size: 0.8rem;
+	color: lightgray;
+	overflow-x: auto;
+	scrollbar-color: #4242426a #99999978;
+	scrollbar-width: thin;
+}
+
+.card_desc::-webkit-scrollbar {
+	height: 3px;
+}
+
+.card_desc::-webkit-scrollbar-thumb {
+	background-color: #99999978;
+	border-radius: 2px;
+}
+
+.card_desc::-webkit-scrollbar-track {
+	background-color: #4242426a;
+	height: 3px;
+}
+
+/* Input box */
+
+input[type=color] {
+	max-width: 100%;
+	min-width: 100px;
+	font-size: 1.0rem;
+	border-radius: 4px;
+	outline: 0;
+	color: white;
+	background-color: #424242;
+	font-family: Monospace;
+}
+
+input[type=number] {
+	max-width: 100%;
+	min-width: 100px;
+	font-size: 1.0rem;
+	border-radius: 4px;
+	outline: 0;
+	color: white;
+	background-color: #424242;
+	font-family: Monospace;
+}
+
+select {
+	max-width: 100%;
+	min-width: 100px;
+	font-size: 1.0rem;
+	border-radius: 4px;
+	outline: 0;
+	color: white;
+	background-color: #424242;
+	font-family: Monospace;
+}
+
+/* Canvas */
+
+canvas {
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+
+#view_container {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	z-index: 0;
+  }
+
+
+/* Buttons */
+
+button {
+	max-width: 100%;
+	font-size: 1.0rem;
+
+	border-radius: 6px;
+	border: 3px solid #784b4b; 
+	border-radius: 2px;
+	font-family: Monospace;
+
+	color: white;
+	background-color: #4d2626;
+}
+
+button:hover{
+	transform: scale(1.02);
+	text-decoration: none;
+	cursor: pointer;
+}
+
+/* Misc */
+
+.logo {
+	position: fixed;
+	right: 5px;
+	bottom: 5px;
+	width: max(min(150px, 15%), 70px);
+	height: auto;
+	pointer-events: none;
+	z-index: 1000;
+}
+
+.noselect {
+	-webkit-user-select: none; /* Chrome, Safari, and Opera */
+	-moz-user-select: none; /* Firefox */
+	-ms-user-select: none; /* Internet Explorer and Edge */
+	user-select: none; /* Standard syntax */
+}

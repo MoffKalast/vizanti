@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+{% include "head.html" %}
+
+<body class="noselect">
+
+	{% include "iconbar.html" %}
+
+	<div id="view_container">
+		<!-- View templates get rendered in here -->
+
+	</div>
+
+	<img class="logo noselect" src="assets/logo_mini.png" alt="OutdooROS">
+
+	<div id="modal_container">
+		<!-- Modals templates get rendered in here -->
+	</div>
+
+	<!-- libraries -->
+	<script src="js/lib/roslib.min.js"></script>
+	<script src="js/lib/quaternion.min.js"></script>
+
+	<!-- modules -->
+	<script type="module" src="js/modules/rosbridge.js"></script>
+	<script type="module" src="js/modules/persistent.js"></script>
+	<script type="module" src="js/modules/elements.js"></script>
+	<script type="module" src="js/modules/view.js"></script>
+	<script type="module" src="js/modules/tf.js"></script>
+
+	<!-- app -->
+	<script src="js/setup.js"></script>
+	<script type="module" src="js/main.js"></script>
+
+</body>
+</html>

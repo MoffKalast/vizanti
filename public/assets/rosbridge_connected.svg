@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Generator: Adobe Illustrator 24.1.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+
+<svg
+   version="1.1"
+   id="Layer_1"
+   x="0px"
+   y="0px"
+   viewBox="0 0 512 512"
+   style="enable-background:new 0 0 512 512;"
+   xml:space="preserve"
+   sodipodi:docname="rosbridge_connected.svg"
+   inkscape:version="1.2 (dc2aedaf03, 2022-05-15)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><defs
+   id="defs9">
+	
+</defs><sodipodi:namedview
+   id="namedview7"
+   pagecolor="#505050"
+   bordercolor="#ffffff"
+   borderopacity="1"
+   inkscape:showpageshadow="0"
+   inkscape:pageopacity="0"
+   inkscape:pagecheckerboard="1"
+   inkscape:deskcolor="#505050"
+   showgrid="false"
+   inkscape:zoom="1.5488281"
+   inkscape:cx="246.63809"
+   inkscape:cy="194.01766"
+   inkscape:window-width="1920"
+   inkscape:window-height="996"
+   inkscape:window-x="-8"
+   inkscape:window-y="-8"
+   inkscape:window-maximized="1"
+   inkscape:current-layer="Layer_1" />
+<style
+   type="text/css"
+   id="style2">
+	.st0{fill:#333333;}
+</style>
+
+<rect
+   style="fill:#43973f;fill-opacity:1;stroke-width:8.03003;stroke-linecap:round;stroke-linejoin:round;paint-order:markers fill stroke"
+   id="rect2503"
+   width="115.84734"
+   height="92.384583"
+   x="205.85782"
+   y="111.82664"
+   ry="0"
+   rx="0" /><rect
+   style="fill:#43e447;fill-opacity:1;stroke-width:8.03003;stroke-linecap:round;stroke-linejoin:round;paint-order:markers fill stroke"
+   id="rect2503-6"
+   width="115.84734"
+   height="92.384583"
+   x="101.33872"
+   y="307.53229"
+   ry="0"
+   rx="0" /><rect
+   style="fill:#254828;fill-opacity:1;stroke-width:8.03003;stroke-linecap:round;stroke-linejoin:round;paint-order:markers fill stroke"
+   id="rect2503-6-1"
+   width="115.84734"
+   height="92.384583"
+   x="304.53238"
+   y="308.23346"
+   ry="0"
+   rx="0" /><g
+   transform="matrix(0.04597739,0,0,-0.04597739,64.889432,442.16933)"
+   fill="#000000"
+   stroke="none"
+   id="g1156"
+   style="fill:#ffffff;fill-opacity:1"><path
+     d="M 2910,6080 V 4840 h 585 585 V 4515 4190 H 2125 170 v -165 -165 h 850 850 l -2,-347 -3,-348 -627,-3 -628,-2 V 1920 680 l 1418,2 1417,3 3,1238 2,1237 h -565 -565 v 350 350 H 4335 6350 V 3530 3200 H 5710 5070 V 1955 710 h 1420 1420 l -2,1243 -3,1242 -552,3 -553,2 v 330 330 h 515 515 v 165 165 H 6180 4530 l 2,323 3,322 608,3 607,2 -2,1238 -3,1237 -1417,3 -1418,2 z m 2390,-5 v -795 h -975 -975 v 795 795 h 975 975 z M 7460,1955 v -795 h -975 -975 v 795 795 h 975 975 z m -4460,-30 v -795 h -975 -975 v 795 795 h 975 975 z"
+     id="path1154"
+     style="fill:#ffffff;fill-opacity:1" /></g></svg>

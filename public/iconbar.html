@@ -1,0 +1,42 @@
+<div id="icon_bar">
+
+	<div id="icon_container">
+		<!-- Icon templates get rendered in here  -->
+	</div>
+
+	<div id="icon_bar_handle" ontouchstart="iconBarHandler(event)" onmousedown="iconBarHandler(event)"></div>
+</div>
+
+
+<script>
+	function iconBarHandler(event) {
+		event.preventDefault();
+
+		document.addEventListener('mousemove', iconBarMouseMove);
+		document.addEventListener('touchmove', iconBarMouseMove);
+
+		document.addEventListener('mouseup', iconBarMouseUp);
+		document.addEventListener('touchend', iconBarMouseUp);
+	}
+
+	function iconBarMouseMove(event) {
+		const iconBar = document.getElementById('icon_bar');
+		let newpos = event.touches && event.touches[0] ? event.touches[0].clientY : event.clientY;
+		newpos = parseInt(newpos/60)*60
+
+		if(newpos < 60)
+			newpos = 60;
+		else if(newpos > 360)
+			newpos = 360
+
+		iconBar.style.height = (newpos+10) + 'px';
+	}
+
+	function iconBarMouseUp() {
+		document.removeEventListener('mousemove', iconBarMouseMove);
+		document.removeEventListener('touchmove', iconBarMouseMove);
+
+		document.removeEventListener('mouseup', iconBarMouseUp);
+		document.removeEventListener('touchend', iconBarMouseUp);
+	}
+</script>

@@ -1,0 +1,17 @@
+<launch>
+
+	<!-- Launch rosbridge without https so it works in AP mode. -->
+	<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">
+		<arg name="ssl" value="false" />
+		<arg name="port" value="9090" />
+		<arg name="use_compression" value="true" />
+	</include>
+
+	<node name="tf2_web_republisher" pkg="tf2_web_republisher" type="tf2_web_republisher" output="screen" ns="/"/>
+
+	<!-- Enable extended functionality for the web app. -->
+	<node name="services_worker" pkg="outdooros" type="server.py" output="screen">
+		<param name="settings_path" value="$(env HOME)/.ros/web_settings.cfg" />
+	</node>
+    
+</launch>
