@@ -12,11 +12,11 @@ const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('im
 
 const linearVelSlider = document.getElementById('{uniqueID}_linear_velocity');
 const angularVelSlider = document.getElementById('{uniqueID}_angular_velocity');
-const smoothnessSlider = document.getElementById('{uniqueID}_smoothness');
+const accelSlider = document.getElementById('{uniqueID}_accel');
 
 const linearVelValue = document.getElementById('{uniqueID}_linear_velocity_value');
 const angularVelValue = document.getElementById('{uniqueID}_angular_velocity_value');
-const smoothnessValue = document.getElementById('{uniqueID}_smoothness_value');
+const accelValue = document.getElementById('{uniqueID}_accel_value');
 
 const invertAngularCheckbox = document.getElementById('{uniqueID}_invert_angular');
 const holonomicSwapCheckbox = document.getElementById('{uniqueID}_holonomic');
@@ -29,13 +29,13 @@ angularVelSlider.addEventListener('input', function () {
 	angularVelValue.textContent = this.value;
 });
 
-smoothnessSlider.addEventListener('input', function () {
-	smoothnessValue.textContent = parseInt((0.5 - this.value)*200) + "%";
+accelSlider.addEventListener('input', function () {
+	accelValue.textContent = this.value;
 });
 
 linearVelSlider.addEventListener('change', saveSettings);
 angularVelSlider.addEventListener('change', saveSettings);
-smoothnessSlider.addEventListener('change', saveSettings);
+accelSlider.addEventListener('change', saveSettings);
 
 invertAngularCheckbox.addEventListener('change', saveSettings);
 holonomicSwapCheckbox.addEventListener('change', saveSettings);
@@ -48,7 +48,7 @@ if (settings.hasOwnProperty('{uniqueID}')) {
 
 	linearVelSlider.value = loadedData.linear_velocity;
 	angularVelSlider.value = loadedData.angular_velocity;
-	smoothnessSlider.value = loadedData.smoothness;
+	accelSlider.value = loadedData.accel;
 
 	invertAngularCheckbox.checked = loadedData.invert_angular;
 	holonomicSwapCheckbox.checked = loadedData.holonomic_swap;
@@ -63,9 +63,9 @@ else{
 function saveSettings() {
 	settings['{uniqueID}'] = {
 		topic: topic,
-		linear_velocity: linearVelSlider.value,
-		angular_velocity: angularVelSlider.value,
-		smoothness: smoothnessSlider.value,
+		linear_velocity: parseFloat(linearVelSlider.value),
+		angular_velocity: parseFloat(angularVelSlider.value),
+		accel: parseFloat(accelSlider.value),
 		invert_angular: invertAngularCheckbox.checked,
 		holonomic_swap: holonomicSwapCheckbox.checked,
 	};
@@ -131,8 +131,6 @@ loadTopics();
 
 // Joystick
 
-const joystickContainer = document.getElementById('{uniqueID}_joystick');
-
 linearVelSlider.addEventListener('input', function () {
 	linearVelValue.textContent = this.value;
 	console.log(this.value)
@@ -143,53 +141,167 @@ angularVelSlider.addEventListener('input', function () {
 });
 
 // Teleop logic
+let linearVel = 0;
+let angularVel = 0;
+
 let targetLinearVel = 0;
 let targetAngularVel = 0;
-let currentLinearVel = 0;
-let currentAngularVel = 0;
 
-const joystick = nipplejs.create({
+let interval = undefined;
+
+const joystickContainer  = document.getElementById('{uniqueID}_joystick');
+const joypreview = document.getElementById('{uniqueID}_joypreview');
+
+let joystick = nipplejs.create({
 	zone: joystickContainer,
 	mode: 'static',
 	position: { left: '50%', bottom: '15%' },
-	size: 200,
+	size: 150,
+	threshold: 0.1,
+	color: 'white',
+	restOpacity: 0.5
 });
 
-joystick.on('move', (event, data) => {
-	const maxLinearVel = parseFloat(linearVelSlider.value);
-	const maxAngularVel = parseFloat(angularVelSlider.value);
-	const invertAngular = invertAngularCheckbox.checked;
-	const holonomicSwap = holonomicSwapCheckbox.checked;
-
-	// Calculate target velocities based on joystick data
-	targetLinearVel = maxLinearVel * Math.sin(data.angle.radian) * data.force;
-	targetAngularVel = - maxAngularVel * Math.cos(data.angle.radian) * data.force;
-
-	if (settings['{uniqueID}'].invert_angular && targetLinearVel < 0) {
-		targetAngularVel = -targetAngularVel;
-	}
-});
-
-joystick.on('end', () => {
-	targetLinearVel = 0;
-	targetAngularVel = 0;
-});
-
-function lerp(start, end, t) {
-	return start + (end - start) * t;
+function addJoystickListeners(){
+	joystick.on('move', onJoystickMove);
+	joystick.on('touchmove', onJoystickMove);
+	joystick.on('end', onJoystickEnd);
+	joystick.on('touchend', onJoystickEnd);
 }
 
-const updateInterval = setInterval(() => {
-	const lerpFactor = settings['{uniqueID}'].smoothness;
+function onJoystickMove(event, data) {
+	const maxLinearVel = parseFloat(linearVelSlider.value);
+	const maxAngularVel = parseFloat(angularVelSlider.value);
+	const force = Math.min(Math.max(data.force, 0.0), 1.0);
 
-	currentLinearVel = lerp(currentLinearVel, targetLinearVel, lerpFactor);
-	//currentAngularVel = lerp(currentAngularVel, targetAngularVel, lerpFactor);
+	targetLinearVel = maxLinearVel * Math.sin(data.angle.radian) * force;
+	targetAngularVel = - maxAngularVel * Math.cos(data.angle.radian) * force;
 
-	if(settings['{uniqueID}'].holonomic_swap){
-		publishTwist(currentLinearVel, targetAngularVel, 0);
+	if (settings['{uniqueID}'].invert_angular && targetLinearVel < 0 && !settings['{uniqueID}'].holonomic_swap) {
+		targetAngularVel = -targetAngularVel;
 	}
-	else{
-		publishTwist(currentLinearVel, 0, targetAngularVel);
+
+	if(interval === undefined){
+		interval = setInterval(() => {
+			const accel = settings['{uniqueID}'].accel;
+		
+			if(linearVel != targetLinearVel){
+				if(linearVel < targetLinearVel){
+					linearVel += accel;
+		
+					if(linearVel > targetLinearVel)
+						linearVel = targetLinearVel;
+				}
+				else if(linearVel > targetLinearVel){
+					linearVel -= accel;
+		
+					if(linearVel < targetLinearVel)
+						linearVel = targetLinearVel;
+				}
+			}
+
+			let angular_accel = accel * 10;
+
+			if(settings['{uniqueID}'].holonomic_swap)
+				angular_accel = accel;
+
+
+			if(angularVel != targetAngularVel){
+				if(angularVel < targetAngularVel){
+					angularVel += angular_accel;
+		
+					if(angularVel > targetAngularVel)
+						angularVel = targetAngularVel;
+				}
+				else if(angularVel > targetAngularVel){
+					angularVel -= angular_accel;
+		
+					if(angularVel < targetAngularVel)
+						angularVel = targetAngularVel;
+				}
+			}
+		
+			if(Math.abs(linearVel) < 0.005 && Math.abs(angularVel) < 0.005){
+				linearVel = 0;
+				targetLinearVel = 0;
+				targetAngularVel = 0;
+				publishTwist(0, 0, 0);
+				clearInterval(interval);
+				interval = undefined;
+				return;
+			}
+		
+			if(settings['{uniqueID}'].holonomic_swap){
+				publishTwist(linearVel, angularVel, 0);
+			}
+			else{
+				publishTwist(linearVel, 0, angularVel);
+			}
+			
+		}, 1000 / 20);
 	}
+};
+
+function onJoystickEnd(event) {
+	targetLinearVel = 0;
+	targetAngularVel = 0;
+}
+
+addJoystickListeners();
+
+//preview for moving around
+
+let preview_active = false;
+
+function onStart(event) {
+	preview_active = true;
+}
+
+function onMove(event) {
+	if (preview_active) {
+		event.preventDefault();
+		let currentX, currentY;
+
+		if (event.type === "touchmove") {
+			currentX = event.touches[0].clientX;
+			currentY = event.touches[0].clientY;
+		} else {
+			currentX = event.clientX;
+			currentY = event.clientY;
+		}
+
+		const percX = (currentX/window.innerWidth * 100) +"%";
+		const percY = (currentY/window.innerHeight * 100) +"%";
+
+		joypreview.style.left = `calc(${percX} - 50px)`;
+		joypreview.style.top = `calc(${percY} - 50px)`;
+
+		console.log(percX,percY)
+
+		joystick.destroy();
+		joystick = nipplejs.create({
+			zone: joystickContainer,
+			mode: 'static',
+			position: { left: percX, top: percY},
+			size: 150,
+			threshold: 0.1,
+			color: 'white',
+			restOpacity: 0.5
+		});
 	
-}, 1000 / 30);  // 30 Hz update rate
+		addJoystickListeners(joystick);
+	}
+}
+
+function onEnd() {
+	preview_active = false;
+}
+  
+joypreview.addEventListener('mousedown', onStart);
+joypreview.addEventListener('mousemove', onMove);
+joypreview.addEventListener('mouseup', onEnd);
+joypreview.addEventListener('mouseleave', onEnd);
+
+joypreview.addEventListener('touchstart', onStart);
+joypreview.addEventListener('touchmove', onMove);
+joypreview.addEventListener('touchend', onEnd);
