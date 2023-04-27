@@ -15,12 +15,6 @@ function save_settings(){
 	settings.save();
 }
 
-document.getElementById("{uniqueID}_remove").addEventListener("click", function(event){
-	let e = new Event("remove_widget");
-	e.uniqueID = "{uniqueID}";
-	window.dispatchEvent(e);
-});
-
 const STATUS = [
 	"UNKNOWN",
 	"CHARGING",

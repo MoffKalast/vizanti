@@ -1,0 +1,45 @@
+<div id="{uniqueID}_modal" class="modal_outer noselect">
+	<div class="modal_inner noselect">
+		<h3>Joystick Teleop</h3>
+		<hr>
+		<label for="{uniqueID}_topic">Topic:</label>
+		<select id="{uniqueID}_topic" name="topic">
+			<!-- add topics here-->
+		</select>
+
+		<hr>
+
+		<label for="{uniqueID}_linear_velocity">Linear Velocity (m/s):</label>
+		<span id="{uniqueID}_linear_velocity_value">0.5</span>
+		<input type="range" value="0.4" step="0.05" min="0.05" max="3.0" id="{uniqueID}_linear_velocity">
+
+		<br>
+
+		<label for="{uniqueID}_angular_velocity">Angular Velocity (m/s):</label>
+		<span id="{uniqueID}_angular_velocity_value">0.5</span>
+		<input type="range" value="0.8" step="0.05" min="0.05" max="6.0" id="{uniqueID}_angular_velocity">
+
+		<br>
+
+		<label for="{uniqueID}_smoothness">Smoothness:</label>
+		<span id="{uniqueID}_smoothness_value">0 %</span>
+		<input type="range" value="0.5" step="0.01" min="0.01" max="0.5" id="{uniqueID}_smoothness" style="direction: rtl">
+
+
+		<label>Invert angular velocity when reversing:</label>
+		<input type="checkbox" id="{uniqueID}_invert_angular">
+
+		<br>
+
+		<label>Use holonomic linear Y instead of angular Z:</label>
+		<input type="checkbox" id="{uniqueID}_holonomic">
+
+		<br>
+
+		<hr>
+
+
+		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
+
+	</div>
+</div>

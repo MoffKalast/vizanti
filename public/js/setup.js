@@ -42,3 +42,9 @@ function addWidget(type){
 	
 	document.getElementById("modal_add_element").style.display = "none";
 }
+
+function removeWidget(uniqueID){
+	let e = new Event("remove_widget");
+	e.uniqueID = uniqueID;
+	window.dispatchEvent(e);
+}

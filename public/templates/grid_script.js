@@ -1,12 +1,6 @@
 import { view } from '/js/modules/view.js';
 import { settings } from '/js/modules/persistent.js';
 
-document.getElementById("{uniqueID}_remove").addEventListener("click", function(event){
-	let e = new Event("remove_widget");
-	e.uniqueID = "{uniqueID}";
-	window.dispatchEvent(e);
-});
-
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d');
 
