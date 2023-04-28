@@ -23,7 +23,7 @@ export function applyRotation(vector, rotation){
 
 export class TF {
 	constructor() {
-		this.frame = 'odom';
+		this.frame = 'map';
 		this.transforms = {};
 		this.absoluteTransforms = {};
 
@@ -71,8 +71,7 @@ export class TF {
 
 	recalculateAbsoluteTransforms() {
 		for (const [key, value] of Object.entries(this.transforms)) {
-			if(!key.includes("sonar") && !key.includes("sonar"))
-				this.absoluteTransforms[key] = this.transformVector(key, this.frame, {x: 0, y:0, z:0}, {x: 0, y:0, z:0, w:1});
+			this.absoluteTransforms[key] = this.transformVector(key, this.frame, {x: 0, y:0, z:0}, {x: 0, y:0, z:0, w:1});
 		};
 	}
 
