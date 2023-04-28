@@ -58,14 +58,14 @@ export class View {
 	mapToScreen(coords) {
 		return {
 			x: (coords.x - this.center.x) * this.scale + window.innerWidth / 2,
-			y: (coords.y - this.center.y) * this.scale + window.innerHeight / 2,
+			y: (-coords.y - this.center.y) * this.scale + window.innerHeight / 2,
 		}
 	}
 	
 	screenToMap(coords) {
 		return {
 			x: (coords.x - window.innerWidth / 2) / this.scale + this.center.x,
-			y: (coords.y - window.innerHeight / 2) / this.scale + this.center.y
+			y: -(coords.y - window.innerHeight / 2) / this.scale - this.center.y,
 		}
 	}
 
@@ -134,7 +134,7 @@ export class View {
 	
 		const newCenter = {
 			x: this.center.x + (mapPoint.x - this.center.x) * (1 - 1 / scaleChange),
-			y: this.center.y + (mapPoint.y - this.center.y) * (1 - 1 / scaleChange),
+			y: this.center.y + (-mapPoint.y - this.center.y) * (1 - 1 / scaleChange),
 		};
 	
 		this.center = newCenter;

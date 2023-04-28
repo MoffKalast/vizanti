@@ -8,7 +8,8 @@ export class Settings {
 			this.navbar = [
 				{type:"settings", id:"settings_default"},
 				{type:"rosbridge", id:"rosbridge_default"},
-				{type:"grid", id:"grid_default"}
+				{type:"grid", id:"grid_default"},
+				{type:"tf", id:"tf_default"}
 			];
 			this.view = {
 				scale: 50.0

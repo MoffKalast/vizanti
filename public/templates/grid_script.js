@@ -32,14 +32,14 @@ function drawGrid() {
     ctx.strokeStyle = grid_colour;
 	ctx.lineWidth = grid_thickness;
 
-    const topLeft = view.screenToMap({ x: 0, y: 0 });
-    const bottomRight = view.screenToMap({ x: wid, y: hei });
-
-    const minX = topLeft.x - (topLeft.x % grid_size) - grid_size;
-    const maxX = bottomRight.x + (grid_size - (bottomRight.x % grid_size));
-
-    const minY = topLeft.y - (topLeft.y % grid_size) - grid_size;
-    const maxY = bottomRight.y + (grid_size - (bottomRight.y % grid_size));
+	const topLeft = view.screenToMap({ x: 0, y: 0 });
+	const bottomRight = view.screenToMap({ x: wid, y: hei });
+  
+	const minX = topLeft.x - (topLeft.x % grid_size) - grid_size;
+	const maxX = bottomRight.x + (grid_size - (bottomRight.x % grid_size));
+  
+	const minY = bottomRight.y - (bottomRight.y % grid_size) - grid_size;
+	const maxY = topLeft.y + (grid_size - (topLeft.y % grid_size));
 
 	const linesX = (maxX-minX)/grid_size;
 	const linesY = (maxY-minY)/grid_size;
@@ -82,25 +82,17 @@ function drawGrid() {
     }
 
 	ctx.stroke();
-
-    let from = view.mapToScreen({
-        x: -0.5,
-        y: -0.5,
-    });
-
-    ctx.fillStyle = "red";
-    ctx.fillRect(from.x, from.y, 1.0 * view.scale, 1.0 * view.scale);
 }
 
-function resizeMap(){
+function resizeScreen(){
 	canvas.height = window.innerHeight;
 	canvas.width = window.innerWidth;
 	drawGrid();
 }
 
 window.addEventListener("view_changed", drawGrid);
-window.addEventListener('resize', resizeMap);
-window.addEventListener('orientationchange', resizeMap);
+window.addEventListener('resize', resizeScreen);
+window.addEventListener('orientationchange', resizeScreen);
 
 const colourpicker = document.getElementById("{uniqueID}_colorpicker");
 const linethickness = document.getElementById("{uniqueID}_thickness");
@@ -144,5 +136,5 @@ gridstep.addEventListener("input", (event) =>{
 	save_settings();
 });
 
-resizeMap();
+resizeScreen();
 

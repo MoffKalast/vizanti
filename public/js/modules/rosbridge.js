@@ -1,3 +1,5 @@
+import '/js/lib/roslib.min.js';
+
 class Rosbridge {
 
 	constructor(url, port) {

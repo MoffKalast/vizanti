@@ -3,6 +3,8 @@ import { settings } from '/js/modules/persistent.js';
 import { nipplejs } from '/js/modules/joystick.js';
 
 let topic = "/cmd_vel";
+let joy_offset_x = "50%";
+let joy_offset_y = "15%";
 let cmdVelPublisher = undefined;
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
@@ -46,6 +48,9 @@ if (settings.hasOwnProperty('{uniqueID}')) {
 	const loadedData = settings['{uniqueID}'];
 	topic = loadedData.topic;
 
+	joy_offset_x = loadedData.joy_offset_x;
+	joy_offset_y = loadedData.joy_offset_y;
+
 	linearVelSlider.value = loadedData.linear_velocity;
 	angularVelSlider.value = loadedData.angular_velocity;
 	accelSlider.value = loadedData.accel;
@@ -65,6 +70,8 @@ function saveSettings() {
 		topic: topic,
 		linear_velocity: parseFloat(linearVelSlider.value),
 		angular_velocity: parseFloat(angularVelSlider.value),
+		joy_offset_x: joy_offset_x,
+		joy_offset_y: joy_offset_y,
 		accel: parseFloat(accelSlider.value),
 		invert_angular: invertAngularCheckbox.checked,
 		holonomic_swap: holonomicSwapCheckbox.checked,
@@ -129,10 +136,8 @@ icon.addEventListener("click", (event) => {
 loadTopics();
 
 // Joystick
-
 linearVelSlider.addEventListener('input', function () {
 	linearVelValue.textContent = this.value;
-	console.log(this.value)
 });
 
 angularVelSlider.addEventListener('input', function () {
@@ -150,11 +155,16 @@ let interval = undefined;
 
 const joystickContainer  = document.getElementById('{uniqueID}_joystick');
 const joypreview = document.getElementById('{uniqueID}_joypreview');
+joypreview.style.left = `calc(${joy_offset_x} - 50px)`;
+joypreview.style.top = `calc(${joy_offset_y} - 50px)`;
 
 let joystick = nipplejs.create({
 	zone: joystickContainer,
 	mode: 'static',
-	position: { left: '50%', bottom: '15%' },
+	position: {
+		left: joy_offset_x,
+		top: joy_offset_y 
+	},
 	size: 150,
 	threshold: 0.1,
 	color: 'white',
@@ -182,7 +192,10 @@ function onJoystickMove(event, data) {
 
 	if(interval === undefined){
 		interval = setInterval(() => {
-			const accel = settings['{uniqueID}'].accel;
+			let accel = settings['{uniqueID}'].accel;
+
+			if (targetLinearVel == 0 && targetAngularVel == 0)
+				accel *= 2;
 		
 			if(linearVel != targetLinearVel){
 				if(linearVel < targetLinearVel){
@@ -199,7 +212,7 @@ function onJoystickMove(event, data) {
 				}
 			}
 
-			let angular_accel = accel * 10;
+			let angular_accel = settings['{uniqueID}'].accel * 10;
 
 			if(settings['{uniqueID}'].holonomic_swap)
 				angular_accel = accel;
@@ -269,17 +282,18 @@ function onMove(event) {
 			currentY = event.clientY;
 		}
 
-		const percX = (currentX/window.innerWidth * 100) +"%";
-		const percY = (currentY/window.innerHeight * 100) +"%";
+		joy_offset_x = (currentX/window.innerWidth * 100) +"%";
+		joy_offset_y = (currentY/window.innerHeight * 100) +"%";
+		saveSettings();
 
-		joypreview.style.left = `calc(${percX} - 50px)`;
-		joypreview.style.top = `calc(${percY} - 50px)`;
+		joypreview.style.left = `calc(${joy_offset_x} - 50px)`;
+		joypreview.style.top = `calc(${joy_offset_y} - 50px)`;
 
 		joystick.destroy();
 		joystick = nipplejs.create({
 			zone: joystickContainer,
 			mode: 'static',
-			position: { left: percX, top: percY},
+			position: { left: joy_offset_x, top: joy_offset_y},
 			size: 150,
 			threshold: 0.1,
 			color: 'white',
