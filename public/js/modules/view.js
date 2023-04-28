@@ -8,6 +8,26 @@ function clamp(val, from, to){
     return val;
 }
 
+function hasClass(element, className) {
+	if (element.classList) {
+		return element.classList.contains(className);
+	} else {
+		return new RegExp('(^| )' + className + '( |$)', 'gi').test(element.className);
+	}
+}
+
+function hasClassInParentChain(element, className) {
+	if (!element) {
+		return false;
+	}
+
+	if (hasClass(element, className)) {
+		return true;
+	}
+
+	return hasClassInParentChain(element.parentElement, className);
+}
+
 const MAX_SCALE = 10000;
 const MIN_SCALE = 1.0;
 const ZOOM_FACTOR = 1.05;
@@ -61,6 +81,10 @@ export class View {
 	
 	handleDragMove(event) {
 		if (this.drag_start === undefined) return;
+
+		if (hasClassInParentChain(event.target, 'inputelement')) {
+			return;
+		}
 	
 		const { clientX, clientY } = event.touches ? event.touches[0] : event;
 		const delta = {
@@ -142,7 +166,6 @@ export class View {
 					const dy = this.touch1.clientY - this.touch2.clientY;
 					this.initialTouchDistance = Math.sqrt(dx * dx + dy * dy);
 				}
-				event.preventDefault();
 			} else {
 				this.touch1 = null;
 				this.touch2 = null;
@@ -153,7 +176,6 @@ export class View {
 		view.addEventListener('touchmove', (event) => {
 			if (event.touches.length === 2) {
 				this.handleZoom(event);
-				event.preventDefault();
 			} else {
 				this.handleDragMove(event);
 			}

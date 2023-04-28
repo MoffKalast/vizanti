@@ -97,7 +97,6 @@ async function loadTopics(){
 }
 
 function connect(){
-
 	cmdVelPublisher = new ROSLIB.Topic({
 		ros: rosbridge.ros,
 		name: topic,
@@ -275,8 +274,6 @@ function onMove(event) {
 
 		joypreview.style.left = `calc(${percX} - 50px)`;
 		joypreview.style.top = `calc(${percY} - 50px)`;
-
-		console.log(percX,percY)
 
 		joystick.destroy();
 		joystick = nipplejs.create({
