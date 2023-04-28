@@ -23,7 +23,7 @@ export function applyRotation(vector, rotation){
 
 export class TF {
 	constructor() {
-		this.frame = 'map';
+		this.fixed_frame = 'odom';
 		this.transforms = {};
 		this.absoluteTransforms = {};
 
@@ -64,14 +64,15 @@ export class TF {
 		window.dispatchEvent(new Event('tf_changed'));
 	}
 
-	set_frame(newframe) {
-		this.frame = newframe;
+	setFixedFrame(newframe) {
+		this.fixed_frame = newframe;
 		this.recalculateAbsoluteTransforms();
+		window.dispatchEvent(new Event('tf_changed'));
 	}
 
 	recalculateAbsoluteTransforms() {
 		for (const [key, value] of Object.entries(this.transforms)) {
-			this.absoluteTransforms[key] = this.transformVector(key, this.frame, {x: 0, y:0, z:0}, {x: 0, y:0, z:0, w:1});
+			this.absoluteTransforms[key] = this.transformVector(key, this.fixed_frame, {x: 0, y:0, z:0}, {x: 0, y:0, z:0, w:1});
 		};
 	}
 

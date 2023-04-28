@@ -134,12 +134,7 @@ selectionbox.addEventListener("change", (event) => {
 	connect();
 });
 
-selectionbox.addEventListener("click", (event) => {
-	connect();
-});
-
-icon.addEventListener("click", (event) => {
-	loadTopics();
-});
+selectionbox.addEventListener("click", connect);
+icon.addEventListener("click", loadTopics);
 
 loadTopics();

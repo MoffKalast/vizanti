@@ -4,7 +4,7 @@ import { nipplejs } from '/js/modules/joystick.js';
 
 let topic = "/cmd_vel";
 let joy_offset_x = "50%";
-let joy_offset_y = "15%";
+let joy_offset_y = "85%";
 let cmdVelPublisher = undefined;
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
@@ -87,7 +87,7 @@ async function loadTopics(){
 	result.forEach(element => {
 		topiclist += "<option value='"+element+"'>"+element+"</option>"
 	});
-	selectionbox.innerHTML = topiclist
+	selectionbox.innerHTML = topiclist;
 
 	if(topic == "")
 		topic = selectionbox.value;
