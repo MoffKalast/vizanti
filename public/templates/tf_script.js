@@ -81,10 +81,6 @@ function drawLines(origin, relative, absolute){
 				ctx.moveTo(parseInt(point.x), parseInt(point.y));
 				ctx.lineTo(parseInt(parentpoint.x), parseInt(parentpoint.y));
 			}
-			else{
-				ctx.moveTo(parseInt(point.x), parseInt(point.y));
-				ctx.lineTo(parseInt(origin.x), parseInt(origin.y));
-			}	
 		}	
 	});
 
