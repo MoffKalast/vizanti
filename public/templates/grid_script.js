@@ -15,7 +15,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	grid_colour = loaded_data.colour;
 }
 
-function save_settings(){
+function saveSettings(){
 	settings["{uniqueID}"] = {
 		size: grid_size,
 		thickness: grid_thickness,
@@ -105,7 +105,7 @@ gridstep.value = grid_size;
 colourpicker.addEventListener("input", (event) =>{
 	grid_colour = colourpicker.value;
 	drawGrid();
-	save_settings();
+	saveSettings();
 });
 
 linethickness.addEventListener("input", (event) =>{
@@ -119,7 +119,7 @@ linethickness.addEventListener("input", (event) =>{
 		grid_thickness = parseFloat(linethickness.value);	
 
 	drawGrid();
-	save_settings();
+	saveSettings();
 });
 
 gridstep.addEventListener("input", (event) =>{
@@ -133,7 +133,7 @@ gridstep.addEventListener("input", (event) =>{
 		grid_size = parseFloat(gridstep.value);	
 
 	drawGrid();
-	save_settings();
+	saveSettings();
 });
 
 resizeScreen();

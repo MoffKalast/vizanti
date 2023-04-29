@@ -96,8 +96,8 @@ function connect(){
 		text_percent.innerText = "Percentage: "+parseInt(msg.percentage*100)+" %";
 		text_voltage.innerText = "Voltage: "+msg.voltage+" V";
 
-		text_current.innerText = "Current draw: "+msg.current+" A";
-		text_charge.innerText = "Charge: "+msg.charge+"/"+msg.capacity+" Ah";
+		text_current.innerText = "Current draw: "+msg.current.toFixed(2)+" A";
+		text_charge.innerText = "Charge: "+msg.charge.toFixed(2)+"/"+msg.capacity.toFixed(2)+" Ah";
 
 		text_status.innerText = "Status: "+STATUS[msg.power_supply_status];
 		text_health.innerText = "Health: "+HEALTH[msg.power_supply_health];

@@ -5,10 +5,20 @@ import { settings } from '/js/modules/persistent.js';
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
 const selectionbox = document.getElementById("{uniqueID}_fixedframe");
 
+const colourpicker = document.getElementById("{uniqueID}_colorpicker");
+
+colourpicker.addEventListener("input", (event) =>{
+	document.body.style.backgroundColor = colourpicker.value;
+	saveSettings();
+});
+
+
 // Settings
 if (settings.hasOwnProperty('{uniqueID}')) {
 	const loadedData = settings['{uniqueID}'];
 	tf.setFixedFrame(loadedData.fixed_frame);
+
+	document.body.style.backgroundColor = loadedData.background_color;
 }
 else{
 	saveSettings();
@@ -16,7 +26,8 @@ else{
 
 function saveSettings() {
 	settings['{uniqueID}'] = {
-		fixed_frame: tf.fixed_frame
+		fixed_frame: tf.fixed_frame,
+		background_color: colourpicker.value
 	};
 	settings.save();
 }
