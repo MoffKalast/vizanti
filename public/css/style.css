@@ -234,6 +234,15 @@ input[type=number] {
 	font-family: Monospace;
 }
 
+input[type=text] {
+	width: 100%;
+	font-size: 1.0rem;
+	outline: 0;
+	color: white;
+	background-color: #424242;
+	font-family: Monospace;
+}
+
 br {
 	content: "";
 	display: block;
