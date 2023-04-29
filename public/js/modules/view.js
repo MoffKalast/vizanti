@@ -69,6 +69,35 @@ export class View {
 		}
 	}
 
+	getPixelsInMapUnits(length){
+		let p1 = this.screenToMap({
+			x: 0,
+			y: 0,
+		});
+	
+		let p2 = this.screenToMap({
+			x: length,
+			y: 0,
+		});
+	
+		return Math.abs(p1.x-p2.x);
+	}
+
+	getMapUnitsInPixels(length){
+		let p1 = this.mapToScreen({
+			x: 0,
+			y: 0,
+		});
+	
+		let p2 = this.mapToScreen({
+			x: length,
+			y: 0,
+		});
+	
+		return Math.abs(p1.x-p2.x);
+	}
+	
+
 	handleDragStart(event) {
 		const { clientX, clientY } = event.touches ? event.touches[0] : event;
 		this.drag_start = {

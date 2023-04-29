@@ -1,0 +1,38 @@
+<div id="{uniqueID}_modal" class="modal_outer noselect">
+	<div class="modal_inner noselect">
+		<h3>Robot Model</h3>
+		<hr>
+
+		<label for="{uniqueID}_frame">Frame:</label>
+		<select id="{uniqueID}_frame" name="topic">
+			<option value='base_link'>base_link</option>
+		</select>
+
+		<br>
+
+		<label for="{uniqueID}_sprite">Robot Sprite:</label>
+		<select id="{uniqueID}_sprite" name="topic">
+			<option value='tuna'>tuna</option>
+		</select>
+
+		<br>
+
+		<img src="assets/robot_model/_tuna.png" alt="modelimg" width="80%" id="{uniqueID}_previewimg">
+
+		<br>
+
+		<label for="{uniqueID}_length">Robot Length (m):</label>
+		<input type="number" value="0.5" step="0.01" min="0.01" max="100" id="{uniqueID}_length">
+
+		<br>
+
+		<p>For simplicity the robot model is a top-down prerendered sprite.</p>
+		<p>Add your own into outdooros/public/assets/robot_model/</p>
+
+		<hr>
+
+		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
+
+		
+	</div>
+</div>

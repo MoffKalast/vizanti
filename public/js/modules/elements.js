@@ -7,7 +7,9 @@ async function loadElementTemplates() {
     const fileList = await fileListResponse.json();
 
     const fetchPromises = fileList.map(async file => {
-        const [category, typeWithExtension] = file.split('_');
+        const filePathParts = file.split('/');
+        const fileName = filePathParts[filePathParts.length - 1];
+        const [category, typeWithExtension] = fileName.split('_');
         const type = typeWithExtension.split('.')[0];
 
         if (!templates[category]) {

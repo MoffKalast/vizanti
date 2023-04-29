@@ -114,20 +114,6 @@ function drawText(origin, relative, absolute){
 	});
 }
 
-function getPixelsInMapUnits(length){
-	let p1 = view.screenToMap({
-		x: 0,
-		y: 0,
-	});
-
-	let p2 = view.screenToMap({
-		x: length,
-		y: 0,
-	});
-
-	return Math.abs(p1.x-p2.x);
-}
-
 function getBasisPoints(basis, translation, rotation){
 	let basis_x = applyRotation(basis, rotation);
 	return [
@@ -144,8 +130,8 @@ function getBasisPoints(basis, translation, rotation){
 
 function drawAxes(origin, relative, absolute) {
 
-	const unit = getPixelsInMapUnits(30*parseFloat(scaleSlider.value));
-	const width_unit = getPixelsInMapUnits(2*parseFloat(scaleSlider.value));
+	const unit = view.getPixelsInMapUnits(30*parseFloat(scaleSlider.value));
+	const width_unit = view.getPixelsInMapUnits(2*parseFloat(scaleSlider.value));
 
 	ctx.lineWidth = 2*parseFloat(scaleSlider.value);
 	ctx.strokeStyle = "#E0000B"; //red
