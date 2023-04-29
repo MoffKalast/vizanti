@@ -22,13 +22,12 @@ function saveSettings() {
 }
 
 // TF frame list
-
 function setFrameList(){
 
 	let framelist = "";
-	Object.keys(tf.transforms).forEach(key => {
+	for (const key of tf.frame_list.values()) {
 		framelist += "<option value='"+key+"'>"+key+"</option>"
-	});
+	}
 	selectionbox.innerHTML = framelist;
 
 	if(tf.transforms.hasOwnProperty(tf.fixed_frame)){

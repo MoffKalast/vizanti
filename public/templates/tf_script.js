@@ -68,21 +68,24 @@ function drawLines(origin, relative, absolute){
 			y: transform.translation.y,
 		});
 
-		let parent = absolute[relative[key].parent];
-		if(parent !== undefined){
-
-			let parentpoint = view.mapToScreen({
-				x: parent.translation.x,
-				y: parent.translation.y,
-			});
-
-			ctx.moveTo(parseInt(point.x), parseInt(point.y));
-			ctx.lineTo(parseInt(parentpoint.x), parseInt(parentpoint.y));
-		}
-		else{
-			ctx.moveTo(parseInt(point.x), parseInt(point.y));
-			ctx.lineTo(parseInt(origin.x), parseInt(origin.y));
-		}		
+		if(relative[key])
+		{
+			let parent = absolute[relative[key].parent];
+			if(parent !== undefined){
+	
+				let parentpoint = view.mapToScreen({
+					x: parent.translation.x,
+					y: parent.translation.y,
+				});
+	
+				ctx.moveTo(parseInt(point.x), parseInt(point.y));
+				ctx.lineTo(parseInt(parentpoint.x), parseInt(parentpoint.y));
+			}
+			else{
+				ctx.moveTo(parseInt(point.x), parseInt(point.y));
+				ctx.lineTo(parseInt(origin.x), parseInt(origin.y));
+			}	
+		}	
 	});
 
 	ctx.stroke();
@@ -98,8 +101,8 @@ function drawText(origin, relative, absolute){
 	ctx.strokeStyle = "#161B21";
 	ctx.lineWidth = 5*parseFloat(scaleSlider.value);
 
-	ctx.strokeText(tf.frame, origin.x, origin.y+15);
-	ctx.fillText(tf.frame, origin.x, origin.y+15);
+	//ctx.strokeText(tf.fixed_frame, origin.x, origin.y+15);
+	//ctx.fillText(tf.fixed_frame, origin.x, origin.y+15);
 
 	Object.keys(absolute).forEach(key => {
 
@@ -199,8 +202,8 @@ function drawAxes(origin, relative, absolute) {
 
 
 	ctx.strokeStyle = "#005DFF"; //blue
-	ctx.fillStyle = "#005DFF";
-	ctx.fillRect(parseInt(origin.x)-1, parseInt(origin.y)-1, 2, 2);
+	//ctx.fillStyle = "#005DFF";
+	//ctx.fillRect(parseInt(origin.x)-1, parseInt(origin.y)-1, 2, 2);
 
 	ctx.beginPath();
 
