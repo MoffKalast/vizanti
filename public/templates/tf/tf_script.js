@@ -5,6 +5,8 @@ import { settings } from '/js/modules/persistent.js';
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d');
 
+const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
+
 const namesCheckbox = document.getElementById('{uniqueID}_shownames');
 const axesCheckbox = document.getElementById('{uniqueID}_showaxes');
 const linesCheckbox = document.getElementById('{uniqueID}_showlines');
@@ -137,14 +139,6 @@ function drawAxes(origin, relative, absolute) {
 	ctx.strokeStyle = "#E0000B"; //red
 	ctx.beginPath();
 
-	let xarrow = view.mapToScreen({
-		x: unit,
-		y: 0,
-	});
-
-	ctx.moveTo(parseInt(origin.x), parseInt(origin.y));
-	ctx.lineTo(parseInt(xarrow.x), parseInt(xarrow.y));
-
 	Object.keys(absolute).forEach(key => {
 		let transform = absolute[key];
 		let p = getBasisPoints(
@@ -161,14 +155,6 @@ function drawAxes(origin, relative, absolute) {
 	ctx.strokeStyle = "#29FF26"; //green
 	ctx.beginPath();
 
-	let yarrow = view.mapToScreen({
-		x: 0,
-		y: unit,
-	});
-
-	ctx.moveTo(parseInt(origin.x), parseInt(origin.y));
-	ctx.lineTo(parseInt(yarrow.x), parseInt(yarrow.y));
-
 	Object.keys(absolute).forEach(key => {
 		let transform = absolute[key];
 		let p = getBasisPoints(
@@ -184,9 +170,6 @@ function drawAxes(origin, relative, absolute) {
 
 
 	ctx.strokeStyle = "#005DFF"; //blue
-	//ctx.fillStyle = "#005DFF";
-	//ctx.fillRect(parseInt(origin.x)-1, parseInt(origin.y)-1, 2, 2);
-
 	ctx.beginPath();
 
 	Object.keys(absolute).forEach(key => {
@@ -232,13 +215,25 @@ function drawFrames() {
 
 	if(namesCheckbox.checked)
 		drawText(origin, relative, absolute);
-
-	updateFrameBox();
 }
 
 const framesDiv = document.getElementById('{uniqueID}_frames');
 
 function updateVisibility(){
+
+	Object.keys(tf.transforms).forEach(key => {
+		const child = key;
+		const parent = tf.transforms[key].parent;
+
+		if(!frame_visibility.hasOwnProperty(child)){
+			frame_visibility[child] = true;
+		}
+
+		if(!frame_visibility.hasOwnProperty(parent)){
+			frame_visibility[parent] = true;
+		}
+	});
+
 	framesDiv.innerHTML = '';
 	Object.keys(frame_visibility).forEach(key => {
 		const checkbox = document.createElement('input');
@@ -261,7 +256,7 @@ function updateVisibility(){
 	});
 }
 
-function updateFrameBox(){
+/* function updateFrameBox(){
 	let updatevisibility = false;
 	Object.keys(tf.transforms).forEach(key => {
 		if(!frame_visibility.hasOwnProperty(key)){
@@ -273,7 +268,9 @@ function updateFrameBox(){
 	if (updatevisibility) {
 		updateVisibility();
 	}
-}
+} */
+
+icon.addEventListener("click", updateVisibility);
 
 function resizeScreen(){
 	canvas.height = window.innerHeight;

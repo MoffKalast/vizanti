@@ -1,13 +1,6 @@
 import { rosbridge } from './rosbridge.js';
 
-export function applyRotation(vector, rotation, inverse){
-	let r = new Quaternion(
-		rotation.w,
-		rotation.x,
-		rotation.y,
-		rotation.z
-	);
-
+export function applyRotation(vector, r, inverse){
 	if(inverse)
 		r = r.inverse();
 		
@@ -38,7 +31,7 @@ export class TF {
 			ros: rosbridge.ros,
 			name: 'tf',
 			messageType: 'tf/tfMessage',
-			throttle_rate: isMobile ? 32 : 16
+			throttle_rate: isMobile ? 40 : 0 // throttle massively on mobile to prevent TCP congestion
 		});
 
 		this.tf_listener = this.tf_topic.subscribe((msg) => {
@@ -157,27 +150,25 @@ export class TF {
 		return p.concat(common, q.reverse());
 	}
 
-	updateTransforms(transforms) {
-		transforms.forEach((transform) => {
+	updateTransforms(newtransforms) {
+		newtransforms.forEach((pose) => {
 
-			const childFrameId = transform.child_frame_id;
-			const parentFrameId = transform.header.frame_id;
+			const childFrameId = pose.child_frame_id;
+			const parentFrameId = pose.header.frame_id;
 
 			this.frame_list.add(childFrameId);
 			this.frame_list.add(parentFrameId);
 	
 			this.transforms[childFrameId] = {
-				translation: transform.transform.translation,
-				rotation: transform.transform.rotation,
-				parent: parentFrameId,
-				children: new Set()
+				translation: pose.transform.translation,
+				rotation: new Quaternion(
+					pose.transform.rotation.w,
+					pose.transform.rotation.x,
+					pose.transform.rotation.y,
+					pose.transform.rotation.z
+				),
+				parent: parentFrameId
 			};
-
-			Object.keys(this.transforms).forEach(key => {
-				if(this.transforms[key].parent == childFrameId)
-					this.transforms[childFrameId].children.add(key);
-			});
-
 			this.addToTree(parentFrameId, childFrameId);
 		});
 
@@ -192,33 +183,25 @@ export class TF {
 
 	recalculateAbsoluteTransforms() {
 		for (const key of this.frame_list.values()) {
-			this.absoluteTransforms[key] = this.transformVector(key, this.fixed_frame, {x: 0, y:0, z:0}, {x: 0, y:0, z:0, w:1});
+			this.absoluteTransforms[key] = this.transformVector(key, this.fixed_frame, {x: 0, y:0, z:0}, new Quaternion());
 		}
 	}
 
 	getZeroFrame(){
 		return {
 			translation:{x: 0, y:0, z:0},
-			rotation: {x: 0, y:0, z:0, w:1}
+			rotation: new Quaternion()
 		}
 	}
 
-	transformVector(sourceFrame, targetFrame, inputVector, inputQuat) {
+	transformVector(sourceFrame, targetFrame, outputVector, outputQuat) {
 
 		if(sourceFrame == targetFrame){
 			return {
-				translation: inputVector,
-				rotation: inputQuat
+				translation: outputVector,
+				rotation: outputQuat
 			};
 		}
-
-		let outputVector = { x: inputVector.x, y: inputVector.y, z: inputVector.z };
-		let outputQuat = new Quaternion(
-			inputQuat.w,
-			inputQuat.x,
-			inputQuat.y,
-			inputQuat.z
-		);
 
 		const path = this.findPath(sourceFrame, targetFrame);
 
@@ -229,12 +212,7 @@ export class TF {
 				source = this.getZeroFrame();
 
 			if(source.parent == path[i+1]){
-				outputQuat = (new Quaternion(
-					source.rotation.w,
-					source.rotation.x,
-					source.rotation.y,
-					source.rotation.z
-				)).mul(outputQuat);
+				outputQuat = source.rotation.mul(outputQuat);
 	
 				outputVector = applyRotation(outputVector, source.rotation, false);
 				outputVector.x += source.translation.x;
@@ -246,12 +224,7 @@ export class TF {
 				if(!source)
 					source = this.getZeroFrame();
 
-				outputQuat = (new Quaternion(
-					source.rotation.w,
-					source.rotation.x,
-					source.rotation.y,
-					source.rotation.z
-				)).inverse().mul(outputQuat);
+				outputQuat = source.rotation.inverse().mul(outputQuat);
 	
 				outputVector.x -= source.translation.x;
 				outputVector.y -= source.translation.y;

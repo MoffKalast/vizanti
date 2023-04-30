@@ -12,6 +12,7 @@ html, body {
 	text-rendering: optimizeLegibility;
 
 	overflow: hidden;
+	touch-action: none;
 }
 
 /* Icon bar */
