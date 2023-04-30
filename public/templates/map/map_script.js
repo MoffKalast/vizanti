@@ -13,6 +13,14 @@ let map_canvas = undefined;
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
 
+const opacitySlider = document.getElementById('{uniqueID}_opacity');
+const opacityValue = document.getElementById('{uniqueID}_opacity_value');
+
+opacitySlider.addEventListener('input', function () {
+	opacityValue.textContent = this.value;
+	saveSettings();
+});
+
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d');
 
@@ -21,11 +29,15 @@ const ctx = canvas.getContext('2d');
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
+
+	opacitySlider.value = loaded_data.opacity;
+	opacityValue.innerText = loaded_data.opacity;
 }
 
 function saveSettings(){
 	settings["{uniqueID}"] = {
-		topic: topic
+		topic: topic,
+		opacity: opacitySlider.value
 	}
 	settings.save();
 }
@@ -47,7 +59,7 @@ function drawMap(){
 	);
 
 	const map_height = view.getMapUnitsInPixels(
-		map_canvas.width * map_data.info.resolution
+		map_canvas.height * map_data.info.resolution
 	);
 
 	const frame = tf.absoluteTransforms[map_data.header.frame_id];
@@ -80,7 +92,7 @@ function drawMap(){
 		)).toEuler().h;
 
 		ctx.save();
-		ctx.globalAlpha = 0.7;
+		ctx.globalAlpha = opacitySlider.value;
 		ctx.translate(pos.x, pos.y);
 		ctx.scale(1.0, -1.0);
 		ctx.rotate(yaw);

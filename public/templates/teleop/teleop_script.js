@@ -25,14 +25,17 @@ const holonomicSwapCheckbox = document.getElementById('{uniqueID}_holonomic');
 
 linearVelSlider.addEventListener('input', function () {
 	linearVelValue.textContent = this.value;
+	saveSettings();
 });
 
 angularVelSlider.addEventListener('input', function () {
 	angularVelValue.textContent = this.value;
+	saveSettings();
 });
 
 accelSlider.addEventListener('input', function () {
 	accelValue.textContent = this.value;
+	saveSettings();
 });
 
 linearVelSlider.addEventListener('change', saveSettings);

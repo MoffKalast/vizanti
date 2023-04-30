@@ -41,7 +41,7 @@ function setFrameList(){
 	}
 	selectionbox.innerHTML = framelist;
 
-	if(tf.transforms.hasOwnProperty(tf.fixed_frame)){
+	if(tf.frame_list.has(tf.fixed_frame)){
 		selectionbox.value = tf.fixed_frame;
 	}else{
 		framelist += "<option value='"+tf.fixed_frame+"'>"+tf.fixed_frame+"</option>"

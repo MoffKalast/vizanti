@@ -152,7 +152,6 @@ function setActive(value){
 		icon.style.backgroundColor = "rgba(124, 124, 124, 0.3)";
 		view_container.style.cursor = "";
 	}
-	console.log(active)
 }
 
 
