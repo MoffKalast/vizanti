@@ -25,6 +25,11 @@ html, body {
 
 	background-color: rgba(124, 124, 124, 0.3);
 
+	border: none;
+	box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+
 	transition: linear  0.2s;
 }
 

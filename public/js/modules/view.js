@@ -42,10 +42,15 @@ export class View {
 		this.scale = settings.view.scale;
 
 		this.drag_start = undefined;
+		this.input_movement = true;
 
 		document.addEventListener("DOMContentLoaded", () => {
 			this.addListeners();
 		});
+	}
+
+	setInputMovementEnabled(value){
+		this.input_movement = value;
 	}
 
 	reset(){
@@ -99,6 +104,9 @@ export class View {
 	
 
 	handleDragStart(event) {
+		if(!this.input_movement)
+			return;
+
 		const { clientX, clientY } = event.touches ? event.touches[0] : event;
 		this.drag_start = {
 			x: clientX,
@@ -134,6 +142,9 @@ export class View {
 	}
 
 	handleZoom(event) {
+		if(!this.input_movement)
+			return;
+
 		let scaleChange;
 		let centerX, centerY;
 	
