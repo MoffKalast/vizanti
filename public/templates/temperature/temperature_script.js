@@ -23,7 +23,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	lowBox.value = loaded_data.low;
 }
 
-function save_settings(){
+function saveSettings(){
 	settings["{uniqueID}"] = {
 		topic: topic,
 		low: highBox.value,
@@ -64,7 +64,7 @@ function connect(){
 		text_variance.innerText = "Variance: "+(Math.round(msg.variance * 100) / 100).toFixed(2);
 	});
 
-	save_settings();
+	saveSettings();
 }
 
 async function loadTopics(){

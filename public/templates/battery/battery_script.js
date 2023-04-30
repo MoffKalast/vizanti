@@ -8,7 +8,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	topic = loaded_data.topic;
 }
 
-function save_settings(){
+function saveSettings(){
 	settings["{uniqueID}"] = {
 		topic: topic,
 	}
@@ -104,7 +104,7 @@ function connect(){
 		text_chemistry.innerText = "Type: "+CHEMISTRY[msg.power_supply_technology];
 	});
 
-	save_settings();
+	saveSettings();
 }
 
 async function loadTopics(){
