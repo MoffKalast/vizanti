@@ -12,7 +12,7 @@ html, body {
 	text-rendering: optimizeLegibility;
 
 	overflow: hidden;
-	touch-action: none;
+	touch-action: none; /* Safari zooming chaos prevention */
 }
 
 /* Icon bar */

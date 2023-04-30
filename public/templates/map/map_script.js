@@ -79,12 +79,12 @@ function drawMap(){
 			map_data.info.origin.orientation
 		);
 
-		let pos = view.mapToScreen({
+		const pos = view.mapToScreen({
 			x: transformed.translation.x,
 			y: transformed.translation.y,
 		});
 	
-		let yaw = (new Quaternion(
+		const yaw = (new Quaternion(
 			transformed.rotation.w,
 			transformed.rotation.x,
 			transformed.rotation.y,
