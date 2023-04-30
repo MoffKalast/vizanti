@@ -19,8 +19,8 @@ function sendMessage(pos, delta){
 
 	const publisher = new ROSLIB.Topic({
 		ros: rosbridge.ros,
-		name: "initialpose",
-		messageType: 'geometry_msgs/PoseWithCovarianceStamped',
+		name: "move_base_simple/goal",
+		messageType: 'geometry_msgs/PoseStamped',
 	});
 
 	const poseMessage = new ROSLIB.Message({
@@ -33,20 +33,17 @@ function sendMessage(pos, delta){
 			frame_id: tf.fixed_frame
 		},
 		pose: {
-			pose: {
-				position: {
-					x: map_pos.x,
-					y: map_pos.y,
-					z: 0.0
-				},
-				orientation: {
-					x: quat.x,
-					y: quat.y,
-					z: quat.z,
-					w: quat.w
-				}
+			position: {
+				x: map_pos.x,
+				y: map_pos.y,
+				z: 0.0
 			},
-			covariance: [0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.06853892326654787]
+			orientation: {
+				x: quat.x,
+				y: quat.y,
+				z: quat.z,
+				w: quat.w
+			}
 		}
 	});	
 	publisher.publish(poseMessage);
@@ -65,7 +62,7 @@ let active = false;
 let sprite = new Image();
 let start_point = undefined;
 let delta = undefined;
-sprite.src = "assets/initialpose.png";
+sprite.src = "assets/simplegoal.png";
 
 function drawArrow() {
     const wid = canvas.width;
@@ -160,7 +157,6 @@ function setActive(value){
 
 
 icon.addEventListener("click", (event) =>{
-	
 	setActive(!active);
 });
 
