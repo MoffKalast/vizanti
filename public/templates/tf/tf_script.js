@@ -289,3 +289,4 @@ window.addEventListener('orientationchange', resizeScreen);
 resizeScreen();
 updateVisibility();
 
+console.log("TF Widget Loaded {uniqueID}")

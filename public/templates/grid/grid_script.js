@@ -138,3 +138,4 @@ gridstep.addEventListener("input", (event) =>{
 
 resizeScreen();
 
+console.log("Grid Widget Loaded {uniqueID}")

@@ -319,3 +319,5 @@ joypreview.addEventListener('mouseleave', onEnd);
 joypreview.addEventListener('touchstart', onStart);
 joypreview.addEventListener('touchmove', onMove);
 joypreview.addEventListener('touchend', onEnd);
+
+console.log("Teleop Widget Loaded {uniqueID}")

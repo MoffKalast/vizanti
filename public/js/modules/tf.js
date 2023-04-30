@@ -38,6 +38,7 @@ export class TF {
 			ros: rosbridge.ros,
 			name: 'tf',
 			messageType: 'tf/tfMessage',
+			throttle_rate: isMobile ? 32 : 16
 		});
 
 		this.tf_listener = this.tf_topic.subscribe((msg) => {
@@ -53,7 +54,6 @@ export class TF {
 		this.tf_static_listener = this.tf_static_topic.subscribe((msg) => {
 			this.updateTransforms(msg.transforms);
 		});
-
 
 		/* setTimeout(() =>{
 			const testCases = [

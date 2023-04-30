@@ -76,3 +76,5 @@ async function deletePersistent() {
 }
 
 document.getElementById("{uniqueID}_delete_persistent").addEventListener("click", deletePersistent);
+
+console.log("Settings Widget Loaded {uniqueID}")

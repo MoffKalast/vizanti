@@ -2,13 +2,15 @@ import '/js/lib/roslib.min.js';
 
 class Rosbridge {
 
-	constructor(url, port) {
+	constructor(url, port) { 
 		this.url = url;
 		this.port = port;
 		this.connected = false;
 
 		this.connect();
 		this.status = "Connecting...";
+
+		console.log("bridge created!")
 	}
 
 	connect(){

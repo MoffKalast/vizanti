@@ -164,3 +164,4 @@ icon.addEventListener("click", (event) =>{
 
 resizeScreen();
 
+console.log("Initialpose Widget Loaded {uniqueID}")

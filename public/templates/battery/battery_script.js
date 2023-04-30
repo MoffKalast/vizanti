@@ -72,7 +72,8 @@ function connect(){
 	batterytopic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : 'sensor_msgs/BatteryState'
+		messageType : 'sensor_msgs/BatteryState',
+		throttle_rate: 500 // throttle to twice a second max
 	});
 	
 	listener = batterytopic.subscribe((msg) => {
@@ -138,3 +139,5 @@ selectionbox.addEventListener("click", connect);
 icon.addEventListener("click", loadTopics);
 
 loadTopics();
+
+console.log("Battery Widget Loaded {uniqueID}")

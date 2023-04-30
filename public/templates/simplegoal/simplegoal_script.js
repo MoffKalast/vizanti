@@ -161,3 +161,4 @@ icon.addEventListener("click", (event) =>{
 
 resizeScreen();
 
+console.log("Simple Goal Widget Loaded {uniqueID}")

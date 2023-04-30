@@ -104,3 +104,5 @@ icon.addEventListener("click", (event) => {
 });
 
 loadTopics();
+
+console.log("Temeprature Widget Loaded {uniqueID}")

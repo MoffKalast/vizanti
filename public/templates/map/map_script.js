@@ -115,7 +115,8 @@ function connect(){
 	map_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : 'nav_msgs/OccupancyGrid'
+		messageType : 'nav_msgs/OccupancyGrid',
+		throttle_rate: 2000 // throttle to once every two seconds max
 	});
 	
 	listener = map_topic.subscribe((msg) => {
@@ -207,3 +208,5 @@ window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);
 
 resizeScreen();
+
+console.log("Map Widget Loaded {uniqueID}")
