@@ -210,7 +210,7 @@ export class TF {
 
 	recalculateAbsoluteTransforms() {
 		for (const key of this.frame_list.values()) {
-			this.absoluteTransforms[key] = this.transformVector(key, this.fixed_frame, {x: 0, y:0, z:0}, new Quaternion());
+			this.absoluteTransforms[key] = this.transformPose(key, this.fixed_frame, {x: 0, y:0, z:0}, new Quaternion());
 		}
 	}
 
@@ -221,7 +221,10 @@ export class TF {
 		}
 	}
 
-	transformVector(sourceFrame, targetFrame, outputVector, outputQuat) {
+	transformPose(sourceFrame, targetFrame, inputVector, inputQuat) {
+
+		let outputVector =  Object.assign({}, inputVector);
+		let outputQuat =  new Quaternion(inputQuat);
 
 		if(sourceFrame == targetFrame){
 			return {

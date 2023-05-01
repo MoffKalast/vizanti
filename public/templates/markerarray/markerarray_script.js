@@ -58,7 +58,7 @@ string text
 string mesh_resource
 bool mesh_use_embedded_materials */
 
-function rgbaToCanvasColor(rosColorRGBA) {
+function rgbaToFillColor(rosColorRGBA) {
 
 	// Clamp the RGBA values between 0 and 1
 	const r = Math.min(Math.max(rosColorRGBA.r, 0), 1);
@@ -75,16 +75,72 @@ function rgbaToCanvasColor(rosColorRGBA) {
 	return `rgba(${r255}, ${g255}, ${b255}, ${a})`;
 }
 
+function rgbaToStrokeColor(rosColorRGBA) {
+
+	// Clamp the RGBA values between 0 and 1
+	const r = Math.min(Math.max(rosColorRGBA.r, 0), 1);
+	const g = Math.min(Math.max(rosColorRGBA.g, 0), 1);
+	const b = Math.min(Math.max(rosColorRGBA.b, 0), 1);
+  
+	// Convert the RGBA values from the range [0, 1] to the range [0, 255]
+	const r255 = Math.round(r * 255);
+	const g255 = Math.round(g * 255);
+	const b255 = Math.round(b * 255);
+
+	console.log(rosColorRGBA)
+  
+	// Return the RGBA color string for HTML canvas context
+	return `rgb(${r255}, ${g255}, ${b255})`;
+}
+
 function drawMarkers(){
 
-	function drawCircle(size){
+	function drawCircle(marker, size){
+		ctx.scale(marker.scale.x, marker.scale.y);
 		ctx.beginPath();
-		ctx.arc(0, 0, size, 0, 2 * Math.PI, false);
+		ctx.arc(0, 0, size/2, 0, 2 * Math.PI, false);
 		ctx.fill();
 	}
 
-	function drawCube(size){
-		ctx.fillRect(-size/2, -size/2, size, size);
+	function drawCube(marker, size){
+		ctx.scale(marker.scale.x, marker.scale.y);
+		ctx.fillRect(-size/4, -size/4, size/2, size/2);
+	}
+
+	function drawArrow(marker, size){
+		const height = size*0.5;
+		const width = parseInt(size*0.05)+1;
+		const tip = parseInt(size*0.15)+1;
+		const tipwidth = parseInt(size*0.15)+1;
+
+		ctx.beginPath();
+		ctx.moveTo(0, -width);
+		ctx.lineTo(height - tip, -width);
+		ctx.lineTo(height - tip, -tipwidth);
+		ctx.lineTo(height, 0);
+		ctx.lineTo(height - tip, tipwidth);
+		ctx.lineTo(height - tip, width);
+		ctx.lineTo(0, width);
+		ctx.lineTo(0, -width);
+		ctx.fill();
+	}
+
+	function drawLine(marker, size){
+		ctx.lineWidth = parseInt(marker.scale.x*size);
+		ctx.strokeStyle = rgbaToFillColor(marker.colors[0]); // for now
+
+		ctx.beginPath();
+		marker.points.forEach((point, index) => {
+			const x = point.x * size;
+			const y = point.y * size;
+			if (index === 0) {
+				ctx.moveTo(x, y);
+			} else {
+				ctx.lineTo(x, y);
+			}
+		});
+
+		ctx.stroke();
 	}
 
 	const unit = view.getMapUnitsInPixels(1.0);
@@ -95,32 +151,39 @@ function drawMarkers(){
 	ctx.clearRect(0, 0, wid, hei);
 
 	for (const [key, marker] of Object.entries(markers)) {
-		ctx.fillStyle = rgbaToCanvasColor(marker.color);
+		ctx.fillStyle = rgbaToFillColor(marker.color);
+
+		const frame = tf.absoluteTransforms[marker.header.frame_id];
+
+		if(!frame)
+			continue;
+
+		let transformed = tf.transformPose(
+			marker.header.frame_id, 
+			tf.fixed_frame, 
+			marker.pose.position, 
+			marker.pose.orientation
+		);
 
 		const pos = view.mapToScreen({
-			x: marker.pose.position.x,
-			y: marker.pose.position.y
+			x: transformed.translation.x,
+			y: transformed.translation.y
 		});
 
-		const yaw = (new Quaternion(
-			marker.pose.orientation.w,
-			marker.pose.orientation.x,
-			marker.pose.orientation.y,
-			marker.pose.orientation.z
-		)).toEuler().h;
+		const yaw = transformed.rotation.toEuler().h;
 
 		ctx.save();
 		ctx.translate(pos.x, pos.y);
-		ctx.scale(marker.scale.x, marker.scale.y);
+		ctx.scale(1.0, -1.0);
 		ctx.rotate(yaw);
 
 		switch(marker.type)
 		{
-			case 0: break;//ARROW=0
-			case 1: drawCube(unit);break;//CUBE=1
+			case 0: drawArrow(marker, unit); break;//ARROW=0
+			case 1: drawCube(marker, unit);break;//CUBE=1
 			case 2: 
-			case 3: drawCircle(unit); break; //SPHERE=2 CYLINDER=3
-			case 4: break; //LINE_STRIP=4
+			case 3: drawCircle(marker, unit); break; //SPHERE=2 CYLINDER=3
+			case 4: drawLine(marker, unit); break; //LINE_STRIP=4
 			case 5: break; //LINE_LIST=5
 			case 6: break; //CUBE_LIST=6
 			case 7: break; //SPHERE_LIST=7
@@ -162,6 +225,10 @@ function connect(){
 				}
 				return;
 			}
+
+			const q = m.pose.orientation;
+			if(q.x == 0 && q.y == 0 && q.z == 0 && q.w == 0)
+				m.pose.orientation = new Quaternion();
 		
 			markers[id] = m;
 		});

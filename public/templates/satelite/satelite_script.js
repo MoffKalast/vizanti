@@ -4,15 +4,16 @@ import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
 
 let topic = "";
+let server_url = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 let listener = undefined;
 
 let map_topic = undefined;
-let map_data = undefined;
-let map_canvas = undefined;
+let map_fix = undefined;
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
 
+const tileServerString = document.getElementById('{uniqueID}_tileserver');
 const opacitySlider = document.getElementById('{uniqueID}_opacity');
 const opacityValue = document.getElementById('{uniqueID}_opacity_value');
 
@@ -21,14 +22,19 @@ opacitySlider.addEventListener('input', function () {
 	saveSettings();
 });
 
+tileServerString.addEventListener('input', function () {
+	server_url = this.value;
+	saveSettings();
+});
+
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d');
 
 //Settings
-
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
+	server_url = loaded_data.server_url;
 
 	opacitySlider.value = loaded_data.opacity;
 	opacityValue.innerText = loaded_data.opacity;
@@ -37,61 +43,26 @@ if(settings.hasOwnProperty("{uniqueID}")){
 function saveSettings(){
 	settings["{uniqueID}"] = {
 		topic: topic,
+		server_url: server_url,
 		opacity: opacitySlider.value
 	}
 	settings.save();
 }
 
 //Rendering
-
-function drawMap(){
+function drawTiles(){
 	const wid = canvas.width;
     const hei = canvas.height;
 
 	ctx.clearRect(0, 0, wid, hei);
-	ctx.imageSmoothingEnabled = false;
 
-	if(!map_canvas)
+	if(!map_fix)
 		return;
 
-	const map_width = view.getMapUnitsInPixels(
-		map_canvas.width * map_data.info.resolution
-	);
-
-	const map_height = view.getMapUnitsInPixels(
-		map_canvas.height * map_data.info.resolution
-	);
-
-	const frame = tf.absoluteTransforms[map_data.header.frame_id];
-
-	if(frame){
-
-		let transformed = tf.transformPose(
-			map_data.header.frame_id,
-			tf.fixed_frame,
-			map_data.info.origin.position,
-			map_data.info.origin.orientation
-		);
-
-		const pos = view.mapToScreen({
-			x: transformed.translation.x,
-			y: transformed.translation.y,
-		});
-	
-		const yaw = transformed.rotation.toEuler().h;
-
-		ctx.save();
-		ctx.globalAlpha = opacitySlider.value;
-		ctx.translate(pos.x, pos.y);
-		ctx.scale(1.0, -1.0);
-		ctx.rotate(yaw);
-		ctx.drawImage(map_canvas, 0, 0, map_width, map_height);
-		ctx.restore();
-	}
+	console.log(map_fix);
 }
 
 //Topic
-
 function connect(){
 
 	if(topic == "")
@@ -104,51 +75,19 @@ function connect(){
 	map_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : 'nav_msgs/OccupancyGrid',
-		throttle_rate: 2000 // throttle to once every two seconds max
+		messageType : 'sensor_msgs/NavSatFix'
 	});
 	
 	listener = map_topic.subscribe((msg) => {
-
-		map_data = msg;
-		map_canvas = document.createElement('canvas');
-
-		const mapctx = map_canvas.getContext('2d');
-
-		const width = msg.info.width;
-		const height = msg.info.height;
-		const data = msg.data;
-	  
-		map_canvas.width = width;
-		map_canvas.height = height;
-	  
-		let map_img = mapctx.createImageData(width, height);
-	  
-		// 3. Iterate through the data array and set the canvas pixel colors
-		for (let i = 0; i < data.length; i++) {
-			const occupancyValue = data[i];
-			let color = 255; // White for unknown
-
-			if (occupancyValue >= 0 && occupancyValue <= 100) {
-				color = 255 - (occupancyValue * 255) / 100; // Grayscale for occupancy probability
-			}
-
-			map_img.data[i * 4] = color; // R
-			map_img.data[i * 4 + 1] = color; // G
-			map_img.data[i * 4 + 2] = color; // B
-			map_img.data[i * 4 + 3] = 255; // A
-		}
-
-		mapctx.putImageData(map_img, 0, 0);
-
-		drawMap();
+		map_fix = msg;
+		drawTiles();
 	});
 
 	saveSettings();
 }
 
 async function loadTopics(){
-	let result = await rosbridge.get_topics("nav_msgs/OccupancyGrid");
+	let result = await rosbridge.get_topics("sensor_msgs/NavSatFix");
 
 	let topiclist = "";
 	result.forEach(element => {
@@ -188,14 +127,14 @@ loadTopics();
 function resizeScreen(){
 	canvas.height = window.innerHeight;
 	canvas.width = window.innerWidth;
-	drawMap();
+	drawTiles();
 }
 
-window.addEventListener("tf_changed", drawMap);
-window.addEventListener("view_changed", drawMap);
+window.addEventListener("tf_changed", drawTiles);
+window.addEventListener("view_changed", drawTiles);
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);
 
 resizeScreen();
 
-console.log("Map Widget Loaded {uniqueID}")
+console.log("Satelite Widget Loaded {uniqueID}")

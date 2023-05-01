@@ -5,8 +5,9 @@
 ## Installation
 
    pip install Flask
+   sudo apt install ros-noetic-rosbridge-suite
 
 
 ## Run
 
-   rosrun outdooros server.py
+   roslaunch outdooros server.launch
