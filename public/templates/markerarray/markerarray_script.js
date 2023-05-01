@@ -146,8 +146,7 @@ function connect(){
 	marker_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : 'visualization_msgs/MarkerArray',
-		throttle_rate: 40
+		messageType : 'visualization_msgs/MarkerArray'
 	});
 	
 	listener = marker_topic.subscribe((msg) => {

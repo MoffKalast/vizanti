@@ -8,7 +8,7 @@ function sendMessage(pos, delta){
 	if(!pos || !delta)
 		return;
 
-	let yaw = Math.atan2(-delta.y, -delta.x);
+	let yaw = Math.atan2(delta.y, -delta.x);
 	let quat = Quaternion.fromEuler(yaw, 0, 0, 'ZXY');
 
 	let map_pos = view.screenToMap(pos);

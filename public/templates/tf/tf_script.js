@@ -221,6 +221,8 @@ const framesDiv = document.getElementById('{uniqueID}_frames');
 
 function updateVisibility(){
 
+	let current_transforms = new Set();
+
 	Object.keys(tf.transforms).forEach(key => {
 		const child = key;
 		const parent = tf.transforms[key].parent;
@@ -232,10 +234,13 @@ function updateVisibility(){
 		if(!frame_visibility.hasOwnProperty(parent)){
 			frame_visibility[parent] = true;
 		}
+
+		current_transforms.add(child);
+		current_transforms.add(parent);
 	});
 
 	framesDiv.innerHTML = '';
-	Object.keys(frame_visibility).forEach(key => {
+	current_transforms.forEach(key => {
 		const checkbox = document.createElement('input');
 		checkbox.type = 'checkbox';
 		checkbox.id = `{uniqueID}_${key}`;

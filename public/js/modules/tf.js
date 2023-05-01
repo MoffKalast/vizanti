@@ -27,16 +27,30 @@ export class TF {
 
 		this.frame_list = new Set();
 
+		//this.previousTime = null;
+		//this.previousTransforms = null;
+		//this.lastReceivedTransforms = null;
+		//this.lastReceivedTime = null;
+
 		this.tf_topic = new ROSLIB.Topic({
 			ros: rosbridge.ros,
-			name: 'tf',
+			name: 'tf/consolidated',
 			messageType: 'tf/tfMessage',
-			throttle_rate: isMobile ? 40 : 0 // throttle massively on mobile to prevent TCP congestion
+			throttle_rate: 30
 		});
+		
+		const setListener = () => {
+			this.tf_listener = this.tf_topic.subscribe((msg) => {
+				//this.previousTransforms = this.lastReceivedTransforms;
+				//this.previousTime = this.lastReceivedTime;
+	
+				//this.lastReceivedTransforms = msg.transforms;
+				//this.lastReceivedTime = performance.now();
+				this.updateTransforms(msg.transforms);
+			});
+		};
 
-		this.tf_listener = this.tf_topic.subscribe((msg) => {
-			this.updateTransforms(msg.transforms);
-		});
+		setListener();
 
 		this.tf_static_topic = new ROSLIB.Topic({
 			ros: rosbridge.ros,
@@ -48,55 +62,68 @@ export class TF {
 			this.updateTransforms(msg.transforms);
 		});
 
-		/* setTimeout(() =>{
-			const testCases = [
-				{
-					input: ['map', 'map'],
-					expected: ['map'],
-				},
-				{
-					input: ['map', 'world'],
-					expected: ['map', 'world'],
-				},
-				{
-					input: ['map', 'prop_right'],
-					expected: ['map', 'odom', 'base_link', 'prop_right'],
-				},
-				{
-					input: ['prop_left', 'world'],
-					expected: ['prop_left', 'base_link', 'odom', 'map', 'world'],
-				},
-				{
-					input: ['prop_right', 'prop_left'],
-					expected: ['prop_right', 'base_link', 'prop_left'],
-				},
-				{
-					input: ['prop_right', 'gps'],
-					expected: ['prop_right', 'base_link', 'gps'],
-				},
-				{
-					input: ['gps', 'imu_link'],
-					expected: ['gps', 'base_link', 'imu_link'],
-				},
-				{
-					input: ['imu_link', 'map'],
-					expected: ['imu_link', 'base_link', 'odom', 'map'],
-				},
-			];
-			
-			testCases.forEach((testCase, index) => {
-				const result = this.findPath(...testCase.input);
-				const isSuccess = JSON.stringify(result) === JSON.stringify(testCase.expected);
-				console.log(
-					`Test ${index + 1}: ${isSuccess ? 'PASSED' : 'FAILED ------'}`,
-					'\nInput:',	testCase.input,
-					'\nResult:', result,
-					'\nExpected:', testCase.expected,
-					'\n'
-				);
-			});
-		}, 2000); */
+		setInterval(()=>{
+			if(performance.now() - this.lastReceivedTime > 1000){
+				console.log('%c TF Connection Reset!', 'background: #222; color: #bada55');
+
+				this.tf_topic.unsubscribe(this.tf_listener);
+				setListener();
+			}
+		},1000);
 	}
+
+	/* interpolateTransforms() {
+		if (this.lastReceivedTransforms !== null && this.previousTransforms !== null && performance.now() - this.lastReceivedTime > 15) {
+			const prevdelta = (this.lastReceivedTime - this.previousTime) / 1000;
+			let delta = ((performance.now() - this.lastReceivedTime) / 1000) / prevdelta;
+
+			console.log("interpolation")
+
+			delta *= 0.005;
+
+			const transformsMap = new Map();
+			this.previousTransforms.forEach(transform => {
+				transformsMap.set(transform.child_frame_id, { previous: transform });
+			});
+	
+			this.lastReceivedTransforms.forEach(transform => {
+				if (transformsMap.has(transform.child_frame_id)) {
+					transformsMap.get(transform.child_frame_id).current = transform;
+				}
+			});
+	
+			const interpolatedTransforms = [];
+	
+			transformsMap.forEach(({ previous, current }, child_frame_id) => {
+				if (current) {
+					const positionDelta = {
+						x: current.transform.translation.x - previous.transform.translation.x,
+						y: current.transform.translation.y - previous.transform.translation.y
+					};
+					const velocity = {
+						x: positionDelta.x * delta,
+						y: positionDelta.y * delta,
+					};
+
+					const interpolatedTransform = {
+						child_frame_id: child_frame_id,
+						header: current.header,
+						transform: {
+							translation: {
+								x: current.transform.translation.x + velocity.x,
+								y: current.transform.translation.y + velocity.y,
+								z: current.transform.translation.z
+							},
+							rotation: current.transform.rotation
+						}
+					};
+					interpolatedTransforms.push(interpolatedTransform);
+				}
+			});
+	
+			this.updateTransforms(interpolatedTransforms);
+		}
+	} */
 
 	addToTree(parentFrameId, childFrameId) {
 
