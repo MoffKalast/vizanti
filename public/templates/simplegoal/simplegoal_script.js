@@ -1,8 +1,22 @@
 import { view } from '/js/modules/view.js';
 import { tf } from '/js/modules/tf.js';
 import { rosbridge } from '/js/modules/rosbridge.js';
+import { settings } from '/js/modules/persistent.js';
 
+let topic = "/move_base_simple/goal"
 let seq = 0;
+
+if(settings.hasOwnProperty("{uniqueID}")){
+	const loaded_data  = settings["{uniqueID}"];
+	topic = loaded_data.topic;
+}
+
+function saveSettings(){
+	settings["{uniqueID}"] = {
+		topic: topic
+	}
+	settings.save();
+}
 
 function sendMessage(pos, delta){
 	if(!pos || !delta)
@@ -19,7 +33,7 @@ function sendMessage(pos, delta){
 
 	const publisher = new ROSLIB.Topic({
 		ros: rosbridge.ros,
-		name: "move_base_simple/goal",
+		name: topic,
 		messageType: 'geometry_msgs/PoseStamped',
 	});
 
@@ -154,10 +168,71 @@ function setActive(value){
 	}
 }
 
+// Topics
+
+const selectionbox = document.getElementById("{uniqueID}_topic");
+
+async function loadTopics(){
+	let result = await rosbridge.get_topics("geometry_msgs/PoseStamped");
+
+	let topiclist = "";
+	result.forEach(element => {
+		topiclist += "<option value='"+element+"'>"+element+"</option>"
+	});
+	selectionbox.innerHTML = topiclist
+
+	if(result.includes(topic)){
+		selectionbox.value = topic;
+	}else{
+		topiclist += "<option value='"+topic+"'>"+topic+"</option>"
+		selectionbox.innerHTML = topiclist
+		selectionbox.value = topic;
+	}
+}
+
+selectionbox.addEventListener("change", (event) => {
+	topic = selectionbox.value;
+	saveSettings();
+});
+
+loadTopics();
+
+// Long press modal open stuff
+
+let longPressTimer;
+let isLongPress = false;
 
 icon.addEventListener("click", (event) =>{
-	setActive(!active);
+	if(!isLongPress)
+		setActive(!active);
+	else
+		isLongPress = false;
 });
+
+icon.addEventListener("mousedown", startLongPress);
+icon.addEventListener("touchstart", startLongPress);
+
+icon.addEventListener("mouseup", cancelLongPress);
+icon.addEventListener("mouseleave", cancelLongPress);
+icon.addEventListener("touchend", cancelLongPress);
+icon.addEventListener("touchcancel", cancelLongPress);
+
+icon.addEventListener("contextmenu", (event) => {
+	event.preventDefault();
+});
+
+function startLongPress(event) {
+	isLongPress = false;
+	longPressTimer = setTimeout(() => {
+		isLongPress = true;
+		loadTopics();
+		openModal("{uniqueID}_modal");
+	}, 500);
+}
+
+function cancelLongPress(event) {
+	clearTimeout(longPressTimer);
+}
 
 resizeScreen();
 

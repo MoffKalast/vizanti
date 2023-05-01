@@ -33,10 +33,6 @@ class Rosbridge {
 			this.connected = false;
 			this.status = "Failed to connect.";
 			window.dispatchEvent(new Event('rosbridge_change'));
-
-			setTimeout(() => {
-				this.connect();
-			}, 500);
 		});
 
 		this.ros.on('close', () => {
@@ -47,7 +43,7 @@ class Rosbridge {
 			setTimeout(() => {
 				this.status = "Reconnecting...";
 				this.connect();
-			}, 500);
+			}, 1000);
 		});
 
 		this.topics_client = new ROSLIB.Service({
