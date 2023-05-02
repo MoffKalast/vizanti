@@ -48,7 +48,7 @@ async function getNodeDetails(name) {
 	});
 }
 
-async function getParamValue(node, paramName) {
+async function getParamValue(paramName) {
 	const service = new ROSLIB.Service({
 		ros: rosbridge.ros,
 		name: '/rosapi/get_param',
@@ -58,15 +58,36 @@ async function getParamValue(node, paramName) {
 	return new Promise((resolve, reject) => {
 
 		const request = new ROSLIB.ServiceRequest({
-			name: node + '/' + paramName,
+			name: paramName,
 		});
 
 		service.callService(request, (response) => {
-			resolve({
-				name: paramName,
-				value: response.value,
-			});
+			resolve(response.value);
 		}, (error) => {
+			reject(error);
+		});
+	});
+}
+
+async function setParamValue(paramName, value) {
+	const setParamClient = new ROSLIB.Service({
+		ros: rosbridge.ros,
+		name: "/rosapi/set_param",
+		serviceType: "rosapi/SetParam",
+	});
+
+	return new Promise((resolve, reject) => {
+		
+		const request = new ROSLIB.ServiceRequest({
+			name: paramName,
+			value: JSON.stringify(value),
+		});
+
+		setParamClient.callService(request, (response) => {
+			console.log(`Parameter ${paramName} set to:`, value);
+			resolve(response);
+		}, (error) => {
+			console.error(`Failed to set parameter ${paramName}:`, error);
 			reject(error);
 		});
 	});
@@ -74,21 +95,87 @@ async function getParamValue(node, paramName) {
 
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
 const nodeSelector = document.getElementById("{uniqueID}_node");
+const infoLabel = document.getElementById("{uniqueID}_info");
+const paramBox = document.getElementById("{uniqueID}_params");
+
+function createParameterInput(fullname, defaultValue, type) {
+	const name = fullname.replace(nodeName+"/","");
+	const id = "${uniqueID}_"+fullname;
+	let inputElement;
+
+	switch (type) {
+		case "string":
+			inputElement = `
+				<label for="${id}"><i>string </i> ${name}:</label>
+				<input id="${id}" type="text" value="${defaultValue}">
+				<br>`;
+			break;
+		case "int":
+			inputElement = `
+				<label for="${id}"><i>int </i> ${name}:</label>
+				<input type="number" value="${defaultValue}" step="1" id="${id}">
+				<br>`;
+			break;
+		case "float":
+			inputElement = `
+				<label for="${id}"><i>float </i>${name}:</label>
+				<input type="number" value="${defaultValue}" step="0.001" id="${id}">
+				<br>`;
+			break;
+		case "bool":
+			inputElement = `
+				<label for="${id}"><i>bool </i>${name}:</label>
+				<input type="checkbox" id="${id}" ${defaultValue ? "checked" : ""}>
+				<br>`;
+			break;
+		default:
+			console.error("Invalid parameter type:", type);
+			return;
+	}
+
+	paramBox.insertAdjacentHTML("beforeend", inputElement);
+
+	document.getElementById(id).addEventListener("change", (event) => {
+		setParamValue(fullname,event.target.value)
+	});
+}
+
+function detectValueType(inputString) {
+	if (inputString.toLowerCase() === 'true' || inputString.toLowerCase() === 'false') {
+		return 'bool';
+	}
+
+	const integerRegex = /^-?[0-9]+$/;
+	if (integerRegex.test(inputString)) {
+		return 'int';
+	}
+
+	const floatRegex = /^-?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$/;
+	if (floatRegex.test(inputString)) {
+		return 'float';
+	}
+
+	return 'string';
+}
 
 let nodeName = "";
 
 async function listParameters(){
-	if(nodeName == "")
+	if(nodeName == ""){
+		infoLabel.innerText = "Select a valid node with reconfigurable parameters.";
 		return;
+	}
 
 	const params = await getParamList();
 	const nodeParams = params.filter((param) => param.startsWith(nodeName + "/"));
 
-	
+	infoLabel.innerText = "";
+	paramBox.innerHTML = "";
 
-
-
-	console.log(nodeParams);
+	for (const element of nodeParams) {
+		const value = await getParamValue(element);
+		createParameterInput(element,value,detectValueType(value));
+	}
 }
 
 async function setList(){
@@ -96,10 +183,7 @@ async function setList(){
 	let result = await getNodes();
 	let nodelist = "";
 	for (const node of result) {
-		const details = await getNodeDetails(node);
-
-		console.log(details)
-  
+		const details = await getNodeDetails(node);  
 		if (details.services.includes(node + '/set_parameters')) {
 			nodelist += "<option value='"+node+"'>"+node+"</option>"
 		}
@@ -116,9 +200,10 @@ async function setList(){
 	listParameters();
 }
 
-nodeSelector.addEventListener("change", listParameters);
-nodeSelector.addEventListener("click", listParameters);
-
+nodeSelector.addEventListener("change", (event)=>{
+	nodeName = nodeSelector.value;
+	listParameters();
+});
 icon.addEventListener("click", setList);
 
 setList();
