@@ -22,6 +22,7 @@
 	function calculateWidth() {
 		const iconBar = document.getElementById('icon_bar');
 		const iconContainer = document.getElementById('icon_container');
+		const iconBarHandle = document.getElementById('icon_bar_handle');
 
 		if(iconBar.style.height == ""){
 			iconBar.style.height = "75px";
@@ -36,6 +37,7 @@
 			requiredWidth = window.innerWidth;
 
 		iconContainer.style.width = requiredWidth + 'px';
+		iconBarHandle.style.width = requiredWidth + 'px';
 	}
 
 	function iconBarMouseMove(event) {
