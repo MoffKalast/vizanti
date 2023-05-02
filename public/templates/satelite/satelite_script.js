@@ -2,6 +2,7 @@ import { view } from '/js/modules/view.js';
 import { tf } from '/js/modules/tf.js';
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
+import { navsat } from './js/modules/navsat.js';
 
 let topic = "";
 let server_url = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
@@ -50,16 +51,55 @@ function saveSettings(){
 }
 
 //Rendering
-function drawTiles(){
+async function drawTiles(){
 	const wid = canvas.width;
     const hei = canvas.height;
 
 	ctx.clearRect(0, 0, wid, hei);
+	ctx.globalAlpha = opacitySlider.value;
 
 	if(!map_fix)
 		return;
 
-	console.log(map_fix);
+	const unit = view.getMapUnitsInPixels(1.0);
+
+	// Get the tile coordinates for the current position
+	const zoomLevel = 19; // You can adjust the zoom level as needed
+	const tileCoords = navsat.coordToTile(map_fix.longitude, map_fix.latitude, zoomLevel);
+	const size = navsat.tileSizeInMeters(map_fix.latitude, zoomLevel);
+	const screenSize = view.getMapUnitsInPixels(size);
+
+	const frame = tf.absoluteTransforms[map_fix.header.frame_id];
+
+	if(frame){
+		const tileOriginCoords = navsat.tileToCoord(tileCoords.longitude, tileCoords.latitude, zoomLevel);
+		const tileImage = await navsat.fetchTile(tileCoords.longitude, tileCoords.latitude, zoomLevel, server_url);
+
+		// Calculate the offset between the current position and the tile's origin
+		const offsetX = navsat.haversine(map_fix.latitude, tileOriginCoords.longitude, map_fix.latitude, map_fix.longitude);
+		const offsetY = navsat.haversine(tileOriginCoords.latitude, map_fix.longitude, map_fix.latitude, map_fix.longitude);
+
+		let transformed = tf.transformPose(
+			map_fix.header.frame_id,
+			tf.fixed_frame,
+			{x: -offsetX, y: offsetY, z: 0},
+			new Quaternion()
+		);
+
+		const pos = view.mapToScreen({
+			x: transformed.translation.x,
+			y: transformed.translation.y,
+		});
+
+		const yaw = transformed.rotation.toEuler().h;
+
+		ctx.save();
+		ctx.translate(pos.x, pos.y);
+		ctx.scale(1.0, 1.0);
+		ctx.rotate(-yaw);
+		ctx.drawImage(tileImage, 0, 0, screenSize, screenSize);
+		ctx.restore();
+	}
 }
 
 //Topic

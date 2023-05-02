@@ -87,7 +87,7 @@ i {
 	left: 0;
 	width: 100vw;
 	height: 10px;
-	background-color:rgb(14, 19, 34);
+	background-color:rgba(0, 0, 0, 0);
 	cursor: grab;
 }
 
