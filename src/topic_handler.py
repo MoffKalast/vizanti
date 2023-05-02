@@ -7,7 +7,7 @@ import threading
 class OutdooROS:
 
 	def __init__(self):
-		rospy.init_node('outdooros_handler', anonymous=True)
+		rospy.init_node('outdooros_topic_handler', anonymous=True)
 
 		self.updated = False
 		self.lock = threading.Lock()

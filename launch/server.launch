@@ -7,11 +7,10 @@
 		<arg name="use_compression" value="true" />
 	</include>
 
-	<node name="rosapi_node" pkg="rosapi" type="rosapi_node" output="screen"/>
-
 	<node name="tf2_web_republisher" pkg="tf2_web_republisher" type="tf2_web_republisher" output="screen" ns="/"/>
 
 	<node name="outdooros_server_node" pkg="outdooros" type="server.py" output="screen"/>
-	<node name="outdooros_handler_node" pkg="outdooros" type="outdooros.py" output="screen"/>
+	<node name="outdooros_topic_handler_node" pkg="outdooros" type="topic_handler.py" output="screen"/>
+	<node name="outdooros_service_handler_node" pkg="outdooros" type="service_handler.py" output="screen"/>
     
 </launch>

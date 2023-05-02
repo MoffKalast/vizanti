@@ -7,10 +7,22 @@ find_package(catkin REQUIRED COMPONENTS
     actionlib_msgs
     move_base_msgs
     std_msgs
+    message_generation
 )
 
+add_service_files(
+    FILES
+    GetNodeParameters.srv
+)
+
+generate_messages(
+    DEPENDENCIES
+    std_msgs
+)
+
+
 catkin_package(
-    CATKIN_DEPENDS dynamic_reconfigure rospy actionlib_msgs geometry_msgs move_base_msgs std_msgs
+    CATKIN_DEPENDS dynamic_reconfigure rospy actionlib_msgs geometry_msgs move_base_msgs std_msgs message_runtime
 )
 
 include_directories(

@@ -1,68 +1,32 @@
 import { rosbridge } from '/js/modules/rosbridge.js';
 
-async function getNodes() {
-	const nodesService = new ROSLIB.Service({
+async function getDynamicReconfigureNodes() {
+	const getNodesService = new ROSLIB.Service({
 		ros: rosbridge.ros,
-		name: "/rosapi/nodes",
-		serviceType: "rosapi/Nodes",
+		name: "/outdooros/get_dynamic_reconfigure_nodes",
+		serviceType: "std_srvs/Trigger",
 	});
 
 	return new Promise((resolve, reject) => {
-		nodesService.callService(new ROSLIB.ServiceRequest(), (result) => {
-			resolve(result.nodes);
-		}, (error) => {
-			reject(error);
-		});
-	});
-}
-  
-async function getParamList() {
-	const service = new ROSLIB.Service({
-		ros: rosbridge.ros,
-		name: '/rosapi/get_param_names',
-		serviceType: 'osapi/GetParamNames',
-	});
-
-	return new Promise((resolve, reject) => {
-		service.callService(new ROSLIB.ServiceRequest(), (response) => {
-			resolve(response.names);
+		getNodesService.callService(new ROSLIB.ServiceRequest(), (result) => {
+			resolve(result.message.split("\n"));
 		}, (error) => {
 			reject(error);
 		});
 	});
 }
 
-async function getNodeDetails(name) {	
-	const detailsService = new ROSLIB.Service({
+async function getNodeParameters(node) {
+	const getNodeParametersService = new ROSLIB.Service({
 		ros: rosbridge.ros,
-		name: "/rosapi/node_details",
-		serviceType: "rosapi/NodeDetails",
+		name: "/outdooros/get_node_parameters",
+		serviceType: "outdooros/GetNodeParameters",
 	});
 
 	return new Promise((resolve, reject) => {
-		detailsService.callService(new ROSLIB.ServiceRequest({node: name}), (details) => {
-			resolve(details);
-		}, (error) => {
-			reject(error);
-		});
-	});
-}
-
-async function getParamValue(paramName) {
-	const service = new ROSLIB.Service({
-		ros: rosbridge.ros,
-		name: '/rosapi/get_param',
-		serviceType: 'rosapi/GetParam',
-	});
-
-	return new Promise((resolve, reject) => {
-
-		const request = new ROSLIB.ServiceRequest({
-			name: paramName,
-		});
-
-		service.callService(request, (response) => {
-			resolve(response.value);
+		const request = new ROSLIB.ServiceRequest({ node });
+		getNodeParametersService.callService(request, (result) => {
+			resolve(result.parameters);
 		}, (error) => {
 			reject(error);
 		});
@@ -109,10 +73,11 @@ async function setNodeParamValue(fullname, type, newValue) {
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
 const nodeSelector = document.getElementById("{uniqueID}_node");
 const infoLabel = document.getElementById("{uniqueID}_info");
+const loaderSpinner = document.getElementById("{uniqueID}_loader");
 const paramBox = document.getElementById("{uniqueID}_params");
 
 function createParameterInput(fullname, defaultValue, type) {
-	const name = fullname.replace(nodeName+"/","");
+	const name = fullname.replace(nodeName+"/","").replaceAll("_","_<wbr>");
 	const id = "${uniqueID}_"+fullname;
 	let inputElement;
 
@@ -161,22 +126,27 @@ function createParameterInput(fullname, defaultValue, type) {
 	});
 }
 
-function detectValueType(inputString) {
-	if (inputString.toLowerCase() === 'true' || inputString.toLowerCase() === 'false') {
-		return 'bool';
+function detectValueType(value) {
+	if (typeof value == "boolean") {
+		return "bool";
 	}
 
-	const integerRegex = /^-?[0-9]+$/;
-	if (integerRegex.test(inputString)) {
-		return 'int';
+	if (Number.isInteger(value)) {
+		return "int";
 	}
 
-	const floatRegex = /^-?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$/;
-	if (floatRegex.test(inputString)) {
-		return 'float';
+	if (isNaN(value)) {
+		return "string";
 	}
 
-	return 'string';
+	return "float";
+}
+
+function convertAlmostJsonToValidJson(almostJson) {
+	const validJson = almostJson.replace(/'/g, '"');
+	return validJson.replace(/(True|False)/g, (match) => {
+		return match.toLowerCase();
+	});
 }
 
 let nodeName = "";
@@ -186,30 +156,35 @@ async function listParameters(){
 		infoLabel.innerText = "Select a valid node with reconfigurable parameters.";
 		return;
 	}
+	infoLabel.innerText = "";
+	paramBox.innerHTML = "";
+	loaderSpinner.style.display = "block";
 
-	const params = await getParamList();
-	const nodeParams = params.filter((param) => param.startsWith(nodeName + "/"));
+	const params = await getNodeParameters(nodeName);	
+	let parsedParams = JSON.parse(convertAlmostJsonToValidJson(params));
+	delete parsedParams.groups;
 
 	infoLabel.innerText = "";
 	paramBox.innerHTML = "";
 
-	for (const element of nodeParams) {
-		const value = await getParamValue(element);
-		createParameterInput(element,value,detectValueType(value));
+	for (const [key,value] of Object.entries(parsedParams)) {
+		createParameterInput(key,value,detectValueType(value));
 	}
+	loaderSpinner.style.display = "none";
 }
 
 async function setList(){
 
-	let result = await getNodes();
+	paramBox.innerHTML = "";
+	loaderSpinner.style.display = "block";
+	let result = await getDynamicReconfigureNodes();
+
 	let nodelist = "";
 	for (const node of result) {
-		const details = await getNodeDetails(node);  
-		if (details.services.includes(node + '/set_parameters')) {
-			nodelist += "<option value='"+node+"'>"+node+"</option>"
-		}
+		nodelist += "<option value='"+node+"'>"+node+"</option>"
 	}
 
+	loaderSpinner.style.display = "none";
 	nodeSelector.innerHTML = nodelist
 
 	if(nodeName == "")
