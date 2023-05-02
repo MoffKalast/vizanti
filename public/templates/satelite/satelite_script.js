@@ -52,6 +52,7 @@ function saveSettings(){
 
 //Rendering
 async function drawTiles(){
+	
 	const wid = canvas.width;
     const hei = canvas.height;
 
@@ -72,33 +73,40 @@ async function drawTiles(){
 	const frame = tf.absoluteTransforms[map_fix.header.frame_id];
 
 	if(frame){
-		const tileOriginCoords = navsat.tileToCoord(tileCoords.longitude, tileCoords.latitude, zoomLevel);
-		const tileImage = await navsat.fetchTile(tileCoords.longitude, tileCoords.latitude, zoomLevel, server_url);
+		const tileURL = server_url.replace("{z}",zoomLevel).replace("{x}",tileCoords.longitude).replace("{y}",tileCoords.latitude);
+		const tileImage = navsat.live_cache[tileURL];
 
-		// Calculate the offset between the current position and the tile's origin
-		const offsetX = navsat.haversine(map_fix.latitude, tileOriginCoords.longitude, map_fix.latitude, map_fix.longitude);
-		const offsetY = navsat.haversine(tileOriginCoords.latitude, map_fix.longitude, map_fix.latitude, map_fix.longitude);
+		if(tileImage){
+			const tileOriginCoords = navsat.tileToCoord(tileCoords.longitude, tileCoords.latitude, zoomLevel);
 
-		let transformed = tf.transformPose(
-			map_fix.header.frame_id,
-			tf.fixed_frame,
-			{x: -offsetX, y: offsetY, z: 0},
-			new Quaternion()
-		);
-
-		const pos = view.mapToScreen({
-			x: transformed.translation.x,
-			y: transformed.translation.y,
-		});
-
-		const yaw = transformed.rotation.toEuler().h;
-
-		ctx.save();
-		ctx.translate(pos.x, pos.y);
-		ctx.scale(1.0, 1.0);
-		ctx.rotate(-yaw);
-		ctx.drawImage(tileImage, 0, 0, screenSize, screenSize);
-		ctx.restore();
+			// Calculate the offset between the current position and the tile's origin
+			const offsetX = navsat.haversine(map_fix.latitude, tileOriginCoords.longitude, map_fix.latitude, map_fix.longitude);
+			const offsetY = navsat.haversine(tileOriginCoords.latitude, map_fix.longitude, map_fix.latitude, map_fix.longitude);
+	
+			let transformed = tf.transformPose(
+				map_fix.header.frame_id,
+				tf.fixed_frame,
+				{x: -offsetX, y: offsetY, z: 0},
+				new Quaternion()
+			);
+	
+			const pos = view.mapToScreen({
+				x: transformed.translation.x,
+				y: transformed.translation.y,
+			});
+	
+			const yaw = transformed.rotation.toEuler().h;
+	
+			ctx.save();
+			ctx.translate(pos.x, pos.y);
+			ctx.scale(1.0, 1.0);
+			ctx.rotate(-yaw);
+			ctx.drawImage(tileImage, 0, 0, screenSize, screenSize);
+			ctx.restore();
+		}
+		else{
+			navsat.enqueue(tileURL);
+		}
 	}
 }
 

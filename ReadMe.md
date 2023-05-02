@@ -6,9 +6,17 @@ OutdooROS is a web-based visualization and control tool that was developed for m
 
 ## Installation
 
+As a field tool, OutdooROS is designed to operate just as well without internet access, and as such the intended way is to run it off the robot, with rosbridge autoconnecting to the host IP and loading cached data from the robot. 
+
  ```bash
 pip install Flask
 sudo apt install ros-noetic-rosbridge-suite
+
+cd ~/catkin_ws/src
+git clone https://github.com/MoffKalast/outdooros.git
+cd ..
+catkin_make
+
  ```
  
 Flask and Jinja2 are used for templating, rosbridge and rosapi are required for socket communication.
