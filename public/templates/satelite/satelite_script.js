@@ -50,14 +50,45 @@ function saveSettings(){
 	settings.save();
 }
 
+function drawTile(x, y, z, screenSize, offsetX, offsetY){
+	const tileURL = server_url.replace("{z}",z).replace("{x}",x).replace("{y}",y);
+	const tileImage = navsat.live_cache[tileURL];
+
+	if(tileImage){
+		let transformed = tf.transformPose(
+			map_fix.header.frame_id,
+			tf.fixed_frame,
+			{x: -offsetX, y: offsetY, z: 0},
+			new Quaternion()
+		);
+
+		const pos = view.mapToScreen({
+			x: transformed.translation.x,
+			y: transformed.translation.y,
+		});
+
+		const yaw = transformed.rotation.toEuler().h;
+
+		ctx.save();
+		ctx.translate(pos.x, pos.y);
+		ctx.scale(1.0, 1.0);
+		ctx.rotate(-yaw);
+		ctx.drawImage(tileImage, 0, 0, screenSize, screenSize);
+		ctx.restore();
+	}else{
+		navsat.enqueue(tileURL);
+	}
+}
+
 //Rendering
 async function drawTiles(){
-	
+
 	const wid = canvas.width;
     const hei = canvas.height;
 
 	ctx.clearRect(0, 0, wid, hei);
 	ctx.globalAlpha = opacitySlider.value;
+	//ctx.imageSmoothingEnabled = false;
 
 	if(!map_fix)
 		return;
@@ -67,45 +98,59 @@ async function drawTiles(){
 	// Get the tile coordinates for the current position
 	const zoomLevel = 19; // You can adjust the zoom level as needed
 	const tileCoords = navsat.coordToTile(map_fix.longitude, map_fix.latitude, zoomLevel);
-	const size = navsat.tileSizeInMeters(map_fix.latitude, zoomLevel);
-	const screenSize = view.getMapUnitsInPixels(size);
+	const metersSize = navsat.tileSizeInMeters(map_fix.latitude, zoomLevel);
+	const screenSize = view.getMapUnitsInPixels(metersSize);
 
 	const frame = tf.absoluteTransforms[map_fix.header.frame_id];
 
 	if(frame){
-		const tileURL = server_url.replace("{z}",zoomLevel).replace("{x}",tileCoords.longitude).replace("{y}",tileCoords.latitude);
-		const tileImage = navsat.live_cache[tileURL];
 
-		if(tileImage){
-			const tileOriginCoords = navsat.tileToCoord(tileCoords.longitude, tileCoords.latitude, zoomLevel);
+		const degreesPerMeterAtLatitude = navsat.degreesPerMeter(map_fix.latitude);
 
-			// Calculate the offset between the current position and the tile's origin
-			const offsetX = navsat.haversine(map_fix.latitude, tileOriginCoords.longitude, map_fix.latitude, map_fix.longitude);
-			const offsetY = navsat.haversine(tileOriginCoords.latitude, map_fix.longitude, map_fix.latitude, map_fix.longitude);
-	
-			let transformed = tf.transformPose(
-				map_fix.header.frame_id,
+		// Calculate the screen corners in pixels
+		const corners = [
+			{ x: 0, y: 0 },
+			{ x: wid, y: 0 },
+			{ x: wid, y: hei },
+			{ x: 0, y: hei },
+		];
+
+		// Convert the corners from pixels to meters, transform them to map_fix frame and convert to latitude, longitude
+		const cornerCoords = corners.map((corner) => {
+			const meters = view.screenToMap(corner);
+			const transformed = tf.transformPose(
 				tf.fixed_frame,
-				{x: -offsetX, y: offsetY, z: 0},
+				map_fix.header.frame_id,
+				meters,
 				new Quaternion()
 			);
-	
-			const pos = view.mapToScreen({
-				x: transformed.translation.x,
-				y: transformed.translation.y,
-			});
-	
-			const yaw = transformed.rotation.toEuler().h;
-	
-			ctx.save();
-			ctx.translate(pos.x, pos.y);
-			ctx.scale(1.0, 1.0);
-			ctx.rotate(-yaw);
-			ctx.drawImage(tileImage, 0, 0, screenSize, screenSize);
-			ctx.restore();
-		}
-		else{
-			navsat.enqueue(tileURL);
+			return {
+				latitude: map_fix.latitude + transformed.translation.y * degreesPerMeterAtLatitude.latitude,
+				longitude: map_fix.longitude + transformed.translation.x * degreesPerMeterAtLatitude.longitude
+			};
+		});
+
+		// Convert the corners to tile coordinates
+		const cornerTileCoords = cornerCoords.map((coord) =>
+			navsat.coordToTile(coord.longitude, coord.latitude, zoomLevel)
+		);
+
+		// Calculate the range of tiles to cover the screen
+		const minX = Math.min(...cornerTileCoords.map((coord) => coord.x)) - tileCoords.x;
+		const maxX = Math.max(...cornerTileCoords.map((coord) => coord.x)) - tileCoords.x;
+		const minY = Math.min(...cornerTileCoords.map((coord) => coord.y)) - tileCoords.y;
+		const maxY = Math.max(...cornerTileCoords.map((coord) => coord.y)) - tileCoords.y;
+		
+		const tileOriginCoords = navsat.tileToCoord(tileCoords.x, tileCoords.y, zoomLevel);
+
+		// Calculate the offset between the current position and the tile's origin
+		const offsetX = navsat.haversine(map_fix.latitude, tileOriginCoords.longitude, map_fix.latitude, map_fix.longitude);
+		const offsetY = navsat.haversine(tileOriginCoords.latitude, map_fix.longitude, map_fix.latitude, map_fix.longitude);
+
+		for (let i = minX; i <= maxX; i++) {
+			for (let j = minY; j <= maxY; j++) {
+				drawTile(tileCoords.x+i, tileCoords.y+j, zoomLevel, screenSize, offsetX - i *metersSize, offsetY - j *metersSize);
+			}
 		}
 	}
 }

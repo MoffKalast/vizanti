@@ -3,6 +3,12 @@ import { IndexedDatabase } from './database.js';
 const db = new IndexedDatabase('tiles');
 await db.openDB();
 
+function blobToImage(blob){
+	let image = new Image();
+	image.src = URL.createObjectURL(blob);
+	return image;
+}
+
 export class Navsat {
 
 	constructor (){
@@ -23,18 +29,23 @@ export class Navsat {
 				this.queue.delete(tile);
 			}
 
-		}, 1000);
+		}, 500);
 	}
 
-	enqueue(keyurl){
-		this.queue.add(keyurl);
+	async enqueue(keyurl){
+		if(Boolean(await db.keyExists(keyurl))){
+			const arrayBuffer = await db.getObject(keyurl);
+			this.live_cache[keyurl] = blobToImage(new Blob([arrayBuffer], { type: 'image/png' }));
+		}else{
+			//this.queue.add(keyurl);
+		}
 	}
 
 	//https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
 	coordToTile(lon, lat, zoom) {
 		return {
-			latitude:(Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom))),
-			longitude: (Math.floor((lon + 180) / 360 * Math.pow(2, zoom)))
+			y:(Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom))),
+			x: (Math.floor((lon + 180) / 360 * Math.pow(2, zoom)))
 		};
 	}
 
@@ -47,11 +58,6 @@ export class Navsat {
 	}
 
 	async fetchURL(url){
-		if(Boolean(await db.keyExists(url))){
-			const arrayBuffer = await db.getObject(url);
-			return new Blob([arrayBuffer], { type: 'image/png' });
-		}
-
 		console.log("Fetching tile data:",url)
 
 		const response = await fetch(url);
@@ -99,6 +105,20 @@ export class Navsat {
 		const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
 		const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 		return R * c;
+	}
+
+	degreesPerMeter(latitude) {
+		const earthRadius = 6371000; // Earth radius in meters
+		const latRadians = (latitude * Math.PI) / 180;
+	
+		// Calculate the degrees per meter for latitude and longitude
+		const latDegreesPerMeter = (180 / Math.PI) / earthRadius;
+		const lonDegreesPerMeter = ((180 / Math.PI) / earthRadius) * Math.cos(latRadians);
+	
+		return {
+			latitude: latDegreesPerMeter,
+			longitude: lonDegreesPerMeter,
+		};
 	}
 	
 }
