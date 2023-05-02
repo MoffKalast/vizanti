@@ -69,25 +69,38 @@ async function getParamValue(paramName) {
 	});
 }
 
-async function setParamValue(paramName, value) {
+async function setNodeParamValue(fullname, type, newValue) {
 	const setParamClient = new ROSLIB.Service({
 		ros: rosbridge.ros,
-		name: "/rosapi/set_param",
-		serviceType: "rosapi/SetParam",
+		name: nodeName + '/set_parameters',
+		serviceType: 'dynamic_reconfigure/Reconfigure',
 	});
 
-	return new Promise((resolve, reject) => {
-		
-		const request = new ROSLIB.ServiceRequest({
-			name: paramName,
-			value: JSON.stringify(value),
-		});
+	let paramName = fullname.replace(nodeName+"/","");
 
+	let valueConfig = {
+		bools: [],
+		ints: [],
+		strs: [],
+		doubles: [],
+		groups: [],
+	};
+
+	switch (type) {
+		case "string": valueConfig.strs.push({ name: paramName, value: newValue }); break;
+		case "int": valueConfig.ints.push({ name: paramName, value: newValue }); break;
+		case "float": valueConfig.doubles.push({ name: paramName, value: newValue }); break;
+		case "bool": valueConfig.bools.push({ name: paramName, value: newValue }); break;
+		default: return Promise.reject(`Invalid parameter value type: ${valueType}`);
+	}
+
+	return new Promise((resolve, reject) => {
+		const request = new ROSLIB.ServiceRequest({ config: valueConfig });
 		setParamClient.callService(request, (response) => {
-			console.log(`Parameter ${paramName} set to:`, value);
+			console.log(`Parameter ${paramName} set to:`, newValue);
 			resolve(response);
 		}, (error) => {
-			console.error(`Failed to set parameter ${paramName}:`, error);
+			console.error(`Failed to call set_parameters service for ${nodeName}:`, error);
 			reject(error);
 		});
 	});
@@ -136,7 +149,15 @@ function createParameterInput(fullname, defaultValue, type) {
 	paramBox.insertAdjacentHTML("beforeend", inputElement);
 
 	document.getElementById(id).addEventListener("change", (event) => {
-		setParamValue(fullname,event.target.value)
+		let val;
+
+		switch(type){
+			case "string": val = event.target.value; break;
+			case "int": val = parseInt(event.target.value); break;
+			case "float": val = parseFloat(event.target.value); break;
+			case "bool": val = event.target.checked; break;
+		}
+		setNodeParamValue(fullname, type, val);
 	});
 }
 
