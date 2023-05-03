@@ -4,12 +4,15 @@ import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
 import { navsat } from './js/modules/navsat.js';
 
+let copyright = "© OpenStreetMap";
 let topic = "";
 let server_url = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 let listener = undefined;
+let zoomLevel = 19;
 
 let map_topic = undefined;
 let map_fix = undefined;
+let fix_data = undefined;
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
@@ -18,6 +21,9 @@ const tileServerString = document.getElementById('{uniqueID}_tileserver');
 const opacitySlider = document.getElementById('{uniqueID}_opacity');
 const opacityValue = document.getElementById('{uniqueID}_opacity_value');
 
+const placeholder = new Image();
+placeholder.src = "assets/tile_loading.png";
+
 opacitySlider.addEventListener('input', function () {
 	opacityValue.textContent = this.value;
 	saveSettings();
@@ -25,6 +31,12 @@ opacitySlider.addEventListener('input', function () {
 
 tileServerString.addEventListener('input', function () {
 	server_url = this.value;
+
+	if(server_url.includes("tile.openstreetmap.org"))
+		copyright = "© OpenStreetMap";
+	else
+		copyright = "";
+
 	saveSettings();
 });
 
@@ -36,6 +48,11 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
 	server_url = loaded_data.server_url;
+
+	if(server_url.includes("tile.openstreetmap.org"))
+		copyright = "© OpenStreetMap";
+	else
+		copyright = "";
 
 	opacitySlider.value = loaded_data.opacity;
 	opacityValue.innerText = loaded_data.opacity;
@@ -50,34 +67,42 @@ function saveSettings(){
 	settings.save();
 }
 
-function drawTile(x, y, z, screenSize, offsetX, offsetY){
-	const tileURL = server_url.replace("{z}",z).replace("{x}",x).replace("{y}",y);
-	const tileImage = navsat.live_cache[tileURL];
+function drawTile(screenSize, i, j){
 
-	if(tileImage){
-		let transformed = tf.transformPose(
-			map_fix.header.frame_id,
-			tf.fixed_frame,
-			{x: -offsetX, y: offsetY, z: 0},
-			new Quaternion()
-		);
+	const x = fix_data.tilePos.x + i;
+	const y = fix_data.tilePos.y + j;
 
-		const pos = view.mapToScreen({
-			x: transformed.translation.x,
-			y: transformed.translation.y,
-		});
+	const offsetX = fix_data.offset.x - i * fix_data.metersSize;
+	const offsetY = fix_data.offset.y - j * fix_data.metersSize;
 
-		const yaw = transformed.rotation.toEuler().h;
+	const tileURL = server_url.replace("{z}",zoomLevel).replace("{x}",x).replace("{y}",y);
+	let tileImage = navsat.live_cache[tileURL];
 
-		ctx.save();
-		ctx.translate(pos.x, pos.y);
-		ctx.scale(1.0, 1.0);
-		ctx.rotate(-yaw);
-		ctx.drawImage(tileImage, 0, 0, screenSize, screenSize);
-		ctx.restore();
-	}else{
+	if(!tileImage || !tileImage.complete){
+		tileImage = placeholder;
 		navsat.enqueue(tileURL);
 	}
+
+	let transformed = tf.transformPose(
+		map_fix.header.frame_id,
+		tf.fixed_frame,
+		{x: -offsetX, y: offsetY, z: 0},
+		new Quaternion()
+	);
+
+	const pos = view.mapToScreen({
+		x: transformed.translation.x,
+		y: transformed.translation.y,
+	});
+
+	const yaw = transformed.rotation.toEuler().h;
+
+	ctx.save();
+	ctx.translate(pos.x, pos.y);
+	ctx.scale(1.0, 1.0);
+	ctx.rotate(-yaw);
+	ctx.drawImage(tileImage, 0, 0, screenSize, screenSize);
+	ctx.restore();
 }
 
 //Rendering
@@ -93,21 +118,11 @@ async function drawTiles(){
 	if(!map_fix)
 		return;
 
-	const unit = view.getMapUnitsInPixels(1.0);
-
-	// Get the tile coordinates for the current position
-	const zoomLevel = 19; // You can adjust the zoom level as needed
-	const tileCoords = navsat.coordToTile(map_fix.longitude, map_fix.latitude, zoomLevel);
-	const metersSize = navsat.tileSizeInMeters(map_fix.latitude, zoomLevel);
-	const screenSize = view.getMapUnitsInPixels(metersSize);
-
 	const frame = tf.absoluteTransforms[map_fix.header.frame_id];
 
 	if(frame){
 
-		const degreesPerMeterAtLatitude = navsat.degreesPerMeter(map_fix.latitude);
-
-		// Calculate the screen corners in pixels
+		const tileScreenSize = view.getMapUnitsInPixels(fix_data.metersSize);
 		const corners = [
 			{ x: 0, y: 0 },
 			{ x: wid, y: 0 },
@@ -125,8 +140,8 @@ async function drawTiles(){
 				new Quaternion()
 			);
 			return {
-				latitude: map_fix.latitude + transformed.translation.y * degreesPerMeterAtLatitude.latitude,
-				longitude: map_fix.longitude + transformed.translation.x * degreesPerMeterAtLatitude.longitude
+				latitude: map_fix.latitude + transformed.translation.y * fix_data.degreesPerMeter,
+				longitude: map_fix.longitude + transformed.translation.x * fix_data.degreesPerMeter*1.5
 			};
 		});
 
@@ -136,22 +151,25 @@ async function drawTiles(){
 		);
 
 		// Calculate the range of tiles to cover the screen
-		const minX = Math.min(...cornerTileCoords.map((coord) => coord.x)) - tileCoords.x;
-		const maxX = Math.max(...cornerTileCoords.map((coord) => coord.x)) - tileCoords.x;
-		const minY = Math.min(...cornerTileCoords.map((coord) => coord.y)) - tileCoords.y;
-		const maxY = Math.max(...cornerTileCoords.map((coord) => coord.y)) - tileCoords.y;
-		
-		const tileOriginCoords = navsat.tileToCoord(tileCoords.x, tileCoords.y, zoomLevel);
-
-		// Calculate the offset between the current position and the tile's origin
-		const offsetX = navsat.haversine(map_fix.latitude, tileOriginCoords.longitude, map_fix.latitude, map_fix.longitude);
-		const offsetY = navsat.haversine(tileOriginCoords.latitude, map_fix.longitude, map_fix.latitude, map_fix.longitude);
+		const minX = Math.min(...cornerTileCoords.map((coord) => coord.x)) - fix_data.tilePos.x - 1;
+		const maxX = Math.max(...cornerTileCoords.map((coord) => coord.x)) - fix_data.tilePos.x + 1;
+		const minY = Math.min(...cornerTileCoords.map((coord) => coord.y)) - fix_data.tilePos.y - 1;
+		const maxY = Math.max(...cornerTileCoords.map((coord) => coord.y)) - fix_data.tilePos.y + 1;
 
 		for (let i = minX; i <= maxX; i++) {
 			for (let j = minY; j <= maxY; j++) {
-				drawTile(tileCoords.x+i, tileCoords.y+j, zoomLevel, screenSize, offsetX - i *metersSize, offsetY - j *metersSize);
+				drawTile(tileScreenSize, i, j);
 			}
 		}
+
+		ctx.globalAlpha = 0.6;
+		ctx.fillStyle = "#171717";
+		ctx.fillRect(0, hei-20, 110, 20);
+
+		ctx.globalAlpha = 1.0;
+		ctx.font = "12px Monospace";
+		ctx.fillStyle = "white";
+		ctx.fillText(copyright, 5, hei-5);
 	}
 }
 
@@ -173,6 +191,25 @@ function connect(){
 	
 	listener = map_topic.subscribe((msg) => {
 		map_fix = msg;
+
+		const tilePos = navsat.coordToTile(map_fix.longitude, map_fix.latitude, zoomLevel);
+		const tileCoords = navsat.tileToCoord(tilePos.x, tilePos.y, zoomLevel);
+		const nextTileCoords = navsat.tileToCoord(tilePos.x+1, tilePos.y+1, zoomLevel);
+
+		const metersSize = navsat.tileSizeInMeters(map_fix.latitude, zoomLevel);
+		const degreeSize = Math.abs(map_fix.longitude - nextTileCoords.longitude);
+
+		fix_data = {
+			tilePos: tilePos,
+			tileCoords: tileCoords,
+			offset:{
+				x: navsat.haversine(map_fix.latitude, tileCoords.longitude, map_fix.latitude, map_fix.longitude),
+				y: navsat.haversine(tileCoords.latitude, map_fix.longitude, map_fix.latitude, map_fix.longitude)
+			},
+			metersSize: metersSize,
+			degreesPerMeter: degreeSize/metersSize
+		}
+
 		drawTiles();
 	});
 

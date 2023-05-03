@@ -108,10 +108,10 @@ function drawMarkers(){
 	}
 
 	function drawArrow(marker, size){
-		const height = size*0.5;
-		const width = parseInt(size*0.05)+1;
-		const tip = parseInt(size*0.15)+1;
-		const tipwidth = parseInt(size*0.15)+1;
+		const height = parseInt(size*marker.scale.x);
+		const width = parseInt(size*0.2*marker.scale.y)+1;
+		const tip = parseInt(size*0.3*marker.scale.x)+1;
+		const tipwidth = parseInt(size*0.6*marker.scale.y)+1;
 
 		ctx.beginPath();
 		ctx.moveTo(0, -width);
