@@ -1,0 +1,35 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/osboxes/catkin_ws/devel/include/**",
+        "/home/osboxes/iris_lama_ws/devel/include/**",
+        "/opt/ros/noetic/include/**",
+        "/home/osboxes/catkin_ws/src/ezmap/async_web_server_cpp/include/**",
+        "/home/osboxes/catkin_ws/src/ezmap/fiducials/fiducial_slam/include/**",
+        "/home/osboxes/catkin_ws/src/ezmap/imu_bno055/include/**",
+        "/home/osboxes/iris_lama_ws/src/iris_ur_lama/include/**",
+        "/home/osboxes/iris_lama_ws/src/iris_ur_lama_ros/include/**",
+        "/home/osboxes/catkin_ws/src/laser_line_extraction/include/**",
+        "/home/osboxes/catkin_ws/src/ezmap/move_basic/include/**",
+        "/home/osboxes/catkin_ws/src/ezmap/move_smooth/include/**",
+        "/home/osboxes/catkin_ws/src/ezmap/oled_display_node/include/**",
+        "/home/osboxes/catkin_ws/src/ezmap/fiducials/stag_detect/include/**",
+        "/home/osboxes/catkin_ws/src/ezmap/ubiquity_motor/include/**",
+        "/home/osboxes/catkin_ws/src/ezmap/ur50_lidar/ur50_lidar_decoder/include/**",
+        "/home/osboxes/catkin_ws/src/ezmap/ur50_lidar/ur50_lidar_driver/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}

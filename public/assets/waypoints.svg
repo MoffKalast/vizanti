@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Generator: Adobe Illustrator 24.1.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+
+<svg
+   version="1.1"
+   id="Layer_1"
+   x="0px"
+   y="0px"
+   viewBox="0 0 512 512"
+   style="enable-background:new 0 0 512 512;"
+   xml:space="preserve"
+   sodipodi:docname="waypoints.svg"
+   inkscape:version="1.2 (dc2aedaf03, 2022-05-15)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><defs
+   id="defs9">
+	
+</defs><sodipodi:namedview
+   id="namedview7"
+   pagecolor="#505050"
+   bordercolor="#ffffff"
+   borderopacity="1"
+   inkscape:showpageshadow="0"
+   inkscape:pageopacity="0"
+   inkscape:pagecheckerboard="1"
+   inkscape:deskcolor="#505050"
+   showgrid="false"
+   inkscape:zoom="0.7744141"
+   inkscape:cx="-1.9369482"
+   inkscape:cy="350.58762"
+   inkscape:window-width="1920"
+   inkscape:window-height="996"
+   inkscape:window-x="-8"
+   inkscape:window-y="-8"
+   inkscape:window-maximized="1"
+   inkscape:current-layer="Layer_1" />
+<style
+   type="text/css"
+   id="style2">
+	.st0{fill:#333333;}
+</style>
+
+<path
+   style="fill:none;stroke:#ebce00;stroke-width:38.9;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;fill-opacity:1"
+   d="m 162.93869,182.27837 c 55.60819,-44.84953 -5.3455,103.41611 -30.56223,185.65738 l 257.77393,-52.62126 28.612,112.13531 4.08718,16.01835"
+   id="path968"
+   sodipodi:nodetypes="ccccc" /><circle
+   style="fill:#ebce00;fill-opacity:1;stroke:#ebce00;stroke-width:10;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+   id="path1022-0"
+   cx="259.91321"
+   cy="426.77261"
+   r="48.166908"
+   transform="rotate(-19.783139)" /><circle
+   style="fill:#ebce00;fill-opacity:1;stroke:#ebce00;stroke-width:10;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+   id="path1022-0-0"
+   cx="-0.7525655"
+   cy="387.87173"
+   r="48.166908"
+   transform="rotate(-19.783139)" /><path
+   id="rect1169"
+   style="fill:#ebce00;fill-opacity:1;stroke:#ebce00;stroke-width:10;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+   d="M 226.70456,72.045086 242.33867,226.23722 122.37736,186.65518 Z"
+   sodipodi:nodetypes="cccc" /></svg>

@@ -22,7 +22,7 @@ const lengthSelector = document.getElementById("{uniqueID}_length");
 const previewImg = document.getElementById("{uniqueID}_previewimg");
 
 let frame = "base_link";
-let sprite = "agv";
+let sprite = "4wd";
 
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
