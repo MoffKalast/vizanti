@@ -18,8 +18,19 @@
 		<span id="{uniqueID}_opacity_value">0.7</span>
 		<input type="range" value="0.7" step="0.05" min="0.1" max="1.0" id="{uniqueID}_opacity">
 
+		<label>Texture smoothing:</label>
+		<input type="checkbox" checked id="{uniqueID}_smoothing">
 
-		<p>All fetched tiles will be stored permanently in the browser's indexedDB, so they can be accesed offline at a later time.</p>
+		<br>
+
+		<h4>Notes</h4>
+
+		<p>The tile server can be changed to anything that uses 265x256 sized tiles . </p>
+
+
+		<p>All fetched tiles will be stored permanently in the indexedDB, so they can be loaded quickly and used offline if needed. </p>
+
+		<p>Keep in mind that browser-cached data is tied to a specific site URL, so if your robot's IP address changes when transitioning from a local network to offline AP mode, the tiles won't be accessible. One way to get tiles loaded is to first load up the site, switch to mobile data to fetch the tiles, and then disable it again so rosbridge can connect correctly again.</p>
 
 		<hr>
 

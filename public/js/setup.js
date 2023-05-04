@@ -48,3 +48,16 @@ function removeWidget(uniqueID){
 	e.uniqueID = uniqueID;
 	window.dispatchEvent(e);
 }
+
+// preventing the context menu popups on main views
+document.getElementById("view_container").addEventListener("contextmenu", (event) => {
+	event.preventDefault();
+});
+
+document.getElementById("modal_container").addEventListener("contextmenu", (event) => {
+	event.preventDefault();
+});
+
+document.getElementById("icon_bar").addEventListener("contextmenu", (event) => {
+	event.preventDefault();
+});

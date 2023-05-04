@@ -20,6 +20,7 @@ const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('im
 const tileServerString = document.getElementById('{uniqueID}_tileserver');
 const opacitySlider = document.getElementById('{uniqueID}_opacity');
 const opacityValue = document.getElementById('{uniqueID}_opacity_value');
+const smoothingCheckbox = document.getElementById('{uniqueID}_smoothing');
 
 const placeholder = new Image();
 placeholder.src = "assets/tile_loading.png";
@@ -28,6 +29,8 @@ opacitySlider.addEventListener('input', function () {
 	opacityValue.textContent = this.value;
 	saveSettings();
 });
+
+smoothingCheckbox.addEventListener('change', saveSettings);
 
 tileServerString.addEventListener('input', function () {
 	server_url = this.value;
@@ -54,6 +57,8 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	else
 		copyright = "";
 
+	smoothingCheckbox.checked = loaded_data.smoothing;
+
 	opacitySlider.value = loaded_data.opacity;
 	opacityValue.innerText = loaded_data.opacity;
 }
@@ -62,7 +67,8 @@ function saveSettings(){
 	settings["{uniqueID}"] = {
 		topic: topic,
 		server_url: server_url,
-		opacity: opacitySlider.value
+		opacity: opacitySlider.value,
+		smoothing: smoothingCheckbox.checked
 	}
 	settings.save();
 }
@@ -113,7 +119,7 @@ async function drawTiles(){
 
 	ctx.clearRect(0, 0, wid, hei);
 	ctx.globalAlpha = opacitySlider.value;
-	//ctx.imageSmoothingEnabled = false;
+	ctx.imageSmoothingEnabled = smoothingCheckbox.checked;
 
 	if(!map_fix)
 		return;
