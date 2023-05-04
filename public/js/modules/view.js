@@ -64,6 +64,7 @@ export class View {
 		return {
 			x: (coords.x - this.center.x) * this.scale + window.innerWidth / 2,
 			y: (-coords.y - this.center.y) * this.scale + window.innerHeight / 2,
+			z: 0
 		}
 	}
 	
@@ -71,6 +72,7 @@ export class View {
 		return {
 			x: (coords.x - window.innerWidth / 2) / this.scale + this.center.x,
 			y: -(coords.y - window.innerHeight / 2) / this.scale - this.center.y,
+			z: 0
 		}
 	}
 

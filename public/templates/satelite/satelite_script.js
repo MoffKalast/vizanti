@@ -124,10 +124,10 @@ async function drawTiles(){
 
 		const tileScreenSize = view.getMapUnitsInPixels(fix_data.metersSize);
 		const corners = [
-			{ x: 0, y: 0 },
-			{ x: wid, y: 0 },
-			{ x: wid, y: hei },
-			{ x: 0, y: hei },
+			{ x: 0, y: 0, z: 0 },
+			{ x: wid, y: 0, z: 0 },
+			{ x: wid, y: hei, z: 0  },
+			{ x: 0, y: hei, z: 0  },
 		];
 
 		// Convert the corners from pixels to meters, transform them to map_fix frame and convert to latitude, longitude
