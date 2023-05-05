@@ -19,7 +19,7 @@ catkin_make
 
  ```
  
-Flask and Jinja2 are used for templating, rosbridge and rosapi are required for socket communication.
+Flask and Jinja2 are used for templating, rosbridge is required for socket communication.
 
 ## Run
 ```bash
