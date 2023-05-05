@@ -372,6 +372,7 @@ button {
 .delete_button {
 	border: 3px solid #784b4b; 
 	background-color: #4d2626;
+	float: right;
 }
 
 button:hover{

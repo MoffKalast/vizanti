@@ -3,6 +3,48 @@ import { tf } from '/js/modules/tf.js';
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
 
+async function saveMap(save_path, topic) {
+	const saveMapService = new ROSLIB.Service({
+		ros: rosbridge.ros,
+		name: "/outdooros/save_map",
+		serviceType: "outdooros/SaveMap",
+	});
+
+	const request = new ROSLIB.ServiceRequest({
+		file_path: save_path,
+		topic: topic
+	});
+
+	return new Promise((resolve, reject) => {
+		saveMapService.callService(request, (result) => {
+			resolve(result);
+		}, (error) => {
+			reject(error);
+		});
+	});
+}
+
+async function loadMap(load_path, topic) {
+	const loadMapService = new ROSLIB.Service({
+		ros: rosbridge.ros,
+		name: "/outdooros/load_map",
+		serviceType: "outdooros/LoadMap",
+	});
+
+	const request = new ROSLIB.ServiceRequest({
+		file_path: load_path,
+		topic: topic,
+	});
+
+	return new Promise((resolve, reject) => {
+		loadMapService.callService(request, (result) => {
+			resolve(result);
+		}, (error) => {
+			reject(error);
+		});
+	});
+}
+
 let topic = "";
 let listener = undefined;
 
@@ -16,7 +58,51 @@ const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('im
 const opacitySlider = document.getElementById('{uniqueID}_opacity');
 const opacityValue = document.getElementById('{uniqueID}_opacity_value');
 
-opacitySlider.addEventListener('input', function () {
+const loadPathBox = document.getElementById("{uniqueID}_loadpath");
+const loadTopicBox = document.getElementById("{uniqueID}_loadtopic");
+const savePathBox = document.getElementById("{uniqueID}_savepath");
+const loadButton = document.getElementById('{uniqueID}_load');
+const saveButton = document.getElementById('{uniqueID}_save');
+
+loadButton.addEventListener('click',  async () => {
+	let path = loadPathBox.value;
+
+	if (path.endsWith(".pgm")) {
+		path = path.slice(0, -4) + ".yaml";
+	} else if (!path.endsWith(".yaml")) {
+		path += ".yaml";
+	}
+
+	loadPathBox.value = path;
+
+	try {
+		const result = await loadMap(path, loadTopicBox.value);
+		alert(result.message);
+	} catch (error) {
+		alert(error);
+	}
+});
+
+saveButton.addEventListener('click', async () => {
+	let path = savePathBox.value;
+
+	if (path.endsWith(".pgm")) {
+		path = path.slice(0, -4);
+	} else if (path.endsWith(".yaml")) {
+		path = path.slice(0, -5);
+	}
+
+	savePathBox.value = path;
+
+	try {
+		const result = await saveMap(path, topic);
+		alert(result.message);
+	} catch (error) {
+		alert(error);
+	}
+});
+
+opacitySlider.addEventListener('input', () =>  {
 	opacityValue.textContent = this.value;
 	saveSettings();
 });
@@ -126,8 +212,11 @@ function connect(){
 	  
 		// 3. Iterate through the data array and set the canvas pixel colors
 		for (let i = 0; i < data.length; i++) {
-			const occupancyValue = data[i];
+			let occupancyValue = data[i];
 			let color = 255; // White for unknown
+
+			if(occupancyValue < 0)
+				occupancyValue = 50;
 
 			if (occupancyValue >= 0 && occupancyValue <= 100) {
 				color = 255 - (occupancyValue * 255) / 100; // Grayscale for occupancy probability
@@ -172,6 +261,8 @@ async function loadTopics(){
 
 selectionbox.addEventListener("change", (event) => {
 	topic = selectionbox.value;
+	map_data = undefined;
+	map_canvas = undefined;
 	connect();
 });
 

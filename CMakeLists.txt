@@ -13,6 +13,8 @@ find_package(catkin REQUIRED COMPONENTS
 add_service_files(
     FILES
     GetNodeParameters.srv
+    SaveMap.srv
+    LoadMap.srv
 )
 
 generate_messages(

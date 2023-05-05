@@ -205,7 +205,7 @@ loadTopics();
 let longPressTimer;
 let isLongPress = false;
 
-icon.addEventListener("click", (event) =>{
+/* icon.addEventListener("click", (event) =>{
 	if(!isLongPress)
 		setActive(!active);
 	else
@@ -222,7 +222,7 @@ icon.addEventListener("touchcancel", cancelLongPress);
 
 icon.addEventListener("contextmenu", (event) => {
 	event.preventDefault();
-});
+}); */
 
 function startLongPress(event) {
 	isLongPress = false;
@@ -239,4 +239,4 @@ function cancelLongPress(event) {
 
 resizeScreen();
 
-console.log("Initialpose Widget Loaded {uniqueID}")
+console.log("Waypoints Widget Loaded {uniqueID}")

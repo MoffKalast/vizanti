@@ -170,8 +170,8 @@ let joystick = nipplejs.create({
 	},
 	size: 150,
 	threshold: 0.1,
-	color: 'white',
-	restOpacity: 0.5
+	color: 'black',
+	restOpacity: 0.7
 });
 
 function addJoystickListeners(){
