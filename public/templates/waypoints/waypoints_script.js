@@ -5,65 +5,108 @@ import { settings } from '/js/modules/persistent.js';
 
 let topic = "/waypoints"
 let seq = 0;
+let active = false;
+let points = [];
 
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
+	points = loaded_data.points;
 }
 
 function saveSettings(){
 	settings["{uniqueID}"] = {
-		topic: topic
+		topic: topic,
+		points: points
 	}
 	settings.save();
 }
 
-function sendMessage(pos, delta){
-	if(!pos || !delta)
-		return;
-
-	let yaw = Math.atan2(delta.y, -delta.x);
-	let quat = Quaternion.fromEuler(yaw, 0, 0, 'ZXY');
-
-	let map_pos = view.screenToMap(pos);
-
+function getStamp(){
 	const currentTime = new Date();
 	const currentTimeSecs = Math.floor(currentTime.getTime() / 1000);
 	const currentTimeNsecs = (currentTime.getTime() % 1000) * 1e6;
 
+	return {
+		secs: currentTimeSecs,
+		nsecs: currentTimeNsecs
+	}
+}
+
+function sendMessage(pointlist){
+	let timeStamp = getStamp();
+	let poseList = [];
+
+	console.log(pointlist)
+
+	if(pointlist.length > 0)
+	{
+		if(pointlist.length  == 1){
+			poseList.push(new ROSLIB.Message({
+				header: {
+					seq: index,
+					stamp: timeStamp,
+					frame_id: tf.fixed_frame
+				},
+				pose: {
+					position: {
+						x: poseList[0].x,
+						y: poseList[0].y,
+						z: 0.0
+					},
+					orientation: new Quaternion()
+				}
+			}));
+		}
+		else
+		{
+			pointlist.forEach((point, index) => {
+				let p0;
+				let p1;
+
+				if(index < pointlist.length-1){
+					p0 = point;
+					p1 = pointlist[index+1];
+				}else{
+					p0 = pointlist[index-1];
+					p1 = point;
+				}
+
+				poseList.push(new ROSLIB.Message({
+					header: {
+						seq: index,
+						stamp: timeStamp,
+						frame_id: tf.fixed_frame
+					},
+					pose: {
+						position: {
+							x: point.x,
+							y: point.y,
+							z: 0.0
+						},
+						orientation: Quaternion.fromEuler(Math.atan2(p0.y - p1.y, -(p0.x - p1.x)), 0, 0, 'ZXY')
+					}
+				}));
+			});
+		}
+	}
+
 	const publisher = new ROSLIB.Topic({
 		ros: rosbridge.ros,
 		name: topic,
-		messageType: 'geometry_msgs/PoseWithCovarianceStamped',
+		messageType: 'nav_msgs/Path',
+		latched: true
 	});
 
-	const poseMessage = new ROSLIB.Message({
+	const pathMessage = new ROSLIB.Message({
 		header: {
 			seq: seq++,
-			stamp: {
-				secs: currentTimeSecs,
-      			nsecs: currentTimeNsecs
-			},
+			stamp: timeStamp,
 			frame_id: tf.fixed_frame
 		},
-		pose: {
-			pose: {
-				position: {
-					x: map_pos.x,
-					y: map_pos.y,
-					z: 0.0
-				},
-				orientation: {
-					x: quat.x,
-					y: quat.y,
-					z: quat.z,
-					w: quat.w
-				}
-			},
-			covariance: [0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.06853892326654787]
-		}
-	});	
-	publisher.publish(poseMessage);
+		poses: poseList
+	});
+	publisher.publish(pathMessage);
 
 }
 
@@ -75,28 +118,72 @@ const view_container = document.getElementById("view_container");
 const icon = document.getElementById("{uniqueID}_icon");
 const iconImg = icon.getElementsByTagName('img')[0];
 
-let active = false;
-let sprite = new Image();
-let start_point = undefined;
-let delta = undefined;
-sprite.src = "assets/initialpose.png";
+const startButton = document.getElementById("{uniqueID}_start");
+const stopButton = document.getElementById("{uniqueID}_stop");
 
-function drawArrow() {
+startButton.addEventListener('click', ()=>{sendMessage(points)});
+stopButton.addEventListener('click', ()=>{sendMessage([])});
+
+function drawWaypoints() {
+
     const wid = canvas.width;
     const hei = canvas.height;
 
     ctx.clearRect(0, 0, wid, hei);
+	ctx.lineWidth = 3;
+	ctx.strokeStyle = "#EBCE00"; 
+	ctx.fillStyle = active ? "white" : "#EBCE00";
 
-	if(delta){
-		let ratio = sprite.naturalHeight/sprite.naturalWidth;
+	const viewPoints = points.map((point) =>
+		view.mapToScreen(point)
+	);
 
+	ctx.beginPath();
+	viewPoints.forEach((pos, index) => {
+		if (index === 0) {
+			ctx.moveTo(pos.x, pos.y);
+		} else {
+			ctx.lineTo(pos.x, pos.y);
+		}
+	});
+	ctx.stroke();
+
+	viewPoints.forEach((pos) => {		
 		ctx.save();
-		ctx.translate(start_point.x, start_point.y);
-		ctx.scale(1.0, 1.0);
-		ctx.rotate(Math.atan2(-delta.y, -delta.x));
-		ctx.drawImage(sprite, -80, -80*ratio, 160, 160*ratio);
+		ctx.translate(pos.x, pos.y);
+
+		ctx.beginPath();
+		ctx.arc(0, 0, 9, 0, 2 * Math.PI, false);
+		ctx.fill();
 		ctx.restore();
-	}
+	});
+
+	ctx.font = "bold 13px Monospace";
+	ctx.textAlign = "center";
+	ctx.fillStyle = "#212E4A";
+
+	viewPoints.forEach((pos, index) => {
+		ctx.fillText(index, pos.x, pos.y+5);
+	});
+}
+
+let start_point = undefined;
+let delta = undefined;
+let drag_point = -1;
+
+function findPoint(newpoint){
+	let i = -1;
+	points.forEach((point, index) => {
+		const screenpoint = view.mapToScreen(point);
+		const dist = Math.hypot(
+			screenpoint.x - newpoint.x,
+			screenpoint.y - newpoint.y,
+		)
+		if(dist < 15){
+			i = index;
+		}
+	});
+	return i;
 }
 
 function startDrag(event){
@@ -105,36 +192,119 @@ function startDrag(event){
 		x: clientX,
 		y: clientY
 	};
+
+	drag_point = findPoint(start_point);
+	if(drag_point >= 0){
+		view.setInputMovementEnabled(false);
+	}
 }
 
 function drag(event){
-	if (start_point === undefined) return;
-
 	const { clientX, clientY } = event.touches ? event.touches[0] : event;
+	if(drag_point >= 0){
+		points[drag_point] = view.screenToMap({
+			x: clientX,
+			y: clientY
+		})
+	}
+
+	if (start_point === undefined) 
+		return;
+
 	delta = {
 		x: start_point.x - clientX,
 		y: start_point.y - clientY,
 	};
+}
 
-	drawArrow();	
+function distancePointToLineSegment(px, py, x1, y1, x2, y2) {
+	const dx = x2 - x1;
+	const dy = y2 - y1;
+	const lengthSquared = dx * dx + dy * dy;
+
+	let t = ((px - x1) * dx + (py - y1) * dy) / lengthSquared;
+	t = Math.max(0, Math.min(1, t));
+
+	const closestX = x1 + t * dx;
+	const closestY = y1 + t * dy;
+
+	const distanceSquared = (px - closestX) * (px - closestX) + (py - closestY) * (py - closestY);
+
+	return Math.sqrt(distanceSquared);
 }
 
 function endDrag(event){
-	sendMessage(start_point, delta);
+
+	if(drag_point >= 0){
+		view.setInputMovementEnabled(true);
+		drag_point = -1;
+	}
+
+	let moveDist = 0;
+
+	if(delta !== undefined){
+		moveDist = Math.hypot(delta.x,delta.y);
+	}
+
+	if(moveDist < 10){
+
+		const { clientX, clientY } = event.touches ? event.touches[0] : event;
+		const newpoint = {
+			x: clientX,
+			y: clientY
+		};
+
+		let index = findPoint(newpoint);
+
+		if(index >= 0)
+			points.splice(index, 1);
+		else
+		{
+			let after = -1;
+			for (let i = 0; i < points.length - 1; i++) {
+				const p0 = view.mapToScreen(points[i]);
+				const p1 = view.mapToScreen(points[i+1]);
+
+				const distance = distancePointToLineSegment(
+					newpoint.x, newpoint.y,
+					p0.x, p0.y,
+					p1.x, p1.y
+				);
+
+				if (distance <= 10) {
+					after = i+1;
+					break;
+				}
+			}
+		
+			if(after > 0){
+				points.splice(after, 0, view.screenToMap(newpoint));
+			}else{
+				points.push(view.screenToMap(newpoint));
+			}
+
+			
+		}
+
+		saveSettings();
+	}
+
+	drawWaypoints();
 
 	start_point = undefined;
 	delta = undefined;
-	drawArrow();
-	setActive(false);
 }
 
 function resizeScreen(){
 	canvas.height = window.innerHeight;
 	canvas.width = window.innerWidth;
+	drawWaypoints();
 }
 
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);
+window.addEventListener("tf_changed", drawWaypoints);
+window.addEventListener("view_changed", drawWaypoints);
 
 function addListeners(){
 	view_container.addEventListener('mousedown', startDrag);
@@ -158,7 +328,6 @@ function removeListeners(){
 
 function setActive(value){
 	active = value;
-	view.setInputMovementEnabled(!active);
 
 	if(active){
 		addListeners();
@@ -176,7 +345,7 @@ function setActive(value){
 const selectionbox = document.getElementById("{uniqueID}_topic");
 
 async function loadTopics(){
-	let result = await rosbridge.get_topics("geometry_msgs/PoseWithCovarianceStamped");
+	let result = await rosbridge.get_topics("nav_msgs/Path");
 
 	let topiclist = "";
 	result.forEach(element => {
@@ -205,7 +374,7 @@ loadTopics();
 let longPressTimer;
 let isLongPress = false;
 
-/* icon.addEventListener("click", (event) =>{
+icon.addEventListener("click", (event) =>{
 	if(!isLongPress)
 		setActive(!active);
 	else
@@ -222,7 +391,7 @@ icon.addEventListener("touchcancel", cancelLongPress);
 
 icon.addEventListener("contextmenu", (event) => {
 	event.preventDefault();
-}); */
+});
 
 function startLongPress(event) {
 	isLongPress = false;

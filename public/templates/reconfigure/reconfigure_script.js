@@ -131,9 +131,10 @@ function detectValueType(value) {
 		return "bool";
 	}
 
-	if (Number.isInteger(value)) {
-		return "int";
-	}
+	//this is incorrectly detecting floats as integers, shelfed for now
+	//if (Number.isInteger(value)) {
+		//return "int";
+	//}
 
 	if (isNaN(value)) {
 		return "string";

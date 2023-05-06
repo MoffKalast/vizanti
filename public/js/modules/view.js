@@ -121,6 +121,11 @@ export class View {
 	handleDragMove(event) {
 		if (this.drag_start === undefined) return;
 
+		if(!this.input_movement){
+			this.drag_start = undefined;
+			return;
+		}
+
 		if (hasClassInParentChain(event.target, 'inputelement')) {
 			return;
 		}
