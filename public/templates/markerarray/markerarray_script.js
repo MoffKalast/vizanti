@@ -263,6 +263,7 @@ async function loadTopics(){
 
 selectionbox.addEventListener("change", (event) => {
 	topic = selectionbox.value;
+	markers = {};
 	connect();
 });
 

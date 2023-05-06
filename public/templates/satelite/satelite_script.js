@@ -170,7 +170,7 @@ async function drawTiles(){
 
 		ctx.globalAlpha = 0.6;
 		ctx.fillStyle = "#171717";
-		ctx.fillRect(0, hei-20, 110, 20);
+		ctx.fillRect(0, hei-20, 120, 20);
 
 		ctx.globalAlpha = 1.0;
 		ctx.font = "12px Monospace";
