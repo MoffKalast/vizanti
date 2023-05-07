@@ -143,6 +143,21 @@ function drawMarkers(){
 		ctx.stroke();
 	}
 
+	function drawText(marker, size){
+
+		ctx.scale(0.1, -0.1);
+
+		ctx.font = (1.2*size)+"px Monospace";
+		ctx.textAlign = "center";
+		ctx.fillStyle = "white";
+	
+		ctx.strokeStyle = "#161B21";
+		ctx.lineWidth = 0.3*size;
+
+		ctx.strokeText(marker.text, 0, 0);
+		ctx.fillText(marker.text, 0, 0);	
+	}
+
 	const unit = view.getMapUnitsInPixels(1.0);
 
 	const wid = canvas.width;
@@ -175,7 +190,9 @@ function drawMarkers(){
 		ctx.save();
 		ctx.translate(pos.x, pos.y);
 		ctx.scale(1.0, -1.0);
-		ctx.rotate(yaw);
+
+		if(marker.type != 9)
+			ctx.rotate(yaw);
 
 		switch(marker.type)
 		{
@@ -188,7 +205,7 @@ function drawMarkers(){
 			case 6: break; //CUBE_LIST=6
 			case 7: break; //SPHERE_LIST=7
 			case 8: break; //POINTS=8
-			case 9: break; //TEXT_VIEW_FACING=9
+			case 9: drawText(marker, unit); //TEXT_VIEW_FACING=9
 			case 10: break; //MESH_RESOURCE=10
 			case 11: break; //TRIANGLE_LIST=11
 		}
