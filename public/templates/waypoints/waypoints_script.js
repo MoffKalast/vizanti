@@ -37,8 +37,6 @@ function sendMessage(pointlist){
 	let timeStamp = getStamp();
 	let poseList = [];
 
-	console.log(pointlist)
-
 	if(pointlist.length > 0)
 	{
 		if(pointlist.length  == 1){
@@ -119,9 +117,11 @@ const icon = document.getElementById("{uniqueID}_icon");
 const iconImg = icon.getElementsByTagName('img')[0];
 
 const startButton = document.getElementById("{uniqueID}_start");
+const reverseButton = document.getElementById("{uniqueID}_reverse");
 const stopButton = document.getElementById("{uniqueID}_stop");
 
 startButton.addEventListener('click', ()=>{sendMessage(points)});
+reverseButton.addEventListener('click', ()=>{sendMessage(points.reverse())});
 stopButton.addEventListener('click', ()=>{sendMessage([])});
 
 function drawWaypoints() {
@@ -151,6 +151,14 @@ function drawWaypoints() {
 	viewPoints.forEach((pos) => {		
 		ctx.save();
 		ctx.translate(pos.x, pos.y);
+
+		ctx.fillStyle = "#292929";
+
+		ctx.beginPath();
+		ctx.arc(0, 0, 12, 0, 2 * Math.PI, false);
+		ctx.fill();
+
+		ctx.fillStyle = active ? "white" : "#EBCE00";
 
 		ctx.beginPath();
 		ctx.arc(0, 0, 9, 0, 2 * Math.PI, false);
@@ -206,6 +214,7 @@ function drag(event){
 			x: clientX,
 			y: clientY
 		})
+		drawWaypoints();
 	}
 
 	if (start_point === undefined) 

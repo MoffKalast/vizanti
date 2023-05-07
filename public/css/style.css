@@ -21,8 +21,19 @@ i {
 
 /* Icon bar */
 
+.icon-text {
+    position: absolute;
+    top: 45%;
+    left: 50%;
+    margin: 0;
+    transform: translate(-50%, -50%);
+	font-weight: bold;
+    font-size: 0.8em;
+}
+
 .icon {
 	display: inline-block;
+	position: relative;
 	width: 50px;
 	height: 50px;
 	margin: 5px;

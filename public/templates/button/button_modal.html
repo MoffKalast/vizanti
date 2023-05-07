@@ -1,34 +1,22 @@
 <div id="{uniqueID}_modal" class="modal_outer noselect">
 	<div class="modal_inner noselect">
-		<h3>Waypoint Mission</h3>
+		<h3>Button</h3>
 		<hr>
+
+		<label for="{uniqueID}_name">Display Text:</label>
+		<input id="{uniqueID}_name" type="text" value="Text">
 
 		<label for="{uniqueID}_topic">Topic:</label>
 		<select id="{uniqueID}_topic" name="topic">
-			<option value="/waypoints">/waypoints</option>
+			<!-- add topics here-->
 		</select>
+		<hr>
 
-		<br>
-
-
-		<br>
-
-		<button id="{uniqueID}_start" >Publish Waypoints</button>
-
-		<button id="{uniqueID}_reverse" >Publish Reversed Waypoints</button>
-
-		<br>
-
-		<button id="{uniqueID}_stop">Stop (publish empty Path)</button>
-
-		<br>
+		<p>Publish a custom message to boolean topic and observe the value changes. For more complex value changes I'd suggest using dynamic reconfigure.</p>
 
 		<hr>
 
-		<br>
-
 		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
 
-		
 	</div>
 </div>
