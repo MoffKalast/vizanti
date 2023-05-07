@@ -25,7 +25,7 @@ Flask and Jinja2 are used for templating, rosbridge is required for socket commu
 ```bash
 roslaunch outdooros server.launch
 ```
-The web app can be accessed at `http://<host_ip>:5000`. Client settings are automatically saved in localStorage.
+The web app can be accessed at `http://<host_ip>:5000`. Client settings are automatically saved in localStorage. The satelite imagery renderer also uses the indexedDB to store tiles for offline use (note that this is IP specific).
 
 If you're using a mobile device connected to a robot's hotspot that doesn't have internet access, make sure to turn off mobile data. This will prevent Android from sending packets to the wrong gateway.
 
@@ -35,7 +35,7 @@ If you're using a mobile device connected to a robot's hotspot that doesn't have
 
 Aside from the required ones, custom widgets can be added to the navbar to customize functionality for a given robot and test setup.
 
-<span style="color:yellow">Note: Some icons open setup modals instantly, while others use a single press to trigger actions and use a long press to open the modal.</span>
+**Note: Some icons open setup modals instantly, while others use a single press to trigger actions and use a long press to open the modal.**
 
 ### <img src="wiki_assets/settings.png" alt="" title="Grid" width="30" height="30"/> Global Settings 
 
@@ -77,13 +77,13 @@ Send the /initialpose for navigation startup. Long press to open setup menu.
 
 Send a /move_base_simple/goal. Long press to open setup menu.
 
-###<img src="wiki_assets/waypoints.png" alt="" title="Waypoint Mission" width="30" height="30"/> Waypoint Mission 
+### <img src="wiki_assets/waypoints.png" alt="" title="Waypoint Mission" width="30" height="30"/> Waypoint Mission 
 
 Create missions with multiple waypoints, then send them as a Path message. Long press to open setup menu.
 
 ### <img src="wiki_assets/area.png" alt="" title="Area Mission" width="30" height="30"/> Area Mission
 
-Drag to select an area and send it as a 3DBoundingBox. Long press to open setup menu.
+Drag to select an area and publish it to a 3DBoundingBox topic. Long press to open setup menu.
 
 ### <img src="wiki_assets/button.png" alt="" title="Button" width="30" height="30"/> Button
 
@@ -93,7 +93,7 @@ A button with customizable text that displays the last message sent on a Bool to
 
 ### <img src="wiki_assets/map.png" alt="" title="Map" width="30" height="30"/> Map
 
-Display an OccupancyGrid.
+Display an OccupancyGrid. Also has some experimental map_server controls for saving and loading maps.
 
 ### <img src="wiki_assets/satelite.png" alt="" title="Satellite Tiles" width="30" height="30"/> Satellite Tiles
 
@@ -107,7 +107,7 @@ Display a BatteryState message.
 
 ### <img src="wiki_assets/markerarray.png" alt="" title="Marker Array" width="30" height="30"/> Marker Array
 
-Visualize a MarkerArray. Currently supported types are ARROW, CUBE, SPHERE, CYLIDER, LINE_STRIP and TEXT_VIEW_FACING.
+Visualize a MarkerArray. Currently supported types are ARROW, CUBE, SPHERE, CYLIDER, LINE_STRIP and TEXT_VIEW_FACING. Since each of these widgets adds another canvas layer, it makes more sense to aggregate regular Marker messages into a Marker Array to avoid some of that overhead.
 
 ### <img src="wiki_assets/path.png" alt="" title="Path" width="30" height="30"/> Path
 
@@ -115,4 +115,4 @@ Render a Path message for navigation debugging.
 
 ### <img src="wiki_assets/temp.png" alt="" title="Temperature" width="30" height="30"/> Temperature
 
-Display a Temperature message.
+Display a Temperature message. Only as a widget for now, not on the view itself.
