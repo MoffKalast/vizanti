@@ -161,18 +161,22 @@ const joypreview = document.getElementById('{uniqueID}_joypreview');
 joypreview.style.left = `calc(${joy_offset_x} - 50px)`;
 joypreview.style.top = `calc(${joy_offset_y} - 50px)`;
 
-let joystick = nipplejs.create({
-	zone: joystickContainer,
-	mode: 'static',
-	position: {
-		left: joy_offset_x,
-		top: joy_offset_y 
-	},
-	size: 150,
-	threshold: 0.1,
-	color: 'black',
-	restOpacity: 0.7
-});
+function makeJoystick(){
+	return nipplejs.create({
+		zone: joystickContainer,
+		mode: 'static',
+		position: {
+			left: joy_offset_x,
+			top: joy_offset_y 
+		},
+		size: 150,
+		threshold: 0.1,
+		color: 'black',
+		restOpacity: 0.7
+	})
+}
+
+let joystick = makeJoystick();
 
 function addJoystickListeners(){
 	joystick.on('move', onJoystickMove);
@@ -293,15 +297,7 @@ function onMove(event) {
 		joypreview.style.top = `calc(${joy_offset_y} - 50px)`;
 
 		joystick.destroy();
-		joystick = nipplejs.create({
-			zone: joystickContainer,
-			mode: 'static',
-			position: { left: joy_offset_x, top: joy_offset_y},
-			size: 150,
-			threshold: 0.1,
-			color: 'white',
-			restOpacity: 0.5
-		});
+		joystick = makeJoystick();
 	
 		addJoystickListeners(joystick);
 	}

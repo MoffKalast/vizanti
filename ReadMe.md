@@ -4,6 +4,8 @@
 
 OutdooROS is a web-based visualization and control tool that was developed for more convenient operation of outdoor robots running the Robot Operating System (ROS). The application attempts to replicate RViz's orthographic 2D view as closely as possible with a smartphone friendly interface. The second goal is to allow planning and executing movement and mission commands, i.e. goals and routes, with custom buttons and parameter reconfigure.
 
+<img src="wiki_assets/preview.jpg" alt=""/> 
+
 ## Installation
 
 As a field tool, OutdooROS is designed to operate just as well without internet access, and as such the intended way is to run it off the robot, with rosbridge autoconnecting to the host IP and loading cached data from the robot. 
@@ -28,6 +30,8 @@ roslaunch outdooros server.launch
 The web app can be accessed at `http://<host_ip>:5000`. Client settings are automatically saved in localStorage. The satelite imagery renderer also uses the indexedDB to store tiles for offline use (note that this is IP specific).
 
 If you're using a mobile device connected to a robot's hotspot that doesn't have internet access, make sure to turn off mobile data. This will prevent Android from sending packets to the wrong gateway.
+
+Note that the client uses the web fetch API to load a fair few things, make sure your browser is at least somewhat up to date or some features may not work.
 
 ----
 
@@ -79,7 +83,7 @@ Send a /move_base_simple/goal. Long press to open setup menu.
 
 ### <img src="wiki_assets/waypoints.png" alt="" title="Waypoint Mission" width="30" height="30"/> Waypoint Mission 
 
-Create missions with multiple waypoints, then send them as a Path message. Long press to open setup menu.
+Create missions with multiple waypoints, then send them as a Path message. Single tap to add a point, single tap to remove an existing one, hold and drag to move points. Adding a point on an existing line will add it between those two points. Long press to open setup menu.
 
 ### <img src="wiki_assets/area.png" alt="" title="Area Mission" width="30" height="30"/> Area Mission
 
