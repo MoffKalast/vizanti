@@ -117,6 +117,14 @@ Visualize a MarkerArray. Currently supported types are ARROW, CUBE, SPHERE, CYLI
 
 Render a Path message for navigation debugging.
 
+#### <img src="wiki_assets/sonar.png" alt="" title="Range" width="30" height="30"/> Range
+
+Render a Range message on the main view. Supports grouping multiple messages onto the same topic, as long as the tf frames are different. 
+
+#### <img src="wiki_assets/scan.png" alt="" title="LaserScan" width="30" height="30"/> LaserScan
+
+Display a LaserScan message on the main view. Heavily throttled by default.
+
 #### <img src="wiki_assets/temp.png" alt="" title="Temperature" width="30" height="30"/> Temperature
 
 Display a Temperature message. Only as a widget for now, not on the view itself.

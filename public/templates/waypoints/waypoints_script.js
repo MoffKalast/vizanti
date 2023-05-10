@@ -121,8 +121,21 @@ const reverseButton = document.getElementById("{uniqueID}_reverse");
 const stopButton = document.getElementById("{uniqueID}_stop");
 
 startButton.addEventListener('click', ()=>{sendMessage(points)});
-reverseButton.addEventListener('click', ()=>{sendMessage(points.reverse())});
+reverseButton.addEventListener('click', ()=>{sendMessage([...points].reverse())});
 stopButton.addEventListener('click', ()=>{sendMessage([])});
+
+const flipButton = document.getElementById("{uniqueID}_flip");
+const deleteButton = document.getElementById("{uniqueID}_delete");
+
+flipButton.addEventListener('click', ()=>{
+	points.reverse();
+	drawWaypoints();
+});
+
+deleteButton.addEventListener('click', ()=>{
+	points = [];
+	drawWaypoints();
+});
 
 function drawWaypoints() {
 
