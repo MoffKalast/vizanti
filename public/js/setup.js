@@ -19,6 +19,9 @@ document.documentElement.ondragstart = function () {
 
 // sizing correction
 window.addEventListener("load", function(){
+	setTimeout(() => {
+		window.dispatchEvent(new Event('resize'));
+	}, 200);
 	window.dispatchEvent(new Event('resize'));
 }, false); 
 

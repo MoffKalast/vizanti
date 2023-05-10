@@ -60,15 +60,8 @@ function drawRobot() {
 			x: robotframe.translation.x,
 			y: robotframe.translation.y,
 		});
-
-		let rotation = new Quaternion(
-			robotframe.rotation.w,
-			robotframe.rotation.x,
-			robotframe.rotation.y,
-			robotframe.rotation.z
-		);
 	
-		let yaw = rotation.toEuler().h;
+		let yaw = robotframe.rotation.toEuler().h;
 
 		let ratio = modelimg.naturalHeight/modelimg.naturalWidth;
 
