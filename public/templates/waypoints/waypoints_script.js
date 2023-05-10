@@ -8,19 +8,59 @@ let seq = 0;
 let active = false;
 let points = [];
 
+const icon = document.getElementById("{uniqueID}_icon");
+const iconImg = icon.getElementsByTagName('img')[0];
+
+const startButton = document.getElementById("{uniqueID}_start");
+const stopButton = document.getElementById("{uniqueID}_stop");
+
+startButton.addEventListener('click', ()=>{
+	if(startCheckbox.checked)
+		sendMessage(points.slice(getStartIndex()))
+	else
+		sendMessage(points)
+});
+
+stopButton.addEventListener('click', ()=>{
+	sendMessage([])
+});
+
+const flipButton = document.getElementById("{uniqueID}_flip");
+const deleteButton = document.getElementById("{uniqueID}_delete");
+
+flipButton.addEventListener('click', ()=>{
+	points.reverse();
+	drawWaypoints();
+});
+
+deleteButton.addEventListener('click', ()=>{
+	points = [];
+	drawWaypoints();
+});
+
+const startCheckbox = document.getElementById('{uniqueID}_startclosest');
+startCheckbox.addEventListener('change', saveSettings);
+
+// Settings
+
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
 	points = loaded_data.points;
+
+	startCheckbox.checked = loaded_data.start_closest;
 }
 
 function saveSettings(){
 	settings["{uniqueID}"] = {
 		topic: topic,
-		points: points
+		points: points,
+		start_closest: startCheckbox.checked
 	}
 	settings.save();
 }
+
+// Message sending
 
 function getStamp(){
 	const currentTime = new Date();
@@ -113,29 +153,30 @@ const ctx = canvas.getContext('2d');
 
 const view_container = document.getElementById("view_container");
 
-const icon = document.getElementById("{uniqueID}_icon");
-const iconImg = icon.getElementsByTagName('img')[0];
+function getStartIndex(){
+	let link = tf.absoluteTransforms["base_link"];
 
-const startButton = document.getElementById("{uniqueID}_start");
-const reverseButton = document.getElementById("{uniqueID}_reverse");
-const stopButton = document.getElementById("{uniqueID}_stop");
+	if(!link)
+		return 0;
 
-startButton.addEventListener('click', ()=>{sendMessage(points)});
-reverseButton.addEventListener('click', ()=>{sendMessage([...points].reverse())});
-stopButton.addEventListener('click', ()=>{sendMessage([])});
+    let minDistance = Number.POSITIVE_INFINITY;
+    let minIndex = 0;
 
-const flipButton = document.getElementById("{uniqueID}_flip");
-const deleteButton = document.getElementById("{uniqueID}_delete");
+    for (let i = 0; i < points.length; i++) {
+        let distance = 0;
 
-flipButton.addEventListener('click', ()=>{
-	points.reverse();
-	drawWaypoints();
-});
+		distance += Math.pow((link.translation.x - points[i].x), 2);
+		distance += Math.pow((link.translation.y - points[i].y), 2);
+		distance += Math.pow((link.translation.z - points[i].z), 2);
 
-deleteButton.addEventListener('click', ()=>{
-	points = [];
-	drawWaypoints();
-});
+        if (distance < minDistance) {
+            minDistance = distance;
+            minIndex = i;
+        }
+    }
+
+    return minIndex;
+}
 
 function drawWaypoints() {
 
@@ -147,12 +188,26 @@ function drawWaypoints() {
 	ctx.strokeStyle = "#EBCE00"; 
 	ctx.fillStyle = active ? "white" : "#EBCE00";
 
+	const startIndex = getStartIndex();
 	const viewPoints = points.map((point) =>
 		view.mapToScreen(point)
 	);
 
+	if(startCheckbox.checked)
+		ctx.strokeStyle = "#4a4a4a";
+	else
+		ctx.strokeStyle = "#EBCE00";
+
 	ctx.beginPath();
 	viewPoints.forEach((pos, index) => {
+
+		if(index == startIndex && startCheckbox.checked){
+			ctx.lineTo(pos.x, pos.y);
+			ctx.stroke();
+			ctx.strokeStyle = "#EBCE00"; 
+			ctx.beginPath();
+		}
+
 		if (index === 0) {
 			ctx.moveTo(pos.x, pos.y);
 		} else {
@@ -161,21 +216,25 @@ function drawWaypoints() {
 	});
 	ctx.stroke();
 
-	viewPoints.forEach((pos) => {		
+	viewPoints.forEach((pos, index) => {		
 		ctx.save();
 		ctx.translate(pos.x, pos.y);
 
 		ctx.fillStyle = "#292929";
-
 		ctx.beginPath();
 		ctx.arc(0, 0, 12, 0, 2 * Math.PI, false);
 		ctx.fill();
 
-		ctx.fillStyle = active ? "white" : "#EBCE00";
+		if(index < startIndex && startCheckbox.checked){
+			ctx.fillStyle = active ? "white" : "#827c52";
+		}else{
+			ctx.fillStyle = active ? "white" : "#EBCE00";
+		}
 
 		ctx.beginPath();
 		ctx.arc(0, 0, 9, 0, 2 * Math.PI, false);
 		ctx.fill();
+
 		ctx.restore();
 	});
 
