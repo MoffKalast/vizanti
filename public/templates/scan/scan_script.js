@@ -8,17 +8,34 @@ let topic = "";
 let range_topic = undefined;
 let listener = undefined;
 
-let data = {};
+let data = undefined;
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
 
 const opacitySlider = document.getElementById('{uniqueID}_opacity');
 const opacityValue = document.getElementById('{uniqueID}_opacity_value');
-
 opacitySlider.addEventListener('input', () =>  {
 	opacityValue.textContent = opacitySlider.value;
 	saveSettings();
+});
+
+const thicknessSlider = document.getElementById('{uniqueID}_thickness');
+const thicknessValue = document.getElementById('{uniqueID}_thickness_value');
+thicknessSlider.addEventListener('input', () =>  {
+	thicknessValue.textContent = thicknessSlider.value;
+	saveSettings();
+});
+
+const colourpicker = document.getElementById("{uniqueID}_colorpicker");
+colourpicker.addEventListener("input", (event) =>{
+	saveSettings();
+});
+
+const throttle = document.getElementById('{uniqueID}_throttle');
+throttle.addEventListener("input", (event) =>{
+	saveSettings();
+	connect();
 });
 
 //Settings
@@ -29,12 +46,21 @@ if(settings.hasOwnProperty("{uniqueID}")){
 
 	opacitySlider.value = loaded_data.opacity;
 	opacityValue.innerText = loaded_data.opacity;
+
+	thicknessSlider.value = loaded_data.thickness;
+	thicknessValue.innerText = loaded_data.thickness;
+
+	colourpicker.value = loaded_data.color;
+	throttle.value = loaded_data.throttle;
 }
 
 function saveSettings(){
 	settings["{uniqueID}"] = {
 		topic: topic,
-		opacity: opacitySlider.value
+		opacity: opacitySlider.value,
+		thickness: thicknessSlider.value,
+		color: colourpicker.value,
+		throttle: throttle.value
 	}
 	settings.save();
 }
@@ -42,67 +68,56 @@ function saveSettings(){
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d');
 
-function drawRanges() {
-
-	function drawPizza(start_angle, end_angle, min_len, max_len){
-        ctx.beginPath();
-        ctx.arc(0, 0, min_len, start_angle, end_angle);
-        ctx.lineTo(max_len * Math.cos(end_angle), max_len * Math.sin(end_angle));
-        ctx.arc(0, 0, max_len, end_angle, start_angle, true);
-        ctx.lineTo(min_len * Math.cos(start_angle), min_len * Math.sin(start_angle));
-        ctx.closePath();
-        ctx.fill();
-	}
+function drawScan() {
 
 	const unit = view.getMapUnitsInPixels(1.0);
+	const pixel = view.getMapUnitsInPixels(thicknessSlider.value);
 
 	const wid = canvas.width;
 	const hei = canvas.height;
 
 	ctx.clearRect(0, 0, wid, hei);
 	ctx.globalAlpha = opacitySlider.value;
+	ctx.fillStyle = colourpicker.value;
 
-	for (const [key, sample] of Object.entries(data)) {
-
-		let pos = view.mapToScreen({
-			x: sample.pose.translation.x,
-			y: sample.pose.translation.y,
-		});
-	
-		let yaw = sample.pose.rotation.toEuler().h;
-
-		let start_angle = -sample.field_of_view/2;
-		let end_angle = sample.field_of_view/2;
-
-		ctx.save();
-		ctx.translate(pos.x, pos.y);
-		ctx.scale(1.0, -1.0);
-		ctx.rotate(yaw);
-
-		ctx.fillStyle = "#33414e96";
-		drawPizza(start_angle, end_angle, unit*sample.min_range, unit*sample.max_range)
-
-		ctx.fillStyle = "#5eb4ffff";
-		let minarc = unit*sample.range-10;
-
-		if(minarc < 0)
-			minarc = 10;
-
-		drawPizza(start_angle, end_angle, minarc, unit*sample.range)
-		
-		ctx.restore();
-
+	if(data == undefined){
+		return;
 	}
+
+	let pos = view.mapToScreen({
+		x: data.pose.translation.x,
+		y: data.pose.translation.y,
+	});
+
+	let yaw = data.pose.rotation.toEuler().h;
+
+	ctx.save();
+	ctx.translate(pos.x, pos.y);
+	ctx.scale(1.0, -1.0);
+	ctx.rotate(yaw);
+
+	let delta = parseInt(pixel/2);
+
+	data.msg.ranges.forEach(function (item, index) {
+		if (item >= data.msg.range_min && item <= data.msg.range_max) {
+            const angle = data.msg.angle_min + index * data.msg.angle_increment;
+            const x = item * Math.cos(angle) * unit - delta;
+            const y = item * Math.sin(angle) * unit - delta;
+            ctx.fillRect(x, y, pixel, pixel);
+        }
+	});
+	
+	ctx.restore();
 }
 
 function resizeScreen(){
 	canvas.height = window.innerHeight;
 	canvas.width = window.innerWidth;
-	drawRanges();
+	drawScan();
 }
 
-window.addEventListener("tf_changed", drawRanges);
-window.addEventListener("view_changed", drawRanges);
+window.addEventListener("tf_changed", drawScan);
+window.addEventListener("view_changed", drawScan);
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);
 
@@ -120,32 +135,27 @@ function connect(){
 	range_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : 'sensor_msgs/Range'
+		messageType : 'sensor_msgs/LaserScan',
+		throttle_rate: parseInt(throttle.value)
 	});
 	
-	listener = range_topic.subscribe((msg) => {		
+	listener = range_topic.subscribe((msg) => {	
 
 		const pose = tf.absoluteTransforms[msg.header.frame_id];
 
 		if(!pose)
 			return;
 
-		data[msg.header.frame_id] = {
-			field_of_view: msg.field_of_view,
-			min_range: msg.min_range,
-			max_range: msg.max_range,
-			range: msg.range,
-			type: msg.radiation_type,
-			pose: pose
-		}
-		drawRanges();
+		data = {};
+		data.pose = pose;
+		data.msg = msg;
 	});
 
 	saveSettings();
 }
 
 async function loadTopics(){
-	let result = await rosbridge.get_topics("sensor_msgs/Range");
+	let result = await rosbridge.get_topics("sensor_msgs/LaserScan");
 	let topiclist = "";
 	result.forEach(element => {
 		topiclist += "<option value='"+element+"'>"+element+"</option>"
@@ -168,6 +178,7 @@ async function loadTopics(){
 
 selectionbox.addEventListener("change", (event) => {
 	topic = selectionbox.value;
+	data = undefined;
 	connect();
 });
 
@@ -177,4 +188,4 @@ icon.addEventListener("click", loadTopics);
 loadTopics();
 resizeScreen();
 
-console.log("Range Widget Loaded {uniqueID}")
+console.log("Laserscan Widget Loaded {uniqueID}")
