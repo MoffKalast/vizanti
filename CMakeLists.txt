@@ -15,6 +15,7 @@ add_service_files(
     GetNodeParameters.srv
     SaveMap.srv
     LoadMap.srv
+    RecordRosbag.srv
 )
 
 generate_messages(

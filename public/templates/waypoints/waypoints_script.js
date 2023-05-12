@@ -15,6 +15,7 @@ const startButton = document.getElementById("{uniqueID}_start");
 const stopButton = document.getElementById("{uniqueID}_stop");
 
 startButton.addEventListener('click', ()=>{
+	console.log("Points:",points.slice(getStartIndex()))
 	if(startCheckbox.checked)
 		sendMessage(points.slice(getStartIndex()))
 	else
@@ -82,14 +83,14 @@ function sendMessage(pointlist){
 		if(pointlist.length  == 1){
 			poseList.push(new ROSLIB.Message({
 				header: {
-					seq: index,
+					seq: 0,
 					stamp: timeStamp,
 					frame_id: tf.fixed_frame
 				},
 				pose: {
 					position: {
-						x: poseList[0].x,
-						y: poseList[0].y,
+						x: pointlist[0].x,
+						y: pointlist[0].y,
 						z: 0.0
 					},
 					orientation: new Quaternion()

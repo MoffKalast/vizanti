@@ -2,90 +2,136 @@
 
 import rospy
 from std_srvs.srv import Trigger, TriggerResponse
-from outdooros.srv import GetNodeParameters, GetNodeParametersResponse
-from outdooros.srv import LoadMap, LoadMapResponse, SaveMap, SaveMapResponse
+from outdooros.srv import GetNodeParameters, GetNodeParametersResponse, LoadMap, LoadMapResponse, SaveMap, SaveMapResponse, RecordRosbag, RecordRosbagResponse
 from nav_msgs.srv import GetMap
 import subprocess
-import select
 import os
 import fcntl
 
-def load_map(req):
-    file_path = os.path.expanduser(req.file_path)
-    topic = req.topic
-    try:
-        process = subprocess.Popen(["rosrun", "map_server", "map_server", file_path, "map:=" + topic, "__name:=outdooros_map_server"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        flags = fcntl.fcntl(process.stdout, fcntl.F_GETFL)
-        fcntl.fcntl(process.stdout, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+class ServiceHandler:
 
-        # Wait for it to either fail or not
-        rospy.sleep(1)
+	def __init__(self):
+		rospy.init_node('outdooros_service_handler')
 
-        # Check if the process is still running
-        if process.poll() is not None:
-            # Process terminated, read the error output
-            error_output = process.stdout.read().decode('utf-8')
-            return LoadMapResponse(success=False, message="Map server failed to load the map: " + error_output)
+		self.get_nodes_service = rospy.Service('outdooros/get_dynamic_reconfigure_nodes', Trigger,self. get_dynamic_reconfigure_nodes)
+		self.get_node_parameters_service = rospy.Service('outdooros/get_node_parameters', GetNodeParameters, self.get_node_parameters)
+		self.load_map_service = rospy.Service('outdooros/load_map', LoadMap, self.load_map)
+		self.save_map_service = rospy.Service('outdooros/save_map', SaveMap, self.save_map)
+		self.record_service = rospy.Service('outdooros/record_rosbag', RecordRosbag, self.handle_recording)
 
-        return LoadMapResponse(success=True, message="Map loaded successfully")
-    except Exception as e:
-        return LoadMapResponse(success=False, message=str(e))
+		self.proc = None
 
-def save_map(req):
-	file_path = os.path.expanduser(req.file_path)
-	topic = req.topic
-	try:
-		process = subprocess.Popen(["rosrun", "map_server", "map_saver", "-f", file_path, "map:=" + topic, "__name:=outdooros_map_saver"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-		flags = fcntl.fcntl(process.stdout, fcntl.F_GETFL)
-		fcntl.fcntl(process.stdout, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+		rospy.loginfo("Service handler ready.")
 
-		while True:
+	def load_map(self, req):
+		file_path = os.path.expanduser(req.file_path)
+		topic = req.topic
+		try:
+			process = subprocess.Popen(["rosrun", "map_server", "map_server", file_path, "map:=" + topic, "__name:=outdooros_map_server"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+			flags = fcntl.fcntl(process.stdout, fcntl.F_GETFL)
+			fcntl.fcntl(process.stdout, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+
+			# Wait for it to either fail or not
+			rospy.sleep(1)
+
 			# Check if the process is still running
 			if process.poll() is not None:
-				break
+				# Process terminated, read the error output
+				error_output = process.stdout.read().decode('utf-8')
+				return LoadMapResponse(success=False, message="Map server failed to load the map: " + error_output)
+
+			return LoadMapResponse(success=True, message="Map loaded successfully")
+		except Exception as e:
+			return LoadMapResponse(success=False, message=str(e))
+
+	def save_map(self, req):
+		file_path = os.path.expanduser(req.file_path)
+		topic = req.topic
+		try:
+			process = subprocess.Popen(["rosrun", "map_server", "map_saver", "-f", file_path, "map:=" + topic, "__name:=outdooros_map_saver"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+			flags = fcntl.fcntl(process.stdout, fcntl.F_GETFL)
+			fcntl.fcntl(process.stdout, fcntl.F_SETFL, flags | os.O_NONBLOCK)
 
 			while True:
-				try:
-					line = process.stdout.readline()
-					if not line:
-						break
-					
-					if b"[ERROR]" in line:
-						process.terminate()
-						return SaveMapResponse(success=False, message="Map saver failed to save the map: " + line.decode('utf-8'))
-				except IOError:
+				# Check if the process is still running
+				if process.poll() is not None:
 					break
 
-			# Sleep for a short period of time to avoid excessive CPU usage
-			rospy.sleep(0.2)
+				while True:
+					try:
+						line = process.stdout.readline()
+						if not line:
+							break
+						
+						if b"[ERROR]" in line:
+							process.terminate()
+							return SaveMapResponse(success=False, message="Map saver failed to save the map: " + line.decode('utf-8'))
+					except IOError:
+						break
 
-		return SaveMapResponse(success=True, message="Map saved successfully")
-	except Exception as e:
-		return SaveMapResponse(success=False, message=str(e))
+				# Sleep for a short period of time to avoid excessive CPU usage
+				rospy.sleep(0.2)
 
-def get_dynamic_reconfigure_nodes(req):
-	list_nodes_output = subprocess.check_output(["rosrun", "dynamic_reconfigure", "dynparam", "list"]).decode('utf-8')
-	nodes_list = list_nodes_output.strip().split("\n")
+			return SaveMapResponse(success=True, message="Map saved successfully")
+		except Exception as e:
+			return SaveMapResponse(success=False, message=str(e))
 
-	response = TriggerResponse()
-	response.success = True
-	response.message = "\n".join(nodes_list)
+	def get_dynamic_reconfigure_nodes(self, req):
+		list_nodes_output = subprocess.check_output(["rosrun", "dynamic_reconfigure", "dynparam", "list"]).decode('utf-8')
+		nodes_list = list_nodes_output.strip().split("\n")
 
-	return response
+		response = TriggerResponse()
+		response.success = True
+		response.message = "\n".join(nodes_list)
 
-def get_node_parameters(req):
-	node_params = subprocess.check_output(["rosrun", "dynamic_reconfigure", "dynparam", "get", req.node]).decode('utf-8')
+		return response
 
-	response = GetNodeParametersResponse()
-	response.parameters = node_params
+	def get_node_parameters(self, req):
+		node_params = subprocess.check_output(["rosrun", "dynamic_reconfigure", "dynparam", "get", req.node]).decode('utf-8')
 
-	return response
+		response = GetNodeParametersResponse()
+		response.parameters = node_params
 
-rospy.init_node('outdooros_service_handler', anonymous=True)
-get_nodes_service = rospy.Service('outdooros/get_dynamic_reconfigure_nodes', Trigger, get_dynamic_reconfigure_nodes)
-get_node_parameters_service = rospy.Service('outdooros/get_node_parameters', GetNodeParameters, get_node_parameters)
-load_map_service = rospy.Service('outdooros/load_map', LoadMap, load_map)
-save_map_service = rospy.Service('outdooros/save_map', SaveMap, save_map)
+		return response
 
-print("Service handler ready.")
+	def handle_recording(self, req):
+
+		response = RecordRosbagResponse()
+
+		if req.start:
+			if self.proc is not None:
+				response.success = False
+				response.message = "Already recording, please stop the current recording first."
+			else:
+				command = ['rosbag', 'record', '-a', '-O']
+
+				# Expand and add the path to the command
+				expanded_path = os.path.expanduser(req.path)
+				command.append(expanded_path)
+				command.append(" -x")
+
+				# Add the topics to the command
+				for topic in req.topics:
+					command.append(topic)
+
+				# Use subprocess to start rosbag record in a new process
+				self.proc = subprocess.Popen(command)
+
+				response.success = True
+				response.message = "Started recording rosbag with PID " + str(self.proc.pid)
+		else:
+			if self.proc is None:
+				response.success = False
+				response.message = "No recording to stop."
+			else:
+				self.proc.terminate()
+				self.proc = None
+
+				response.success = True
+				response.message = "Stopped recording rosbag."
+
+		return response
+
+
+handler = ServiceHandler()
 rospy.spin()

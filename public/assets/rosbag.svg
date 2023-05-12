@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Generator: Adobe Illustrator 24.1.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+
+<svg
+   version="1.1"
+   id="Layer_1"
+   x="0px"
+   y="0px"
+   viewBox="0 0 512 512"
+   style="enable-background:new 0 0 512 512;"
+   xml:space="preserve"
+   sodipodi:docname="rosbag.svg"
+   inkscape:version="1.2 (dc2aedaf03, 2022-05-15)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><defs
+   id="defs9">
+	
+
+	
+</defs><sodipodi:namedview
+   id="namedview7"
+   pagecolor="#505050"
+   bordercolor="#ffffff"
+   borderopacity="1"
+   inkscape:showpageshadow="0"
+   inkscape:pageopacity="0"
+   inkscape:pagecheckerboard="1"
+   inkscape:deskcolor="#505050"
+   showgrid="false"
+   inkscape:zoom="0.54759345"
+   inkscape:cx="-148.83304"
+   inkscape:cy="66.65529"
+   inkscape:window-width="1920"
+   inkscape:window-height="996"
+   inkscape:window-x="-8"
+   inkscape:window-y="-8"
+   inkscape:window-maximized="1"
+   inkscape:current-layer="g149" />
+<style
+   type="text/css"
+   id="style2">
+	.st0{fill:#333333;}
+</style>
+
+<g
+   id="g151"
+   style="fill:#ffffff;fill-opacity:1"
+   transform="matrix(0.66577714,0,0,0.66577714,93.40191,93.401577)">
+		<g
+   id="g149"
+   style="fill:#ffffff;fill-opacity:1">
+			<rect
+   style="fill:#e1e1e1;fill-opacity:1;stroke-width:22.5301;stroke-linecap:round;stroke-linejoin:round;paint-order:markers fill stroke"
+   id="rect2372"
+   width="414.09094"
+   height="260.86761"
+   x="42.026344"
+   y="176.82462" /><rect
+   style="fill:#e1e1e1;fill-opacity:1;stroke-width:19.8064;stroke-linecap:round;stroke-linejoin:round;paint-order:markers fill stroke"
+   id="rect2372-8"
+   width="320.02344"
+   height="260.86761"
+   x="58.027534"
+   y="0.81170046"
+   ry="25.371994" /><path
+   d="m 153.029,90.223 h 182.404 c 5.427,0 9.873,-4.43 9.873,-9.869 V 0 H 143.137 v 80.354 c 0,5.439 4.434,9.869 9.892,9.869 z"
+   id="path141"
+   style="fill:#161616;fill-opacity:1" />
+			<path
+   d="M 480.817,122.864 377.88,19.494 v 60.859 c 0,23.404 -19.043,42.447 -42.447,42.447 H 153.029 c -23.409,0 -42.447,-19.043 -42.447,-42.447 V 0 H 44.823 C 20.068,0 0.002,20.07 0.002,44.808 v 398.831 c 0,24.736 20.066,44.808 44.821,44.808 h 398.813 c 24.74,0 44.808,-20.068 44.808,-44.808 V 141.325 c 0,-6.933 -2.746,-13.567 -7.627,-18.461 z m -68.356,262.802 c 0,14.434 -11.703,26.154 -26.168,26.154 H 102.137 c -14.451,0 -26.153,-11.722 -26.153,-26.154 V 249.303 c 0,-14.43 11.702,-26.148 26.153,-26.148 h 284.156 c 14.465,0 26.168,11.72 26.168,26.148 z"
+   id="path143"
+   style="fill:#080808;fill-opacity:1" />
+			<path
+   d="M 356.497,265.131 H 131.949 c -9.008,0 -16.294,7.273 -16.294,16.28 0,9.007 7.286,16.28 16.294,16.28 h 224.549 c 8.988,0 16.277,-7.273 16.277,-16.28 0,-9.007 -7.288,-16.28 -16.278,-16.28 z"
+   id="path145"
+   style="fill:#303030;fill-opacity:1" />
+			<path
+   d="M 323.936,330.264 H 164.508 c -8.994,0 -16.28,7.273 -16.28,16.28 0,8.989 7.286,16.28 16.28,16.28 h 159.427 c 8.994,0 16.281,-7.291 16.281,-16.28 10e-4,-9.007 -7.286,-16.28 -16.28,-16.28 z"
+   id="path147"
+   style="fill:#212121;fill-opacity:1" />
+		</g>
+	</g></svg>

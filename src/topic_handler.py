@@ -4,10 +4,10 @@ import rospy
 from tf2_msgs.msg import TFMessage
 import threading
 
-class OutdooROS:
+class TopicHandler:
 
 	def __init__(self):
-		rospy.init_node('outdooros_topic_handler', anonymous=True)
+		rospy.init_node('outdooros_topic_handler')
 
 		self.updated = False
 		self.lock = threading.Lock()
@@ -16,9 +16,11 @@ class OutdooROS:
 		self.tf_sub = rospy.Subscriber('/tf', TFMessage, self.tf_callback)
 		self.tf_pub = rospy.Publisher('/tf/consolidated', TFMessage, queue_size=1)
 
+		rospy.loginfo("TF handler ready.")
+
 	def publish(self):
 		if not self.updated:
-			return;
+			return
 
 		msg = TFMessage()
 		with self.lock:
@@ -34,7 +36,7 @@ class OutdooROS:
 			self.updated = True
 		
 
-odr = OutdooROS()
+odr = TopicHandler()
 rate = rospy.Rate(30)
 while not rospy.is_shutdown():
 	odr.publish();

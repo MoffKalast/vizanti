@@ -448,3 +448,48 @@ button:hover{
 	0% { transform: rotate(0deg); }
 	100% { transform: rotate(360deg); }
 }
+
+/*Collapsible buttons*/
+
+.collapsible {
+	cursor: pointer;
+	border: none;
+	text-align: left;
+	outline: none;
+	font-size: 15px;
+	background-color: #282828;
+	padding: 10px;
+	width: 100%;
+	border: none;
+	text-align: left;
+	outline: none;
+	overflow-x: auto;
+	scrollbar-color: #4242426a #99999978;
+	scrollbar-width: thin;
+}
+
+.collapsible:hover{
+	transform: scale(1.0);
+}
+
+.collapsible:after {
+	content: '-';
+	color: #ffffff;
+	font-weight: bold;
+	float: right;
+	margin-left: 5px;
+}
+
+.active:after {
+	content: "+";
+}
+
+.content {
+	padding: 0 18px;
+	display: none;
+	overflow: hidden;
+	background-color: #2f2f2f;
+	overflow-x: auto;
+	scrollbar-color: #4242426a #99999978;
+	scrollbar-width: thin;
+}
