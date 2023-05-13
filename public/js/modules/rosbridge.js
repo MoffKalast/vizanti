@@ -52,7 +52,21 @@ class Rosbridge {
 			serviceType : 'rosapi/Topics',
 		});
 
+		this.nodes_clinet = new ROSLIB.Service({
+			ros : this.ros,
+			name : '/rosapi/nodes',
+			serviceType : 'rosapi/Nodes',
+		});
+
 		window.dispatchEvent(new Event('rosbridge_change'));
+	}
+
+	async get_all_nodes() {
+		return new Promise(async (resolve) => {
+			this.nodes_clinet.callService(new ROSLIB.ServiceRequest({}), function (result) {
+				resolve(result);
+			});
+		});
 	}
 
 	async get_all_topics() {
@@ -83,4 +97,4 @@ class Rosbridge {
 	}
 }
 
-export var rosbridge = new Rosbridge(window.location.hostname, 9090);
+export var rosbridge = new Rosbridge(window.location.hostname, 5001);

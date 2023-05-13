@@ -2,8 +2,10 @@
 
 import rospy
 from std_srvs.srv import Trigger, TriggerResponse
-from outdooros.srv import GetNodeParameters, GetNodeParametersResponse, LoadMap, LoadMapResponse, SaveMap, SaveMapResponse, RecordRosbag, RecordRosbagResponse
-from nav_msgs.srv import GetMap
+from outdooros.srv import GetNodeParameters, GetNodeParametersResponse
+from outdooros.srv import LoadMap, LoadMapResponse, SaveMap, SaveMapResponse
+from outdooros.srv import RecordRosbag, RecordRosbagResponse
+from outdooros.srv import ManageNode, ListPackages, ListExecutables, ListExecutablesResponse, ListPackagesResponse
 import subprocess
 import os
 import fcntl
@@ -13,16 +15,82 @@ class ServiceHandler:
 	def __init__(self):
 		rospy.init_node('outdooros_service_handler')
 
+		self.proc = None
+		self.packages = self.get_packages()
+
 		self.get_nodes_service = rospy.Service('outdooros/get_dynamic_reconfigure_nodes', Trigger,self. get_dynamic_reconfigure_nodes)
 		self.get_node_parameters_service = rospy.Service('outdooros/get_node_parameters', GetNodeParameters, self.get_node_parameters)
+
 		self.load_map_service = rospy.Service('outdooros/load_map', LoadMap, self.load_map)
 		self.save_map_service = rospy.Service('outdooros/save_map', SaveMap, self.save_map)
+
 		self.record_setup_service = rospy.Service('outdooros/bag/setup', RecordRosbag, self.recording_setup)
 		self.record_status_service = rospy.Service('outdooros/bag/status', Trigger, self.recording_status)
 
-		self.proc = None
+		self.node_kill_service = rospy.Service('outdooros/node/kill', ManageNode, self.node_kill)
+		self.node_start_service = rospy.Service('outdooros/node/start', ManageNode, self.node_start)
+
+		self.list_packages_service = rospy.Service('outdooros/list_packages', ListPackages ,self.list_packages_callback)
+		self.list_executables_service = rospy.Service('outdooros/list_executables', ListExecutables ,self.list_executables_callback)
 
 		rospy.loginfo("Service handler ready.")
+
+	def get_packages(self):
+		# Use rospack to get list of packages
+		cmd = ["rospack", "list"]
+		process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+		output, error = process.communicate()
+		# Process output
+		lines = output.decode('utf-8').split('\n')
+		packages = {line.split()[0]: line.split()[1] for line in lines if line}
+		return packages
+
+	def list_packages_callback(self, req):
+		return ListPackagesResponse(self.packages.keys())
+	
+	def list_executables_callback(self, req):
+		if req.package not in self.packages:
+			rospy.logerr("Package not found: " + req.package)
+			return ListExecutablesResponse([])
+
+		path = self.packages[req.package]
+		# Use find to get list of executables
+		cmd_exec = ["find", path, "-type", "f", "!", "-name", "*.*", "-executable"]
+		cmd_python_and_launch = ["find", path, "-type", "f", 
+								"(",
+								"-iname", "*.py", "-executable",
+								"-o",
+								"-iname", "*.launch",
+								")"]
+								
+		process_exec = subprocess.Popen(cmd_exec, stdout=subprocess.PIPE)
+		process_python_and_launch = subprocess.Popen(cmd_python_and_launch, stdout=subprocess.PIPE)
+		
+		output_exec, error_exec = process_exec.communicate()
+		output_python_and_launch, error_python_and_launch = process_python_and_launch.communicate()
+		
+		# Process output
+		lines_exec = output_exec.decode('utf-8').split('\n')
+		lines_python_and_launch = output_python_and_launch.decode('utf-8').split('\n')
+		
+		executables = [line.split("/")[-1] for line in lines_exec if line]
+		python_and_launch_files = [line.split("/")[-1] for line in lines_python_and_launch if line]
+		
+		return ListExecutablesResponse(executables + python_and_launch_files)
+
+	def node_kill(self, req):
+		try:
+			subprocess.call(['rosnode', 'kill', req.node])
+			return {'success': True, 'message': f'Killed node {req.node}'}
+		except Exception as e:
+			return {'success': False, 'message': str(e)}
+
+	def node_start(self, req):
+		try:
+			subprocess.call(req.node.split(" "))
+			return {'success': True, 'message': f'Started node {req.node}'}
+		except Exception as e:
+			return {'success': False, 'message': str(e)}
 
 	def load_map(self, req):
 		file_path = os.path.expanduser(req.file_path)

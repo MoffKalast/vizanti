@@ -1,0 +1,71 @@
+<div id="{uniqueID}_modal" class="modal_outer noselect">
+	<div class="modal_inner noselect">
+		<h3>Node Manager</h3>
+		<hr>
+
+		<b>Launch Node:</b>
+
+		<br>
+
+		<select id="{uniqueID}_type">
+			<option value="rosrun">rosrun</option>
+			<option value="roslaunch">roslaunch</option>
+		</select>
+
+
+		<select id="{uniqueID}_package">
+			<!--Add packages here-->
+		</select>
+
+
+		<select id="{uniqueID}_name">
+			<!--Add nodes here-->
+		</select>
+
+		<br>
+
+		<button id="{uniqueID}_execute">Execute</button>
+
+		<br>
+
+		<b>Running Nodes:</b>
+		<br>
+		<div id="{uniqueID}_nodelist">
+			
+		</div>
+
+		<br>
+
+		<hr>
+
+		<!--<button id="{uniqueID}_shutdown" style="background-color: rgb(134, 44, 33);">Shutdown OS</button>
+
+		<br>
+
+		<button id="{uniqueID}_reboot" style="background-color: rgb(164, 142, 48);">Reboot OS</button>
+
+		<p>Requires sudoless systemctl </p>
+
+		<br>
+
+		<hr>-->
+
+		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
+
+	</div>
+</div>
+
+<div id="{uniqueID}_contextmodal" class="modal_outer noselect">
+	<div class="modal_inner noselect">
+		<h3 id="{uniqueID}_context_title"></h3>
+		<hr>
+
+		<br>
+
+		<p>Note that if a node is set to respawn, it'll automatically restart itself.</p>
+
+		<br>
+
+		<button id="{uniqueID}_nodekill" style="background-color: rgb(131, 17, 17);">Kill node</button>
+	</div>
+</div>

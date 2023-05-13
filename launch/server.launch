@@ -1,11 +1,22 @@
 <launch>
 
+	<arg name="retry_startup_delay" default="10" />
+	<arg name="fragment_timeout" default="30" />
+	<arg name="delay_between_messages" default="0" />
+	<arg name="max_message_size" default="None" />
+
 	<!-- Launch rosbridge without https so it works in AP mode. -->
-	<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">
-		<arg name="ssl" value="false" />
-		<arg name="port" value="9090" />
-		<arg name="use_compression" value="true" />
-	</include>
+	<node name="outdooros_rosbridge" pkg="rosbridge_server" type="rosbridge_websocket" output="screen">
+		<param name="authenticate" value="false" />
+		<param name="port" value="5001"/>
+		<param name="address" value=""/>
+		<param name="retry_startup_delay" value="$(arg retry_startup_delay)"/>
+		<param name="fragment_timeout" value="$(arg fragment_timeout)"/>
+		<param name="delay_between_messages" value="$(arg delay_between_messages)"/>
+		<param name="max_message_size" value="$(arg max_message_size)"/>
+	</node>
+
+	<node name="outdooros_rosapi" pkg="rosapi" type="rosapi_node" />
 
 	<node name="outdooros_server_node" pkg="outdooros" type="server.py" output="screen"/>
 	<node name="outdooros_topic_handler_node" pkg="outdooros" type="topic_handler.py" output="screen"/>

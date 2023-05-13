@@ -32,11 +32,13 @@ const deleteButton = document.getElementById("{uniqueID}_delete");
 flipButton.addEventListener('click', ()=>{
 	points.reverse();
 	drawWaypoints();
+	saveSettings();
 });
 
 deleteButton.addEventListener('click', ()=>{
 	points = [];
 	drawWaypoints();
+	saveSettings();
 });
 
 const startCheckbox = document.getElementById('{uniqueID}_startclosest');

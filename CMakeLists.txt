@@ -16,6 +16,9 @@ add_service_files(
     SaveMap.srv
     LoadMap.srv
     RecordRosbag.srv
+    ManageNode.srv
+    ListPackages.srv
+    ListExecutables.srv
 )
 
 generate_messages(

@@ -19,6 +19,12 @@ i {
 	color: rgb(174, 174, 174);
 }
 
+h1, h2, h3, b {
+	overflow-x: auto;
+	scrollbar-color: #4242426a #99999978;
+	scrollbar-width: thin;
+}
+
 /* Icon bar */
 
 .icon-text {
@@ -459,13 +465,16 @@ button:hover{
 	font-size: 15px;
 	background-color: #282828;
 	padding: 10px;
-	width: 100%;
 	border: none;
 	text-align: left;
 	outline: none;
 	overflow-x: auto;
 	scrollbar-color: #4242426a #99999978;
 	scrollbar-width: thin;
+
+	max-width: 50vw;
+	width: 50vw;
+	min-width: 50vw;
 }
 
 .collapsible:hover{
@@ -492,4 +501,45 @@ button:hover{
 	overflow-x: auto;
 	scrollbar-color: #4242426a #99999978;
 	scrollbar-width: thin;
+}
+
+/* Node manager*/
+
+.node-box {
+	background-color: #282828;
+	border-radius: 15px;
+	margin-bottom: 10px;
+	padding-left: 15px;
+	height: 40px;
+	width:auto;
+	min-width: auto;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	overflow-x: auto;
+	overflow-y: hidden;
+	scrollbar-color: #4242426a #99999978;
+	scrollbar-width: thin;
+}
+
+.action-button {
+	border: none;
+	background: none;
+	cursor: pointer;
+	padding-top: 5px;
+	display: inline-block
+}
+
+.action-button:hover{
+	transform: scale(1.00);
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.action-container {
+	flex-wrap: nowrap;
+	width: 110px; 
+	min-width: 110px;
+	height: 50px; 
+	display: inline-block; 
 }

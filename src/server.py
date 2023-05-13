@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import subprocess
+import rospy
 
 from flask import Flask, render_template, send_from_directory, jsonify
 
@@ -39,4 +40,5 @@ def list_robot_model_files():
 def serve_static(path):
 	return send_from_directory(app.static_folder, path)
 
+rospy.init_node('outdooros_server')
 app.run(debug=True, host='0.0.0.0')

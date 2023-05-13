@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Generator: Adobe Illustrator 24.1.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+
+<svg
+   version="1.1"
+   id="Layer_1"
+   x="0px"
+   y="0px"
+   viewBox="0 0 512 512"
+   style="enable-background:new 0 0 512 512;"
+   xml:space="preserve"
+   sodipodi:docname="node_restart.svg"
+   inkscape:version="1.2 (dc2aedaf03, 2022-05-15)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><defs
+   id="defs9">
+	
+</defs><sodipodi:namedview
+   id="namedview7"
+   pagecolor="#505050"
+   bordercolor="#ffffff"
+   borderopacity="1"
+   inkscape:showpageshadow="0"
+   inkscape:pageopacity="0"
+   inkscape:pagecheckerboard="1"
+   inkscape:deskcolor="#505050"
+   showgrid="false"
+   inkscape:zoom="0.7744141"
+   inkscape:cx="171.09709"
+   inkscape:cy="141.39722"
+   inkscape:window-width="1920"
+   inkscape:window-height="996"
+   inkscape:window-x="-8"
+   inkscape:window-y="-8"
+   inkscape:window-maximized="1"
+   inkscape:current-layer="Layer_1" />
+<style
+   type="text/css"
+   id="style2">
+	.st0{fill:#333333;}
+</style>
+
+<circle
+   style="fill:#171717;fill-opacity:1;stroke-width:17.8528;stroke-linecap:round;stroke-linejoin:round;paint-order:markers fill stroke"
+   id="path343"
+   cx="256"
+   cy="256"
+   r="250.51196" /><g
+   id="g1060"
+   transform="matrix(27.761675,0,0,27.761675,33.934914,35.72482)"
+   style="fill:#f8fa75;fill-opacity:1;stroke:#f8fa75;stroke-width:0.360209;stroke-dasharray:none;stroke-opacity:1"><path
+     fill-rule="evenodd"
+     d="M 8,3 A 5,5 0 1 1 3.454,5.914 0.5,0.5 0 0 0 2.546,5.497 6,6 0 1 0 8,2 Z"
+     id="path909"
+     style="fill:#f8fa75;fill-opacity:1;stroke:#f8fa75;stroke-width:0.360209;stroke-dasharray:none;stroke-opacity:1" /><path
+     d="M 8,4.466 V 0.534 A 0.25,0.25 0 0 0 7.59,0.342 L 5.23,2.308 a 0.25,0.25 0 0 0 0,0.384 L 7.59,4.658 A 0.25,0.25 0 0 0 8,4.466 Z"
+     id="path911"
+     style="fill:#f8fa75;fill-opacity:1;stroke:#f8fa75;stroke-width:0.360209;stroke-dasharray:none;stroke-opacity:1" /></g></svg>

@@ -30,6 +30,10 @@ function openModal(id){
 	document.getElementById(id).style.display = "flex";
 }
 
+function closeModal(id){
+	document.getElementById(id).style.display = "none";
+}
+
 //modal closing
 window.addEventListener("click", function(event){
 	if(event.target.classList.contains("modal_outer")) {
