@@ -17,7 +17,8 @@ class ServiceHandler:
 		self.get_node_parameters_service = rospy.Service('outdooros/get_node_parameters', GetNodeParameters, self.get_node_parameters)
 		self.load_map_service = rospy.Service('outdooros/load_map', LoadMap, self.load_map)
 		self.save_map_service = rospy.Service('outdooros/save_map', SaveMap, self.save_map)
-		self.record_service = rospy.Service('outdooros/record_rosbag', RecordRosbag, self.handle_recording)
+		self.record_setup_service = rospy.Service('outdooros/bag/setup', RecordRosbag, self.recording_setup)
+		self.record_status_service = rospy.Service('outdooros/bag/status', Trigger, self.recording_status)
 
 		self.proc = None
 
@@ -94,7 +95,19 @@ class ServiceHandler:
 
 		return response
 
-	def handle_recording(self, req):
+	def recording_status(self, msg):
+		response = TriggerResponse()
+		response.success = self.proc is not None
+
+		if response.success:
+			response.message = "Bag recording in progress..."
+		else:
+			response.message = "Bag recorder idle."
+
+		return response
+
+
+	def recording_setup(self, req):
 
 		response = RecordRosbagResponse()
 
@@ -103,12 +116,11 @@ class ServiceHandler:
 				response.success = False
 				response.message = "Already recording, please stop the current recording first."
 			else:
-				command = ['rosbag', 'record', '-a', '-O']
+				command = ['rosbag', 'record', '-O']
 
 				# Expand and add the path to the command
 				expanded_path = os.path.expanduser(req.path)
 				command.append(expanded_path)
-				command.append(" -x")
 
 				# Add the topics to the command
 				for topic in req.topics:

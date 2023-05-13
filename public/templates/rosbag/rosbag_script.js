@@ -4,7 +4,8 @@ import { settings } from '/js/modules/persistent.js';
 let path = "~/recording.bag";
 let topic_list = new Set();
 
-let active = false;
+let active = await getRecordingStatus();
+
 // Settings
 
 if(settings.hasOwnProperty("{uniqueID}")){
@@ -21,10 +22,29 @@ function saveSettings(){
 	settings.save();
 }
 
+async function getRecordingStatus(topics, start, path) {
+    const recordRosbagService = new ROSLIB.Service({
+        ros: rosbridge.ros,
+        name: "/outdooros/bag/status",
+        serviceType: "std_srvs/Trigger",
+    });
+
+    return new Promise((resolve, reject) => {
+        const request = new ROSLIB.ServiceRequest({ topics, start, path });
+        recordRosbagService.callService(request, (result) => {
+            console.log(result.message);
+            resolve(result.success);
+        }, (error) => {
+            console.log(error);
+            resolve(false);
+        });
+    });
+}
+
 async function recordRosbag(topics, start, path) {
     const recordRosbagService = new ROSLIB.Service({
         ros: rosbridge.ros,
-        name: "/outdooros/record_rosbag",
+        name: "/outdooros/bag/setup",
         serviceType: "outdooros/RecordRosbag",
     });
 
@@ -81,6 +101,14 @@ async function stopRecording() {
 	if(!result.success)
 		alert(result.message)
 }
+
+startButton.addEventListener('click', async () => {
+	if(active){
+        stopRecording();
+    }else{
+        startRecording();
+    }
+});
 
 selectAllButton.addEventListener('click', async () => {
 	let result = await rosbridge.get_all_topics();
@@ -189,7 +217,7 @@ async function updateTopics(){
 }
 
 icon.addEventListener("click", updateTopics);
-
 updateTopics();
+setState(active);
 
 console.log("Rosbag Widget Loaded {uniqueID}")
