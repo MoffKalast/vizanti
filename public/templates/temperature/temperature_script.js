@@ -9,7 +9,6 @@ const selectionbox = document.getElementById("{uniqueID}_topic");
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
 
 const highBox = document.getElementById('{uniqueID}_hightemp');
-const midBox = document.getElementById('{uniqueID}_midtemp');
 const lowBox = document.getElementById('{uniqueID}_lowtemp');
 
 const text_temperature = document.getElementById("{uniqueID}_temperature");
@@ -19,7 +18,6 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
 	highBox.value = loaded_data.high;
-	midBox.value = loaded_data.mid;
 	lowBox.value = loaded_data.low;
 }
 
@@ -27,7 +25,6 @@ function saveSettings(){
 	settings["{uniqueID}"] = {
 		topic: topic,
 		low: highBox.value,
-		mid: midBox.value,
 		high: highBox.value
 	}
 	settings.save();
