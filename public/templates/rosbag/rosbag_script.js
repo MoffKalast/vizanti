@@ -16,7 +16,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 
 function saveSettings(){
 	settings["{uniqueID}"] = {
-		path: savePathBox.value,
+		path: path,
 		topic_list: Array.from(topic_list)
 	}
 	settings.save();
@@ -125,7 +125,8 @@ selectNoneButton.addEventListener('click', async () => {
 	updateTopics();
 });
 
-savePathBox.addEventListener('click', async () => {
+savePathBox.addEventListener('input', async () => {
+	path = savePathBox.value;
 	saveSettings();
 });
 
