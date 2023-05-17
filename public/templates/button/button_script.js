@@ -1,7 +1,8 @@
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
 
-let topic = "/toggle";
+let topic = "";
+let typedict = {};
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const icondiv = document.getElementById("{uniqueID}_icon");
@@ -21,12 +22,14 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	topic = loaded_data.topic;
 	namebox.value = loaded_data.text;
 	icontext.textContent = loaded_data.text;
+	typedict = loaded_data.typedict;
 }
 
 function saveSettings(){
 	settings["{uniqueID}"] = {
 		topic: topic,
-		text: namebox.value
+		text: namebox.value,
+		typedict: typedict
 	}
 	settings.save();
 }
@@ -37,14 +40,16 @@ function sendMessage(){
 	const publisher = new ROSLIB.Topic({
 		ros: rosbridge.ros,
 		name: topic,
-		messageType: 'std_msgs/Bool',
+		messageType: typedict[topic],
 	});
 
-	const boolMessage = new ROSLIB.Message({
-		data: !value,
-	});	
-
-	publisher.publish(boolMessage);
+	if(typedict[topic] == "std_msgs/Bool"){
+		publisher.publish(new ROSLIB.Message({
+			data: !value,
+		}));
+	}else{
+		publisher.publish(new ROSLIB.Message({}));
+	}
 
 }
 
@@ -61,32 +66,48 @@ function connect(){
 		booltopic.unsubscribe(listener);
 	}
 
-	booltopic = new ROSLIB.Topic({
-		ros : rosbridge.ros,
-		name : topic,
-		messageType : 'std_msgs/Bool'
-	});
+	if(typedict[topic] == "std_msgs/Bool"){
+
+		booltopic = new ROSLIB.Topic({
+			ros : rosbridge.ros,
+			name : topic,
+			messageType : "std_msgs/Bool"
+		});	
+		
+		listener = booltopic.subscribe((msg) => {
+			value = msg.data;
+			icon.src = "assets/button_"+value+".svg";
+		});
+
+		icon.src = "assets/button_false.svg";
+	}
+	else{
+		icon.src = "assets/button.svg";
+	}
+
 	
-	listener = booltopic.subscribe((msg) => {
-		value = msg.data;
-		icon.src = "assets/button_"+value+".svg";
-	});
 
 	saveSettings();
 }
 
 async function loadTopics(){
-	let result = await rosbridge.get_topics("std_msgs/Bool");
+	let booltopics = await rosbridge.get_topics("std_msgs/Bool");
+	let triggertopics = await rosbridge.get_topics("std_msgs/Empty");
 	let topiclist = "";
-	result.forEach(element => {
-		topiclist += "<option value='"+element+"'>"+element+"</option>"
+	booltopics.forEach(element => {
+		topiclist += "<option value='"+element+"'>"+element+" (Bool)</option>"
+		typedict[element] = "std_msgs/Bool";
+	});
+	triggertopics.forEach(element => {
+		topiclist += "<option value='"+element+"'>"+element+" (Empty)</option>"
+		typedict[element] = "std_msgs/Empty";
 	});
 	selectionbox.innerHTML = topiclist
 
 	if(topic == "")
 		topic = selectionbox.value;
 	else{
-		if(result.includes(topic)){
+		if(booltopics.includes(topic) || triggertopics.includes(topic)){
 			selectionbox.value = topic;
 		}else{
 			topiclist += "<option value='"+topic+"'>"+topic+"</option>"
@@ -94,7 +115,7 @@ async function loadTopics(){
 			selectionbox.value = topic;
 		}
 	}
-	connect();
+	//connect();
 }
 
 selectionbox.addEventListener("change", (event) => {
@@ -107,6 +128,7 @@ selectionbox.addEventListener("click", connect);
 icon.addEventListener("click", loadTopics);
 
 loadTopics();
+connect();
 
 // Long press modal open stuff
 let longPressTimer;
@@ -137,6 +159,7 @@ function startLongPress(event) {
 	longPressTimer = setTimeout(() => {
 		isLongPress = true;
 		loadTopics();
+		connect();
 		openModal("{uniqueID}_modal");
 	}, 500);
 }

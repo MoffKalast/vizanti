@@ -24,7 +24,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 function saveSettings(){
 	settings["{uniqueID}"] = {
 		topic: topic,
-		low: highBox.value,
+		low: lowBox.value,
 		high: highBox.value
 	}
 	settings.save();
@@ -90,6 +90,7 @@ async function loadTopics(){
 selectionbox.addEventListener("change", (event) => {
 	topic = selectionbox.value;
 	connect();
+	saveSettings();
 });
 
 selectionbox.addEventListener("click", (event) => {
