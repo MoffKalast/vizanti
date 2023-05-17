@@ -1,5 +1,6 @@
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
+import { toDataURL } from '/js/modules/util.js';
 
 let topic = "";
 
@@ -14,6 +15,14 @@ function saveSettings(){
 	}
 	settings.save();
 }
+
+let icons = {};
+icons["20%"] = await toDataURL("assets/battery_20.svg");
+icons["40%"] = await toDataURL("assets/battery_40.svg");
+icons["60%"] = await toDataURL("assets/battery_60.svg");
+icons["80%"] = await toDataURL("assets/battery_80.svg");
+icons["100%"] = await toDataURL("assets/battery_100.svg");
+icons["unknown"] = await toDataURL("assets/battery_unknown.svg");
 
 const STATUS = [
 	"UNKNOWN",
@@ -79,19 +88,19 @@ function connect(){
 	listener = batterytopic.subscribe((msg) => {
 
 		if(msg.percentage <= 0.2){
-			icon.src = "assets/battery_20.svg";
+			icon.src = icons["20%"];
 		}
 		else if(msg.percentage <= 0.4){
-			icon.src = "assets/battery_40.svg";
+			icon.src = icons["40%"];
 		}
 		else if(msg.percentage <= 0.6){
-			icon.src = "assets/battery_60.svg";
+			icon.src = icons["60%"];
 		}
 		else if(msg.percentage <= 0.8){
-			icon.src = "assets/battery_80.svg";
+			icon.src = icons["80%"];
 		}
 		else{
-			icon.src = "assets/battery_100.svg";
+			icon.src = icons["100%"];
 		}
 
 		text_percent.innerText = "Percentage: "+parseInt(msg.percentage*100)+" %";
@@ -137,8 +146,9 @@ async function loadTopics(){
 
 selectionbox.addEventListener("change", (event) => {
 	topic = selectionbox.value;
-	icon.src = "assets/battery_unknown.svg";
+	icon.src = icons["unknown"];
 	connect();
+	saveSettings();
 });
 
 selectionbox.addEventListener("click", connect);

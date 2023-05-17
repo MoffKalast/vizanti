@@ -91,7 +91,7 @@ Drag to select an area and publish it to a 3DBoundingBox topic. Long press to op
 
 #### <img src="wiki_assets/button.png" alt="" title="Button" width="30" height="30"/> Button
 
-A button with customizable text that displays the last message sent on a Bool topic and sends the inverse to toggle it when pressed. Long press to open setup menu.
+A button with customizable text that displays the last message sent on a Bool topic and sends the inverse to toggle it when pressed. Also supports just sending messages to an Empty topic. Long press to open setup menu.
 
 ----
 

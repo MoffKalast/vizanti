@@ -1,9 +1,16 @@
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
+import { toDataURL } from '/js/modules/util.js';
 
 let topic = "";
 let listener = undefined;
 let temperature_topic = undefined;
+
+let icons = {};
+icons["hot"] = await toDataURL("assets/temp_hot.svg");
+icons["cold"] = await toDataURL("assets/temp_cold.svg");
+icons["warm"] = await toDataURL("assets/temp_warm.svg");
+icons["unknown"] = await toDataURL("assets/temp_warm.svg");
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
@@ -48,13 +55,13 @@ function connect(){
 	listener = temperature_topic.subscribe((msg) => {
 
 		if(msg.temperature > highBox.value){
-			icon.src = "assets/temp_hot.svg";
+			icon.src = icons["hot"];
 		}
 		else if(msg.temperature < lowBox.value){
-			icon.src = "assets/temp_cold.svg";
+			icon.src = icons["cold"];
 		}
 		else{
-			icon.src = "assets/temp_warm.svg";
+			icon.src = icons["warm"];
 		}
 
 		text_temperature.innerText = "Temperature (°C): "+(Math.round(msg.temperature * 100) / 100).toFixed(2);
@@ -89,8 +96,8 @@ async function loadTopics(){
 
 selectionbox.addEventListener("change", (event) => {
 	topic = selectionbox.value;
+	icon.src = icons["unknown"];
 	connect();
-	saveSettings();
 });
 
 selectionbox.addEventListener("click", (event) => {

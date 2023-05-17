@@ -18,7 +18,12 @@
 
 	<node name="outdooros_rosapi" pkg="rosapi" type="rosapi_node" />
 
-	<node name="outdooros_server_node" pkg="outdooros" type="server.py" output="screen"/>
+	<node name="outdooros_flask_node" pkg="outdooros" type="server.py" output="screen">
+		<param name="host" value="0.0.0.0"/>
+		<param name="port" value="5000"/>
+		<param name="flask_debug" value="True"/>
+	</node>
+
 	<node name="outdooros_topic_handler_node" pkg="outdooros" type="topic_handler.py" output="screen"/>
 	<node name="outdooros_service_handler_node" pkg="outdooros" type="service_handler.py" output="screen"/>
     

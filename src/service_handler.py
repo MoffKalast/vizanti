@@ -198,7 +198,7 @@ class ServiceHandler:
 				self.proc = subprocess.Popen(command)
 
 				response.success = True
-				response.message = "Started recording rosbag with PID " + str(self.proc.pid)
+				response.message = "Started recording rosbag with PID " + str(self.proc.pid) +" to path "+ str(expanded_path)
 		else:
 			if self.proc is None:
 				response.success = False
