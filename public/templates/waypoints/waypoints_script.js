@@ -4,12 +4,12 @@ import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
 
 let topic = "/waypoints"
+let fixed_frame = "/map"
 let seq = 0;
 let active = false;
 let points = [];
 
 const icon = document.getElementById("{uniqueID}_icon");
-const iconImg = icon.getElementsByTagName('img')[0];
 
 const startButton = document.getElementById("{uniqueID}_start");
 const stopButton = document.getElementById("{uniqueID}_stop");
@@ -50,6 +50,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
 	points = loaded_data.points;
+	fixed_frame = loaded_data.fixed_frame;
 
 	startCheckbox.checked = loaded_data.start_closest;
 }
@@ -57,6 +58,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 function saveSettings(){
 	settings["{uniqueID}"] = {
 		topic: topic,
+		fixed_frame: fixed_frame,
 		points: points,
 		start_closest: startCheckbox.checked
 	}
@@ -87,7 +89,7 @@ function sendMessage(pointlist){
 				header: {
 					seq: 0,
 					stamp: timeStamp,
-					frame_id: tf.fixed_frame
+					frame_id: fixed_frame
 				},
 				pose: {
 					position: {
@@ -117,7 +119,7 @@ function sendMessage(pointlist){
 					header: {
 						seq: index,
 						stamp: timeStamp,
-						frame_id: tf.fixed_frame
+						frame_id: fixed_frame
 					},
 					pose: {
 						position: {
@@ -143,7 +145,7 @@ function sendMessage(pointlist){
 		header: {
 			seq: seq++,
 			stamp: timeStamp,
-			frame_id: tf.fixed_frame
+			frame_id: fixed_frame
 		},
 		poses: poseList
 	});
@@ -157,10 +159,16 @@ const ctx = canvas.getContext('2d');
 const view_container = document.getElementById("view_container");
 
 function getStartIndex(){
-	let link = tf.absoluteTransforms["base_link"];
 
-	if(!link)
+	if(!tf.transforms["base_link"])
 		return 0;
+
+	let link = tf.transformPose(
+		"base_link", 
+		fixed_frame, 
+		{x: 0, y: 0, z: 0}, 
+		new Quaternion()
+	);
 
     let minDistance = Number.POSITIVE_INFINITY;
     let minIndex = 0;
@@ -181,6 +189,30 @@ function getStartIndex(){
     return minIndex;
 }
 
+function pointToScreen(point){
+	let transformed = tf.transformPose(
+		fixed_frame, 
+		tf.fixed_frame, 
+		point, 
+		new Quaternion()
+	);
+
+	return view.fixedToScreen({
+		x: transformed.translation.x,
+		y: transformed.translation.y
+	});
+}
+
+function screenToPoint(click){
+	let transformed = view.screenToFixed(click);
+	return tf.transformPose(
+		tf.fixed_frame, 
+		fixed_frame, 
+		transformed, 
+		new Quaternion()
+	).translation;
+}
+
 function drawWaypoints() {
 
     const wid = canvas.width;
@@ -191,9 +223,14 @@ function drawWaypoints() {
 	ctx.strokeStyle = "#EBCE00"; 
 	ctx.fillStyle = active ? "white" : "#EBCE00";
 
+	const frame = tf.absoluteTransforms[fixed_frame];
+
+	if(!frame)
+		return;
+
 	const startIndex = getStartIndex();
 	const viewPoints = points.map((point) =>
-		view.mapToScreen(point)
+		pointToScreen(point)
 	);
 
 	if(startCheckbox.checked)
@@ -257,7 +294,7 @@ let drag_point = -1;
 function findPoint(newpoint){
 	let i = -1;
 	points.forEach((point, index) => {
-		const screenpoint = view.mapToScreen(point);
+		const screenpoint = pointToScreen(point);
 		const dist = Math.hypot(
 			screenpoint.x - newpoint.x,
 			screenpoint.y - newpoint.y,
@@ -285,7 +322,7 @@ function startDrag(event){
 function drag(event){
 	const { clientX, clientY } = event.touches ? event.touches[0] : event;
 	if(drag_point >= 0){
-		points[drag_point] = view.screenToMap({
+		points[drag_point] = screenToPoint({
 			x: clientX,
 			y: clientY
 		})
@@ -346,8 +383,8 @@ function endDrag(event){
 		{
 			let after = -1;
 			for (let i = 0; i < points.length - 1; i++) {
-				const p0 = view.mapToScreen(points[i]);
-				const p1 = view.mapToScreen(points[i+1]);
+				const p0 = pointToScreen(points[i]);
+				const p1 = pointToScreen(points[i+1]);
 
 				const distance = distancePointToLineSegment(
 					newpoint.x, newpoint.y,
@@ -362,9 +399,9 @@ function endDrag(event){
 			}
 		
 			if(after > 0){
-				points.splice(after, 0, view.screenToMap(newpoint));
+				points.splice(after, 0, screenToPoint(newpoint));
 			}else{
-				points.push(view.screenToMap(newpoint));
+				points.push(screenToPoint(newpoint));
 			}
 
 			
@@ -427,6 +464,7 @@ function setActive(value){
 // Topics
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
+const fixedFrameBox = document.getElementById("{uniqueID}_fixed_frame");
 
 async function loadTopics(){
 	let result = await rosbridge.get_topics("nav_msgs/Path");
@@ -444,12 +482,32 @@ async function loadTopics(){
 		selectionbox.innerHTML = topiclist
 		selectionbox.value = topic;
 	}
+
+	let framelist = "";
+	for (const key of tf.frame_list.values()) {
+		framelist += "<option value='"+key+"'>"+key+"</option>"
+	}
+	fixedFrameBox.innerHTML = framelist;
+
+	if(tf.frame_list.has(fixed_frame)){
+		fixedFrameBox.value = fixed_frame;
+	}else{
+		framelist += "<option value='"+fixed_frame+"'>"+fixed_frame+"</option>"
+		fixedFrameBox.innerHTML = framelist
+		fixedFrameBox.value = fixed_frame;
+	}
 }
 
 selectionbox.addEventListener("change", (event) => {
 	topic = selectionbox.value;
 	saveSettings();
 });
+
+fixedFrameBox.addEventListener("change", (event) => {
+	fixed_frame = fixedFrameBox.value;
+	saveSettings();
+});
+
 
 loadTopics();
 

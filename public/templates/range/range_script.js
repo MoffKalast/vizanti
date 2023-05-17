@@ -64,7 +64,7 @@ function drawRanges() {
 
 	for (const [key, sample] of Object.entries(data)) {
 
-		let pos = view.mapToScreen({
+		let pos = view.fixedToScreen({
 			x: sample.pose.translation.x,
 			y: sample.pose.translation.y,
 		});

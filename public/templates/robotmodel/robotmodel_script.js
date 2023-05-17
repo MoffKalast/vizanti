@@ -56,7 +56,7 @@ function drawRobot() {
 	const modelimg = models[sprite];
 
 	if(robotframe){
-		let pos = view.mapToScreen({
+		let pos = view.fixedToScreen({
 			x: robotframe.translation.x,
 			y: robotframe.translation.y,
 		});

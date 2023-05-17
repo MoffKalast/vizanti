@@ -159,7 +159,7 @@ function drawMap(){
 			map_data.info.origin.orientation
 		);
 
-		const pos = view.mapToScreen({
+		const pos = view.fixedToScreen({
 			x: transformed.translation.x,
 			y: transformed.translation.y,
 		});

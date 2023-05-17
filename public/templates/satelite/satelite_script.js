@@ -96,7 +96,7 @@ function drawTile(screenSize, i, j){
 		new Quaternion()
 	);
 
-	const pos = view.mapToScreen({
+	const pos = view.fixedToScreen({
 		x: transformed.translation.x,
 		y: transformed.translation.y,
 	});
@@ -138,7 +138,7 @@ async function drawTiles(){
 
 		// Convert the corners from pixels to meters, transform them to map_fix frame and convert to latitude, longitude
 		const cornerCoords = corners.map((corner) => {
-			const meters = view.screenToMap(corner);
+			const meters = view.screenToFixed(corner);
 			const transformed = tf.transformPose(
 				tf.fixed_frame,
 				map_fix.header.frame_id,

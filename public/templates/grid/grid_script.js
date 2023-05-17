@@ -32,8 +32,8 @@ function drawGrid() {
     ctx.strokeStyle = grid_colour;
 	ctx.lineWidth = grid_thickness;
 
-	const topLeft = view.screenToMap({ x: 0, y: 0 });
-	const bottomRight = view.screenToMap({ x: wid, y: hei });
+	const topLeft = view.screenToFixed({ x: 0, y: 0 });
+	const bottomRight = view.screenToFixed({ x: wid, y: hei });
   
 	const minX = topLeft.x - (topLeft.x % grid_size) - grid_size;
 	const maxX = bottomRight.x + (grid_size - (bottomRight.x % grid_size));
@@ -51,12 +51,12 @@ function drawGrid() {
 
     // Draw vertical lines
     for (let x = minX; x <= maxX; x += grid_size) {
-        let from = view.mapToScreen({
+        let from = view.fixedToScreen({
             x: x,
             y: minY,
         });
 
-        let to = view.mapToScreen({
+        let to = view.fixedToScreen({
             x: x,
             y: maxY,
         });
@@ -67,12 +67,12 @@ function drawGrid() {
 
     // Draw horizontal lines
     for (let y = minY; y <= maxY; y += grid_size) {
-        let from = view.mapToScreen({
+        let from = view.fixedToScreen({
             x: minX,
             y: y,
         });
 
-        let to = view.mapToScreen({
+        let to = view.fixedToScreen({
             x: maxX,
             y: y,
         });

@@ -55,7 +55,7 @@ function drawPath(){
 			point.pose.orientation
 		);
 
-		const pos = view.mapToScreen({
+		const pos = view.fixedToScreen({
 			x: transformed.translation.x,
 			y: transformed.translation.y
 		});

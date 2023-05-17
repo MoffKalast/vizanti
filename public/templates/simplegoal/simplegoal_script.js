@@ -25,7 +25,7 @@ function sendMessage(pos, delta){
 	let yaw = Math.atan2(delta.y, -delta.x);
 	let quat = Quaternion.fromEuler(yaw, 0, 0, 'ZXY');
 
-	let map_pos = view.screenToMap(pos);
+	let map_pos = view.screenToFixed(pos);
 
 	const currentTime = new Date();
 	const currentTimeSecs = Math.floor(currentTime.getTime() / 1000);

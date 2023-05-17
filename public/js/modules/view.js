@@ -60,7 +60,7 @@ export class View {
 		window.dispatchEvent(new Event("view_changed"));
 	}
 
-	mapToScreen(coords) {
+	fixedToScreen(coords) {
 		return {
 			x: (coords.x - this.center.x) * this.scale + window.innerWidth / 2,
 			y: (-coords.y - this.center.y) * this.scale + window.innerHeight / 2,
@@ -68,7 +68,7 @@ export class View {
 		}
 	}
 	
-	screenToMap(coords) {
+	screenToFixed(coords) {
 		return {
 			x: (coords.x - window.innerWidth / 2) / this.scale + this.center.x,
 			y: -(coords.y - window.innerHeight / 2) / this.scale - this.center.y,
@@ -77,12 +77,12 @@ export class View {
 	}
 
 	getPixelsInMapUnits(length){
-		let p1 = this.screenToMap({
+		let p1 = this.screenToFixed({
 			x: 0,
 			y: 0,
 		});
 	
-		let p2 = this.screenToMap({
+		let p2 = this.screenToFixed({
 			x: length,
 			y: 0,
 		});
@@ -91,12 +91,12 @@ export class View {
 	}
 
 	getMapUnitsInPixels(length){
-		let p1 = this.mapToScreen({
+		let p1 = this.fixedToScreen({
 			x: 0,
 			y: 0,
 		});
 	
-		let p2 = this.mapToScreen({
+		let p2 = this.fixedToScreen({
 			x: length,
 			y: 0,
 		});
@@ -177,7 +177,7 @@ export class View {
 		}
 	
 		const screenPoint = { x: centerX, y: centerY };
-		const mapPoint = this.screenToMap(screenPoint);
+		const mapPoint = this.screenToFixed(screenPoint);
 	
 		const newCenter = {
 			x: this.center.x + (mapPoint.x - this.center.x) * (1 - 1 / scaleChange),

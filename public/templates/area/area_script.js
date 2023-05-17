@@ -22,8 +22,8 @@ function sendMessage(start, end){
 	if(!start || !end)
 		return;
 
-	let start_pos = view.screenToMap(start);
-	let end_pos = view.screenToMap(end);
+	let start_pos = view.screenToFixed(start);
+	let end_pos = view.screenToFixed(end);
 
 	const centerX = (start_pos.x + end_pos.x) / 2;
 	const centerY = (start_pos.y + end_pos.y) / 2;

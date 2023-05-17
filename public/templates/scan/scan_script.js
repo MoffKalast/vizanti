@@ -84,7 +84,7 @@ function drawScan() {
 		return;
 	}
 
-	let pos = view.mapToScreen({
+	let pos = view.fixedToScreen({
 		x: data.pose.translation.x,
 		y: data.pose.translation.y,
 	});

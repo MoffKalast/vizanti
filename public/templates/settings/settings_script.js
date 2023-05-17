@@ -12,7 +12,6 @@ colourpicker.addEventListener("input", (event) =>{
 	saveSettings();
 });
 
-
 // Settings
 if (settings.hasOwnProperty('{uniqueID}')) {
 	const loadedData = settings['{uniqueID}'];

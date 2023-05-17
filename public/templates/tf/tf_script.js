@@ -65,7 +65,7 @@ function drawLines(origin, relative, absolute){
 
 		let transform = absolute[key];
 
-		let point = view.mapToScreen({
+		let point = view.fixedToScreen({
 			x: transform.translation.x,
 			y: transform.translation.y,
 		});
@@ -75,7 +75,7 @@ function drawLines(origin, relative, absolute){
 			let parent = absolute[relative[key].parent];
 			if(parent !== undefined){
 	
-				let parentpoint = view.mapToScreen({
+				let parentpoint = view.fixedToScreen({
 					x: parent.translation.x,
 					y: parent.translation.y,
 				});
@@ -106,7 +106,7 @@ function drawText(origin, relative, absolute){
 
 		let transform = absolute[key];
 
-		let point = view.mapToScreen({
+		let point = view.fixedToScreen({
 			x: transform.translation.x,
 			y: transform.translation.y,
 		});
@@ -119,11 +119,11 @@ function drawText(origin, relative, absolute){
 function getBasisPoints(basis, translation, rotation){
 	let basis_x = applyRotation(basis, rotation);
 	return [
-		view.mapToScreen({
+		view.fixedToScreen({
 			x: translation.x,
 			y: translation.y,
 		}), 
-		view.mapToScreen({
+		view.fixedToScreen({
 			x: translation.x + basis_x.x,
 			y: translation.y + basis_x.y,
 		})
@@ -202,7 +202,7 @@ function drawFrames() {
 	const relative = filterFrames(tf.transforms);
 	const absolute = filterFrames(tf.absoluteTransforms);
 
-	let origin = view.mapToScreen({
+	let origin = view.fixedToScreen({
 		x: 0,
 		y: 0,
 	});
