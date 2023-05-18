@@ -3,7 +3,7 @@ import { tf } from '/js/modules/tf.js';
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
 
-let topic = "/area"
+let topic = ""
 let seq = 0;
 
 if(settings.hasOwnProperty("{uniqueID}")){
@@ -167,7 +167,6 @@ function setActive(value){
 }
 
 // Topics
-
 const selectionbox = document.getElementById("{uniqueID}_topic");
 
 async function loadTopics(){
@@ -192,8 +191,6 @@ selectionbox.addEventListener("change", (event) => {
 	topic = selectionbox.value;
 	saveSettings();
 });
-
-loadTopics();
 
 // Long press modal open stuff
 
@@ -233,5 +230,6 @@ function cancelLongPress(event) {
 }
 
 resizeScreen();
+loadTopics();
 
 console.log("Area Widget Loaded {uniqueID}")

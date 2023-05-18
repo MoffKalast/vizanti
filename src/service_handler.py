@@ -97,7 +97,7 @@ class ServiceHandler:
 		try:
 			rosinfo = subprocess.check_output(["rosnode", "info", req.node]).decode('utf-8')
 			rosinfo = rosinfo.replace("--------------------------------------------------------------------------------","")
-			return {'success': True, 'message': rosinfo.split("contacting node")[0]}
+			return {'success': True, 'message': rosinfo}
 		except Exception as e:
 			return {'success': False, 'message': str(e)}
 		

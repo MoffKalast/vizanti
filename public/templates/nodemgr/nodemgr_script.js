@@ -28,7 +28,7 @@ async function nodeInfo(name) {
     return new Promise((resolve, reject) => {
         const request = new ROSLIB.ServiceRequest({ node: name });
         recordRosbagService.callService(request, (result) => {
-            resolve(result.message);
+            resolve(result.message.replace(/ /g, '\u00a0'));
         }, (error) => {
             reject(error);
 			alert(error);

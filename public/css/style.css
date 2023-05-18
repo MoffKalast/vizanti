@@ -19,7 +19,7 @@ i {
 	color: rgb(174, 174, 174);
 }
 
-h1, h2, h3, b {
+h1, h2, h3, b, p {
 	overflow-x: auto;
 	scrollbar-color: #4242426a #99999978;
 	scrollbar-width: thin;

@@ -115,7 +115,6 @@ async function loadTopics(){
 			selectionbox.value = topic;
 		}
 	}
-	//connect();
 }
 
 selectionbox.addEventListener("change", (event) => {

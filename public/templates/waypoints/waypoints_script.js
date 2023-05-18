@@ -3,8 +3,8 @@ import { tf } from '/js/modules/tf.js';
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
 
-let topic = "/waypoints"
-let fixed_frame = "/map"
+let topic = ""
+let fixed_frame = "map"
 let seq = 0;
 let active = false;
 let points = [];
