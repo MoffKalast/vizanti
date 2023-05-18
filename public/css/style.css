@@ -434,14 +434,15 @@ button:hover{
 /* Loader */
 
 .loader {
-	border: 20px solid #273444;
+	display: inline-block;
+	border: 7px solid #273444;
 	border-radius: 50%;
-	border-top: 20px solid #aeaeae;
-	width: 50px;
-	height: 50px;
+	border-top: 7px solid #aeaeae;
+	width: 15px;
+	height: 15px;
 	-webkit-animation: spin 0.6s linear infinite; /* Safari */
 	animation: spin 0.6s linear infinite;
-	margin: 20px;
+	margin: 7px;
 	position: flex;
 }
 

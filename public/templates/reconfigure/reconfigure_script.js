@@ -26,12 +26,20 @@ async function getNodeParameters(node) {
 	return new Promise((resolve, reject) => {
 		const request = new ROSLIB.ServiceRequest({ node });
 		getNodeParametersService.callService(request, (result) => {
-			resolve(result.parameters);
+			let parsedParams = JSON.parse(convertAlmostJsonToValidJson(result.parameters));
+			delete parsedParams.groups;
+			resolve(parsedParams);
 		}, (error) => {
 			reject(error);
 		});
 	});
 }
+
+const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
+const nodeSelector = document.getElementById("{uniqueID}_node");
+const loaderSpinner = document.getElementById("{uniqueID}_loader");
+const paramBox = document.getElementById("{uniqueID}_params");
+const refreshButton = document.getElementById("{uniqueID}_refresh");
 
 async function setNodeParamValue(fullname, type, newValue) {
 	const setParamClient = new ROSLIB.Service({
@@ -69,12 +77,6 @@ async function setNodeParamValue(fullname, type, newValue) {
 		});
 	});
 }
-
-const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
-const nodeSelector = document.getElementById("{uniqueID}_node");
-const infoLabel = document.getElementById("{uniqueID}_info");
-const loaderSpinner = document.getElementById("{uniqueID}_loader");
-const paramBox = document.getElementById("{uniqueID}_params");
 
 function createParameterInput(fullname, defaultValue, type) {
 	const name = fullname.replace(nodeName+"/","").replaceAll("_","_<wbr>");
@@ -151,58 +153,66 @@ function convertAlmostJsonToValidJson(almostJson) {
 }
 
 let nodeName = "";
+let cached_params = undefined;
 
 async function listParameters(){
-	if(nodeName == ""){
-		infoLabel.innerText = "Select a valid node with reconfigurable parameters.";
+	if(nodeName == "" || !cached_params[nodeName]){
 		return;
 	}
-	infoLabel.innerText = "";
-	paramBox.innerHTML = "";
 	loaderSpinner.style.display = "block";
 
-	const params = await getNodeParameters(nodeName);	
-	let parsedParams = JSON.parse(convertAlmostJsonToValidJson(params));
-	delete parsedParams.groups;
-
-	infoLabel.innerText = "";
 	paramBox.innerHTML = "";
-
-	for (const [key,value] of Object.entries(parsedParams)) {
+	for (const [key,value] of Object.entries(cached_params[nodeName])) {
 		createParameterInput(key,value,detectValueType(value));
 	}
 	loaderSpinner.style.display = "none";
 }
 
-async function setList(){
-
-	paramBox.innerHTML = "";
+async function getAll(results){
 	loaderSpinner.style.display = "block";
-	let result = await getDynamicReconfigureNodes();
+	cached_params = {};
+	for (const node of results) {
+		cached_params[node] = await getNodeParameters(node);
+		if(node == nodeName){
+			listParameters();
+		}
+	}
+	loaderSpinner.style.display = "none";
+}
 
+async function setNodeList(){
+	let results = await getDynamicReconfigureNodes();
 	let nodelist = "";
-	for (const node of result) {
+	for (const node of results) {
 		nodelist += "<option value='"+node+"'>"+node+"</option>"
 	}
-
-	loaderSpinner.style.display = "none";
-	nodeSelector.innerHTML = nodelist
+	nodeSelector.innerHTML = nodelist;
 
 	if(nodeName == "")
 		nodeName = nodeSelector.value;
-	else if(result.includes(nodeName)){
+	else if(results.includes(nodeName)){
 		nodeSelector.value = nodeName;
 	}
 
-	listParameters();
+	if(!cached_params){
+		await getAll(results);
+	}
 }
 
 nodeSelector.addEventListener("change", (event)=>{
 	nodeName = nodeSelector.value;
 	listParameters();
 });
-icon.addEventListener("click", setList);
 
-setList();
+icon.addEventListener("click", setNodeList);
+
+refreshButton.addEventListener("click", async (event)=>{
+	loaderSpinner.style.display = "block";
+	cached_params[nodeName] = await getNodeParameters(nodeName);
+	listParameters();
+	loaderSpinner.style.display = "none";
+});
+
+await setNodeList();
 
 console.log("Reconfigure Widget Loaded {uniqueID}")
