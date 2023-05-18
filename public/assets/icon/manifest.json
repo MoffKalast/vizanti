@@ -1,0 +1,22 @@
+{
+    "name": "OutdooROS",
+    "short_name": "OutdooROS",
+    "description": "A web-based visualization and control tool for outdoor robots running ROS.",
+    "start_url": "/",
+    "display": "fullscreen",
+    "background_color": "#111111",
+    "theme_color": "#111111",
+    "orientation": "any",
+    "icons": [
+      {
+        "src": "192.png",
+        "sizes": "192x192",
+        "type": "image/png"
+      },
+      {
+        "src": "512.png",
+        "sizes": "512x512",
+        "type": "image/png"
+      }
+    ]
+  }
