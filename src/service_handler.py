@@ -29,6 +29,7 @@ class ServiceHandler:
 
 		self.node_kill_service = rospy.Service('outdooros/node/kill', ManageNode, self.node_kill)
 		self.node_start_service = rospy.Service('outdooros/node/start', ManageNode, self.node_start)
+		self.node_info_service = rospy.Service('outdooros/node/info', ManageNode, self.node_info)
 
 		self.list_packages_service = rospy.Service('outdooros/list_packages', ListPackages ,self.list_packages_callback)
 		self.list_executables_service = rospy.Service('outdooros/list_executables', ListExecutables ,self.list_executables_callback)
@@ -91,6 +92,15 @@ class ServiceHandler:
 			return {'success': True, 'message': f'Started node {req.node}'}
 		except Exception as e:
 			return {'success': False, 'message': str(e)}
+		
+	def node_info(self, req):
+		try:
+			rosinfo = subprocess.check_output(["rosnode", "info", req.node]).decode('utf-8')
+			rosinfo = rosinfo.replace("--------------------------------------------------------------------------------","")
+			return {'success': True, 'message': rosinfo.split("contacting node")[0]}
+		except Exception as e:
+			return {'success': False, 'message': str(e)}
+		
 
 	def load_map(self, req):
 		file_path = os.path.expanduser(req.file_path)

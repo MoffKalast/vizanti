@@ -18,11 +18,30 @@ async function killNode(name) {
     });
 }
 
+async function nodeInfo(name) {
+    const recordRosbagService = new ROSLIB.Service({
+        ros: rosbridge.ros,
+        name: "/outdooros/node/info",
+        serviceType: "outdooros/ManageNode",
+    });
+
+    return new Promise((resolve, reject) => {
+        const request = new ROSLIB.ServiceRequest({ node: name });
+        recordRosbagService.callService(request, (result) => {
+            resolve(result.message);
+        }, (error) => {
+            reject(error);
+			alert(error);
+        });
+    });
+}
+
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
 const nodeDiv = document.getElementById('{uniqueID}_nodelist');
 
 const contextTitle = document.getElementById('{uniqueID}_context_title');
 const killButton = document.getElementById('{uniqueID}_nodekill');
+const infoText = document.getElementById('{uniqueID}_rosnode_info');
 
 const typeBox = document.getElementById('{uniqueID}_type');
 const packageBox = document.getElementById('{uniqueID}_package');
@@ -62,9 +81,13 @@ async function updateNodeList(){
 		nodeName.textContent = node;
 	
 		nodeBox.addEventListener('click', async () => {
+			infoText.innerText = "Waiting for rosnode info...";
+
 			currentNode = node;
 			contextTitle.innerText = node;
 			openModal("{uniqueID}_contextmodal");
+
+			infoText.innerText = await nodeInfo(node);
 		});
 	
 		nodeBox.appendChild(nodeName);

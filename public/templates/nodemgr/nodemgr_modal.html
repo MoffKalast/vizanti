@@ -38,18 +38,6 @@
 
 		<hr>
 
-		<!--<button id="{uniqueID}_shutdown" style="background-color: rgb(134, 44, 33);">Shutdown OS</button>
-
-		<br>
-
-		<button id="{uniqueID}_reboot" style="background-color: rgb(164, 142, 48);">Reboot OS</button>
-
-		<p>Requires sudoless systemctl </p>
-
-		<br>
-
-		<hr>-->
-
 		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
 
 	</div>
@@ -62,9 +50,11 @@
 
 		<br>
 
-		<p>Note that if a node is set to respawn, it'll automatically restart itself.</p>
+		<p id="{uniqueID}_rosnode_info" style="color:lightgray">Waiting for rosnode info...</p>
+		
+		<hr>
 
-		<br>
+		<p>Note that if a node is set to respawn, it'll automatically restart itself.</p>
 
 		<button id="{uniqueID}_nodekill" style="background-color: rgb(131, 17, 17);">Kill node</button>
 	</div>
