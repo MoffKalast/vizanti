@@ -14,7 +14,7 @@ class TopicHandler:
 		self.transforms = {}
 
 		self.tf_sub = rospy.Subscriber('/tf', TFMessage, self.tf_callback)
-		self.tf_pub = rospy.Publisher('/tf/consolidated', TFMessage, queue_size=1)
+		self.tf_pub = rospy.Publisher('/outdooros/tf_consolidated', TFMessage, queue_size=1)
 
 		rospy.loginfo("TF handler ready.")
 

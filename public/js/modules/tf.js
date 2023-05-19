@@ -34,7 +34,7 @@ export class TF {
 
 		this.tf_topic = new ROSLIB.Topic({
 			ros: rosbridge.ros,
-			name: 'tf/consolidated',
+			name: 'outdooros/tf_consolidated',
 			messageType: 'tf/tfMessage',
 			throttle_rate: 30
 		});

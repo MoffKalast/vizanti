@@ -23,7 +23,7 @@ async function loadElementTemplates() {
     });
 
     await Promise.all(fetchPromises);
-	console.log("Loaded templates:",templates)
+	console.table("Loaded templates:",templates)
 
     return templates;
 }

@@ -9,8 +9,6 @@ class Rosbridge {
 
 		this.connect();
 		this.status = "Connecting...";
-
-		console.log("bridge created!")
 	}
 
 	connect(){
