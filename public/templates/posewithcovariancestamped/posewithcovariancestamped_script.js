@@ -98,32 +98,24 @@ function drawMarkers(){
 		ctx.lineTo(0, -width);
 		ctx.fill();
 	}
-
-	function covarianceToRadius(covariance) {
-		// Use the max of the x and y covariance as the radius
-		const max_cov = Math.max(covariance[0], covariance[7]);
-		return Math.sqrt(max_cov);
-	}
 	
-	function drawCovariance(eigen, size) {
-		const { eigenvalues, eigenvectors } = eigen;
-	
-		// Sort eigenvalues and vectors by eigenvalue size
-		const indices = Array.from(eigenvalues.keys()).sort((i, j) => eigenvalues[j] - eigenvalues[i]);
-		const sortedEigenvalues = indices.map(i => eigenvalues[i]);
-		const sortedEigenvectors = indices.map(i => eigenvectors[i]);
-	
-		const semiMajor = sortedEigenvalues[0] * size;
-		const semiMinor = sortedEigenvalues[1] * size;
-	
-		const angle = Math.atan2(sortedEigenvectors[0][1], sortedEigenvectors[0][0]);
-	
+	function drawCovariance(posemsg, size) {
+		const covariance = posemsg.pose.covariance;
+	  
+		// Extract the variance values for X and Y.
+		const varianceX = covariance[0];
+		const varianceY = covariance[7];
+	  
+		// Compute the standard deviation, which will be the radius for our ellipse.
+		const radiusX = Math.sqrt(varianceX) * size;
+		const radiusY = Math.sqrt(varianceY) * size;
+	  
+		// Draw the ellipse. The factor of 3 is used to ensure that the 99.7% confidence interval is included.
 		ctx.save();
-		ctx.rotate(angle);
-		ctx.scale(semiMajor, semiMinor);
+		ctx.scale(1, -1);
+		ctx.fillStyle = 'rgba(255, 255, 0, 0.2)'; // Yellow, semi-transparent
 		ctx.beginPath();
-		ctx.arc(0, 0, 1, 0, 2 * Math.PI, false);
-		ctx.fillStyle = "rgba(255, 255, 0, 0.3)"; // transparent yellow
+		ctx.ellipse(0, 0, 3 * radiusX, 3 * radiusY, 0, 0, 2 * Math.PI);
 		ctx.fill();
 		ctx.restore();
 	}
@@ -163,11 +155,11 @@ function drawMarkers(){
 
 	ctx.save();
 	ctx.translate(pos.x, pos.y);
-	ctx.scale(scale, -scale);
+	ctx.scale(1, -1);
 	ctx.rotate(yaw);
 
-	drawCovariance(posemsg.eigen, unit);
-	drawArrow(posemsg, unit);
+	drawCovariance(posemsg, unit);
+	drawArrow(posemsg, unit*scale);
 
 	ctx.restore();
 }
@@ -189,30 +181,6 @@ function connect(){
 	});
 	
 	listener = marker_topic.subscribe((msg) => {
-
-		function eigen(covariance) {
-			const a = covariance[0];
-			const b = covariance[1];
-			const d = covariance[7];
-		
-			const T = a + d;
-			const D = a * d - b * b;
-		
-			const eigenvalues = [
-				(T + Math.sqrt(T * T - 4 * D)) / 2,
-				(T - Math.sqrt(T * T - 4 * D)) / 2
-			];
-		
-			const eigenvectors = [
-				[-b, eigenvalues[0] - a],
-				[-b, eigenvalues[1] - a]
-			];
-		
-			return {
-				eigenvalues: eigenvalues.map(Math.sqrt), // convert variances to standard deviations
-				eigenvectors
-			};
-		}
 		
 		const q = msg.pose.pose.orientation;
 		if(q.x == 0 && q.y == 0 && q.z == 0 && q.w == 0)
@@ -220,7 +188,6 @@ function connect(){
 		
 		msg.color = {r: 1, g: 0, b: 0, a: 1};
 		msg.scale = {x: 2.0, y: 0.6, z: 1};
-		msg.eigen = eigen(msg.pose.covariance)
 	
 		posemsg = msg;
 	
