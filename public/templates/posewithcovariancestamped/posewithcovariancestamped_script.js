@@ -80,12 +80,18 @@ function rgbaToStrokeColor(rosColorRGBA) {
 
 function drawMarkers(){
 
-	function drawArrow(marker, size){
+	function drawCircle(size){
+		ctx.beginPath();
+		ctx.arc(0, 0, size/2, 0, 2 * Math.PI, false);
+		ctx.fill();
+	}
+
+	function drawArrow(posemsg, size){
 		ctx.fillStyle = "rgba(255, 0, 0, 0.9)";
-		const height = parseInt(size*marker.scale.x);
-		const width = parseInt(size*0.1*marker.scale.y)+1;
-		const tip = parseInt(size*0.2*marker.scale.x)+1;
-		const tipwidth = parseInt(size*0.3*marker.scale.y)+1;
+		const height = parseInt(size*posemsg.scale.x);
+		const width = parseInt(size*0.1*posemsg.scale.y)+1;
+		const tip = parseInt(size*0.2*posemsg.scale.x)+1;
+		const tipwidth = parseInt(size*0.3*posemsg.scale.y)+1;
 
 		ctx.beginPath();
 		ctx.moveTo(0, -width);
@@ -150,16 +156,26 @@ function drawMarkers(){
 		y: transformed.translation.y
 	});
 
+	const q = posemsg.pose.pose.orientation;
+	const rotation_invalid = q.x == 0 && q.y == 0 && q.z == 0 && q.w == 0;
+
 	const yaw = transformed.rotation.toEuler().h;
 	const scale = parseFloat(scaleSlider.value);
 
 	ctx.save();
 	ctx.translate(pos.x, pos.y);
 	ctx.scale(1, -1);
-	ctx.rotate(yaw);
+
+	if(!rotation_invalid)
+		ctx.rotate(yaw);
 
 	drawCovariance(posemsg, unit);
-	drawArrow(posemsg, unit*scale);
+
+	if(!rotation_invalid){
+		drawArrow(posemsg, unit*scale);
+	}else{
+		drawCircle(unit*scale*0.4);
+	}
 
 	ctx.restore();
 }
@@ -181,10 +197,6 @@ function connect(){
 	});
 	
 	listener = marker_topic.subscribe((msg) => {
-		
-		const q = msg.pose.pose.orientation;
-		if(q.x == 0 && q.y == 0 && q.z == 0 && q.w == 0)
-			msg.pose.pose.orientation = new Quaternion();
 		
 		msg.color = {r: 1, g: 0, b: 0, a: 1};
 		msg.scale = {x: 2.0, y: 0.6, z: 1};
