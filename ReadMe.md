@@ -87,7 +87,7 @@ Create missions with multiple waypoints, then send them as a Path message. Singl
 
 #### <img src="wiki_assets/area.png" alt="" title="Area Mission" width="30" height="30"/> Area Mission
 
-Drag to select an area and publish it to a 3DBoundingBox topic. Long press to open setup menu.
+Drag to select an area and publish it to a PolygonStamped topic. Since the area is a rectangle, the first polygon vertex will be at the cursor press, and the third vertex will be the press released point. Long press to open setup menu.
 
 #### <img src="wiki_assets/button.png" alt="" title="Button" width="30" height="30"/> Button
 

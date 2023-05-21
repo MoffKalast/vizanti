@@ -25,41 +25,45 @@ function sendMessage(start, end){
 	let start_pos = view.screenToFixed(start);
 	let end_pos = view.screenToFixed(end);
 
-	const centerX = (start_pos.x + end_pos.x) / 2;
-	const centerY = (start_pos.y + end_pos.y) / 2;
+	// Compute the other two points of the square.
+	let vector = {
+		x: end_pos.x - start_pos.x,
+		y: end_pos.y - start_pos.y
+	};
 
-	const sizeX = Math.abs(end_pos.x - start_pos.x) / 2;
-	const sizeY = Math.abs(end_pos.y - start_pos.y) / 2;
+	let point2 = {
+		x: start_pos.x + vector.x,
+		y: start_pos.y
+	};
+
+	let point3 = {
+		x: start_pos.x, 
+		y: start_pos.y + vector.y
+	};
 
 	const publisher = new ROSLIB.Topic({
 		ros: rosbridge.ros,
 		name: topic,
-		messageType: 'vision_msgs/BoundingBox3D'
+		messageType: 'geometry_msgs/PolygonStamped'
 	});
 
-	const boundingBox3DMessage = new ROSLIB.Message({
-		center: {
-			position: {
-				x: centerX,
-				y: centerY,
-				z: 0
-			},
-			orientation: {
-				x: 0,
-				y: 0,
-				z: 0,
-				w: 1.0
-			}
+	console.log("Points",start_pos,end_pos, point2, point3)
+
+	const polygonMsg = new ROSLIB.Message({
+		header:{
+			frame_id: tf.fixed_frame
 		},
-		size: {
-			x: sizeX,
-			y: sizeY,
-			z: 0
-		}
+		polygon: {
+			points: [
+				start_pos,
+				point2,
+				end_pos,
+				point3,
+			]
+		},
 	});
 
-	publisher.publish(boundingBox3DMessage);
-
+	publisher.publish(polygonMsg);
 }
 
 const canvas = document.getElementById('{uniqueID}_canvas');
@@ -170,7 +174,7 @@ function setActive(value){
 const selectionbox = document.getElementById("{uniqueID}_topic");
 
 async function loadTopics(){
-	let result = await rosbridge.get_topics("vision_msgs/BoundingBox3D");
+	let result = await rosbridge.get_topics("geometry_msgs/PolygonStamped");
 
 	let topiclist = "";
 	result.forEach(element => {
