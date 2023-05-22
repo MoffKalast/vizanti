@@ -1,4 +1,4 @@
-# <img src="public/assets/icon/512.png" alt="Icon" title="Grid" width="70" height="70"/> Vizanti - Web Visualizer and Mission Planner for ROS
+# <img src="public/assets/icon/512.png" alt="Icon" title="Grid" width="50" height="50"/> Vizanti - Web Visualizer & Mission Planner for ROS
 
 [![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.png)](https://opensource.org/licenses/BSD-3-Clause)
 
@@ -152,4 +152,4 @@ Display a Temperature message. Only as a widget for now, not on the view itself.
 
 ## Contributing
 
-Contrbutions are of course welcome, feel free to fork and submit PRs for any extra widgets you find useful.
+Contrbutions are of course welcome, feel free to fork and submit PRs for any fixes or extra widgets you find useful.
