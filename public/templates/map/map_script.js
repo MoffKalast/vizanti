@@ -6,8 +6,8 @@ import { settings } from '/js/modules/persistent.js';
 async function saveMap(save_path, topic) {
 	const saveMapService = new ROSLIB.Service({
 		ros: rosbridge.ros,
-		name: "/outdooros/save_map",
-		serviceType: "outdooros/SaveMap",
+		name: "/vizanti/save_map",
+		serviceType: "vizanti/SaveMap",
 	});
 
 	const request = new ROSLIB.ServiceRequest({
@@ -27,8 +27,8 @@ async function saveMap(save_path, topic) {
 async function loadMap(load_path, topic) {
 	const loadMapService = new ROSLIB.Service({
 		ros: rosbridge.ros,
-		name: "/outdooros/load_map",
-		serviceType: "outdooros/LoadMap",
+		name: "/vizanti/load_map",
+		serviceType: "vizanti/LoadMap",
 	});
 
 	const request = new ROSLIB.ServiceRequest({

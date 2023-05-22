@@ -2,10 +2,10 @@
 
 import rospy
 from std_srvs.srv import Trigger, TriggerResponse
-from outdooros.srv import GetNodeParameters, GetNodeParametersResponse
-from outdooros.srv import LoadMap, LoadMapResponse, SaveMap, SaveMapResponse
-from outdooros.srv import RecordRosbag, RecordRosbagResponse
-from outdooros.srv import ManageNode, ListPackages, ListExecutables, ListExecutablesResponse, ListPackagesResponse
+from vizanti.srv import GetNodeParameters, GetNodeParametersResponse
+from vizanti.srv import LoadMap, LoadMapResponse, SaveMap, SaveMapResponse
+from vizanti.srv import RecordRosbag, RecordRosbagResponse
+from vizanti.srv import ManageNode, ListPackages, ListExecutables, ListExecutablesResponse, ListPackagesResponse
 import subprocess
 import os
 import fcntl
@@ -13,26 +13,26 @@ import fcntl
 class ServiceHandler:
 
 	def __init__(self):
-		rospy.init_node('outdooros_service_handler')
+		rospy.init_node('vizanti_service_handler')
 
 		self.proc = None
 		self.packages = self.get_packages()
 
-		self.get_nodes_service = rospy.Service('outdooros/get_dynamic_reconfigure_nodes', Trigger,self. get_dynamic_reconfigure_nodes)
-		self.get_node_parameters_service = rospy.Service('outdooros/get_node_parameters', GetNodeParameters, self.get_node_parameters)
+		self.get_nodes_service = rospy.Service('vizanti/get_dynamic_reconfigure_nodes', Trigger,self. get_dynamic_reconfigure_nodes)
+		self.get_node_parameters_service = rospy.Service('vizanti/get_node_parameters', GetNodeParameters, self.get_node_parameters)
 
-		self.load_map_service = rospy.Service('outdooros/load_map', LoadMap, self.load_map)
-		self.save_map_service = rospy.Service('outdooros/save_map', SaveMap, self.save_map)
+		self.load_map_service = rospy.Service('vizanti/load_map', LoadMap, self.load_map)
+		self.save_map_service = rospy.Service('vizanti/save_map', SaveMap, self.save_map)
 
-		self.record_setup_service = rospy.Service('outdooros/bag/setup', RecordRosbag, self.recording_setup)
-		self.record_status_service = rospy.Service('outdooros/bag/status', Trigger, self.recording_status)
+		self.record_setup_service = rospy.Service('vizanti/bag/setup', RecordRosbag, self.recording_setup)
+		self.record_status_service = rospy.Service('vizanti/bag/status', Trigger, self.recording_status)
 
-		self.node_kill_service = rospy.Service('outdooros/node/kill', ManageNode, self.node_kill)
-		self.node_start_service = rospy.Service('outdooros/node/start', ManageNode, self.node_start)
-		self.node_info_service = rospy.Service('outdooros/node/info', ManageNode, self.node_info)
+		self.node_kill_service = rospy.Service('vizanti/node/kill', ManageNode, self.node_kill)
+		self.node_start_service = rospy.Service('vizanti/node/start', ManageNode, self.node_start)
+		self.node_info_service = rospy.Service('vizanti/node/info', ManageNode, self.node_info)
 
-		self.list_packages_service = rospy.Service('outdooros/list_packages', ListPackages ,self.list_packages_callback)
-		self.list_executables_service = rospy.Service('outdooros/list_executables', ListExecutables ,self.list_executables_callback)
+		self.list_packages_service = rospy.Service('vizanti/list_packages', ListPackages ,self.list_packages_callback)
+		self.list_executables_service = rospy.Service('vizanti/list_executables', ListExecutables ,self.list_executables_callback)
 
 		rospy.loginfo("Service handler ready.")
 
@@ -106,7 +106,7 @@ class ServiceHandler:
 		file_path = os.path.expanduser(req.file_path)
 		topic = req.topic
 		try:
-			process = subprocess.Popen(["rosrun", "map_server", "map_server", file_path, "map:=" + topic, "__name:=outdooros_map_server"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+			process = subprocess.Popen(["rosrun", "map_server", "map_server", file_path, "map:=" + topic, "__name:=vizanti_map_server"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 			flags = fcntl.fcntl(process.stdout, fcntl.F_GETFL)
 			fcntl.fcntl(process.stdout, fcntl.F_SETFL, flags | os.O_NONBLOCK)
 
@@ -127,7 +127,7 @@ class ServiceHandler:
 		file_path = os.path.expanduser(req.file_path)
 		topic = req.topic
 		try:
-			process = subprocess.Popen(["rosrun", "map_server", "map_saver", "-f", file_path, "map:=" + topic, "__name:=outdooros_map_saver"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+			process = subprocess.Popen(["rosrun", "map_server", "map_saver", "-f", file_path, "map:=" + topic, "__name:=vizanti_map_saver"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 			flags = fcntl.fcntl(process.stdout, fcntl.F_GETFL)
 			fcntl.fcntl(process.stdout, fcntl.F_SETFL, flags | os.O_NONBLOCK)
 

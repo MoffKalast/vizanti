@@ -3,8 +3,8 @@ import { rosbridge } from '/js/modules/rosbridge.js';
 async function killNode(name) {
     const recordRosbagService = new ROSLIB.Service({
         ros: rosbridge.ros,
-        name: "/outdooros/node/kill",
-        serviceType: "outdooros/ManageNode",
+        name: "/vizanti/node/kill",
+        serviceType: "vizanti/ManageNode",
     });
 
     return new Promise((resolve, reject) => {
@@ -21,8 +21,8 @@ async function killNode(name) {
 async function nodeInfo(name) {
     const recordRosbagService = new ROSLIB.Service({
         ros: rosbridge.ros,
-        name: "/outdooros/node/info",
-        serviceType: "outdooros/ManageNode",
+        name: "/vizanti/node/info",
+        serviceType: "vizanti/ManageNode",
     });
 
     return new Promise((resolve, reject) => {
@@ -71,7 +71,7 @@ async function updateNodeList(){
 	nodeDiv.innerHTML = '';
 	result.nodes.forEach(node => {
 
-		if(node.includes("outdooros"))
+		if(node.includes("vizanti"))
 			return;
 
 		const nodeBox = document.createElement('div');

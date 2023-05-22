@@ -1,6 +1,6 @@
 {
-    "name": "OutdooROS",
-    "short_name": "OutdooROS",
+    "name": "Vizanti",
+    "short_name": "Vizanti",
     "description": "A web-based visualization and control tool for outdoor robots running ROS.",
     "start_url": "/",
     "display": "fullscreen",

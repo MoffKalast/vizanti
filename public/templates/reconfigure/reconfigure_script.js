@@ -3,7 +3,7 @@ import { rosbridge } from '/js/modules/rosbridge.js';
 async function getDynamicReconfigureNodes() {
 	const getNodesService = new ROSLIB.Service({
 		ros: rosbridge.ros,
-		name: "/outdooros/get_dynamic_reconfigure_nodes",
+		name: "/vizanti/get_dynamic_reconfigure_nodes",
 		serviceType: "std_srvs/Trigger",
 	});
 
@@ -19,8 +19,8 @@ async function getDynamicReconfigureNodes() {
 async function getNodeParameters(node) {
 	const getNodeParametersService = new ROSLIB.Service({
 		ros: rosbridge.ros,
-		name: "/outdooros/get_node_parameters",
-		serviceType: "outdooros/GetNodeParameters",
+		name: "/vizanti/get_node_parameters",
+		serviceType: "vizanti/GetNodeParameters",
 	});
 
 	return new Promise((resolve, reject) => {

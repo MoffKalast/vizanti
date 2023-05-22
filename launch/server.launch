@@ -6,7 +6,7 @@
 	<arg name="max_message_size" default="None" />
 
 	<!-- Launch rosbridge without https so it works in AP mode. -->
-	<node name="outdooros_rosbridge" pkg="rosbridge_server" type="rosbridge_websocket" output="screen">
+	<node name="vizanti_rosbridge" pkg="rosbridge_server" type="rosbridge_websocket" output="screen">
 		<param name="authenticate" value="false" />
 		<param name="port" value="5001"/>
 		<param name="address" value=""/>
@@ -16,15 +16,15 @@
 		<param name="max_message_size" value="$(arg max_message_size)"/>
 	</node>
 
-	<node name="outdooros_rosapi" pkg="rosapi" type="rosapi_node" />
+	<node name="vizanti_rosapi" pkg="rosapi" type="rosapi_node" />
 
-	<node name="outdooros_flask_node" pkg="outdooros" type="server.py" output="screen">
+	<node name="vizanti_flask_node" pkg="vizanti" type="server.py" output="screen">
 		<param name="host" value="0.0.0.0"/>
 		<param name="port" value="5000"/>
 		<param name="flask_debug" value="True"/>
 	</node>
 
-	<node name="outdooros_topic_handler_node" pkg="outdooros" type="topic_handler.py" output="screen"/>
-	<node name="outdooros_service_handler_node" pkg="outdooros" type="service_handler.py" output="screen"/>
+	<node name="vizanti_topic_handler_node" pkg="vizanti" type="topic_handler.py" output="screen"/>
+	<node name="vizanti_service_handler_node" pkg="vizanti" type="service_handler.py" output="screen"/>
     
 </launch>

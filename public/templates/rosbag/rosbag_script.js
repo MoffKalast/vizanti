@@ -25,7 +25,7 @@ function saveSettings(){
 async function getRecordingStatus(topics, start, path) {
 	const recordRosbagService = new ROSLIB.Service({
 		ros: rosbridge.ros,
-		name: "/outdooros/bag/status",
+		name: "/vizanti/bag/status",
 		serviceType: "std_srvs/Trigger",
 	});
 
@@ -44,8 +44,8 @@ async function getRecordingStatus(topics, start, path) {
 async function recordRosbag(topics, start, path) {
 	const recordRosbagService = new ROSLIB.Service({
 		ros: rosbridge.ros,
-		name: "/outdooros/bag/setup",
-		serviceType: "outdooros/RecordRosbag",
+		name: "/vizanti/bag/setup",
+		serviceType: "vizanti/RecordRosbag",
 	});
 
 	return new Promise((resolve, reject) => {

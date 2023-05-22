@@ -7,14 +7,14 @@ import threading
 class TopicHandler:
 
 	def __init__(self):
-		rospy.init_node('outdooros_topic_handler')
+		rospy.init_node('vizanti_topic_handler')
 
 		self.updated = False
 		self.lock = threading.Lock()
 		self.transforms = {}
 
 		self.tf_sub = rospy.Subscriber('/tf', TFMessage, self.tf_callback)
-		self.tf_pub = rospy.Publisher('/outdooros/tf_consolidated', TFMessage, queue_size=1)
+		self.tf_pub = rospy.Publisher('/vizanti/tf_consolidated', TFMessage, queue_size=1)
 
 		rospy.loginfo("TF handler ready.")
 

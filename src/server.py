@@ -71,7 +71,7 @@ class ServerThread(threading.Thread):
 	def shutdown(self):
 		self.srv.shutdown()
 
-rospy.init_node('outdooros_flask_node')
+rospy.init_node('vizanti_flask_node')
 
 param_host = rospy.get_param('~host', '0.0.0.0')
 param_port = rospy.get_param('~port', 5000)

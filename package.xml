@@ -1,5 +1,5 @@
 <package format="2">
-    <name>outdooros</name>
+    <name>vizanti</name>
     <version>0.0.1</version>
     <description>A mission planner and visualizer for controlling outdoor ROS robots.</description>
     <maintainer email="vid.rijavec@gmail.com">MoffKalast</maintainer>

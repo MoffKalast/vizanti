@@ -1,21 +1,21 @@
-# OutdooROS
+# <img src="public/assets/icon/512.png" alt="Icon" title="Grid" width="70" height="70"/> Vizanti - Web Visualizer and Mission Planner for ROS
 
 [![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.png)](https://opensource.org/licenses/BSD-3-Clause)
 
-OutdooROS is a web-based visualization and control tool developed for more convenient operation of outdoor robots running the Robot Operating System (ROS). The application attempts to replicate RViz's orthographic 2D view as closely as possible with a smartphone friendly interface. The second goal is to allow planning and executing movement and mission commands, i.e. goals and waypoints, with custom buttons and parameter reconfigure.
+Vizanti is a web-based visualization and control tool developed for more convenient operation of outdoor robots running the Robot Operating System (ROS). The application attempts to replicate RViz's orthographic 2D view as closely as possible with a smartphone friendly interface. The second goal is to allow planning and executing movement and mission commands, i.e. goals and waypoints, with custom buttons and parameter reconfigure.
 
 <img src="wiki_assets/preview.jpg" alt=""/> 
 
 ## Installation
 
-As a field tool, OutdooROS is designed to operate just as well without internet access, and as such the intended way is to host it on a robot, with rosbridge autoconnecting to the host IP. 
+As a field tool, Vizanti is designed to operate just as well without internet access, and as such the intended way is to host it on a robot, with rosbridge autoconnecting to the host IP. 
 
  ```bash
 pip install Flask
 sudo apt install ros-noetic-rosbridge-suite
 
 cd ~/catkin_ws/src
-git clone https://github.com/MoffKalast/outdooros.git
+git clone https://github.com/MoffKalast/vizanti.git
 cd ..
 catkin_make
 
@@ -25,7 +25,7 @@ Flask and Jinja2 are used for templating, rosbridge is required for socket commu
 
 ## Run
 ```bash
-roslaunch outdooros server.launch
+roslaunch vizanti server.launch
 ```
 The web app can be accessed at `http://<host_ip>:5000`. Client settings are automatically saved in localStorage. The satelite imagery renderer also uses the indexedDB to store tiles for offline use (note that this is IP specific). By default the rosbridge instance also occupies port 5001.
 
@@ -42,7 +42,7 @@ Aside from the required ones, custom widgets can be added to the navbar to custo
 **Note: Some icons open setup modals instantly, while others use a single press to trigger actions and use a long press to open the modal.**
 
 <details>
-<summary> General Tools</summary>
+<summary> General Tools & Configuration</summary>
 
 #### <img src="wiki_assets/settings.png" alt="" title="Grid" width="30" height="30"/> Global Settings 
 
@@ -81,7 +81,7 @@ Self explanatory.
 </details>
 
 <details>
-<summary> Command Generation</summary>
+<summary> Mission Planning</summary>
 
 #### <img src="wiki_assets/joystick.png" alt="" title="Teleop Joystick" width="30" height="30"/> Teleop Joystick
 

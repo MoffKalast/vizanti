@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(outdooros)
+project(vizanti)
 
 find_package(catkin REQUIRED COMPONENTS
     dynamic_reconfigure
