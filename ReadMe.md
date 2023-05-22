@@ -1,4 +1,4 @@
-# <img src="public/assets/icon/512.png" alt="Icon" title="Grid" width="70" height="70"/> Vizanti - Web Visualizer and Mission Planner for ROS
+# <img src="public/assets/icon/512.png" alt="Icon" title="Grid" width="50" height="50"/> Vizanti - Web Visualizer & Mission Planner for ROS
 
 [![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.png)](https://opensource.org/licenses/BSD-3-Clause)
 
