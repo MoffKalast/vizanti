@@ -152,4 +152,4 @@ Display a Temperature message. Only as a widget for now, not on the view itself.
 
 ## Contributing
 
-Contrbutions are of course welcome, feel free to fork and submit PRs for any extra widgets you find useful.
+Contrbutions are of course welcome, feel free to fork and submit PRs for any fixes or extra widgets you find useful.
