@@ -101,21 +101,21 @@ function setState(state){
 }
 
 async function startRecording() {
-	const result = await recordRosbag(Array.from(topic_list), true, path);
-	console.log(result);
-	setState(result.success);
-
-	if(!result.success)
+	if(await confirm("Are you sure you want to start recording a bag?")){
+		const result = await recordRosbag(Array.from(topic_list), true, path);
+		console.log(result);
+		setState(result.success);
 		alert(result.message)
+	}
 }
 
 async function stopRecording() {
-	const result = await recordRosbag([], false, '');
-	console.log(result);
-	setState(!result.success);
-
-	if(!result.success)
+	if(await confirm("Are you sure you want to stop recording?")){
+		const result = await recordRosbag([], false, '');
+		console.log(result);
+		setState(!result.success);
 		alert(result.message)
+	}
 }
 
 startButton.addEventListener('click', async () => {
