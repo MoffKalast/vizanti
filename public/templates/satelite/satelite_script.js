@@ -146,8 +146,8 @@ async function drawTiles(){
 				new Quaternion()
 			);
 			return {
-				latitude: map_fix.latitude + transformed.translation.y * fix_data.degreesPerMeter,
-				longitude: map_fix.longitude + transformed.translation.x * fix_data.degreesPerMeter*1.5
+				latitude: map_fix.latitude + (transformed.translation.y * fix_data.degreesPerMeter * 3.0), //magic numbers to make this work, this should be fine without them but reality is often dissapointing
+				longitude: map_fix.longitude + (transformed.translation.x * fix_data.degreesPerMeter * 4.2)
 			};
 		});
 
@@ -157,10 +157,10 @@ async function drawTiles(){
 		);
 
 		// Calculate the range of tiles to cover the screen
-		const minX = Math.min(...cornerTileCoords.map((coord) => coord.x)) - fix_data.tilePos.x - 1;
-		const maxX = Math.max(...cornerTileCoords.map((coord) => coord.x)) - fix_data.tilePos.x + 1;
-		const minY = Math.min(...cornerTileCoords.map((coord) => coord.y)) - fix_data.tilePos.y - 1;
-		const maxY = Math.max(...cornerTileCoords.map((coord) => coord.y)) - fix_data.tilePos.y + 1;
+		const minX = Math.min(...cornerTileCoords.map((coord) => coord.x)) - fix_data.tilePos.x - 2;
+		const maxX = Math.max(...cornerTileCoords.map((coord) => coord.x)) - fix_data.tilePos.x + 2;
+		const minY = Math.min(...cornerTileCoords.map((coord) => coord.y)) - fix_data.tilePos.y - 2;
+		const maxY = Math.max(...cornerTileCoords.map((coord) => coord.y)) - fix_data.tilePos.y + 2;
 
 		for (let i = minX; i <= maxX; i++) {
 			for (let j = minY; j <= maxY; j++) {
