@@ -35,10 +35,12 @@ flipButton.addEventListener('click', ()=>{
 	saveSettings();
 });
 
-deleteButton.addEventListener('click', ()=>{
-	points = [];
-	drawWaypoints();
-	saveSettings();
+deleteButton.addEventListener('click', async ()=>{
+	if(await confirm("Are you sure you want to delete all waypoints?")){
+		points = [];
+		drawWaypoints();
+		saveSettings();
+	}
 });
 
 const startCheckbox = document.getElementById('{uniqueID}_startclosest');

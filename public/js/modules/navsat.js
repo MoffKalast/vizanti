@@ -45,9 +45,9 @@ export class Navsat {
 		if(Boolean(await db.keyExists(keyurl))){
 			const arrayBuffer = await db.getObject(keyurl);
 			this.live_cache[keyurl] = await blobToImage(new Blob([arrayBuffer], { type: 'image/png' }));
-			console.log("Tile loaded from DB",keyurl)
+			//console.log("Tile loaded from DB",keyurl)
 		}else{
-			console.log("Tile Queued",keyurl)
+			//console.log("Tile Queued",keyurl)
 			this.queue.add(keyurl);
 		}
 	}
@@ -87,7 +87,7 @@ export class Navsat {
 		const blob = await this.fetchURL(keyurl);
 		let image;
 		if(blob){
-			console.log("Loading tile",keyurl);
+			//console.log("Loading tile",keyurl);
 			image = new Image();
 			image.src = URL.createObjectURL(blob);
 			return new Promise((resolve, reject) => {
