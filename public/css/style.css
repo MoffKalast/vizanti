@@ -339,7 +339,7 @@ input[type="range"]::-moz-range-thumb {
 	cursor: pointer;
 }
 
-select {
+select, .datalist_input {
 	max-width: 100%;
 	min-width: 100px;
 	font-size: 1.0rem;
@@ -348,6 +348,8 @@ select {
 	color: white;
 	background-color: #424242;
 	font-family: Monospace;
+	margin-top: 5px;
+	margin-bottom: 5px;
 }
 
 /* Canvas */
