@@ -45,7 +45,7 @@ async function loadMap(load_path, topic) {
 	});
 }
 
-let topic = "";
+let topic = getTopic("{uniqueID}");
 let listener = undefined;
 
 let map_topic = undefined;

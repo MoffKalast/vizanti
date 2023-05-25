@@ -5,7 +5,7 @@ import { settings } from '/js/modules/persistent.js';
 import { navsat } from './js/modules/navsat.js';
 
 let copyright = "© OpenStreetMap";
-let topic = "";
+let topic = getTopic("{uniqueID}");
 let server_url = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 let listener = undefined;
 let zoomLevel = 19;

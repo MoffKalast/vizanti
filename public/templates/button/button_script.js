@@ -1,7 +1,7 @@
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
 
-let topic = "";
+let topic = getTopic("{uniqueID}");
 let typedict = {};
 
 const selectionbox = document.getElementById("{uniqueID}_topic");

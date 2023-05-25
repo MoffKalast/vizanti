@@ -42,11 +42,11 @@ window.addEventListener("click", function(event){
 }, false); 
 
 //widget event
-function addWidget(type){
+function addWidget(type, topic){
 	let event = new Event("add_widget");
 	event.widget_type = type;
+	event.widget_topic = topic;
 	window.dispatchEvent(event);
-	
 	document.getElementById("modal_add_element").style.display = "none";
 }
 
@@ -54,6 +54,12 @@ function removeWidget(uniqueID){
 	let e = new Event("remove_widget");
 	e.uniqueID = uniqueID;
 	window.dispatchEvent(e);
+}
+
+function getTopic(uniqueID){
+	const icon = document.getElementById(uniqueID+"_icon");
+	const topic = icon.parentElement.dataset.topic;
+	return topic ? topic : "";
 }
 
 // preventing the context menu popups on main views

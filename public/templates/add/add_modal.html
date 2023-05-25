@@ -1,198 +1,212 @@
 <div id="modal_add_element" class="modal_outer noselect">
 	<div class="modal_inner noselect">
 		<h3>Add Widgets</h3>
-		<hr>
+		
+		<br>
 
-		<!--<div class="widget_entry" onclick="addWidget('rosbridge')">
-			<img src="assets/rosbridge_disconnected.svg" alt="Rosbridge" class="card_icon">
-			<div class="card">
-				<b class="card_title">Rosbridge Client</b>
-				<p class="card_desc">Adds another connection to a Rosbridge server</p>
-			</div>
-		</div>-->
-
-		<div class="widget_entry" onclick="addWidget('grid')">
-			<img src="assets/grid.svg" alt="Grid" class="card_icon">
-			<div class="card">
-				<b class="card_title">Grid</b>
-				<p class="card_desc">Infinite grid centered at the origin of the target frame of reference</p>
-			</div>
+		<div class="tab">
+			<button class="tablinks active_tab" id="add_set_type">By Type</button>
+			<button class="tablinks" id="add_set_topics">By Topic</button>
 		</div>
 
-		<div class="widget_entry" onclick="addWidget('tf')">
-			<img src="assets/tf.svg" alt="TF" class="card_icon">
-			<div class="card">
-				<b class="card_title">TF</b>
-				<p class="card_desc">TF transform hierarchy</p>
-			</div>
+		<div id="add_topics_container" style="display: none">
+
 		</div>
 
-		<div class="widget_entry" onclick="addWidget('robotmodel')">
-			<img src="assets/robotmodel.svg" alt="RobotModel" class="card_icon">
-			<div class="card">
-				<b class="card_title">Robot Model</b>
-				<p class="card_desc">Custom robot sprite</p>
+		<div id="add_types_container">
+
+			<!--<div class="widget_entry" onclick="addWidget('rosbridge')">
+				<img src="assets/rosbridge_disconnected.svg" alt="Rosbridge" class="card_icon">
+				<div class="card">
+					<b class="card_title">Rosbridge Client</b>
+					<p class="card_desc">Adds another connection to a Rosbridge server</p>
+				</div>
+			</div>-->
+
+			<div class="widget_entry" onclick="addWidget('grid','')">
+				<img src="assets/grid.svg" alt="Grid" class="card_icon">
+				<div class="card">
+					<b class="card_title">Grid</b>
+					<p class="card_desc">Infinite grid centered at the origin of the target frame of reference</p>
+				</div>
 			</div>
-		</div>
 
-		<div class="widget_entry" onclick="addWidget('reconfigure')">
-			<img src="assets/reconfigure.svg" alt="Dynamic ReCfg" class="card_icon">
-			<div class="card">
-				<b class="card_title">Dynamic Reconfigure</b>
-				<p class="card_desc">View and edit parameters</p>
+			<div class="widget_entry" onclick="addWidget('tf','')">
+				<img src="assets/tf.svg" alt="TF" class="card_icon">
+				<div class="card">
+					<b class="card_title">TF</b>
+					<p class="card_desc">TF transform hierarchy</p>
+				</div>
 			</div>
-		</div>
 
-		<div class="widget_entry" onclick="addWidget('rosbag')">
-			<img src="assets/rosbag.svg" alt="Bag Rec" class="card_icon">
-			<div class="card">
-				<b class="card_title">Bag Recorder</b>
-				<p class="card_desc">Record rosbags</p>
+			<div class="widget_entry" onclick="addWidget('robotmodel','')">
+				<img src="assets/robotmodel.svg" alt="RobotModel" class="card_icon">
+				<div class="card">
+					<b class="card_title">Robot Model</b>
+					<p class="card_desc">Custom robot sprite</p>
+				</div>
 			</div>
-		</div>
 
-		<div class="widget_entry" onclick="addWidget('nodemgr')">
-			<img src="assets/nodemgr.svg" alt="Node Mgr" class="card_icon">
-			<div class="card">
-				<b class="card_title">Node Manager</b>
-				<p class="card_desc">Start and stop nodes</p>
+			<div class="widget_entry" onclick="addWidget('reconfigure','')">
+				<img src="assets/reconfigure.svg" alt="Dynamic ReCfg" class="card_icon">
+				<div class="card">
+					<b class="card_title">Dynamic Reconfigure</b>
+					<p class="card_desc">View and edit parameters</p>
+				</div>
 			</div>
-		</div>
 
-		<hr>
-
-		<div class="widget_entry" onclick="addWidget('teleop')">
-			<img src="assets/joystick.svg" alt="Teleop" class="card_icon">
-			<div class="card">
-				<b class="card_title">Teleop Joystick</b>
-				<p class="card_desc">geometry_msgs/Twist</p>
+			<div class="widget_entry" onclick="addWidget('rosbag','')">
+				<img src="assets/rosbag.svg" alt="Bag Rec" class="card_icon">
+				<div class="card">
+					<b class="card_title">Bag Recorder</b>
+					<p class="card_desc">Record rosbags</p>
+				</div>
 			</div>
-		</div>
 
-		<div class="widget_entry" onclick="addWidget('initialpose')">
-			<img src="assets/initialpose.svg" alt="Initialpose" class="card_icon">
-			<div class="card">
-				<b class="card_title">2D Pose Estimate</b>
-				<p class="card_desc">/initialpose [geometry_msgs/PoseWithCovarianceStamped]</p>
+			<div class="widget_entry" onclick="addWidget('nodemgr','')">
+				<img src="assets/nodemgr.svg" alt="Node Mgr" class="card_icon">
+				<div class="card">
+					<b class="card_title">Node Manager</b>
+					<p class="card_desc">Start and stop nodes</p>
+				</div>
 			</div>
-		</div>
 
-		<div class="widget_entry" onclick="addWidget('simplegoal')">
-			<img src="assets/simplegoal.svg" alt="Simplegoal" class="card_icon">
-			<div class="card">
-				<b class="card_title">2D Nav Goal</b>
-				<p class="card_desc">/move_base_simple/goal [geometry_msgs/PoseStamped]</p>
+			<hr>
+
+			<div class="widget_entry" onclick="addWidget('teleop','')" data-topic="geometry_msgs/Twist">
+				<img src="assets/joystick.svg" alt="Teleop" class="card_icon">
+				<div class="card">
+					<b class="card_title">Teleop Joystick</b>
+					<p class="card_desc">geometry_msgs/Twist</p>
+				</div>
 			</div>
-		</div>
 
-		<div class="widget_entry" onclick="addWidget('waypoints')">
-			<img src="assets/waypoints.svg" alt="Waypoints" class="card_icon">
-			<div class="card">
-				<b class="card_title">Waypoint Mission</b>
-				<p class="card_desc">Send a list of goals [nav_msgs/Path]</p>
+			<div class="widget_entry" onclick="addWidget('initialpose','')" data-topic="geometry_msgs/PoseWithCovarianceStamped">
+				<img src="assets/initialpose.svg" alt="Initialpose" class="card_icon">
+				<div class="card">
+					<b class="card_title">2D Pose Estimate</b>
+					<p class="card_desc">Send an initialpose [geometry_msgs/PoseWithCovarianceStamped]</p>
+				</div>
 			</div>
-		</div>
 
-		<div class="widget_entry" onclick="addWidget('area')">
-			<img src="assets/area.svg" alt="Area" class="card_icon">
-			<div class="card">
-				<b class="card_title">Area Mission</b>
-				<p class="card_desc">Send vertices of a box [geometry_msgs/PolygonStamped]</p>
+			<div class="widget_entry" onclick="addWidget('simplegoal','')" data-topic="geometry_msgs/PoseStamped">
+				<img src="assets/simplegoal.svg" alt="Simplegoal" class="card_icon">
+				<div class="card">
+					<b class="card_title">2D Nav Goal</b>
+					<p class="card_desc">Send a move_base_simple goal [geometry_msgs/PoseStamped]</p>
+				</div>
 			</div>
-		</div>
 
-		<div class="widget_entry" onclick="addWidget('button')">
-			<img src="assets/button.svg" alt="Button" class="card_icon">
-			<div class="card">
-				<b class="card_title">Button</b>
-				<p class="card_desc">Display and toggle boolean [std_msgs/Bool]</p>
+			<div class="widget_entry" onclick="addWidget('waypoints','')" data-topic="nav_msgs/Path">
+				<img src="assets/waypoints.svg" alt="Waypoints" class="card_icon">
+				<div class="card">
+					<b class="card_title">Waypoint Mission</b>
+					<p class="card_desc">Send a list of goals [nav_msgs/Path]</p>
+				</div>
 			</div>
-		</div>
 
-		<hr>
-
-
-		<div class="widget_entry" onclick="addWidget('map')">
-			<img src="assets/map.svg" alt="Map" class="card_icon">
-			<div class="card">
-				<b class="card_title">Map</b>
-				<p class="card_desc">nav_msgs/OccupancyGrid</p>
+			<div class="widget_entry" onclick="addWidget('area','')" data-topic="geometry_msgs/PolygonStamped">
+				<img src="assets/area.svg" alt="Area" class="card_icon">
+				<div class="card">
+					<b class="card_title">Area Mission</b>
+					<p class="card_desc">Send vertices of a box [geometry_msgs/PolygonStamped]</p>
+				</div>
 			</div>
-		</div>
 
-		<div class="widget_entry" onclick="addWidget('satelite')">
-			<img src="assets/satelite.svg" alt="Satelite" class="card_icon">
-			<div class="card">
-				<b class="card_title">Satelite Tiles</b>
-				<p class="card_desc">sensor_msgs/NavSatFix</p>
+			<div class="widget_entry" onclick="addWidget('button','')" data-topic="std_msgs/Bool,std_msgs/Empty">
+				<img src="assets/button.svg" alt="Button" class="card_icon">
+				<div class="card">
+					<b class="card_title">Button</b>
+					<p class="card_desc">Display and toggle [std_msgs/Bool], or send [std_msgs/Empty]</p>
+				</div>
 			</div>
-		</div>
 
-		<hr>
+			<hr>
 
-		<div class="widget_entry" onclick="addWidget('battery')">
-			<img src="assets/battery_80.svg" alt="Battery" class="card_icon">
-			<div class="card">
-				<b class="card_title">Battery</b>
-				<p class="card_desc">sensor_msgs/BatteryState</p>
+
+			<div class="widget_entry" onclick="addWidget('map','')" data-topic="nav_msgs/OccupancyGrid">
+				<img src="assets/map.svg" alt="Map" class="card_icon">
+				<div class="card">
+					<b class="card_title">Map</b>
+					<p class="card_desc">nav_msgs/OccupancyGrid</p>
+				</div>
 			</div>
-		</div>
 
-		<div class="widget_entry" onclick="addWidget('markerarray')">
-			<img src="assets/markerarray.svg" alt="MarkerArray" class="card_icon">
-			<div class="card">
-				<b class="card_title">Marker Array</b>
-				<p class="card_desc">visualization_msgs/MarkerArray</p>
+			<div class="widget_entry" onclick="addWidget('satelite','')" data-topic="sensor_msgs/NavSatFix">
+				<img src="assets/satelite.svg" alt="Satelite" class="card_icon">
+				<div class="card">
+					<b class="card_title">Satelite Tiles</b>
+					<p class="card_desc">sensor_msgs/NavSatFix</p>
+				</div>
 			</div>
-		</div>	
 
-		<div class="widget_entry" onclick="addWidget('scan')">
-			<img src="assets/scan.svg" alt="Scan" class="card_icon">
-			<div class="card">
-				<b class="card_title">Lidar</b>
-				<p class="card_desc">sensor_msgs/LaserScan</p>
+			<hr>
+
+			<div class="widget_entry" onclick="addWidget('battery','')" data-topic="sensor_msgs/BatteryState">
+				<img src="assets/battery_80.svg" alt="Battery" class="card_icon">
+				<div class="card">
+					<b class="card_title">Battery</b>
+					<p class="card_desc">sensor_msgs/BatteryState</p>
+				</div>
 			</div>
-		</div>
 
-		<div class="widget_entry" onclick="addWidget('path')">
-			<img src="assets/path.svg" alt="Path" class="card_icon">
-			<div class="card">
-				<b class="card_title">Path</b>
-				<p class="card_desc">nav_msgs/Path</p>
+			<div class="widget_entry" onclick="addWidget('markerarray','')" data-topic="visualization_msgs/MarkerArray">
+				<img src="assets/markerarray.svg" alt="MarkerArray" class="card_icon">
+				<div class="card">
+					<b class="card_title">Marker Array</b>
+					<p class="card_desc">visualization_msgs/MarkerArray</p>
+				</div>
+			</div>	
+
+			<div class="widget_entry" onclick="addWidget('scan','')" data-topic="sensor_msgs/LaserScan">
+				<img src="assets/scan.svg" alt="Scan" class="card_icon">
+				<div class="card">
+					<b class="card_title">Lidar</b>
+					<p class="card_desc">sensor_msgs/LaserScan</p>
+				</div>
 			</div>
-		</div>
 
-		<div class="widget_entry" onclick="addWidget('posewithcovariancestamped')">
-			<img src="assets/posewithcovariancestamped.svg" alt="PoseCovStamped" class="card_icon">
-			<div class="card">
-				<b class="card_title">Pose with Covariance (Stamped)</b>
-				<p class="card_desc">geometry_msgs/PoseWithCovarianceStamped</p>
+			<div class="widget_entry" onclick="addWidget('path','')" data-topic="nav_msgs/Path">
+				<img src="assets/path.svg" alt="Path" class="card_icon">
+				<div class="card">
+					<b class="card_title">Path</b>
+					<p class="card_desc">nav_msgs/Path</p>
+				</div>
 			</div>
-		</div>
 
-		<div class="widget_entry" onclick="addWidget('posearray')">
-			<img src="assets/posearray.svg" alt="PoseArray" class="card_icon">
-			<div class="card">
-				<b class="card_title">Pose Array</b>
-				<p class="card_desc">geometry_msgs/PoseArray</p>
+			<div class="widget_entry" onclick="addWidget('posewithcovariancestamped','')" data-topic="geometry_msgs/PoseWithCovarianceStamped">
+				<img src="assets/posewithcovariancestamped.svg" alt="PoseCovStamped" class="card_icon">
+				<div class="card">
+					<b class="card_title">Pose with Covariance (Stamped)</b>
+					<p class="card_desc">geometry_msgs/PoseWithCovarianceStamped</p>
+				</div>
 			</div>
-		</div>
 
-		<div class="widget_entry" onclick="addWidget('range')">
-			<img src="assets/range.svg" alt="Range" class="card_icon">
-			<div class="card">
-				<b class="card_title">Range</b>
-				<p class="card_desc">sensor_msgs/Range</p>
+			<div class="widget_entry" onclick="addWidget('posearray','')" data-topic="geometry_msgs/PoseArray">
+				<img src="assets/posearray.svg" alt="PoseArray" class="card_icon">
+				<div class="card">
+					<b class="card_title">Pose Array</b>
+					<p class="card_desc">geometry_msgs/PoseArray</p>
+				</div>
 			</div>
-		</div>
 
-
-		<div class="widget_entry" onclick="addWidget('temperature')">
-			<img src="assets/temp_warm.svg" alt="Temperature" class="card_icon">
-			<div class="card">
-				<b class="card_title">Temperature</b>
-				<p class="card_desc">sensor_msgs/Temperature</p>
+			<div class="widget_entry" onclick="addWidget('range','')" data-topic="sensor_msgs/Range">
+				<img src="assets/range.svg" alt="Range" class="card_icon">
+				<div class="card">
+					<b class="card_title">Range</b>
+					<p class="card_desc">sensor_msgs/Range</p>
+				</div>
 			</div>
+
+
+			<div class="widget_entry" onclick="addWidget('temperature','')">
+				<img src="assets/temp_warm.svg" alt="Temperature" class="card_icon">
+				<div class="card">
+					<b class="card_title">Temperature</b>
+					<p class="card_desc">sensor_msgs/Temperature</p>
+				</div>
+			</div>
+
 		</div>
 
 	</div>

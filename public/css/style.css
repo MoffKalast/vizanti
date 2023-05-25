@@ -568,3 +568,50 @@ button:hover{
 	color: rgb(255, 255, 255);
 	font-size: 30px;
 }
+
+/* Add tabs */
+
+/* Style the tab */
+.tab {
+	border-style: outset;
+	border-radius: 5px;
+	display: flex;
+    justify-content: space-around;
+	overflow: hidden;
+	background-color: #273B54;
+	margin-bottom: 15px;
+}
+
+/* Style the buttons inside the tab */
+.tab button {
+	background-color: inherit;
+	flex-grow: 1;
+	float: left;
+	border: none;
+	outline: none;
+	cursor: pointer;
+	padding: 7px 7px;
+	transition: 0.3s;
+	color: lightgray;
+}
+
+/* Change background color of buttons on hover */
+.tab button:hover {
+	background-color: #39567A;
+	transform: scale(1);
+}
+
+/* Create an active/current tablink class */
+.tab button.active_tab {
+	background-color: #496D99;
+	font-weight: bold;
+	color: white;
+}
+
+/* Style the tab content */
+.tabcontent {
+	display: none;
+	padding: 6px 12px;
+	border: none;
+	border-top: none;
+}

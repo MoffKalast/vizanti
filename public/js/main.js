@@ -51,6 +51,7 @@ function initializeNav() {
 	const add = element_templates["add"];
 	modal_container.appendChild(createElement(add.modal, "addbutton"));
 	icon_container.appendChild(createElement(add.icon, "addbutton"));
+	scripts.push(createScript(add.script, "addbutton"));
 
 	scripts.forEach(element => {
 		script_container.appendChild(element);
@@ -83,7 +84,10 @@ document.addEventListener("DOMContentLoaded", (event) =>{
 			settings.save();
 	
 			const add_button = document.querySelector("#icon_container [data-uniqueid='addbutton']");
-			icon_container.insertBefore(createElement(template.icon, eid), add_button);
+
+			const icon_element = createElement(template.icon, eid);
+			icon_element.dataset.topic = event.widget_topic;
+			icon_container.insertBefore(icon_element, add_button);
 
 			if (template.hasOwnProperty("modal"))
 				modal_container.appendChild(createElement(template.modal, eid));
