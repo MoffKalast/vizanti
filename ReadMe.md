@@ -144,6 +144,11 @@ Display a LaserScan message on the main view. Heavily throttled by default.
 
 Display a PoseWithCovarianceStamped message. The covariance rendering is currently experimental and will likely only display correctly for spherical covariance.
 
+#### <img src="wiki_assets/posearray.png" alt="" title="PoseArray" width="30" height="30"/> Pose Array
+
+Display a PoseArray message. Throttled to 15 hz.
+
+
 #### <img src="wiki_assets/temp.png" alt="" title="Temperature" width="30" height="30"/> Temperature
 
 Display a Temperature message. Only as a widget for now, not on the view itself.

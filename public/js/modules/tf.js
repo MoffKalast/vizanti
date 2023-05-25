@@ -1,5 +1,52 @@
 import { rosbridge } from './rosbridge.js';
 
+/* class TimeStampedData {
+	constructor(maxLength) {
+		this.maxLength = maxLength;
+		this.data = [];
+		this.index = new Map();
+	}
+
+	getKey({ secs, nsecs }) {
+		// Use the provided data structure to form a unique key
+		// The precision should be enough for up to 1ns resolution over approximately 285 years.
+		return secs * 1e9 + nsecs;
+	}
+
+	add(key, value) {
+		const timestampKey = this.getKey(key);
+
+		// If we're at maximum capacity, remove the oldest item
+		if (this.data.length >= this.maxLength) {
+			const oldestKey = this.getKey(this.data[0].key);
+			this.index.delete(oldestKey);
+			this.data.shift();
+		}
+
+		// Add the new item
+		this.data.push({ key, value });
+		this.index.set(timestampKey, value);
+	}
+
+	get(key) {
+		const timestampKey = this.getKey(key);
+		return this.index.get(timestampKey);
+	}
+
+	find(key) {
+		const timestampKey = this.getKey(key);
+		const keys = Array.from(this.index.keys());
+
+		console.log("Find: ",timestampKey," in ",keys);
+
+		// Find the key closest to the input timestamp
+		const closestKey = keys.reduce((prev, curr) => {
+			return (Math.abs(curr - timestampKey) < Math.abs(prev - timestampKey) ? curr : prev);
+		});
+		return this.index.get(closestKey);
+	}
+} */
+
 export function applyRotation(vector, r, inverse){
 	if(inverse)
 		r = r.inverse();
@@ -24,7 +71,7 @@ export class TF {
 		this.tf_tree = {};
 		this.transforms = {};
 		this.absoluteTransforms = {};
-
+		//this.absoluteTransformsHistory = new TimeStampedData(20);
 		this.frame_list = new Set();
 
 		//this.previousTime = null;
@@ -36,7 +83,7 @@ export class TF {
 			ros: rosbridge.ros,
 			name: 'vizanti/tf_consolidated',
 			messageType: 'tf/tfMessage',
-			throttle_rate: 30
+			throttle_rate: 33
 		});
 		
 		const setListener = () => {
@@ -46,7 +93,9 @@ export class TF {
 	
 				//this.lastReceivedTransforms = msg.transforms;
 				//this.lastReceivedTime = performance.now();
+
 				this.updateTransforms(msg.transforms);
+				//this.absoluteTransformsHistory.add(msg.transforms[0].header.stamp, this.absoluteTransforms);
 			});
 		};
 
