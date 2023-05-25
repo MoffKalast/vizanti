@@ -2,15 +2,32 @@ import { rosbridge } from '/js/modules/rosbridge.js';
 
 let packages = [];
 
+async function runRosWTF() {
+	const wtfService = new ROSLIB.Service({
+		ros: rosbridge.ros,
+		name: "/vizanti/roswtf",
+		serviceType: "std_srvs/Trigger",
+	});
+
+	return new Promise((resolve, reject) => {
+		wtfService.callService(new ROSLIB.ServiceRequest(), (result) => {
+			// The ASCII code for escape is 27, represented in hexadecimal as \x1B
+			resolve(result.message.replace(/\x1B\[1m/g, '').replace(/\x1B\[0m/g, '').replace(/ /g, '\u00a0'));
+		}, (error) => {
+			reject(error);
+			alert(error);
+		});
+	});
+}
 async function getExecutables(pkg_name) {
-	const getNodesService = new ROSLIB.Service({
+	const getExecutablesService = new ROSLIB.Service({
 		ros: rosbridge.ros,
 		name: "/vizanti/list_executables",
 		serviceType: "vizanti/ListExecutables",
 	});
 
 	return new Promise((resolve, reject) => {
-		getNodesService.callService(new ROSLIB.ServiceRequest({package : pkg_name}), (result) => {
+		getExecutablesService.callService(new ROSLIB.ServiceRequest({package : pkg_name}), (result) => {
 			resolve(result.executables);
 		}, (error) => {
 			reject(error);
@@ -19,14 +36,14 @@ async function getExecutables(pkg_name) {
 }
 
 async function getPackages() {
-	const getNodesService = new ROSLIB.Service({
+	const getPackagesService = new ROSLIB.Service({
 		ros: rosbridge.ros,
 		name: "/vizanti/list_packages",
 		serviceType: "vizanti/ListPackages",
 	});
 
 	return new Promise((resolve, reject) => {
-		getNodesService.callService(new ROSLIB.ServiceRequest(), (result) => {
+		getPackagesService.callService(new ROSLIB.ServiceRequest(), (result) => {
 			resolve(result.packages);
 		}, (error) => {
 			reject(error);
@@ -35,33 +52,30 @@ async function getPackages() {
 }
 
 async function startNode(command) {
-	const recordRosbagService = new ROSLIB.Service({
+	const startService = new ROSLIB.Service({
 		ros: rosbridge.ros,
 		name: "/vizanti/node/start",
 		serviceType: "vizanti/ManageNode",
 	});
 
 	return new Promise((resolve, reject) => {
-		const request = new ROSLIB.ServiceRequest({ node: command });
-		recordRosbagService.callService(request, (result) => {
+		startService.callService(new ROSLIB.ServiceRequest({ node: command }), (result) => {
 			resolve(result);
 		}, (error) => {
 			reject(error);
-			alert(error);
 		});
 	});
 }
 
 async function killNode(name) {
-	const recordRosbagService = new ROSLIB.Service({
+	const killService = new ROSLIB.Service({
 		ros: rosbridge.ros,
 		name: "/vizanti/node/kill",
 		serviceType: "vizanti/ManageNode",
 	});
 
 	return new Promise((resolve, reject) => {
-		const request = new ROSLIB.ServiceRequest({ node: name });
-		recordRosbagService.callService(request, (result) => {
+		killService.callService(new ROSLIB.ServiceRequest({ node: name }), (result) => {
 			resolve(result);
 		}, (error) => {
 			reject(error);
@@ -71,15 +85,14 @@ async function killNode(name) {
 }
 
 async function nodeInfo(name) {
-	const recordRosbagService = new ROSLIB.Service({
+	const infoService = new ROSLIB.Service({
 		ros: rosbridge.ros,
 		name: "/vizanti/node/info",
 		serviceType: "vizanti/ManageNode",
 	});
 
 	return new Promise((resolve, reject) => {
-		const request = new ROSLIB.ServiceRequest({ node: name });
-		recordRosbagService.callService(request, (result) => {
+		infoService.callService(new ROSLIB.ServiceRequest({ node: name }), (result) => {
 			resolve(result.message.replace(/ /g, '\u00a0'));
 		}, (error) => {
 			reject(error);
@@ -136,6 +149,19 @@ async function updateNodeList(){
 	});
 }
 
+// roswtf
+
+const wtfText = document.getElementById('{uniqueID}_roswtf_data');
+const wtfButton = document.getElementById('{uniqueID}_roswtf');
+
+wtfButton.addEventListener('click', async () => {
+	wtfText.innerText = "Waiting for roswtf report (might take several seconds)...";
+	openModal("{uniqueID}_roswtfmodal");
+	wtfText.innerText = await runRosWTF();
+	console.log(wtfText.innerText)
+});
+
+
 // package picking
 const executeButton = document.getElementById('{uniqueID}_execute');
 
@@ -186,7 +212,8 @@ async function updatePackageList(){
 executeButton.addEventListener('click', async () => {
 	if(await confirm("Do you really want to run '"+typeBox.value+" "+packageBox.value+" "+nameBox.value+"'?")){
 		console.log("Executing "+typeBox.value+" "+packageBox.value+" "+nameBox.value);
-		startNode(typeBox.value+" "+packageBox.value+" "+nameBox.value);
+		let response = await startNode(typeBox.value+" "+packageBox.value+" "+nameBox.value);
+		alert(response.message);
 		setTimeout(updateNodeList,1000);
 	}
 });

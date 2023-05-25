@@ -23,11 +23,24 @@
 			<!--Add nodes here-->
 		</select>
 
+		<p style="color: lightgray">Note: Package executable detection is experimental so not all or too many files might show up.</p>
+
 		<br>
 
 		<button id="{uniqueID}_execute">Execute</button>
 
 		<br>
+
+		<hr>
+		<b>Diagnostics:</b>
+
+		<br>
+
+		<button id="{uniqueID}_roswtf">roswtf</button>
+
+		<br>
+
+		<hr>
 
 		<b>Running Nodes:</b>
 		<br>
@@ -58,5 +71,18 @@
 		<p>Note that if a node is set to respawn, it'll automatically restart itself.</p>
 
 		<button id="{uniqueID}_nodekill" style="background-color: rgb(131, 17, 17);">Kill node</button>
+	</div>
+</div>
+
+
+<div id="{uniqueID}_roswtfmodal" class="modal_outer noselect">
+	<div class="modal_inner noselect">
+		<h3>Roswtf Diagnostics</h3>
+		<hr>
+
+		<br>
+
+		<p id="{uniqueID}_roswtf_data" style="color:lightgray">Waiting for roswtf report...</p>
+		
 	</div>
 </div>
