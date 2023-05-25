@@ -546,3 +546,25 @@ button:hover{
 	height: 50px; 
 	display: inline-block; 
 }
+
+/*Dynamic reconfigure arrow animations*/
+
+@keyframes arrowMove {
+	0% {
+		transform: translateX(0);
+		opacity: 1;
+	}
+	100% {
+		transform: translateX(200px);
+		opacity: 0;
+	}
+}
+
+.arrow {
+	position: relative;
+	animation: arrowMove 0.5s linear;
+	/* Adjust the following based on your design */
+	display: inline-block;
+	color: rgb(255, 255, 255);
+	font-size: 30px;
+}
