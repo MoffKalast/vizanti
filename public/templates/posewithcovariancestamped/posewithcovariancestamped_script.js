@@ -86,7 +86,6 @@ function drawMarkers(){
 	}
 
 	function drawArrow(size){
-		ctx.fillStyle = "rgba(139, 0, 0, 0.9)";
 		const height = parseInt(size*2.0);
 		const width = parseInt(size*0.1*0.6)+1;
 		const tip = parseInt(size*0.24)+1;
@@ -147,6 +146,8 @@ function drawMarkers(){
 			ctx.rotate(posemsg.yaw);
 
 		drawCovariance(posemsg.covariance, unit);
+
+		ctx.fillStyle = "rgba(139, 0, 0, 0.9)";
 
 		if(!posemsg.rotation_invalid){
 			drawArrow(scale);
