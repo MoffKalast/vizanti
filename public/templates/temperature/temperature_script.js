@@ -2,7 +2,7 @@ import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
 import { toDataURL } from '/js/modules/util.js';
 
-let topic = "";
+let topic = getTopic("{uniqueID}");
 let listener = undefined;
 let temperature_topic = undefined;
 

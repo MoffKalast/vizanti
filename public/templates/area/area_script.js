@@ -3,7 +3,7 @@ import { tf } from '/js/modules/tf.js';
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
 
-let topic = ""
+let topic = getTopic("{uniqueID}");
 let seq = 0;
 
 if(settings.hasOwnProperty("{uniqueID}")){

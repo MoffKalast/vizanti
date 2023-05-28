@@ -3,7 +3,7 @@ import { tf } from '/js/modules/tf.js';
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
 
-let topic = ""
+let topic = getTopic("{uniqueID}");
 let fixed_frame = "map"
 let seq = 0;
 let active = false;
@@ -35,10 +35,12 @@ flipButton.addEventListener('click', ()=>{
 	saveSettings();
 });
 
-deleteButton.addEventListener('click', ()=>{
-	points = [];
-	drawWaypoints();
-	saveSettings();
+deleteButton.addEventListener('click', async ()=>{
+	if(await confirm("Are you sure you want to delete all waypoints?")){
+		points = [];
+		drawWaypoints();
+		saveSettings();
+	}
 });
 
 const startCheckbox = document.getElementById('{uniqueID}_startclosest');

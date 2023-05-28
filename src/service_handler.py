@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 
+import subprocess
+import os
+import fcntl
+import sys
 import rospy
+
 from std_srvs.srv import Trigger, TriggerResponse
 from vizanti.srv import GetNodeParameters, GetNodeParametersResponse
 from vizanti.srv import LoadMap, LoadMapResponse, SaveMap, SaveMapResponse
 from vizanti.srv import RecordRosbag, RecordRosbagResponse
 from vizanti.srv import ManageNode, ListPackages, ListExecutables, ListExecutablesResponse, ListPackagesResponse
-import subprocess
-import os
-import fcntl
+
 
 class ServiceHandler:
 
@@ -30,6 +33,7 @@ class ServiceHandler:
 		self.node_kill_service = rospy.Service('vizanti/node/kill', ManageNode, self.node_kill)
 		self.node_start_service = rospy.Service('vizanti/node/start', ManageNode, self.node_start)
 		self.node_info_service = rospy.Service('vizanti/node/info', ManageNode, self.node_info)
+		self.node_info_service = rospy.Service('vizanti/roswtf', Trigger, self.roswtf)
 
 		self.list_packages_service = rospy.Service('vizanti/list_packages', ListPackages ,self.list_packages_callback)
 		self.list_executables_service = rospy.Service('vizanti/list_executables', ListExecutables ,self.list_executables_callback)
@@ -88,7 +92,20 @@ class ServiceHandler:
 
 	def node_start(self, req):
 		try:
-			subprocess.call(req.node.split(" "))
+			args = req.node.split(" ")
+
+			# Open /dev/null
+			devnull = open(os.devnull, 'w')
+
+			# Set up the process to ignore the SIGTERM signal
+			def preexec():
+				os.setpgrp()
+				sys.stdin = open(os.devnull, 'r')
+				sys.stdout = open(os.devnull, 'w')
+				sys.stderr = open(os.devnull, 'w')
+
+			subprocess.Popen(args, stdout=devnull, stderr=devnull, preexec_fn=preexec)
+			
 			return {'success': True, 'message': f'Started node {req.node}'}
 		except Exception as e:
 			return {'success': False, 'message': str(e)}
@@ -97,6 +114,13 @@ class ServiceHandler:
 		try:
 			rosinfo = subprocess.check_output(["rosnode", "info", req.node]).decode('utf-8')
 			rosinfo = rosinfo.replace("--------------------------------------------------------------------------------","")
+			return {'success': True, 'message': rosinfo}
+		except Exception as e:
+			return {'success': False, 'message': str(e)}
+		
+	def roswtf(self, req):
+		try:
+			rosinfo = subprocess.check_output(["roswtf"]).decode('utf-8')
 			return {'success': True, 'message': rosinfo}
 		except Exception as e:
 			return {'success': False, 'message': str(e)}

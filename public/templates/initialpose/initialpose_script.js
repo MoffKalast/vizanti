@@ -3,8 +3,12 @@ import { tf } from '/js/modules/tf.js';
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
 
-let topic = "/initialpose"
+let topic = getTopic("{uniqueID}");
 let seq = 0;
+
+if(topic == ""){
+	topic = "/initialpose";
+}
 
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];

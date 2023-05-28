@@ -3,13 +3,12 @@ import { tf } from '/js/modules/tf.js';
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
 
-
-
-let topic = "";
+let topic = getTopic("{uniqueID}");
 let listener = undefined;
 let marker_topic = undefined;
 
 let posemsg = undefined;
+let frame = "";
 
 const scaleSlider = document.getElementById('{uniqueID}_scale');
 const scaleSliderValue = document.getElementById('{uniqueID}_scale_value');
@@ -86,12 +85,11 @@ function drawMarkers(){
 		ctx.fill();
 	}
 
-	function drawArrow(posemsg, size){
-		ctx.fillStyle = "rgba(255, 0, 0, 0.9)";
-		const height = parseInt(size*posemsg.scale.x);
-		const width = parseInt(size*0.1*posemsg.scale.y)+1;
-		const tip = parseInt(size*0.2*posemsg.scale.x)+1;
-		const tipwidth = parseInt(size*0.3*posemsg.scale.y)+1;
+	function drawArrow(size){
+		const height = parseInt(size*2.0);
+		const width = parseInt(size*0.1*0.6)+1;
+		const tip = parseInt(size*0.24)+1;
+		const tipwidth = parseInt(size*0.3*0.6)+1;
 
 		ctx.beginPath();
 		ctx.moveTo(0, -width);
@@ -105,8 +103,7 @@ function drawMarkers(){
 		ctx.fill();
 	}
 	
-	function drawCovariance(posemsg, size) {
-		const covariance = posemsg.pose.covariance;
+	function drawCovariance(covariance, size) {
 	  
 		// Extract the variance values for X and Y.
 		const varianceX = covariance[0];
@@ -133,51 +130,34 @@ function drawMarkers(){
 
 	ctx.clearRect(0, 0, wid, hei);
 
-
 	if(!posemsg)
 		return;
 
-	ctx.fillStyle = rgbaToFillColor(posemsg.color);
+	if(frame === tf.fixed_frame){
 
-	const frame = tf.absoluteTransforms[posemsg.header.frame_id];
+		const screenpos = view.fixedToScreen(posemsg);
+		const scale = unit*parseFloat(scaleSlider.value);
 
-	if(!frame)
-		return;
+		ctx.save();
+		ctx.translate(screenpos.x, screenpos.y);
+		ctx.scale(1, -1);
 
-	let transformed = tf.transformPose(
-		posemsg.header.frame_id, 
-		tf.fixed_frame, 
-		posemsg.pose.pose.position, 
-		posemsg.pose.pose.orientation
-	);
+		if(!posemsg.rotation_invalid)
+			ctx.rotate(posemsg.yaw);
 
-	const pos = view.fixedToScreen({
-		x: transformed.translation.x,
-		y: transformed.translation.y
-	});
+		drawCovariance(posemsg.covariance, unit);
 
-	const q = posemsg.pose.pose.orientation;
-	const rotation_invalid = q.x == 0 && q.y == 0 && q.z == 0 && q.w == 0;
+		ctx.fillStyle = "rgba(139, 0, 0, 0.9)";
 
-	const yaw = transformed.rotation.toEuler().h;
-	const scale = parseFloat(scaleSlider.value);
+		if(!posemsg.rotation_invalid){
+			drawArrow(scale);
+		}else{
+			drawCircle(scale*0.4);
+		}
 
-	ctx.save();
-	ctx.translate(pos.x, pos.y);
-	ctx.scale(1, -1);
+		ctx.restore();
 
-	if(!rotation_invalid)
-		ctx.rotate(yaw);
-
-	drawCovariance(posemsg, unit);
-
-	if(!rotation_invalid){
-		drawArrow(posemsg, unit*scale);
-	}else{
-		drawCircle(unit*scale*0.4);
 	}
-
-	ctx.restore();
 }
 
 //Topic
@@ -198,10 +178,34 @@ function connect(){
 	
 	listener = marker_topic.subscribe((msg) => {
 		
-		msg.color = {r: 1, g: 0, b: 0, a: 1};
-		msg.scale = {x: 2.0, y: 0.6, z: 1};
+		if(!tf.absoluteTransforms[msg.header.frame_id])
+			return;
+
+		frame = tf.fixed_frame;
+
+		let q = msg.pose.pose.orientation;
+		const rotation_invalid = q.x == 0 && q.y == 0 && q.z == 0 && q.w == 0
+
+		if(rotation_invalid){
+			q = new Quaternion();
+		}
+
+		const transformed = tf.transformPose(
+			msg.header.frame_id, 
+			tf.fixed_frame, 
+			msg.pose.pose.position, 
+			q
+		);
+
+		//Todo: transform covariance
 	
-		posemsg = msg;
+		posemsg = {
+			x: transformed.translation.x,
+			y: transformed.translation.y,
+			yaw: transformed.rotation.toEuler().h,
+			rotation_invalid: rotation_invalid,
+			covariance: msg.pose.covariance
+		};
 	
 		drawMarkers();
 	});

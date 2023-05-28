@@ -5,7 +5,7 @@ import { settings } from '/js/modules/persistent.js';
 import { navsat } from './js/modules/navsat.js';
 
 let copyright = "© OpenStreetMap";
-let topic = "";
+let topic = getTopic("{uniqueID}");
 let server_url = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 let listener = undefined;
 let zoomLevel = 19;
@@ -146,8 +146,8 @@ async function drawTiles(){
 				new Quaternion()
 			);
 			return {
-				latitude: map_fix.latitude + (transformed.translation.y * fix_data.degreesPerMeter * 3.0), //magic numbers to make this work, this should be fine without them but reality is often dissapointing
-				longitude: map_fix.longitude + (transformed.translation.x * fix_data.degreesPerMeter * 4.2)
+				latitude: map_fix.latitude + (transformed.translation.y * fix_data.degreesPerMeter.latitude),
+				longitude: map_fix.longitude + (transformed.translation.x * fix_data.degreesPerMeter.longitude)
 			};
 		});
 
@@ -157,10 +157,10 @@ async function drawTiles(){
 		);
 
 		// Calculate the range of tiles to cover the screen
-		const minX = Math.min(...cornerTileCoords.map((coord) => coord.x)) - fix_data.tilePos.x - 2;
-		const maxX = Math.max(...cornerTileCoords.map((coord) => coord.x)) - fix_data.tilePos.x + 2;
-		const minY = Math.min(...cornerTileCoords.map((coord) => coord.y)) - fix_data.tilePos.y - 2;
-		const maxY = Math.max(...cornerTileCoords.map((coord) => coord.y)) - fix_data.tilePos.y + 2;
+		const minX = Math.min(...cornerTileCoords.map((coord) => coord.x)) - fix_data.tilePos.x - 1;
+		const maxX = Math.max(...cornerTileCoords.map((coord) => coord.x)) - fix_data.tilePos.x + 1;
+		const minY = Math.min(...cornerTileCoords.map((coord) => coord.y)) - fix_data.tilePos.y - 1;
+		const maxY = Math.max(...cornerTileCoords.map((coord) => coord.y)) - fix_data.tilePos.y + 1;
 
 		for (let i = minX; i <= maxX; i++) {
 			for (let j = minY; j <= maxY; j++) {
@@ -201,9 +201,7 @@ function connect(){
 		const tilePos = navsat.coordToTile(map_fix.longitude, map_fix.latitude, zoomLevel);
 		const tileCoords = navsat.tileToCoord(tilePos.x, tilePos.y, zoomLevel);
 		const nextTileCoords = navsat.tileToCoord(tilePos.x+1, tilePos.y+1, zoomLevel);
-
 		const metersSize = navsat.tileSizeInMeters(map_fix.latitude, zoomLevel);
-		const degreeSize = Math.abs(map_fix.longitude - nextTileCoords.longitude);
 
 		fix_data = {
 			tilePos: tilePos,
@@ -213,7 +211,10 @@ function connect(){
 				y: navsat.haversine(tileCoords.latitude, map_fix.longitude, map_fix.latitude, map_fix.longitude)
 			},
 			metersSize: metersSize,
-			degreesPerMeter: degreeSize/metersSize
+			degreesPerMeter: {
+				longitude: Math.abs(tileCoords.longitude - nextTileCoords.longitude)/metersSize,
+				latitude: Math.abs(tileCoords.latitude - nextTileCoords.latitude)/metersSize
+			}
 		}
 
 		drawTiles();

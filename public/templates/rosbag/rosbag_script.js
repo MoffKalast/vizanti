@@ -41,6 +41,17 @@ async function getRecordingStatus(topics, start, path) {
 	});
 }
 
+function getCurrentDateTimeString() {
+	const date = new Date();
+	const year = date.getFullYear();
+	const month = (date.getMonth() + 1).toString().padStart(2, '0');
+	const day = date.getDate().toString().padStart(2, '0');
+	const hours = date.getHours().toString().padStart(2, '0');
+	const minutes = date.getMinutes().toString().padStart(2, '0');
+
+	return `${year}-${month}-${day}-${hours}-${minutes}`;
+}
+
 async function recordRosbag(topics, start, path) {
 	const recordRosbagService = new ROSLIB.Service({
 		ros: rosbridge.ros,
@@ -48,8 +59,13 @@ async function recordRosbag(topics, start, path) {
 		serviceType: "vizanti/RecordRosbag",
 	});
 
+	const timestamp = getCurrentDateTimeString();
+    const pathArray = path.split("/");
+    const fileName = pathArray.pop();
+    const timepath = `${pathArray.join("/")}/${timestamp}-${fileName}`;
+
 	return new Promise((resolve, reject) => {
-		const request = new ROSLIB.ServiceRequest({ topics, start, path });
+		const request = new ROSLIB.ServiceRequest({ topics, start, path: timepath });
 		recordRosbagService.callService(request, (result) => {
 			resolve(result);
 		}, (error) => {
@@ -85,21 +101,21 @@ function setState(state){
 }
 
 async function startRecording() {
-	const result = await recordRosbag(Array.from(topic_list), true, path);
-	console.log(result);
-	setState(result.success);
-
-	if(!result.success)
+	if(await confirm("Are you sure you want to start recording a bag?")){
+		const result = await recordRosbag(Array.from(topic_list), true, path);
+		console.log(result);
+		setState(result.success);
 		alert(result.message)
+	}
 }
 
 async function stopRecording() {
-	const result = await recordRosbag([], false, '');
-	console.log(result);
-	setState(!result.success);
-
-	if(!result.success)
+	if(await confirm("Are you sure you want to stop recording?")){
+		const result = await recordRosbag([], false, '');
+		console.log(result);
+		setState(!result.success);
 		alert(result.message)
+	}
 }
 
 startButton.addEventListener('click', async () => {

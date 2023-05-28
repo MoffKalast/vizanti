@@ -2,10 +2,14 @@ import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
 import { nipplejs } from '/js/modules/joystick.js';
 
-let topic = "/cmd_vel";
+let topic = getTopic("{uniqueID}");
 let joy_offset_x = "50%";
 let joy_offset_y = "85%";
 let cmdVelPublisher = undefined;
+
+if(topic == ""){
+	topic = "/cmd_vel";
+}
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];

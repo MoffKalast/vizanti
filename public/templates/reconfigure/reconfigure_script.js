@@ -81,31 +81,32 @@ async function setNodeParamValue(fullname, type, newValue) {
 function createParameterInput(fullname, defaultValue, type) {
 	const name = fullname.replace(nodeName+"/","").replaceAll("_","_<wbr>");
 	const id = "${uniqueID}_"+fullname;
+	const arrowId = `${id}_arrow`;
 	let inputElement;
 
 	switch (type) {
 		case "string":
 			inputElement = `
 				<label for="${id}"><i>string </i> ${name}:</label>
-				<input id="${id}" type="text" value="${defaultValue}">
+				<input id="${id}" type="text" value="${defaultValue}"><span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span>
 				<br>`;
 			break;
 		case "int":
 			inputElement = `
 				<label for="${id}"><i>int </i> ${name}:</label>
-				<input type="number" value="${defaultValue}" step="1" id="${id}">
+				<input type="number" value="${defaultValue}" step="1" id="${id}"><span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span>
 				<br>`;
 			break;
 		case "float":
 			inputElement = `
 				<label for="${id}"><i>float </i>${name}:</label>
-				<input type="number" value="${defaultValue}" step="0.001" id="${id}">
+				<input type="number" value="${defaultValue}" step="0.001" id="${id}"><span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span>
 				<br>`;
 			break;
 		case "bool":
 			inputElement = `
 				<label for="${id}"><i>bool </i>${name}:</label>
-				<input type="checkbox" id="${id}" ${defaultValue ? "checked" : ""}>
+				<input type="checkbox" id="${id}" ${defaultValue ? "checked" : ""}><span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span>
 				<br>`;
 			break;
 		default:
@@ -125,8 +126,21 @@ function createParameterInput(fullname, defaultValue, type) {
 			case "bool": val = event.target.checked; break;
 		}
 		setNodeParamValue(fullname, type, val);
+
+		const arrowElement = document.getElementById(arrowId);
+		arrowElement.style.visibility = "visible";
+		arrowElement.style.animation = "none";
+		// Force reflow to make the new animation take effect
+		arrowElement.offsetHeight;
+		arrowElement.style.animation = null;
+
+		arrowElement.addEventListener('animationend', () => {
+			arrowElement.style.visibility = "hidden";
+		}, {once: true});
 	});
 }
+
+
 
 function detectValueType(value) {
 	if (typeof value == "boolean") {

@@ -339,7 +339,7 @@ input[type="range"]::-moz-range-thumb {
 	cursor: pointer;
 }
 
-select {
+select, .datalist_input {
 	max-width: 100%;
 	min-width: 100px;
 	font-size: 1.0rem;
@@ -348,6 +348,8 @@ select {
 	color: white;
 	background-color: #424242;
 	font-family: Monospace;
+	margin-top: 5px;
+	margin-bottom: 5px;
 }
 
 /* Canvas */
@@ -543,4 +545,73 @@ button:hover{
 	min-width: 110px;
 	height: 50px; 
 	display: inline-block; 
+}
+
+/*Dynamic reconfigure arrow animations*/
+
+@keyframes arrowMove {
+	0% {
+		transform: translateX(0);
+		opacity: 1;
+	}
+	100% {
+		transform: translateX(200px);
+		opacity: 0;
+	}
+}
+
+.arrow {
+	position: relative;
+	animation: arrowMove 0.5s linear;
+	/* Adjust the following based on your design */
+	display: inline-block;
+	color: rgb(255, 255, 255);
+	font-size: 30px;
+}
+
+/* Add tabs */
+
+/* Style the tab */
+.tab {
+	border-style: outset;
+	border-radius: 5px;
+	display: flex;
+    justify-content: space-around;
+	overflow: hidden;
+	background-color: #273B54;
+	margin-bottom: 15px;
+}
+
+/* Style the buttons inside the tab */
+.tab button {
+	background-color: inherit;
+	flex-grow: 1;
+	float: left;
+	border: none;
+	outline: none;
+	cursor: pointer;
+	padding: 7px 7px;
+	transition: 0.3s;
+	color: lightgray;
+}
+
+/* Change background color of buttons on hover */
+.tab button:hover {
+	background-color: #39567A;
+	transform: scale(1);
+}
+
+/* Create an active/current tablink class */
+.tab button.active_tab {
+	background-color: #496D99;
+	font-weight: bold;
+	color: white;
+}
+
+/* Style the tab content */
+.tabcontent {
+	display: none;
+	padding: 6px 12px;
+	border: none;
+	border-top: none;
 }
