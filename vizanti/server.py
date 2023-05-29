@@ -8,7 +8,7 @@ from werkzeug.serving import make_server, WSGIRequestHandler
 import rclpy
 from std_msgs.msg import String
 
-app = Flask(__name__, static_folder='../public', template_folder='../publics')
+app = Flask(__name__, static_folder='../public', template_folder='../public')
 
 def get_files(path, valid_extensions):
     templates_dir = os.path.join(app.static_folder, path)
