@@ -1,5 +1,0 @@
-string file_path
-string topic
----
-bool success
-string message
