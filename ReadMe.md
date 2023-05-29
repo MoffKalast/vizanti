@@ -11,12 +11,14 @@ Vizanti is a web-based visualization and control tool developed for more conveni
 As a field tool, Vizanti is designed to operate just as well without internet access, and as such the intended way is to host it on a robot, with rosbridge autoconnecting to the host IP. 
 
  ```bash
-cd ~/catkin_ws/src
-git clone https://github.com/MoffKalast/vizanti.git
+pip install Flask
+sudo apt install ros-humble-rosbridge-suite
+
+cd ~/ros2_ws/src
+git clone -b ros2 https://github.com/MoffKalast/vizanti.git
+git clone https://github.com/b1n-ch1kn/vizanti_interfaces
 cd ..
-rosdep install --from-paths src --ignore-src
-catkin_make
-```
+colcon build
 
 Or if rosdep fails for some reason, these are the main two deps:
 ```
