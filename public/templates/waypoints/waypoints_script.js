@@ -477,12 +477,16 @@ async function loadTopics(){
 	});
 	selectionbox.innerHTML = topiclist
 
-	if(result.includes(topic)){
-		selectionbox.value = topic;
-	}else{
-		topiclist += "<option value='"+topic+"'>"+topic+"</option>"
-		selectionbox.innerHTML = topiclist
-		selectionbox.value = topic;
+	if(topic == "")
+		topic = selectionbox.value;
+	else{
+		if(result.includes(topic)){
+			selectionbox.value = topic;
+		}else{
+			topiclist += "<option value='"+topic+"'>"+topic+"</option>"
+			selectionbox.innerHTML = topiclist
+			selectionbox.value = topic;
+		}
 	}
 
 	let framelist = "";
