@@ -15,7 +15,6 @@
     <build_depend>std_msgs</build_depend>
     <build_depend>message_generation</build_depend>
 
-
     <build_export_depend>actionlib_msgs</build_export_depend>
     <build_export_depend>move_base_msgs</build_export_depend>
     <build_export_depend>std_msgs</build_export_depend>
@@ -25,5 +24,6 @@
     <exec_depend>actionlib_msgs</exec_depend>
     <exec_depend>move_base_msgs</exec_depend>
     <exec_depend>std_msgs</exec_depend>
+    <exec_depend>python3-flask</exec_depend>
 
 </package>
