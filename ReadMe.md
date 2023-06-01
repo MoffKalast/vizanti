@@ -11,15 +11,17 @@ Vizanti is a web-based visualization and control tool developed for more conveni
 As a field tool, Vizanti is designed to operate just as well without internet access, and as such the intended way is to host it on a robot, with rosbridge autoconnecting to the host IP. 
 
  ```bash
-pip install Flask
-sudo apt install ros-noetic-rosbridge-suite
-
 cd ~/catkin_ws/src
 git clone https://github.com/MoffKalast/vizanti.git
 cd ..
+rosdep install --from-paths src --ignore-src
 catkin_make
+```
 
- ```
+Or if rosdep fails for some reason, these are the main two deps:
+```
+sudo apt install ros-noetic-rosbridge-suite python3-flask
+```
  
 Flask and Jinja2 are used for templating, rosbridge is required for socket communication.
 
