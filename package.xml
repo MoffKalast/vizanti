@@ -3,8 +3,9 @@
     <version>0.0.1</version>
     <description>A mission planner and visualizer for controlling outdoor ROS robots.</description>
     <maintainer email="vid.rijavec@gmail.com">MoffKalast</maintainer>
-    <license>BSD3</license>
+    <license>BSD</license>
 
+    <author email="vid.rijavec@gmail.com">MoffKalast</author>
     <depend>rospy</depend>
     <depend>dynamic_reconfigure</depend>
 
