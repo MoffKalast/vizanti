@@ -126,6 +126,10 @@ Display satelite imagery, by default from OpenStreetMap. Requires a Fix origin w
 
 Display a BatteryState message.
 
+#### <img src="wiki_assets/image.png" alt="" title="Compressed Image" width="30" height="30"/> Compressed Image
+
+Display a CompressedImage message in a movable box anywhere on the screen. Heavily throttled by default.
+
 #### <img src="wiki_assets/markerarray.png" alt="" title="Marker Array" width="30" height="30"/> Marker Array
 
 Visualize a MarkerArray. Currently supported types are ARROW, CUBE, SPHERE, CYLIDER, LINE_STRIP and TEXT_VIEW_FACING. Since each of these widgets adds another canvas layer, it makes more sense to aggregate regular Marker messages into a Marker Array to avoid some of that overhead.
