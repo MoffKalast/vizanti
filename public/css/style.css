@@ -377,7 +377,7 @@ canvas {
 	height: auto;
 
 	position: absolute;
-	top: 75px;
+	top: 0;
 	left: 0;
 	border: 3px solid #424242;
 

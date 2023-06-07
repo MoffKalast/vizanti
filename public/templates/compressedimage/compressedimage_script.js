@@ -63,7 +63,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	canvas.style.top = `calc(${img_offset_y})`;
 
 	rotationbox.value = loaded_data.rotation;
-	canvas.style.transform = `rotate(${loaded_data.rotation}deg)`;
+	canvas.style.transform = `translate(-50%, -50%) rotate(${loaded_data.rotation}deg)`;
 
 }
 
@@ -82,7 +82,7 @@ function saveSettings(){
 	canvas.style.opacity = opacitySlider.value;
 	canvas.style.width = widthSlider.value+"%";
 
-	canvas.style.transform = `rotate(${rotationbox.value}deg)`;
+	canvas.style.transform = `translate(-50%, -50%) rotate(${rotationbox.value}deg)`;
 }
 
 //Topic
