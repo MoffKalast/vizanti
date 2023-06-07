@@ -151,6 +151,10 @@ let preview_active = false;
 
 function onStart(event) {
 	preview_active = true;
+	document.addEventListener('mousemove', onMove);
+	document.addEventListener('touchmove', onMove);
+	document.addEventListener('mouseup', onEnd);
+	document.addEventListener('touchend', onEnd);
 }
 
 function onMove(event) {
@@ -180,16 +184,15 @@ function onMove(event) {
 
 function onEnd() {
 	preview_active = false;
+	document.removeEventListener('mousemove', onMove);
+	document.removeEventListener('touchmove', onMove);
+	document.removeEventListener('mouseup', onEnd);
+	document.removeEventListener('touchend', onEnd);
 }
   
 imgpreview.addEventListener('mousedown', onStart);
-imgpreview.addEventListener('mousemove', onMove);
-imgpreview.addEventListener('mouseup', onEnd);
-imgpreview.addEventListener('mouseleave', onEnd);
-
 imgpreview.addEventListener('touchstart', onStart);
-imgpreview.addEventListener('touchmove', onMove);
-imgpreview.addEventListener('touchend', onEnd);
+
 
 console.log("Image Widget Loaded {uniqueID}")
 

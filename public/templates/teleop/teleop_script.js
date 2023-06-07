@@ -278,6 +278,10 @@ let preview_active = false;
 
 function onStart(event) {
 	preview_active = true;
+	document.addEventListener('mousemove', onMove);
+	document.addEventListener('mouseup', onEnd);
+	document.addEventListener('touchmove', onMove);
+	document.addEventListener('touchend', onEnd);
 }
 
 function onMove(event) {
@@ -309,15 +313,13 @@ function onMove(event) {
 
 function onEnd() {
 	preview_active = false;
+	document.removeEventListener('mousemove', onMove);
+	document.removeEventListener('mouseup', onEnd);
+	document.removeEventListener('touchmove', onMove);
+	document.removeEventListener('touchend', onEnd);
 }
   
 joypreview.addEventListener('mousedown', onStart);
-joypreview.addEventListener('mousemove', onMove);
-joypreview.addEventListener('mouseup', onEnd);
-joypreview.addEventListener('mouseleave', onEnd);
-
 joypreview.addEventListener('touchstart', onStart);
-joypreview.addEventListener('touchmove', onMove);
-joypreview.addEventListener('touchend', onEnd);
 
 console.log("Teleop Widget Loaded {uniqueID}")
