@@ -52,18 +52,18 @@ holonomicSwapCheckbox.addEventListener('change', saveSettings);
 // Settings
 
 if (settings.hasOwnProperty('{uniqueID}')) {
-	const loadedData = settings['{uniqueID}'];
-	topic = loadedData.topic;
+	const loaded_data = settings['{uniqueID}'];
+	topic = loaded_data.topic;
 
-	joy_offset_x = loadedData.joy_offset_x;
-	joy_offset_y = loadedData.joy_offset_y;
+	joy_offset_x = loaded_data.joy_offset_x;
+	joy_offset_y = loaded_data.joy_offset_y;
 
-	linearVelSlider.value = loadedData.linear_velocity;
-	angularVelSlider.value = loadedData.angular_velocity;
-	accelSlider.value = loadedData.accel;
+	linearVelSlider.value = loaded_data.linear_velocity;
+	angularVelSlider.value = loaded_data.angular_velocity;
+	accelSlider.value = loaded_data.accel;
 
-	invertAngularCheckbox.checked = loadedData.invert_angular;
-	holonomicSwapCheckbox.checked = loadedData.holonomic_swap;
+	invertAngularCheckbox.checked = loaded_data.invert_angular;
+	holonomicSwapCheckbox.checked = loaded_data.holonomic_swap;
 
 	linearVelValue.textContent = linearVelSlider.value;
 	angularVelValue.textContent = angularVelSlider.value;
@@ -278,6 +278,10 @@ let preview_active = false;
 
 function onStart(event) {
 	preview_active = true;
+	document.addEventListener('mousemove', onMove);
+	document.addEventListener('mouseup', onEnd);
+	document.addEventListener('touchmove', onMove);
+	document.addEventListener('touchend', onEnd);
 }
 
 function onMove(event) {
@@ -309,15 +313,13 @@ function onMove(event) {
 
 function onEnd() {
 	preview_active = false;
+	document.removeEventListener('mousemove', onMove);
+	document.removeEventListener('mouseup', onEnd);
+	document.removeEventListener('touchmove', onMove);
+	document.removeEventListener('touchend', onEnd);
 }
   
 joypreview.addEventListener('mousedown', onStart);
-joypreview.addEventListener('mousemove', onMove);
-joypreview.addEventListener('mouseup', onEnd);
-joypreview.addEventListener('mouseleave', onEnd);
-
 joypreview.addEventListener('touchstart', onStart);
-joypreview.addEventListener('touchmove', onMove);
-joypreview.addEventListener('touchend', onEnd);
 
 console.log("Teleop Widget Loaded {uniqueID}")

@@ -1,6 +1,6 @@
 # <img src="public/assets/icon/512.png" alt="Icon" title="Grid" width="50" height="50"/> Vizanti - Web Visualizer & Mission Planner for ROS
 
-[![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.png)](https://opensource.org/licenses/BSD-3-Clause)
+[![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.png)](https://opensource.org/licenses/BSD-3-Clause) [![Build Status](https://build.ros.org/buildStatus/icon?job=Ndev__vizanti__ubuntu_focal_amd64&build=4)](https://build.ros.org/job/Ndev__vizanti__ubuntu_focal_amd64/4/)
 
 Vizanti is a web-based visualization and control tool developed for more convenient operation of outdoor robots running the Robot Operating System (ROS). The application attempts to replicate RViz's orthographic 2D view as closely as possible with a smartphone friendly interface. The second goal is to allow planning and executing movement and mission commands, i.e. goals and waypoints, with custom buttons and parameter reconfigure.
 
@@ -125,6 +125,10 @@ Display satelite imagery, by default from OpenStreetMap. Requires a Fix origin w
 #### <img src="wiki_assets/battery.png" alt="" title="Battery" width="30" height="30"/> Battery
 
 Display a BatteryState message.
+
+#### <img src="wiki_assets/image.png" alt="" title="Compressed Image" width="30" height="30"/> Compressed Image
+
+Display a CompressedImage message in a movable box anywhere on the screen. Heavily throttled by default.
 
 #### <img src="wiki_assets/markerarray.png" alt="" title="Marker Array" width="30" height="30"/> Marker Array
 
