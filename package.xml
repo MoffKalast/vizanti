@@ -11,6 +11,7 @@
 
     <!-- Custom interfaces broken out -->
     <depend>vizanti_interfaces</depend>
+    <depend>rosbridge_suite</depend>
 
     <exec_depend>ros2launch</exec_depend>
 
