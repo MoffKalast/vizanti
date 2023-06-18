@@ -4,13 +4,18 @@
     <description>A mission planner and visualizer for controlling outdoor ROS robots.</description>
     <maintainer email="vid.rijavec@gmail.com">MoffKalast</maintainer>
     <maintainer email="albradford2468@gmail.com">Alastair Bradford</maintainer>
-    <license>BSD3</license>
+    <license>BSD</license>
+
+    <author email="vid.rijavec@gmail.com">MoffKalast</author>
 
     <depend>std_srvs</depend>
     <depend>tf2_msgs</depend>
+    <depend>geometry_msgs</depend>
+    <depend>std_msgs</depend>
 
     <!-- Custom interfaces broken out -->
     <depend>vizanti_interfaces</depend>
+    <depend>python3-flask</depend>
     <depend>rosbridge_suite</depend>
 
     <exec_depend>ros2launch</exec_depend>

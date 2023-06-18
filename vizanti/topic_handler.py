@@ -35,18 +35,25 @@ class TopicHandler(Node):
                 self.transforms[transform.child_frame_id] = transform
             self.updated = True
 
+def spin(node):
+    rclpy.spin(node)
+
 def main(args=None):
     rclpy.init(args=args)
     odr = TopicHandler()
+
+    spinner = threading.Thread(target=spin, args=(odr,))
+    spinner.start()
+
     rate = odr.create_rate(30)
 
     while rclpy.ok():
         odr.publish()
-        rclpy.spin_once(odr)
         rate.sleep()
 
     odr.destroy_node()
     rclpy.shutdown()
+    spinner.join()
 
 if __name__ == '__main__':
     main()
