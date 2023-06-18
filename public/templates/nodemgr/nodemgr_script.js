@@ -28,6 +28,7 @@ async function getExecutables(pkg_name) {
 
 	return new Promise((resolve, reject) => {
 		getExecutablesService.callService(new ROSLIB.ServiceRequest({package : pkg_name}), (result) => {
+			console.log(result)
 			resolve(result.executables);
 		}, (error) => {
 			reject(error);
@@ -181,20 +182,19 @@ packageBox.addEventListener('change', async function(e) {
 		}
 		nameBox.innerHTML = nodelist;
 
-
-		if(nameBox.value.endsWith(".launch")){
-			typeBox.value = "roslaunch";
+		if(nameBox.value.includes("launch")){
+			typeBox.value = "ros2 launch";
 		}else{
-			typeBox.value = "rosrun";
+			typeBox.value = "ros2 run";
 		}
 	}
 });
 
 nameBox.addEventListener('change', async function(e) {
-	if(nameBox.value.endsWith(".launch")){
-		typeBox.value = "roslaunch";
+	if(nameBox.value.includes("launch")){
+		typeBox.value = "ros2 launch";
 	}else{
-		typeBox.value = "rosrun";
+		typeBox.value = "ros2 run";
 	}
 });
 

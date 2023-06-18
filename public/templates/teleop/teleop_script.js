@@ -114,7 +114,7 @@ function connect(){
 	cmdVelPublisher = new ROSLIB.Topic({
 		ros: rosbridge.ros,
 		name: topic,
-		messageType: 'geometry_msgs/Twist',
+		messageType: 'geometry_msgs/msg/Twist',
 	});
 }
 

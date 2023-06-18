@@ -47,13 +47,13 @@ class Rosbridge {
 		this.topics_client = new ROSLIB.Service({
 			ros : this.ros,
 			name : '/rosapi/topics',
-			serviceType : 'rosapi/Topics',
+			serviceType : 'rosapi_msgs/srv/Topics',
 		});
 
 		this.nodes_clinet = new ROSLIB.Service({
 			ros : this.ros,
 			name : '/rosapi/nodes',
-			serviceType : 'rosapi/Nodes',
+			serviceType : 'rosapi_msgs/srv/Nodes',
 		});
 
 		window.dispatchEvent(new Event('rosbridge_change'));

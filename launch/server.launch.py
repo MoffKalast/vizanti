@@ -9,6 +9,7 @@ def generate_launch_description():
     unregister_timeout = launch.substitutions.LaunchConfiguration('unregister_timeout', default='100.0')
 
     rosbridge_node = launch_ros.actions.Node(
+        name='vizanti_rosbridge',
         package='rosbridge_server',
         executable='rosbridge_websocket',
         output='screen',
@@ -25,11 +26,13 @@ def generate_launch_description():
     )
 
     rosapi_node = launch_ros.actions.Node(
+        name='vizanti_rosapi',
         package='rosapi',
         executable='rosapi_node'
     )
 
     flask_node = launch_ros.actions.Node(
+        name='vizanti_flask_node',
         package='vizanti',
         executable='vizanti_flask_node',
         output='screen',
@@ -41,12 +44,14 @@ def generate_launch_description():
     )
 
     topic_handler_node = launch_ros.actions.Node(
+        name='vizanti_topic_handler_node',
         package='vizanti',
         executable='vizanti_topic_handler_node',
         output='screen'
     )
 
     service_handler_node = launch_ros.actions.Node(
+        name='vizanti_service_handler_node',
         package='vizanti',
         executable='vizanti_service_handler_node',
         output='screen'

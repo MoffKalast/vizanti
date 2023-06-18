@@ -8,8 +8,8 @@
 		<br>
 
 		<select id="{uniqueID}_type">
-			<option value="rosrun">rosrun</option>
-			<option value="roslaunch">roslaunch</option>
+			<option value="ros2 run">ros2 run</option>
+			<option value="ros2 launch">ros2 launch</option>
 		</select>
 
 
@@ -36,7 +36,7 @@
 
 		<br>
 
-		<button id="{uniqueID}_roswtf">roswtf</button>
+		<button id="{uniqueID}_roswtf">ros2 doctor</button>
 
 		<br>
 
@@ -64,11 +64,11 @@
 
 		<br>
 
-		<p id="{uniqueID}_rosnode_info" style="color:lightgray">Waiting for rosnode info...</p>
+		<p id="{uniqueID}_rosnode_info" style="color:lightgray">Waiting for ros2 node info...</p>
 		
 		<hr>
 
-		<p>Note that if a node is set to respawn, it'll automatically restart itself.</p>
+		<p>Note that if a node is set to respawn, it'll automatically restart itself. Also given that ros 2 has no way of shutting down nodes, it may seem like killed nodes are running for a while after they died until the node list polls again.</p>
 
 		<button id="{uniqueID}_nodekill" style="background-color: rgb(131, 17, 17);">Kill node</button>
 	</div>
@@ -77,12 +77,12 @@
 
 <div id="{uniqueID}_roswtfmodal" class="modal_outer noselect">
 	<div class="modal_inner noselect">
-		<h3>Roswtf Diagnostics</h3>
+		<h3>Doctor Diagnostics</h3>
 		<hr>
 
 		<br>
 
-		<p id="{uniqueID}_roswtf_data" style="color:lightgray">Waiting for roswtf report...</p>
+		<p id="{uniqueID}_roswtf_data" style="color:lightgray">Waiting for doctor report...</p>
 		
 	</div>
 </div>

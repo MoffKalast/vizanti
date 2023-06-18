@@ -1,6 +1,8 @@
 # <img src="public/assets/icon/512.png" alt="Icon" title="Grid" width="50" height="50"/> Vizanti - Web Visualizer & Mission Planner for ROS
 
-[![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.png)](https://opensource.org/licenses/BSD-3-Clause) [![Build Status](https://build.ros.org/buildStatus/icon?job=Ndev__vizanti__ubuntu_focal_amd64&build=4)](https://build.ros.org/job/Ndev__vizanti__ubuntu_focal_amd64/4/)
+[![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.png)](https://opensource.org/licenses/BSD-3-Clause) [![Build Status](https://build.ros.org/buildStatus/icon?job=Ndev__vizanti__ubuntu_jammy_amd64&build=4)](https://build.ros.org/job/Ndev__vizanti__ubuntu_jammy_amd64/4/)
+
+**Note: The ROS 2 version is still being ported, try at your own peril.**
 
 Vizanti is a web-based visualization and control tool developed for more convenient operation of outdoor robots running the Robot Operating System (ROS). The application attempts to replicate RViz's orthographic 2D view as closely as possible with a smartphone friendly interface. The second goal is to allow planning and executing movement and mission commands, i.e. goals and waypoints, with custom buttons and parameter reconfigure.
 
@@ -18,7 +20,8 @@ cd ~/ros2_ws/src
 git clone -b ros2 https://github.com/MoffKalast/vizanti.git
 git clone https://github.com/b1n-ch1kn/vizanti_interfaces
 cd ..
-colcon build
+colcon build --symlink-install
+```
 
 Or if rosdep fails for some reason, these are the main two deps:
 ```

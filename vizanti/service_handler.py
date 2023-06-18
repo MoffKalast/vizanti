@@ -4,7 +4,6 @@ import fcntl
 import sys
 import rclpy
 from rclpy.node import Node
-from rclpy.publisher import Publisher
 
 from std_srvs.srv import Trigger
 from vizanti_interfaces.srv import GetNodeParameters
@@ -50,41 +49,66 @@ class ServiceHandler(Node):
         res.packages = self.packages
         return res
 
+    def get_filenames(self, file_paths):
+        file_names = []
+        for file_path in file_paths:
+            base_name = os.path.basename(file_path)
+            if base_name.endswith(tuple([".py",".launch",".yaml"])) or "." not in base_name:
+                file_names.append(base_name)
+        return file_names
+
     def list_executables_callback(self, req, res):
+
         if req.package not in self.packages:
             self.get_logger().error("Package not found: " + req.package)
             res.executables = []
             return res
+        
+        process = subprocess.Popen(['ros2', 'pkg', 'prefix', req.package], stdout=subprocess.PIPE)
+        output, error = process.communicate()
+        path = output.decode('utf-8').strip()
 
-        path = self.packages[req.package]
-        # Use find to get list of executables
-        cmd_exec = ["find", path, "-type", "f", "!", "-name", "*.*", "-executable"]
-        cmd_python_and_launch = ["find", path, "-type", "f",
-                                 "(",
-                                 "-iname", "*.py", "-executable",
-                                 "-o",
-                                 "-iname", "*.launch",
-                                 ")"]
+        self.get_logger().info(f"Executables Package: {req.package}")
+        self.get_logger().info(f"Path: {path}")
+
+        libpath = path+"/share/"+req.package
+        launchpath = path+"/lib/"+req.package
+        #TODO add path to apt installed packages, I'm not sure where exactly those executables are yet
+        self.get_logger().info(f"libpath: {libpath}")
+
+        cmd_exec = ["find", libpath] # get list of executables
+        cmd_exec = cmd_exec + ["-type", "f", "-o", "-type", "l"] # files or symlinks
+
+        cmd_launch = ["find", launchpath]
+        cmd_launch = cmd_launch + ["-type", "f", "-o", "-type", "l"]
+        
+        self.get_logger().info(f"cmd_exec: {cmd_exec}")
+        self.get_logger().info(f"cmd_python_and_launch: {cmd_launch}")
 
         process_exec = subprocess.Popen(cmd_exec, stdout=subprocess.PIPE)
-        process_python_and_launch = subprocess.Popen(cmd_python_and_launch, stdout=subprocess.PIPE)
+        process_launch = subprocess.Popen(cmd_launch, stdout=subprocess.PIPE)
 
         output_exec, error_exec = process_exec.communicate()
-        output_python_and_launch, error_python_and_launch = process_python_and_launch.communicate()
+        output_launch, error_launch = process_launch.communicate()
 
         # Process output
-        lines_exec = output_exec.decode('utf-8').split('\n')
-        lines_python_and_launch = output_python_and_launch.decode('utf-8').split('\n')
+        lines_exec = self.get_filenames(output_exec.decode('utf-8').split('\n'))
+        lines_launch = self.get_filenames(output_launch.decode('utf-8').split('\n'))
+
+        self.get_logger().info(f"lines_exec: {lines_exec}")
+        self.get_logger().info(f"output_python_and_launch: {lines_launch}")
 
         executables = [line.split("/")[-1] for line in lines_exec if line]
-        python_and_launch_files = [line.split("/")[-1] for line in lines_python_and_launch if line]
+        launch_files = [line.split("/")[-1] for line in lines_launch if line]
 
-        res.executables = executables + python_and_launch_files
+        res.executables = executables + launch_files
         return res
 
     def node_kill(self, req, res):
         try:
-            subprocess.call(['ros2', 'node', 'kill', req.node])
+            #ros 2 doesn't let you kill nodes in a legit way, so we have to be extra janky lol
+            #this seems to also have the weird side effect that it takes a year for ros2 node list to show the change
+            subprocess.call("ps aux | grep '"+req.node+"' | awk '{print $2}' | xargs kill -9", shell=True)
             res.success = True
             res.message = f'Killed node {req.node}'
         except Exception as e:
