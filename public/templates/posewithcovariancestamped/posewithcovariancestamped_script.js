@@ -173,7 +173,7 @@ function connect(){
 	marker_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : 'geometry_msgs/PoseWithCovarianceStamped'
+		messageType : 'geometry_msgs/msg/PoseWithCovarianceStamped'
 	});
 	
 	listener = marker_topic.subscribe((msg) => {
@@ -214,7 +214,7 @@ function connect(){
 }
 
 async function loadTopics(){
-	let result = await rosbridge.get_topics("geometry_msgs/PoseWithCovarianceStamped");
+	let result = await rosbridge.get_topics("geometry_msgs/msg/PoseWithCovarianceStamped");
 
 	let topiclist = "";
 	result.forEach(element => {

@@ -85,7 +85,7 @@ function connect(){
 	path_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : 'nav_msgs/Path'
+		messageType : 'nav_msgs/msg/Path'
 	});
 	
 	listener = path_topic.subscribe((msg) => {
@@ -97,7 +97,7 @@ function connect(){
 }
 
 async function loadTopics(){
-	let result = await rosbridge.get_topics("nav_msgs/Path");
+	let result = await rosbridge.get_topics("nav_msgs/msg/Path");
 
 	let topiclist = "";
 	result.forEach(element => {

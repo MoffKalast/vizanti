@@ -6,7 +6,8 @@ def generate_launch_description():
     fragment_timeout = launch.substitutions.LaunchConfiguration('fragment_timeout', default='30')
     delay_between_messages = launch.substitutions.LaunchConfiguration('delay_between_messages', default='0')
     max_message_size = launch.substitutions.LaunchConfiguration('max_message_size', default='10000000')
-    unregister_timeout = launch.substitutions.LaunchConfiguration('unregister_timeout', default='100.0')
+    unregister_timeout = launch.substitutions.LaunchConfiguration('unregister_timeout', default='9999999.9')
+    #https://github.com/RobotWebTools/rosbridge_suite/issues/298
 
     rosbridge_node = launch_ros.actions.Node(
         name='vizanti_rosbridge',

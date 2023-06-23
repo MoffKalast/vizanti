@@ -139,7 +139,7 @@ function sendMessage(pointlist){
 	const publisher = new ROSLIB.Topic({
 		ros: rosbridge.ros,
 		name: topic,
-		messageType: 'nav_msgs/Path',
+		messageType: 'nav_msgs/msg/Path',
 		latched: true
 	});
 
@@ -469,7 +469,7 @@ const selectionbox = document.getElementById("{uniqueID}_topic");
 const fixedFrameBox = document.getElementById("{uniqueID}_fixed_frame");
 
 async function loadTopics(){
-	let result = await rosbridge.get_topics("nav_msgs/Path");
+	let result = await rosbridge.get_topics("nav_msgs/msg/Path");
 
 	let topiclist = "";
 	result.forEach(element => {

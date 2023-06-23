@@ -81,7 +81,7 @@ function connect(){
 	batterytopic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : 'sensor_msgs/BatteryState',
+		messageType : 'sensor_msgs/msg/BatteryState',
 		throttle_rate: 500 // throttle to twice a second max
 	});
 	
@@ -123,7 +123,7 @@ function connect(){
 }
 
 async function loadTopics(){
-	let result = await rosbridge.get_topics("sensor_msgs/BatteryState");
+	let result = await rosbridge.get_topics("sensor_msgs/msg/BatteryState");
 	let topiclist = "";
 	result.forEach(element => {
 		topiclist += "<option value='"+element+"'>"+element+"</option>"

@@ -120,7 +120,7 @@ function connect(){
 	range_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : 'sensor_msgs/Range'
+		messageType : 'sensor_msgs/msg/Range'
 	});
 	
 	listener = range_topic.subscribe((msg) => {		
@@ -145,7 +145,7 @@ function connect(){
 }
 
 async function loadTopics(){
-	let result = await rosbridge.get_topics("sensor_msgs/Range");
+	let result = await rosbridge.get_topics("sensor_msgs/msg/Range");
 	let topiclist = "";
 	result.forEach(element => {
 		topiclist += "<option value='"+element+"'>"+element+"</option>"

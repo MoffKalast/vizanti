@@ -98,7 +98,7 @@ function connect(){
 	image_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : 'sensor_msgs/CompressedImage',
+		messageType : 'sensor_msgs/msg/CompressedImage',
 		throttle_rate: parseInt(throttle.value)
 	});
 	
@@ -110,7 +110,7 @@ function connect(){
 }
 
 async function loadTopics(){
-	let result = await rosbridge.get_topics("sensor_msgs/CompressedImage");
+	let result = await rosbridge.get_topics("sensor_msgs/msg/CompressedImage");
 	let topiclist = "";
 	result.forEach(element => {
 		topiclist += "<option value='"+element+"'>"+element+"</option>"

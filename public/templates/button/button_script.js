@@ -43,7 +43,7 @@ function sendMessage(){
 		messageType: typedict[topic],
 	});
 
-	if(typedict[topic] == "std_msgs/Bool"){
+	if(typedict[topic] == "std_msgs/msg/Bool"){
 		publisher.publish(new ROSLIB.Message({
 			data: !value,
 		}));
@@ -66,12 +66,12 @@ function connect(){
 		booltopic.unsubscribe(listener);
 	}
 
-	if(typedict[topic] == "std_msgs/Bool"){
+	if(typedict[topic] == "std_msgs/msg/Bool"){
 
 		booltopic = new ROSLIB.Topic({
 			ros : rosbridge.ros,
 			name : topic,
-			messageType : "std_msgs/Bool"
+			messageType : "std_msgs/msg/Bool"
 		});	
 		
 		listener = booltopic.subscribe((msg) => {
@@ -91,16 +91,16 @@ function connect(){
 }
 
 async function loadTopics(){
-	let booltopics = await rosbridge.get_topics("std_msgs/Bool");
-	let triggertopics = await rosbridge.get_topics("std_msgs/Empty");
+	let booltopics = await rosbridge.get_topics("std_msgs/msg/Bool");
+	let triggertopics = await rosbridge.get_topics("std_msgs/msg/Empty");
 	let topiclist = "";
 	booltopics.forEach(element => {
 		topiclist += "<option value='"+element+"'>"+element+" (Bool)</option>"
-		typedict[element] = "std_msgs/Bool";
+		typedict[element] = "std_msgs/msg/Bool";
 	});
 	triggertopics.forEach(element => {
 		topiclist += "<option value='"+element+"'>"+element+" (Empty)</option>"
-		typedict[element] = "std_msgs/Empty";
+		typedict[element] = "std_msgs/msg/Empty";
 	});
 	selectionbox.innerHTML = topiclist
 

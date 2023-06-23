@@ -89,7 +89,7 @@ function saveSettings() {
 // Topic and connections
 
 async function loadTopics(){
-	let result = await rosbridge.get_topics("geometry_msgs/Twist");
+	let result = await rosbridge.get_topics("geometry_msgs/msg/Twist");
 	let topiclist = "";
 	result.forEach(element => {
 		topiclist += "<option value='"+element+"'>"+element+"</option>"

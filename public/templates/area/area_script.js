@@ -44,7 +44,7 @@ function sendMessage(start, end){
 	const publisher = new ROSLIB.Topic({
 		ros: rosbridge.ros,
 		name: topic,
-		messageType: 'geometry_msgs/PolygonStamped'
+		messageType: 'geometry_msgs/msg/PolygonStamped'
 	});
 
 	console.log("Points",start_pos,end_pos, point2, point3)
@@ -174,7 +174,7 @@ function setActive(value){
 const selectionbox = document.getElementById("{uniqueID}_topic");
 
 async function loadTopics(){
-	let result = await rosbridge.get_topics("geometry_msgs/PolygonStamped");
+	let result = await rosbridge.get_topics("geometry_msgs/msg/PolygonStamped");
 
 	let topiclist = "";
 	result.forEach(element => {

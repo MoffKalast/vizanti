@@ -135,7 +135,7 @@ function connect(){
 	range_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : 'sensor_msgs/LaserScan',
+		messageType : 'sensor_msgs/msg/LaserScan',
 		throttle_rate: parseInt(throttle.value)
 	});
 	
@@ -155,7 +155,7 @@ function connect(){
 }
 
 async function loadTopics(){
-	let result = await rosbridge.get_topics("sensor_msgs/LaserScan");
+	let result = await rosbridge.get_topics("sensor_msgs/msg/LaserScan");
 	let topiclist = "";
 	result.forEach(element => {
 		topiclist += "<option value='"+element+"'>"+element+"</option>"

@@ -192,7 +192,7 @@ function connect(){
 	map_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : 'sensor_msgs/NavSatFix'
+		messageType : 'sensor_msgs/msg/NavSatFix'
 	});
 	
 	listener = map_topic.subscribe((msg) => {
@@ -224,7 +224,7 @@ function connect(){
 }
 
 async function loadTopics(){
-	let result = await rosbridge.get_topics("sensor_msgs/NavSatFix");
+	let result = await rosbridge.get_topics("sensor_msgs/msg/NavSatFix");
 
 	let topiclist = "";
 	result.forEach(element => {

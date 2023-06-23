@@ -224,6 +224,8 @@ async function updateTopics(){
 			}
 		});
 	}
+
+	saveSettings();
 }
 
 icon.addEventListener("click", updateTopics);

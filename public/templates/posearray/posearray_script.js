@@ -104,7 +104,7 @@ function connect(){
 	poses_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : 'geometry_msgs/PoseArray',
+		messageType : 'geometry_msgs/msg/PoseArray',
 		throttle_rate: 50
 	});
 	
@@ -137,7 +137,7 @@ function connect(){
 }
 
 async function loadTopics(){
-	let result = await rosbridge.get_topics("geometry_msgs/PoseArray");
+	let result = await rosbridge.get_topics("geometry_msgs/msg/PoseArray");
 
 	let topiclist = "";
 	result.forEach(element => {

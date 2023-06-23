@@ -49,7 +49,7 @@ function connect(){
 	temperature_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : 'sensor_msgs/Temperature'
+		messageType : 'sensor_msgs/msg/Temperature'
 	});
 	
 	listener = temperature_topic.subscribe((msg) => {
@@ -72,7 +72,7 @@ function connect(){
 }
 
 async function loadTopics(){
-	let result = await rosbridge.get_topics("sensor_msgs/Temperature");
+	let result = await rosbridge.get_topics("sensor_msgs/msg/Temperature");
 
 	let topiclist = "";
 	result.forEach(element => {

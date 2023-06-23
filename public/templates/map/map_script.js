@@ -190,7 +190,7 @@ function connect(){
 	map_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : 'nav_msgs/OccupancyGrid',
+		messageType : 'nav_msgs/msg/OccupancyGrid',
 		throttle_rate: 2000 // throttle to once every two seconds max
 	});
 	
@@ -237,7 +237,7 @@ function connect(){
 }
 
 async function loadTopics(){
-	let result = await rosbridge.get_topics("nav_msgs/OccupancyGrid");
+	let result = await rosbridge.get_topics("nav_msgs/msg/OccupancyGrid");
 
 	let topiclist = "";
 	result.forEach(element => {

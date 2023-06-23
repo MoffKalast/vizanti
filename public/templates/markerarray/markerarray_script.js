@@ -224,7 +224,7 @@ function connect(){
 	marker_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : 'visualization_msgs/MarkerArray'
+		messageType : 'visualization_msgs/msg/MarkerArray'
 	});
 	
 	listener = marker_topic.subscribe((msg) => {
@@ -254,7 +254,7 @@ function connect(){
 }
 
 async function loadTopics(){
-	let result = await rosbridge.get_topics("visualization_msgs/MarkerArray");
+	let result = await rosbridge.get_topics("visualization_msgs/msg/MarkerArray");
 
 	let topiclist = "";
 	result.forEach(element => {
