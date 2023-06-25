@@ -86,7 +86,19 @@ function saveSettings(){
 }
 
 //Topic
+
+async function getImage(src) {
+    return new Promise((resolve, reject) => {
+        let img = new Image();
+        img.onload = () => resolve(src);
+        img.onerror = () => reject(src);
+        img.src = src;
+    });
+}
+
 function connect(){
+
+	canvas.src = "assets/tile_loading.png";
 
 	if(topic == "")
 		return;
@@ -102,8 +114,16 @@ function connect(){
 		throttle_rate: parseInt(throttle.value)
 	});
 	
-	listener = image_topic.subscribe((msg) => {  
-		canvas.src = 'data:image/jpeg;base64,' + msg.data;
+	listener = image_topic.subscribe(async (msg) => {  
+		const src = 'data:image/jpeg;base64,' + msg.data
+
+		getImage(src)
+			.then(() => {
+				canvas.src = src;
+			})
+			.catch(() => {
+				canvas.src = "assets/tile_error.png";
+			});
 	});
 
 	saveSettings();
