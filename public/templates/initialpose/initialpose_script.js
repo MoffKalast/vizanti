@@ -4,7 +4,6 @@ import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
 
 let topic = getTopic("{uniqueID}");
-let seq = 0;
 
 if(topic == ""){
 	topic = "/initialpose";
@@ -43,7 +42,6 @@ function sendMessage(pos, delta){
 
 	const poseMessage = new ROSLIB.Message({
 		header: {
-			seq: seq++,
 			stamp: {
 				secs: currentTimeSecs,
       			nsecs: currentTimeNsecs

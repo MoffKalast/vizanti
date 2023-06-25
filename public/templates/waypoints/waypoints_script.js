@@ -5,7 +5,6 @@ import { settings } from '/js/modules/persistent.js';
 
 let topic = getTopic("{uniqueID}");
 let fixed_frame = "map"
-let seq = 0;
 let active = false;
 let points = [];
 
@@ -89,7 +88,6 @@ function sendMessage(pointlist){
 		if(pointlist.length  == 1){
 			poseList.push(new ROSLIB.Message({
 				header: {
-					seq: 0,
 					stamp: timeStamp,
 					frame_id: fixed_frame
 				},
@@ -119,7 +117,6 @@ function sendMessage(pointlist){
 
 				poseList.push(new ROSLIB.Message({
 					header: {
-						seq: index,
 						stamp: timeStamp,
 						frame_id: fixed_frame
 					},
@@ -145,7 +142,6 @@ function sendMessage(pointlist){
 
 	const pathMessage = new ROSLIB.Message({
 		header: {
-			seq: seq++,
 			stamp: timeStamp,
 			frame_id: fixed_frame
 		},
