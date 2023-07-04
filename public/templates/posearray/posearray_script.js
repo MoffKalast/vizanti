@@ -105,7 +105,8 @@ function connect(){
 		ros : rosbridge.ros,
 		name : topic,
 		messageType : 'geometry_msgs/PoseArray',
-		throttle_rate: 50
+		throttle_rate: 50,
+		compression: "cbor"
 	});
 	
 	listener = poses_topic.subscribe((msg) => {

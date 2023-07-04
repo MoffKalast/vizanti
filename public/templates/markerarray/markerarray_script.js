@@ -224,7 +224,8 @@ function connect(){
 	marker_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : 'visualization_msgs/MarkerArray'
+		messageType : 'visualization_msgs/MarkerArray',
+		compression: "cbor"
 	});
 	
 	listener = marker_topic.subscribe((msg) => {

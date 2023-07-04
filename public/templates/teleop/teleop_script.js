@@ -115,6 +115,7 @@ function connect(){
 		ros: rosbridge.ros,
 		name: topic,
 		messageType: 'geometry_msgs/Twist',
+		queue_size: 1
 	});
 }
 

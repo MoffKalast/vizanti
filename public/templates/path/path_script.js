@@ -15,15 +15,22 @@ const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('im
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d');
 
+const colourpicker = document.getElementById("{uniqueID}_colorpicker");
+colourpicker.addEventListener("input", (event) =>{
+	saveSettings();
+});
+
 //Settings
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
+	colourpicker.value = loaded_data.color ?? "#5ED753";
 }
 
 function saveSettings(){
 	settings["{uniqueID}"] = {
-		topic: topic
+		topic: topic,
+		color: colourpicker.value,
 	}
 	settings.save();
 }
@@ -39,7 +46,7 @@ function drawPath(){
 		return;
 
 	ctx.lineWidth = 2;
-	ctx.strokeStyle = "#5ED753";
+	ctx.strokeStyle = colourpicker.value;
 	ctx.beginPath();
 
 	pose_array.forEach((point, index) => {
@@ -85,7 +92,8 @@ function connect(){
 	path_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : 'nav_msgs/Path'
+		messageType : 'nav_msgs/Path',
+		compression: "cbor"		
 	});
 	
 	listener = path_topic.subscribe((msg) => {
