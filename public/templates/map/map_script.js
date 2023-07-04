@@ -191,7 +191,9 @@ function connect(){
 		ros : rosbridge.ros,
 		name : topic,
 		messageType : 'nav_msgs/OccupancyGrid',
-		throttle_rate: 2000 // throttle to once every two seconds max
+		throttle_rate: 2000, // throttle to once every two seconds max
+		compression: "cbor"
+		
 	});
 	
 	listener = map_topic.subscribe((msg) => {
