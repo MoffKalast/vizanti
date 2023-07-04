@@ -32,7 +32,7 @@ Flask and Jinja2 are used for templating, rosbridge is required for socket commu
 
 ## Run
 ```bash
-roslaunch vizanti server.launch
+ros2 launch vizanti server.launch.py
 ```
 The web app can be accessed at `http://<host_ip>:5000`. Client settings are automatically saved in localStorage. The satelite imagery renderer also uses the indexedDB to store tiles for offline use (note that this is IP specific). By default the rosbridge instance also occupies port 5001.
 
