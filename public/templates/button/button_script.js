@@ -22,7 +22,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	topic = loaded_data.topic;
 	namebox.value = loaded_data.text;
 	icontext.textContent = loaded_data.text;
-	typedict = loaded_data.typedict;
+	typedict = loaded_data.typedict ?? {};
 }
 
 function saveSettings(){

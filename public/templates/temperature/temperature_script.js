@@ -110,4 +110,4 @@ icon.addEventListener("click", (event) => {
 
 loadTopics();
 
-console.log("Temeprature Widget Loaded {uniqueID}")
+console.log("Temperature Widget Loaded {uniqueID}")
