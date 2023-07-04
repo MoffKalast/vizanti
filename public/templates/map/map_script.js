@@ -64,6 +64,9 @@ const savePathBox = document.getElementById("{uniqueID}_savepath");
 const loadButton = document.getElementById('{uniqueID}_load');
 const saveButton = document.getElementById('{uniqueID}_save');
 
+const costmapCheckbox = document.getElementById('{uniqueID}_costmap_mode');
+costmapCheckbox.addEventListener('change', saveSettings);
+
 loadButton.addEventListener('click',  async () => {
 	let path = loadPathBox.value;
 
@@ -103,7 +106,7 @@ saveButton.addEventListener('click', async () => {
 });
 
 opacitySlider.addEventListener('input', () =>  {
-	opacityValue.textContent = this.value;
+	opacityValue.textContent = opacitySlider.value;
 	saveSettings();
 });
 
@@ -118,12 +121,15 @@ if(settings.hasOwnProperty("{uniqueID}")){
 
 	opacitySlider.value = loaded_data.opacity;
 	opacityValue.innerText = loaded_data.opacity;
+
+	costmapCheckbox.checked =  loaded_data.costmap_mode ?? false;
 }
 
 function saveSettings(){
 	settings["{uniqueID}"] = {
 		topic: topic,
-		opacity: opacitySlider.value
+		opacity: opacitySlider.value,
+		costmap_mode: costmapCheckbox.checked
 	}
 	settings.save();
 }
@@ -191,7 +197,7 @@ function connect(){
 		ros : rosbridge.ros,
 		name : topic,
 		messageType : 'nav_msgs/OccupancyGrid',
-		throttle_rate: 2000, // throttle to once every two seconds max
+		throttle_rate: 1000, // throttle to once every two seconds max
 		compression: "cbor"
 		
 	});
@@ -206,28 +212,66 @@ function connect(){
 		const width = msg.info.width;
 		const height = msg.info.height;
 		const data = msg.data;
+
+		if(width == 0 || height == 0)
+			return;
 	  
 		map_canvas.width = width;
 		map_canvas.height = height;
 	  
 		let map_img = mapctx.createImageData(width, height);
 	  
-		// 3. Iterate through the data array and set the canvas pixel colors
-		for (let i = 0; i < data.length; i++) {
-			let occupancyValue = data[i];
-			let color = 255; // White for unknown
+		if(costmapCheckbox.checked)
+		{
+			// Iterate through the data array and set the canvas pixel colors
+			for (let i = 0; i < data.length; i++) {
+				let occupancyValue = data[i];
+				let color = 255; // White for unknown
 
-			if(occupancyValue < 0)
-				occupancyValue = 50;
+				if(occupancyValue < 0)
+					occupancyValue = 0;
 
-			if (occupancyValue >= 0 && occupancyValue <= 100) {
-				color = 255 - (occupancyValue * 255) / 100; // Grayscale for occupancy probability
+				color = (occupancyValue * 255) / 100;
+
+				if(occupancyValue == 100){
+					map_img.data[i * 4] = 255; // R
+					map_img.data[i * 4 + 1] = 0; // G
+					map_img.data[i * 4 + 2] = 128; // B
+					map_img.data[i * 4 + 3] = 255; // A
+				}
+				else if(occupancyValue > 80){
+					map_img.data[i * 4] = 0; // R
+					map_img.data[i * 4 + 1] = 255; // G
+					map_img.data[i * 4 + 2] = 255; // B
+					map_img.data[i * 4 + 3] = 255; // A
+				}
+				else{
+					map_img.data[i * 4] = color; // R
+					map_img.data[i * 4 + 1] = 0; // G
+					map_img.data[i * 4 + 2] = 255-color; // B
+					map_img.data[i * 4 + 3] = parseInt(occupancyValue*2.55); // A
+				}
 			}
+		}
+		else
+		{
+			// Iterate through the data array and set the canvas pixel colors
+			for (let i = 0; i < data.length; i++) {
+				let occupancyValue = data[i];
+				let color = 255; // White for unknown
 
-			map_img.data[i * 4] = color; // R
-			map_img.data[i * 4 + 1] = color; // G
-			map_img.data[i * 4 + 2] = color; // B
-			map_img.data[i * 4 + 3] = 255; // A
+				if(occupancyValue < 0)
+					occupancyValue = 50;
+
+				if (occupancyValue >= 0 && occupancyValue <= 100) {
+					color = 255 - (occupancyValue * 255) / 100;
+				}
+
+				map_img.data[i * 4] = color; // R
+				map_img.data[i * 4 + 1] = color; // G
+				map_img.data[i * 4 + 2] = color; // B
+				map_img.data[i * 4 + 3] = 255; // A
+			}
 		}
 
 		mapctx.putImageData(map_img, 0, 0);
