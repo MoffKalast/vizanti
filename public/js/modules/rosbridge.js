@@ -9,6 +9,8 @@ class Rosbridge {
 
 		this.connect();
 		this.status = "Connecting...";
+
+		this.reset_reconnect = false;
 	}
 
 	connect(){
@@ -24,6 +26,10 @@ class Rosbridge {
 			this.connected = true;
 			this.status = "Connected.";
 
+			if(this.reset_reconnect){
+				location.reload(false); //otherwise topics won't re-subscribe automatically :/
+			}
+
 			window.dispatchEvent(new Event('rosbridge_change'));
 		});
 
@@ -36,6 +42,7 @@ class Rosbridge {
 		this.ros.on('close', () => {
 			this.connected = false;
 			this.status = "Connection lost.";
+			this.reset_reconnect = true;
 			window.dispatchEvent(new Event('rosbridge_change'));
 
 			setTimeout(() => {

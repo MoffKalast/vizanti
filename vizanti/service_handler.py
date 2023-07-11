@@ -27,10 +27,10 @@ class ServiceHandler(Node):
         self.record_setup_service = self.create_service(RecordRosbag, 'vizanti/bag/setup', self.recording_setup)
         self.record_status_service = self.create_service(Trigger, 'vizanti/bag/status', self.recording_status)
 
-        self_kill_service = self.create_service(ManageNode, 'vizanti/node/kill', self.node_kill)
-        self_start_service = self.create_service(ManageNode, 'vizanti/node/start', self.node_start)
-        self_info_service = self.create_service(ManageNode, 'vizanti/node/info', self.node_info)
-        self_info_service = self.create_service(Trigger, 'vizanti/roswtf', self.roswtf)
+        self.kill_service = self.create_service(ManageNode, 'vizanti/node/kill', self.node_kill)
+        self.start_service = self.create_service(ManageNode, 'vizanti/node/start', self.node_start)
+        self.info_service = self.create_service(ManageNode, 'vizanti/node/info', self.node_info)
+        self.info_service = self.create_service(Trigger, 'vizanti/roswtf', self.roswtf)
 
         self.list_packages_service = self.create_service(ListPackages, 'vizanti/list_packages', self.list_packages_callback)
         self.list_executables_service = self.create_service(ListExecutables, 'vizanti/list_executables', self.list_executables_callback)

@@ -210,6 +210,9 @@ function connect(){
 		const width = msg.info.width;
 		const height = msg.info.height;
 		const data = msg.data;
+
+		if(width == 0 || height == 0)
+			return;
 	  
 		map_canvas.width = width;
 		map_canvas.height = height;
