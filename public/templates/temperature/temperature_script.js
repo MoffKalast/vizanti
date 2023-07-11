@@ -1,16 +1,17 @@
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
-import { toDataURL } from '/js/modules/util.js';
+import { imageToDataURL } from '/js/modules/util.js';
 
 let topic = getTopic("{uniqueID}");
 let listener = undefined;
 let temperature_topic = undefined;
 
+//persistent loading, so we don't re-fetch on every update
 let icons = {};
-icons["hot"] = await toDataURL("assets/temp_hot.svg");
-icons["cold"] = await toDataURL("assets/temp_cold.svg");
-icons["warm"] = await toDataURL("assets/temp_warm.svg");
-icons["unknown"] = await toDataURL("assets/temp_warm.svg");
+icons["hot"] = await imageToDataURL("assets/temp_hot.svg");
+icons["cold"] = await imageToDataURL("assets/temp_cold.svg");
+icons["warm"] = await imageToDataURL("assets/temp_warm.svg");
+icons["unknown"] = await imageToDataURL("assets/temp_warm.svg");
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
