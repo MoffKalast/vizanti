@@ -1,8 +1,15 @@
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
+import { imageToDataURL } from '/js/modules/util.js';
 
 let topic = getTopic("{uniqueID}");
 let typedict = {};
+
+//persistent loading, so we don't re-fetch on every update
+let icons = {};
+icons["true"] = await imageToDataURL("assets/button_true.svg");
+icons["false"] = await imageToDataURL("assets/button_false.svg");
+icons["default"] = await imageToDataURL("assets/button.svg");
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const icondiv = document.getElementById("{uniqueID}_icon");
@@ -76,13 +83,13 @@ function connect(){
 		
 		listener = booltopic.subscribe((msg) => {
 			value = msg.data;
-			icon.src = "assets/button_"+value+".svg";
+			icon.src = icons[value];
 		});
 
-		icon.src = "assets/button_false.svg";
+		icon.src = icons["false"];
 	}
 	else{
-		icon.src = "assets/button.svg";
+		icon.src = icons["default"];
 	}
 
 	
@@ -119,7 +126,7 @@ async function loadTopics(){
 
 selectionbox.addEventListener("change", (event) => {
 	topic = selectionbox.value;
-	icon.src = "assets/button.svg";
+	icon.src = icons["default"];
 	connect();
 });
 

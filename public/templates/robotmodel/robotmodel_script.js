@@ -1,11 +1,9 @@
 import { view } from '/js/modules/view.js';
 import { tf } from '/js/modules/tf.js';
 import { settings } from '/js/modules/persistent.js';
+import fileList from '/assets/robot_model/files' assert {type: 'json'};
 
 let models = {};
-
-const fileListResponse = await fetch('/assets/robot_model/files');
-const fileList = await fileListResponse.json();
 fileList.map(file => {
 	const name = file.split('.png')[0].split("_")[1];
 	models[name] = new Image();

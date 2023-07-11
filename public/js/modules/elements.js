@@ -1,10 +1,7 @@
-export const elementTemplatesPromise = loadElementTemplates();
+import fileList from '/templates/files' assert {type: 'json'};
 
 async function loadElementTemplates() {
-    let templates = {};
-
-    const fileListResponse = await fetch('/templates/files');
-    const fileList = await fileListResponse.json();
+    let templates = {};    
 
     const fetchPromises = fileList.map(async file => {
         const filePathParts = file.split('/');
@@ -27,3 +24,5 @@ async function loadElementTemplates() {
 
     return templates;
 }
+
+export const elementTemplatesPromise = loadElementTemplates();

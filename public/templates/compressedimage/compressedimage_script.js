@@ -1,10 +1,16 @@
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
+import { imageToDataURL } from '/js/modules/util.js';
 
 let img_offset_x = "0%";
 let img_offset_y = "75px";
 
 let topic = getTopic("{uniqueID}");
+
+//persistent loading, so we don't re-fetch on every update
+let stock_images = {};
+stock_images["loading"] = await imageToDataURL("assets/tile_loading.png");
+stock_images["error"] = await imageToDataURL("assets/tile_error.png");
 
 let image_topic = undefined;
 let listener = undefined;
@@ -98,7 +104,7 @@ async function getImage(src) {
 
 function connect(){
 
-	canvas.src = "assets/tile_loading.png";
+	canvas.src = stock_images["loading"];
 
 	if(topic == "")
 		return;
@@ -122,7 +128,7 @@ function connect(){
 				canvas.src = src;
 			})
 			.catch(() => {
-				canvas.src = "assets/tile_error.png";
+				canvas.src = stock_images["error"];
 			});
 	});
 
