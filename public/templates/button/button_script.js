@@ -7,9 +7,9 @@ let typedict = {};
 
 //persistent loading, so we don't re-fetch on every update
 let icons = {};
-icons["false"] = await imageToDataURL("assets/button_true.svg");
-icons["true"] = await imageToDataURL("assets/button_false.svg");
-icons["default"] = await imageToDataURL("assets/button_false.svg");
+icons["true"] = await imageToDataURL("assets/button_true.svg");
+icons["false"] = await imageToDataURL("assets/button_false.svg");
+icons["default"] = await imageToDataURL("assets/button.svg");
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const icondiv = document.getElementById("{uniqueID}_icon");
