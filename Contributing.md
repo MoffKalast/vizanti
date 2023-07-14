@@ -38,9 +38,9 @@ Upon client load, the server collects all widget templates in [public/templates]
 
 - `name_script.js` A JS module that can import helper singletons from [public/js/modules](public/js/modules).
 
-To actually be able to add the widget to the taskbar, it has to be manually added to the `add_types_container` list in the [add_modal.html](public/templates/add/add_modal.html). The `data-topic` value is used for listing the topics the widget can use and is used for the topic selection screen.
+To add the widget to the taskbar, it has to be defined in the `add_types_container` list in the [add_modal.html](public/templates/add/add_modal.html). The `data-topic` value is used for creating widgets from a specific topic.
 
-Any required assets should be put into [public/assets](public/js/lib).
+Any required assets should be put into [public/assets](public/assets).
 
 ### {uniqueID}
 
