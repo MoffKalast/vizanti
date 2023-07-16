@@ -16,7 +16,7 @@ def get_public_dir():
 		return "../public" #for --symlink-install
 	return get_package_share_directory('vizanti')+ '/public/'
 
-app = Flask(__name__, static_folder=get_public_dir(), template_folder='../public')
+app = Flask(__name__, static_folder=get_public_dir(), template_folder=get_public_dir())
 
 def get_files(path, valid_extensions):
 	templates_dir = os.path.join(app.static_folder, path)
@@ -111,6 +111,7 @@ def main(args=None):
     server.start()
 
     node.get_logger().info(f"Flask server running at http://{param_host}:{param_port}")
+    node.get_logger().info(f"Public directory set as {get_public_dir()}")
 
     rclpy.spin(node)
 
