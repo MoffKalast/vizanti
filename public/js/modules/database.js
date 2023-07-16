@@ -6,7 +6,7 @@ export class IndexedDatabase {
 
 	async openDB() {
 		return new Promise((resolve, reject) => {
-			const request = indexedDB.open("outdooROS", 1);
+			const request = indexedDB.open("vizantiDB", 1);
 
 			request.onupgradeneeded = (event) => {
 				const db = event.target.result;

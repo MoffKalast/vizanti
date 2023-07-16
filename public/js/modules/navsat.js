@@ -1,14 +1,15 @@
 import { IndexedDatabase } from './database.js';
+import { toDataURL } from '/js/modules/util.js';
 
-const db = new IndexedDatabase('tiles');
+const db = new IndexedDatabase('tile_data');
 await db.openDB();
 
-async function blobToImage(blob){
+async function dataToImage(data){
 	return new Promise((resolve, reject) => {
-		let image = new Image()
-		image.onload = () => resolve(image)
-		image.onerror = reject
-		image.src = URL.createObjectURL(blob);
+		let image = new Image();
+		image.onload = () => resolve(image);
+		image.onerror = reject;
+		image.src = data;
 	})
 }
 
@@ -40,11 +41,12 @@ export class Navsat {
 	async enqueue(keyurl){
 		if(this.queue_history.has(keyurl))
 			return;
+
 		this.queue_history.add(keyurl);
 
 		if(Boolean(await db.keyExists(keyurl))){
-			const arrayBuffer = await db.getObject(keyurl);
-			this.live_cache[keyurl] = await blobToImage(new Blob([arrayBuffer], { type: 'image/png' }));
+			const data = await db.getObject(keyurl);
+			this.live_cache[keyurl] = await dataToImage(data);
 			//console.log("Tile loaded from DB",keyurl)
 		}else{
 			//console.log("Tile Queued",keyurl)
@@ -71,25 +73,20 @@ export class Navsat {
 	async fetchURL(url){
 		console.log("Fetching tile data:",url);
 
-		const response = await fetch(url);
-		if (!response.ok) {
+		const data = await toDataURL(url);
+		if (!data) {
 			return undefined;
 		}
 
-		const blob = await response.blob();
-		const arrayBuffer = await blob.arrayBuffer();
-		db.setObject(url, arrayBuffer);
-
-		return blob;
+		db.setObject(url, data);
+		return data;
 	}
 
 	async loadTile(keyurl) {
-		const blob = await this.fetchURL(keyurl);
-		let image;
-		if(blob){
-			//console.log("Loading tile",keyurl);
-			image = new Image();
-			image.src = URL.createObjectURL(blob);
+		const data = await this.fetchURL(keyurl);
+		if(data){
+			let image = new Image();
+			image.src = data;
 			return new Promise((resolve, reject) => {
 				image.onload = () => resolve(image);
 				image.onerror = () => resolve(undefined);
