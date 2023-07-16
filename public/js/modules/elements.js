@@ -1,28 +1,24 @@
-import fileList from '/templates/files' assert {type: 'json'};
+import files from '/templates/files';
 
 async function loadElementTemplates() {
-    let templates = {};    
+	let templates = {};
 
-    const fetchPromises = fileList.map(async file => {
-        const filePathParts = file.split('/');
-        const fileName = filePathParts[filePathParts.length - 1];
-        const [category, typeWithExtension] = fileName.split('_');
-        const type = typeWithExtension.split('.')[0];
+	files.forEach(file => {
+		const filePathParts = file.path.split('/');
+		const fileName = filePathParts[filePathParts.length - 1];
+		const [category, typeWithExtension] = fileName.split('_');
+		const type = typeWithExtension.split('.')[0];
 
-        if (!templates[category]) {
-            templates[category] = {};
-        }
+		if (!templates[category]) {
+			templates[category] = {};
+		}
 
-        const response = await fetch(`/templates/${file}`);
-        if (response.ok) {
-            templates[category][type] = await response.text();
-        }
-    });
+		templates[category][type] = file.content;
+	});
 
-    await Promise.all(fetchPromises);
 	console.table("Loaded templates:",templates)
 
-    return templates;
+	return templates;
 }
 
 export const elementTemplatesPromise = loadElementTemplates();
