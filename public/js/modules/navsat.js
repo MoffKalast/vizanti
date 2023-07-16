@@ -69,7 +69,7 @@ export class Navsat {
 	}
 
 	async fetchURL(url){
-		console.log("Fetching tile data:",url)
+		console.log("Fetching tile data:",url);
 
 		const response = await fetch(url);
 		if (!response.ok) {

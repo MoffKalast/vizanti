@@ -1,31 +1,48 @@
 #!/usr/bin/env python3
 import os
-import subprocess
 import rospy
 import threading
 import logging
+import json
 
-from flask import Flask, render_template, send_from_directory, jsonify
+from flask import Flask, render_template, send_from_directory, make_response
 from werkzeug.serving import make_server, WSGIRequestHandler
 
 app = Flask(__name__, static_folder='../public', template_folder='../public')
 
 def get_files(path, valid_extensions):
 	templates_dir = os.path.join(app.static_folder, path)
-	output = subprocess.check_output(["ls", "-R", templates_dir]).decode("utf-8")
-	all_lines = output.strip().split("\n")
 	file_list = []
 
-	current_path = templates_dir
-	for line in all_lines:
-		if line.endswith(':'):
-			current_path = os.path.relpath(line[:-1], templates_dir)
-		else:
-			file_extension = os.path.splitext(line)[1]
-			if (file_extension in valid_extensions) and (line.count('_') == 1):
-				file_list.append(os.path.join(current_path, line))
+	for root, dirs, files in os.walk(templates_dir):
+		for file in files:
+			if os.path.splitext(file)[1] in valid_extensions:
+				file_path = os.path.join(root, file)
+				with open(file_path, 'r') as f:
+					file_content = f.read()
+				file_list.append({'path': os.path.relpath(file_path, templates_dir), 'content': file_content})
 
-	return jsonify(file_list)
+	js_module = f"const files = {json.dumps(file_list)};\n\nexport default files;"
+
+	#fetch workaround hackery for webkit support on HTTP
+	response = make_response(js_module)
+	response.headers['Content-Type'] = 'application/javascript'
+	return response
+
+def get_paths(path, valid_extensions):
+	templates_dir = os.path.join(app.static_folder, path)
+	file_list = []
+
+	for root, dirs, files in os.walk(templates_dir):
+		for file in files:
+			if os.path.splitext(file)[1] in valid_extensions:
+				file_list.append(os.path.relpath(os.path.join(root, file), templates_dir))
+
+	js_module = f"const paths = {json.dumps(file_list)};\n\nexport default paths;"
+
+	response = make_response(js_module)
+	response.headers['Content-Type'] = 'application/javascript'
+	return response
 
 @app.route('/')
 def index():
@@ -35,9 +52,9 @@ def index():
 def list_template_files():
 	return get_files("templates", ['.html', '.js', '.css'])
 
-@app.route('/assets/robot_model/files')
+@app.route('/assets/robot_model/paths')
 def list_robot_model_files():
-	return get_files("assets/robot_model", ['.png'])
+	return get_paths("assets/robot_model", ['.png'])
 
 @app.route('/<path:path>')
 def serve_static(path):

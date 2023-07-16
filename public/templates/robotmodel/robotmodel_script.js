@@ -1,13 +1,13 @@
 import { view } from '/js/modules/view.js';
 import { tf } from '/js/modules/tf.js';
 import { settings } from '/js/modules/persistent.js';
-import fileList from '/assets/robot_model/files' assert {type: 'json'};
+import paths from '/assets/robot_model/paths';
 
 let models = {};
-fileList.map(file => {
+paths.map(file => {
 	const name = file.split('.png')[0].split("_")[1];
 	models[name] = new Image();
-	models[name].src = "assets/robot_model/"+file.substring(1);
+	models[name].src = "assets/robot_model/"+file;
 });
 
 const canvas = document.getElementById('{uniqueID}_canvas');
