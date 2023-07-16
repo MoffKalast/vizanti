@@ -14,7 +14,8 @@ export function imageToDataURL(url) {
 	if(url.toLowerCase().endsWith(".svg")){
 		return new Promise((resolve, reject) => {
 			const object = document.createElement("object");
-			object.style.display = "none";
+			object.style.position = "absolute";
+  			object.style.left = "-9999px";//trick chrome to hide the elements, since it doesn't fetch if display is set to none
 			object.type = "image/svg+xml";
 			object.data = url;
 			object.onload = () => {
