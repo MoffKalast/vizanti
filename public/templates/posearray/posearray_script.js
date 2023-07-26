@@ -97,8 +97,6 @@ function drawArrows(){
 			ctx.restore();
 		});
 	}
-
-	status.setOK();
 }
 
 //Topic
@@ -125,8 +123,10 @@ function connect(){
 	
 	listener = poses_topic.subscribe((msg) => {
 
-		if(!tf.absoluteTransforms[msg.header.frame_id])
+		if(!tf.absoluteTransforms[msg.header.frame_id]){
+			status.setError("Required transform frame not found.");
 			return;
+		}
 
 		poses = [];
 		frame = tf.fixed_frame;
@@ -146,6 +146,8 @@ function connect(){
 			});
 		});
 		drawArrows();
+
+		status.setOK();
 	});
 
 	saveSettings();

@@ -52,7 +52,7 @@ function drawPath(){
 
 	if(pose_array === undefined){
 		status.setWarn("No point data to render.");
-		return;
+		return false;
 	}
 
 	ctx.lineWidth = 2;
@@ -64,7 +64,7 @@ function drawPath(){
 
 		if(!frame){
 			status.setError("Required transform frame not found.");
-			return;
+			return false;
 		}
 
 		let transformed = tf.transformPose(
@@ -89,7 +89,8 @@ function drawPath(){
 	});
 
 	ctx.stroke();
-	status.setOK();
+
+	return true;
 }
 
 //Topic
@@ -115,7 +116,9 @@ function connect(){
 	
 	listener = path_topic.subscribe((msg) => {
 		pose_array = msg.poses;
-		drawPath();
+		if(drawPath()){
+			status.setOK();
+		}
 	});
 
 	saveSettings();

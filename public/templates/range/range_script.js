@@ -113,8 +113,6 @@ function drawRanges() {
 		ctx.restore();
 
 	}
-
-	status.setOK();
 }
 
 function resizeScreen(){
@@ -168,6 +166,7 @@ function connect(){
 			stamp: new Date()
 		}
 		drawRanges();
+		status.setOK();
 	});
 
 	saveSettings();
