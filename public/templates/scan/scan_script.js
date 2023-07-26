@@ -2,8 +2,14 @@ import { view } from '/js/modules/view.js';
 import { tf } from '/js/modules/tf.js';
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
+import { Status } from '/js/modules/status.js';
 
 let topic = getTopic("{uniqueID}");
+let status = new Status(
+	document.getElementById("{uniqueID}_icon"),
+	document.getElementById("{uniqueID}_status")
+);
+
 
 let range_topic = undefined;
 let listener = undefined;
@@ -52,6 +58,8 @@ if(settings.hasOwnProperty("{uniqueID}")){
 
 	colourpicker.value = loaded_data.color;
 	throttle.value = loaded_data.throttle;
+}else{
+	saveSettings();
 }
 
 function saveSettings(){
@@ -125,9 +133,11 @@ window.addEventListener('orientationchange', resizeScreen);
 
 function connect(){
 
-	if(topic == "")
+	if(topic == ""){
+		status.setError("Empty topic.");
 		return;
-
+	}
+	
 	if(range_topic !== undefined){
 		range_topic.unsubscribe(listener);
 	}
@@ -139,17 +149,22 @@ function connect(){
 		throttle_rate: parseInt(throttle.value),
 		compression: "cbor"
 	});
+
+	status.setWarn("No data received.");
 	
 	listener = range_topic.subscribe((msg) => {	
 
 		const pose = tf.absoluteTransforms[msg.header.frame_id];
 
-		if(!pose)
+		if(!pose){
+			status.setError("Required transform frame not found.");
 			return;
+		}
 
 		data = {};
 		data.pose = pose;
 		data.msg = msg;
+		status.setOK();
 	});
 
 	saveSettings();

@@ -1,15 +1,17 @@
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
 import { nipplejs } from '/js/modules/joystick.js';
+import { Status } from '/js/modules/status.js';
 
 let topic = getTopic("{uniqueID}");
+let status = new Status(
+	document.getElementById("{uniqueID}_icon"),
+	document.getElementById("{uniqueID}_status")
+);
+
 let joy_offset_x = "50%";
 let joy_offset_y = "85%";
 let cmdVelPublisher = undefined;
-
-if(topic == ""){
-	topic = "/cmd_vel";
-}
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
@@ -67,8 +69,13 @@ if (settings.hasOwnProperty('{uniqueID}')) {
 
 	linearVelValue.textContent = linearVelSlider.value;
 	angularVelValue.textContent = angularVelSlider.value;
+}else{
+	saveSettings();
 }
-else{
+
+if(topic == ""){
+	topic = "/cmd_vel";
+	status.setWarn("No topic found, defaulting to /cmd_vel");
 	saveSettings();
 }
 
@@ -131,6 +138,7 @@ selectionbox.addEventListener("change", (event) => {
 	topic = selectionbox.value;
 	saveSettings();
 	connect();
+	status.setOK();
 });
 
 selectionbox.addEventListener("click", (event) => {

@@ -1,8 +1,14 @@
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
 import { imageToDataURL } from '/js/modules/util.js';
+import { Status } from '/js/modules/status.js';
 
 let topic = getTopic("{uniqueID}");
+let status = new Status(
+	document.getElementById("{uniqueID}_icon"),
+	document.getElementById("{uniqueID}_status")
+);
+
 let typedict = {};
 
 //persistent loading, so we don't re-fetch on every update
@@ -30,6 +36,8 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	namebox.value = loaded_data.text;
 	icontext.textContent = loaded_data.text;
 	typedict = loaded_data.typedict ?? {};
+}else{
+	saveSettings();
 }
 
 function saveSettings(){
@@ -57,7 +65,6 @@ function sendMessage(){
 	}else{
 		publisher.publish(new ROSLIB.Message({}));
 	}
-
 }
 
 let value = false;
@@ -66,14 +73,18 @@ let booltopic = undefined;
 
 function connect(){
 
-	if(topic == "")
+	if(topic == ""){
+		status.setError("Empty topic.");
 		return;
+	}
 
 	if(booltopic !== undefined){
 		booltopic.unsubscribe(listener);
 	}
 
 	if(typedict[topic] == "std_msgs/Bool"){
+
+		status.setWarn("No data received.");
 
 		booltopic = new ROSLIB.Topic({
 			ros : rosbridge.ros,
@@ -84,15 +95,14 @@ function connect(){
 		listener = booltopic.subscribe((msg) => {
 			value = msg.data;
 			icon.src = icons[value];
+			status.setOK();
 		});
 
 		icon.src = icons["false"];
 	}
 	else{
 		icon.src = icons["default"];
-	}
-
-	
+	}	
 
 	saveSettings();
 }

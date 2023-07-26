@@ -1,11 +1,16 @@
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
 import { imageToDataURL } from '/js/modules/util.js';
+import { Status } from '/js/modules/status.js';
 
 let img_offset_x = "0%";
 let img_offset_y = "75px";
 
 let topic = getTopic("{uniqueID}");
+let status = new Status(
+	document.getElementById("{uniqueID}_icon"),
+	document.getElementById("{uniqueID}_status")
+);
 
 //persistent loading, so we don't re-fetch on every update
 let stock_images = {};
@@ -70,7 +75,8 @@ if(settings.hasOwnProperty("{uniqueID}")){
 
 	rotationbox.value = loaded_data.rotation;
 	canvas.style.transform = `translate(-50%, -50%) rotate(${loaded_data.rotation}deg)`;
-
+}else{
+	saveSettings();
 }
 
 function saveSettings(){
@@ -106,12 +112,16 @@ function connect(){
 
 	canvas.src = stock_images["loading"];
 
-	if(topic == "")
+	if(topic == ""){
+		status.setError("Empty topic.");
 		return;
+	}
 
 	if(image_topic !== undefined){
 		image_topic.unsubscribe(listener);
 	}
+
+	status.setWarn("No data received.");
 
 	image_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
@@ -126,9 +136,11 @@ function connect(){
 		getImage(src)
 			.then(() => {
 				canvas.src = src;
+				status.setOK();
 			})
-			.catch(() => {
+			.catch((e) => {
 				canvas.src = stock_images["error"];
+				status.setError(e.message);
 			});
 	});
 

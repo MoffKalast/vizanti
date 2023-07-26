@@ -3,6 +3,12 @@ import { tf } from '/js/modules/tf.js';
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
 import { navsat } from './js/modules/navsat.js';
+import { Status } from '/js/modules/status.js';
+
+let status = new Status(
+	document.getElementById("{uniqueID}_icon"),
+	document.getElementById("{uniqueID}_status")
+);
 
 let copyright = "© OpenStreetMap";
 let topic = getTopic("{uniqueID}");
@@ -61,6 +67,8 @@ if(settings.hasOwnProperty("{uniqueID}")){
 
 	opacitySlider.value = loaded_data.opacity;
 	opacityValue.innerText = loaded_data.opacity;
+}else{
+	saveSettings();
 }
 
 function saveSettings(){
@@ -121,8 +129,9 @@ async function drawTiles(){
 	ctx.globalAlpha = opacitySlider.value;
 	ctx.imageSmoothingEnabled = smoothingCheckbox.checked;
 
-	if(!map_fix)
+	if(!map_fix){
 		return;
+	}
 
 	const frame = tf.absoluteTransforms[map_fix.header.frame_id];
 
@@ -176,14 +185,20 @@ async function drawTiles(){
 		ctx.font = "12px Monospace";
 		ctx.fillStyle = "white";
 		ctx.fillText(copyright, 5, hei-5);
+
+		status.setOK();
+	}else{
+		status.setError("Required transform frame not found.");
 	}
 }
 
 //Topic
 function connect(){
 
-	if(topic == "")
+	if(topic == ""){
+		status.setError("Empty topic.");
 		return;
+	}
 
 	if(map_topic !== undefined){
 		map_topic.unsubscribe(listener);
@@ -194,8 +209,16 @@ function connect(){
 		name : topic,
 		messageType : 'sensor_msgs/NavSatFix'
 	});
+
+	status.setWarn("No data received.");
 	
 	listener = map_topic.subscribe((msg) => {
+
+		if(isNaN(msg.longitude) || isNaN(msg.latitude)){
+			status.setError("Invalid fix.");
+			return;
+		}
+
 		map_fix = msg;
 
 		const tilePos = navsat.coordToTile(map_fix.longitude, map_fix.latitude, zoomLevel);

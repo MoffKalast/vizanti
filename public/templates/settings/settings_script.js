@@ -16,10 +16,8 @@ colourpicker.addEventListener("input", (event) =>{
 if (settings.hasOwnProperty('{uniqueID}')) {
 	const loadedData = settings['{uniqueID}'];
 	tf.setFixedFrame(loadedData.fixed_frame);
-
 	document.body.style.backgroundColor = loadedData.background_color;
-}
-else{
+}else{
 	saveSettings();
 }
 

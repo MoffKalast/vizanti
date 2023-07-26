@@ -2,6 +2,7 @@ import { view } from '/js/modules/view.js';
 import { tf } from '/js/modules/tf.js';
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
+import { Status } from '/js/modules/status.js';
 
 async function saveMap(save_path, topic) {
 	const saveMapService = new ROSLIB.Service({
@@ -46,8 +47,12 @@ async function loadMap(load_path, topic) {
 }
 
 let topic = getTopic("{uniqueID}");
-let listener = undefined;
+let status = new Status(
+	document.getElementById("{uniqueID}_icon"),
+	document.getElementById("{uniqueID}_status")
+);
 
+let listener = undefined;
 let map_topic = undefined;
 let map_data = undefined;
 let map_canvas = undefined;
@@ -123,6 +128,8 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	opacityValue.innerText = loaded_data.opacity;
 
 	costmapCheckbox.checked =  loaded_data.costmap_mode ?? false;
+}else{
+	saveSettings();
 }
 
 function saveSettings(){
@@ -186,8 +193,10 @@ function drawMap(){
 
 function connect(){
 
-	if(topic == "")
+	if(topic == ""){
+		status.setError("Empty topic.");
 		return;
+	}
 
 	if(map_topic !== undefined){
 		map_topic.unsubscribe(listener);
@@ -201,6 +210,8 @@ function connect(){
 		compression: "cbor"
 		
 	});
+
+	status.setWarn("No data received.");
 	
 	listener = map_topic.subscribe((msg) => {
 
@@ -213,8 +224,10 @@ function connect(){
 		const height = msg.info.height;
 		const data = msg.data;
 
-		if(width == 0 || height == 0)
+		if(width == 0 || height == 0){
+			status.setWarn("Received empty map.");
 			return;
+		}
 	  
 		map_canvas.width = width;
 		map_canvas.height = height;
@@ -277,6 +290,8 @@ function connect(){
 		mapctx.putImageData(map_img, 0, 0);
 
 		drawMap();
+
+		status.setOK();
 	});
 
 	saveSettings();
@@ -304,6 +319,10 @@ async function loadTopics(){
 	}
 	connect();
 }
+
+costmapCheckbox.addEventListener("change", (event) => {
+	status.setWarn("Display mode changed, waiting for map data...");
+});
 
 selectionbox.addEventListener("change", (event) => {
 	topic = selectionbox.value;

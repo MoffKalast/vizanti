@@ -1,8 +1,14 @@
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
 import { toDataURL } from '/js/modules/util.js';
+import { Status } from '/js/modules/status.js';
 
 let topic = getTopic("{uniqueID}");
+let status = new Status(
+	document.getElementById("{uniqueID}_icon"),
+	document.getElementById("{uniqueID}_status")
+);
+
 
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
@@ -71,8 +77,10 @@ let batterytopic = undefined;
 
 function connect(){
 
-	if(topic == "")
+	if(topic == ""){
+		status.setError("Empty topic.");
 		return;
+	}
 
 	if(batterytopic !== undefined){
 		batterytopic.unsubscribe(listener);
@@ -84,6 +92,8 @@ function connect(){
 		messageType : 'sensor_msgs/BatteryState',
 		throttle_rate: 500 // throttle to twice a second max
 	});
+
+	status.setWarn("No data received.");
 	
 	listener = batterytopic.subscribe((msg) => {
 
@@ -117,6 +127,8 @@ function connect(){
 		text_status.innerText = "Status: "+STATUS[msg.power_supply_status];
 		text_health.innerText = "Health: "+HEALTH[msg.power_supply_health];
 		text_chemistry.innerText = "Type: "+CHEMISTRY[msg.power_supply_technology];
+		
+		status.setOK();
 	});
 
 	saveSettings();

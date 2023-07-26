@@ -1,6 +1,13 @@
 import { view } from '/js/modules/view.js';
 import { tf, applyRotation } from '/js/modules/tf.js';
 import { settings } from '/js/modules/persistent.js';
+import { Status } from '/js/modules/status.js';
+
+let status = new Status(
+	document.getElementById("{uniqueID}_icon"),
+	document.getElementById("{uniqueID}_status")
+);
+status.setWarn("No TF data received yet.");
 
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d');
@@ -37,8 +44,7 @@ if (settings.hasOwnProperty('{uniqueID}')) {
 	scaleSliderValue.textContent = scaleSlider.value;
 
 	frame_visibility = loadedData.frame_visibility;
-}
-else{
+}else{
 	saveSettings();
 }
 
@@ -283,7 +289,11 @@ function resizeScreen(){
 	drawFrames();
 }
 
-window.addEventListener("tf_changed", drawFrames);
+window.addEventListener("tf_changed", ()=>{
+	status.setOK();
+	drawFrames();
+});
+
 window.addEventListener("view_changed", drawFrames);
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);

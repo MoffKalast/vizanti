@@ -2,8 +2,14 @@ import { view } from '/js/modules/view.js';
 import { tf } from '/js/modules/tf.js';
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
+import { Status } from '/js/modules/status.js';
 
 let topic = getTopic("{uniqueID}");
+let status = new Status(
+	document.getElementById("{uniqueID}_icon"),
+	document.getElementById("{uniqueID}_status")
+);
+
 let listener = undefined;
 let path_topic = undefined;
 
@@ -25,6 +31,8 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
 	colourpicker.value = loaded_data.color ?? "#5ED753";
+}else{
+	saveSettings();
 }
 
 function saveSettings(){
@@ -42,8 +50,10 @@ function drawPath(){
     const hei = canvas.height;
 	ctx.clearRect(0, 0, wid, hei);
 
-	if(pose_array === undefined)
+	if(pose_array === undefined){
+		status.setWarn("No point data to render.");
 		return;
+	}
 
 	ctx.lineWidth = 2;
 	ctx.strokeStyle = colourpicker.value;
@@ -52,8 +62,10 @@ function drawPath(){
 	pose_array.forEach((point, index) => {
 		const frame = tf.absoluteTransforms[point.header.frame_id];
 
-		if(!frame)
+		if(!frame){
+			status.setError("Required transform frame not found.");
 			return;
+		}
 
 		let transformed = tf.transformPose(
 			point.header.frame_id, 
@@ -77,13 +89,16 @@ function drawPath(){
 	});
 
 	ctx.stroke();
+	status.setOK();
 }
 
 //Topic
 function connect(){
 
-	if(topic == "")
+	if(topic == ""){
+		status.setError("Empty topic.");
 		return;
+	}	
 
 	if(path_topic !== undefined){
 		path_topic.unsubscribe(listener);
@@ -95,6 +110,8 @@ function connect(){
 		messageType : 'nav_msgs/Path',
 		compression: "cbor"		
 	});
+
+	status.setWarn("No data received.");
 	
 	listener = path_topic.subscribe((msg) => {
 		pose_array = msg.poses;
