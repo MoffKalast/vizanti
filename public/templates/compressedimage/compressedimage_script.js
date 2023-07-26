@@ -3,7 +3,7 @@ import { settings } from '/js/modules/persistent.js';
 import { imageToDataURL } from '/js/modules/util.js';
 import { Status } from '/js/modules/status.js';
 
-let img_offset_x = "0%";
+let img_offset_x = "12.5%";
 let img_offset_y = "75px";
 
 let topic = getTopic("{uniqueID}");
@@ -208,8 +208,27 @@ function onMove(event) {
 			currentY = event.clientY;
 		}
 
-		img_offset_x = (currentX/window.innerWidth * 100) +"%";
-		img_offset_y = (currentY/window.innerHeight * 100) +"%";
+		let offset_x = (currentX/window.innerWidth * 100);
+		let offset_y = (currentY/window.innerHeight * 100);
+		let img_width = widthSlider.value/2;
+		let img_height = img_width * canvas.naturalWidth/canvas.naturalHeight;
+
+		if(offset_x < img_width){
+			offset_x = img_width;
+		}else if(offset_x > 100-img_width){
+			offset_x = 100-img_width;
+		}
+
+		if(offset_y < img_height){
+			offset_y = img_height;
+		}else if(offset_y > 100-img_height){
+			offset_y = 100-img_height;
+		}
+
+		img_offset_x = offset_x +"%";
+		img_offset_y = offset_y +"%";
+
+
 		saveSettings();
 
 		imgpreview.style.left = `calc(${img_offset_x} - 50px)`;
