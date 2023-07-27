@@ -1,10 +1,15 @@
 import { view } from '/js/modules/view.js';
 import { tf } from '/js/modules/tf.js';
 import { settings } from '/js/modules/persistent.js';
+import { Status } from '/js/modules/status.js';
+
+let status = new Status(
+	document.getElementById("{uniqueID}_icon"),
+	document.getElementById("{uniqueID}_status")
+);
 
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
 const selectionbox = document.getElementById("{uniqueID}_fixedframe");
-
 const colourpicker = document.getElementById("{uniqueID}_colorpicker");
 
 colourpicker.addEventListener("input", (event) =>{
@@ -18,6 +23,10 @@ if (settings.hasOwnProperty('{uniqueID}')) {
 	tf.setFixedFrame(loadedData.fixed_frame);
 	document.body.style.backgroundColor = loadedData.background_color;
 }else{
+	if(tf.fixed_frame == ""){
+		tf.setFixedFrame("odom");
+		status.setWarn("No frame selected, defaulting to odom");
+	}
 	saveSettings();
 }
 
@@ -49,6 +58,7 @@ function setFrameList(){
 
 selectionbox.addEventListener("change", (event) => {
 	tf.setFixedFrame(selectionbox.value);
+	status.setOK();
 	saveSettings();
 });
 
@@ -64,12 +74,16 @@ document.getElementById("{uniqueID}_reset_view").addEventListener("click", (even
 });
 
 async function deletePersistent() {
+
+	status.setWarn("Are you sure about that?");
 	let del_ok = await confirm("Are you sure you want to delete your saved widget setup? This will refresh the page.");
 
 	if(del_ok){
 		localStorage.removeItem("settings");
 		window.location.reload();
 	}
+
+	status.setOK();
 }
 
 document.getElementById("{uniqueID}_delete_persistent").addEventListener("click", deletePersistent);

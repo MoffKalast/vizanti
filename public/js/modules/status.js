@@ -7,13 +7,19 @@ export class Status {
         this.message = message_element;
     }
 
-    setOK(){
+
+    setOK(message){
         this.icon.classList.remove("icon-error");
         this.icon.classList.remove("icon-warn");
 
         this.message.classList.remove("status-error");
         this.message.classList.remove("status-warn"); 
-        this.message.innerText = "Status: Ok";
+
+        if(arguments.length == 1){
+            this.message.innerText = "Status: "+message;
+        }else{
+            this.message.innerText = "Status: Ok";
+        }        
     }
 
     setWarn(message){

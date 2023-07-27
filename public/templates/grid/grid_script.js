@@ -1,5 +1,11 @@
 import { view } from '/js/modules/view.js';
 import { settings } from '/js/modules/persistent.js';
+import { Status } from '/js/modules/status.js';
+
+let status = new Status(
+	document.getElementById("{uniqueID}_icon"),
+	document.getElementById("{uniqueID}_status")
+);
 
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d');
@@ -44,8 +50,10 @@ function drawGrid() {
 	const linesX = (maxX-minX)/grid_size;
 	const linesY = (maxY-minY)/grid_size;
 
-	if(linesX > 200 || linesY > 200)
+	if(linesX > 200 || linesY > 200){
+		status.setWarn("Too many lines to render, increase step size.");
 		return;
+	}
 
 	ctx.beginPath();
 
@@ -82,6 +90,8 @@ function drawGrid() {
     }
 
 	ctx.stroke();
+
+	status.setOK();
 }
 
 function resizeScreen(){
