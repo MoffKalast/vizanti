@@ -1,10 +1,9 @@
 export class Settings {
+
 	constructor() {
 		if (localStorage.hasOwnProperty("settings")) {
-			let storedSettings = JSON.parse(localStorage.getItem("settings"));
-			Object.assign(this, storedSettings);
-		}
-		else{
+			this.fromJSON(localStorage.getItem("settings"));
+		}else{
 			this.navbar = [
 				{type:"settings", id:"settings_default"},
 				{type:"rosbridge", id:"rosbridge_default"},
@@ -15,6 +14,11 @@ export class Settings {
 				scale: 50.0
 			};
 		}
+	}
+
+	fromJSON(settings_object){
+		let storedSettings = JSON.parse(settings_object);
+		Object.assign(this, storedSettings);
 	}
 
 	save() {

@@ -38,12 +38,13 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	spriteSelector.value = sprite;
 	previewImg.src = models[sprite].src;
 }else{
-	saveSettings();
-}
 
-if(frame == ""){
-	topic = "base_link";
-	status.setWarn("No frame found, defaulting to base_link");
+	if(frame == ""){
+		frame = "base_link";
+		status.setWarn("No frame found, defaulting to base_link");
+	}
+
+	saveSettings();
 }
 
 function saveSettings(){

@@ -1,6 +1,7 @@
 import { view } from '/js/modules/view.js';
 import { tf } from '/js/modules/tf.js';
 import { settings } from '/js/modules/persistent.js';
+import { saveJsonToFile } from '/js/modules/util.js';
 import { Status } from '/js/modules/status.js';
 
 let status = new Status(
@@ -73,8 +74,7 @@ document.getElementById("{uniqueID}_reset_view").addEventListener("click", (even
 	modal.style.display = "none";
 });
 
-async function deletePersistent() {
-
+document.getElementById("{uniqueID}_delete_persistent").addEventListener("click", async (event) =>{
 	status.setWarn("Are you sure about that?");
 	let del_ok = await confirm("Are you sure you want to delete your saved widget setup? This will refresh the page.");
 
@@ -84,8 +84,44 @@ async function deletePersistent() {
 	}
 
 	status.setOK();
-}
+});
 
-document.getElementById("{uniqueID}_delete_persistent").addEventListener("click", deletePersistent);
+document.getElementById("{uniqueID}_export_persistent").addEventListener("click", async (event) =>{
+
+	let filename = await prompt("Save as file (.json will be appended automatically):", "robot_config");
+	if (filename != null) {
+		saveJsonToFile(settings, filename+'.json');
+		modal.style.display = "none";
+	}
+});
+
+document.getElementById("{uniqueID}_import_persistent").addEventListener("click", (event) =>{
+
+	const input = document.createElement('input');
+	input.type = 'file';
+	input.accept = '.json';
+
+	input.onchange = (event) => {
+		const file = event.target.files[0];
+		const reader = new FileReader();
+
+		reader.onload = () => {
+			try {
+				settings.fromJSON(reader.result);
+				settings.save();
+				location.reload(false);
+			} catch (error) {
+				console.error('Error importing JSON file:', error);
+			}
+		};
+
+		reader.readAsText(file);
+	};
+
+	input.click();
+
+	modal.style.display = "none";
+});
+
 
 console.log("Settings Widget Loaded {uniqueID}")

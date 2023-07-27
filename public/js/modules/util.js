@@ -1,12 +1,14 @@
-export async function toDataURL(url) {
-	const response = await fetch(url);
-	const blob = await response.blob();
-	return new Promise((resolve, reject) => {
-		const reader = new FileReader();
-		reader.onloadend = () => resolve(reader.result);
-		reader.onerror = reject;
-		reader.readAsDataURL(blob);
-	});
+export function saveJsonToFile(data, filename) {
+	const jsonData = JSON.stringify(data, null, 2);
+	const blob = new Blob([jsonData], { type: 'application/json' });
+	const url = URL.createObjectURL(blob);
+  
+	const a = document.createElement('a');
+	a.href = url;
+	a.download = filename;
+	a.click();
+  
+	URL.revokeObjectURL(url);
 }
 
 //webkit http compatible fetch-free implementation

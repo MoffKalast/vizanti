@@ -1,6 +1,6 @@
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
-import { toDataURL } from '/js/modules/util.js';
+import { imageToDataURL } from '/js/modules/util.js';
 import { Status } from '/js/modules/status.js';
 
 let topic = getTopic("{uniqueID}");
@@ -8,7 +8,6 @@ let status = new Status(
 	document.getElementById("{uniqueID}_icon"),
 	document.getElementById("{uniqueID}_status")
 );
-
 
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
@@ -23,12 +22,12 @@ function saveSettings(){
 }
 
 let icons = {};
-icons["20%"] = await toDataURL("assets/battery_20.svg");
-icons["40%"] = await toDataURL("assets/battery_40.svg");
-icons["60%"] = await toDataURL("assets/battery_60.svg");
-icons["80%"] = await toDataURL("assets/battery_80.svg");
-icons["100%"] = await toDataURL("assets/battery_100.svg");
-icons["unknown"] = await toDataURL("assets/battery_unknown.svg");
+icons["20%"] = await imageToDataURL("assets/battery_20.svg");
+icons["40%"] = await imageToDataURL("assets/battery_40.svg");
+icons["60%"] = await imageToDataURL("assets/battery_60.svg");
+icons["80%"] = await imageToDataURL("assets/battery_80.svg");
+icons["100%"] = await imageToDataURL("assets/battery_100.svg");
+icons["unknown"] = await imageToDataURL("assets/battery_unknown.svg");
 
 const STATUS = [
 	"UNKNOWN",
