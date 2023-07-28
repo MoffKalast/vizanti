@@ -1,7 +1,6 @@
 import { view } from '/js/modules/view.js';
 import { tf } from '/js/modules/tf.js';
-import { settings } from '/js/modules/persistent.js';
-import { saveJsonToFile } from '/js/modules/util.js';
+import { settings, saveJsonToFile } from '/js/modules/persistent.js';
 import { Status } from '/js/modules/status.js';
 
 let status = new Status(
