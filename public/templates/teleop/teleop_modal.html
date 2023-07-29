@@ -6,13 +6,17 @@
 
 	<div class="modal_inner noselect">
 		<h3>Joystick Teleop</h3>
+		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
 		<hr>
 		<label for="{uniqueID}_topic">Topic:</label>
 		<select id="{uniqueID}_topic" name="topic">
 			<!-- add topics here-->
 		</select>
 
-		<hr>
+		<p>Adds a joystick overlay to the main view that can be used to send geometry_msgs/Twist movement commands.</p>
+
+		<p style="color:#b4b4b4;">Scroll up and drag the preview box to position the joystick on the screen.</p>
+
 
 		<label for="{uniqueID}_linear_velocity">Linear Velocity (m/s):</label>
 		<span id="{uniqueID}_linear_velocity_value">0.5</span>
@@ -42,8 +46,6 @@
 		<br>
 
 		<hr>
-
-		<p style="color:lightgray">Hint: Scroll up and drag the preview box to position the joystick on the screen.</p>
 
 		<br>
 

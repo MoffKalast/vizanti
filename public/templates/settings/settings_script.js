@@ -1,10 +1,15 @@
 import { view } from '/js/modules/view.js';
 import { tf } from '/js/modules/tf.js';
-import { settings } from '/js/modules/persistent.js';
+import { settings, saveJsonToFile } from '/js/modules/persistent.js';
+import { Status } from '/js/modules/status.js';
+
+let status = new Status(
+	document.getElementById("{uniqueID}_icon"),
+	document.getElementById("{uniqueID}_status")
+);
 
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
 const selectionbox = document.getElementById("{uniqueID}_fixedframe");
-
 const colourpicker = document.getElementById("{uniqueID}_colorpicker");
 
 colourpicker.addEventListener("input", (event) =>{
@@ -16,10 +21,12 @@ colourpicker.addEventListener("input", (event) =>{
 if (settings.hasOwnProperty('{uniqueID}')) {
 	const loadedData = settings['{uniqueID}'];
 	tf.setFixedFrame(loadedData.fixed_frame);
-
 	document.body.style.backgroundColor = loadedData.background_color;
-}
-else{
+}else{
+	if(tf.fixed_frame == ""){
+		tf.setFixedFrame("odom");
+		status.setWarn("No frame selected, defaulting to odom");
+	}
 	saveSettings();
 }
 
@@ -51,6 +58,7 @@ function setFrameList(){
 
 selectionbox.addEventListener("change", (event) => {
 	tf.setFixedFrame(selectionbox.value);
+	status.setOK();
 	saveSettings();
 });
 
@@ -65,15 +73,54 @@ document.getElementById("{uniqueID}_reset_view").addEventListener("click", (even
 	modal.style.display = "none";
 });
 
-async function deletePersistent() {
+document.getElementById("{uniqueID}_delete_persistent").addEventListener("click", async (event) =>{
+	status.setWarn("Are you sure about that?");
 	let del_ok = await confirm("Are you sure you want to delete your saved widget setup? This will refresh the page.");
 
 	if(del_ok){
 		localStorage.removeItem("settings");
 		window.location.reload();
 	}
-}
 
-document.getElementById("{uniqueID}_delete_persistent").addEventListener("click", deletePersistent);
+	status.setOK();
+});
+
+document.getElementById("{uniqueID}_export_persistent").addEventListener("click", async (event) =>{
+
+	let filename = await prompt("Save as file (.json will be appended automatically):", "robot_config");
+	if (filename != null) {
+		saveJsonToFile(settings, filename+'.json');
+		modal.style.display = "none";
+	}
+});
+
+document.getElementById("{uniqueID}_import_persistent").addEventListener("click", (event) =>{
+
+	const input = document.createElement('input');
+	input.type = 'file';
+	input.accept = '.json';
+
+	input.onchange = (event) => {
+		const file = event.target.files[0];
+		const reader = new FileReader();
+
+		reader.onload = () => {
+			try {
+				settings.fromJSON(reader.result);
+				settings.save();
+				location.reload(false);
+			} catch (error) {
+				console.error('Error importing JSON file:', error);
+			}
+		};
+
+		reader.readAsText(file);
+	};
+
+	input.click();
+
+	modal.style.display = "none";
+});
+
 
 console.log("Settings Widget Loaded {uniqueID}")

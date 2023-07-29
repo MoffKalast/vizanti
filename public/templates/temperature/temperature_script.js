@@ -1,11 +1,18 @@
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
 import { imageToDataURL } from '/js/modules/util.js';
+import { Status } from '/js/modules/status.js';
 
 let topic = getTopic("{uniqueID}");
+let status = new Status(
+	document.getElementById("{uniqueID}_icon"),
+	document.getElementById("{uniqueID}_status")
+);
+
 let listener = undefined;
 let temperature_topic = undefined;
 
+//persistent loading, so we don't re-fetch on every update
 let icons = {};
 icons["hot"] = await imageToDataURL("assets/temp_hot.svg");
 icons["cold"] = await imageToDataURL("assets/temp_cold.svg");
@@ -26,6 +33,8 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	topic = loaded_data.topic;
 	highBox.value = loaded_data.high;
 	lowBox.value = loaded_data.low;
+}else{
+	saveSettings();
 }
 
 function saveSettings(){
@@ -39,8 +48,10 @@ function saveSettings(){
 
 function connect(){
 
-	if(topic == "")
+	if(topic == ""){
+		status.setError("Empty topic.");
 		return;
+	}
 
 	if(temperature_topic !== undefined){
 		temperature_topic.unsubscribe(listener);
@@ -51,6 +62,8 @@ function connect(){
 		name : topic,
 		messageType : 'sensor_msgs/msg/Temperature'
 	});
+
+	status.setWarn("No data received.");
 	
 	listener = temperature_topic.subscribe((msg) => {
 
@@ -66,6 +79,8 @@ function connect(){
 
 		text_temperature.innerText = "Temperature (°C): "+(Math.round(msg.temperature * 100) / 100).toFixed(2);
 		text_variance.innerText = "Variance: "+(Math.round(msg.variance * 100) / 100).toFixed(2);
+
+		status.setOK();
 	});
 
 	saveSettings();

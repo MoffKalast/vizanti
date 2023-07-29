@@ -2,8 +2,13 @@ import { view } from '/js/modules/view.js';
 import { tf } from '/js/modules/tf.js';
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
+import { Status } from '/js/modules/status.js';
 
 let topic = getTopic("{uniqueID}");
+let status = new Status(
+	document.getElementById("{uniqueID}_icon"),
+	document.getElementById("{uniqueID}_status")
+);
 
 let range_topic = undefined;
 let listener = undefined;
@@ -21,7 +26,11 @@ opacitySlider.addEventListener('input', () =>  {
 	saveSettings();
 });
 
-//Settings
+const decay = document.getElementById('{uniqueID}_decay');
+decay.addEventListener("input", (event) =>{
+	saveSettings();
+	connect();
+});
 
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
@@ -29,12 +38,17 @@ if(settings.hasOwnProperty("{uniqueID}")){
 
 	opacitySlider.value = loaded_data.opacity;
 	opacityValue.innerText = loaded_data.opacity;
+
+	decay.value = loaded_data.decay ?? 2000;
+}else{
+	saveSettings();
 }
 
 function saveSettings(){
 	settings["{uniqueID}"] = {
 		topic: topic,
-		opacity: opacitySlider.value
+		opacity: opacitySlider.value,
+		decay: decay.value
 	}
 	settings.save();
 }
@@ -63,6 +77,10 @@ function drawRanges() {
 	ctx.globalAlpha = opacitySlider.value;
 
 	for (const [key, sample] of Object.entries(data)) {
+
+		//skip old messages
+		if(new Date() - sample.stamp > decay.value)
+			continue;
 
 		let pos = view.fixedToScreen({
 			x: sample.pose.translation.x,
@@ -110,8 +128,10 @@ window.addEventListener('orientationchange', resizeScreen);
 
 function connect(){
 
-	if(topic == "")
+	if(topic == ""){
+		status.setError("Empty topic.");
 		return;
+	}
 
 	if(range_topic !== undefined){
 		range_topic.unsubscribe(listener);
@@ -122,13 +142,17 @@ function connect(){
 		name : topic,
 		messageType : 'sensor_msgs/msg/Range'
 	});
+
+	status.setWarn("No data received.");
 	
 	listener = range_topic.subscribe((msg) => {		
 
 		const pose = tf.absoluteTransforms[msg.header.frame_id];
 
-		if(!pose)
+		if(!pose){
+			status.setError("Required transform frame not found.");
 			return;
+		}
 
 		data[msg.header.frame_id] = {
 			field_of_view: msg.field_of_view,
@@ -136,9 +160,11 @@ function connect(){
 			max_range: msg.max_range,
 			range: msg.range,
 			type: msg.radiation_type,
-			pose: pose
+			pose: pose,
+			stamp: new Date()
 		}
 		drawRanges();
+		status.setOK();
 	});
 
 	saveSettings();
