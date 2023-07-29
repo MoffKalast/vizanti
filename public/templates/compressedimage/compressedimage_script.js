@@ -3,8 +3,11 @@ import { settings } from '/js/modules/persistent.js';
 import { imageToDataURL } from '/js/modules/util.js';
 import { Status } from '/js/modules/status.js';
 
-let img_offset_x = "12.5%";
-let img_offset_y = "75px";
+let img_offset_x = "-999px";
+let img_offset_y = "-999px";
+
+let img_width = -1;
+let img_height = -1;
 
 let topic = getTopic("{uniqueID}");
 let status = new Status(
@@ -68,14 +71,13 @@ if(settings.hasOwnProperty("{uniqueID}")){
 
 	widthSlider.value = loaded_data.width;
 	widthValue.innerText = loaded_data.width;
-	canvas.style.width = loaded_data.width+"%";
-
-	canvas.style.left = `calc(${img_offset_x})`;
-	canvas.style.top = `calc(${img_offset_y})`;
-
 	rotationbox.value = loaded_data.rotation;
+
+	canvas.style.width = loaded_data.width+"%";
 	canvas.style.transform = `translate(-50%, -50%) rotate(${loaded_data.rotation}deg)`;
+	displayImageOffset(img_offset_x, img_offset_y);
 }else{
+	clampImagePos(0, window.innerHeight);
 	saveSettings();
 }
 
@@ -178,8 +180,6 @@ selectionbox.addEventListener("click", connect);
 
 icon.addEventListener("click", ()=> {
 	loadTopics();
-	imgpreview.style.left = `calc(${img_offset_x} - 50px)`;
-	imgpreview.style.top = `calc(${img_offset_y} - 50px)`;	
 });
 
 loadTopics();
@@ -195,6 +195,38 @@ function onStart(event) {
 	document.addEventListener('touchend', onEnd);
 }
 
+function clampImagePos(x, y){
+	let offset_x = (x/window.innerWidth * 100);
+	let offset_y = (y/window.innerHeight * 100);
+	let img_width = widthSlider.value/2;
+	let img_height = (widthSlider.value * 3/4 * canvas.naturalHeight)/canvas.naturalWidth;
+
+	if(offset_x < img_width){
+		offset_x = img_width;
+	}else if(offset_x > 100 - img_width){
+		offset_x = 100 - img_width;
+	}
+
+	if(offset_y < img_height){
+		offset_y = img_height;
+	}else if(offset_y > 100 - img_height){
+		offset_y = 100 - img_height;
+	}
+
+	img_offset_x = offset_x +"%";
+	img_offset_y = offset_y +"%";
+
+	displayImageOffset(img_offset_x, img_offset_y);
+}
+
+function displayImageOffset(x, y){
+	imgpreview.style.left = `calc(${img_offset_x} - 50px)`;
+	imgpreview.style.top = `calc(${img_offset_y} - 50px)`;
+
+	canvas.style.left = `calc(${img_offset_x})`;
+	canvas.style.top = `calc(${img_offset_y})`;
+}
+
 function onMove(event) {
 	if (preview_active) {
 		event.preventDefault();
@@ -208,34 +240,8 @@ function onMove(event) {
 			currentY = event.clientY;
 		}
 
-		let offset_x = (currentX/window.innerWidth * 100);
-		let offset_y = (currentY/window.innerHeight * 100);
-		let img_width = widthSlider.value/2;
-		let img_height = img_width * canvas.naturalWidth/canvas.naturalHeight;
-
-		if(offset_x < img_width){
-			offset_x = img_width;
-		}else if(offset_x > 100-img_width){
-			offset_x = 100-img_width;
-		}
-
-		if(offset_y < img_height){
-			offset_y = img_height;
-		}else if(offset_y > 100-img_height){
-			offset_y = 100-img_height;
-		}
-
-		img_offset_x = offset_x +"%";
-		img_offset_y = offset_y +"%";
-
-
+		clampImagePos(currentX, currentY);
 		saveSettings();
-
-		imgpreview.style.left = `calc(${img_offset_x} - 50px)`;
-		imgpreview.style.top = `calc(${img_offset_y} - 50px)`;
-
-		canvas.style.left = `calc(${img_offset_x})`;
-		canvas.style.top = `calc(${img_offset_y})`;
 	}
 }
 
@@ -250,6 +256,7 @@ function onEnd() {
 imgpreview.addEventListener('mousedown', onStart);
 imgpreview.addEventListener('touchstart', onStart);
 
+displayImageOffset(img_offset_x, img_offset_y);
 
 console.log("Image Widget Loaded {uniqueID}")
 
