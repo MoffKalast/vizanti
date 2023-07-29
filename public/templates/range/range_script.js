@@ -32,8 +32,6 @@ decay.addEventListener("input", (event) =>{
 	connect();
 });
 
-//Settings
-
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;

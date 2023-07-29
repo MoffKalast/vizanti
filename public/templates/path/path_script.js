@@ -51,7 +51,6 @@ function drawPath(){
 	ctx.clearRect(0, 0, wid, hei);
 
 	if(pose_array === undefined){
-		status.setWarn("No point data to render.");
 		return false;
 	}
 
@@ -60,37 +59,19 @@ function drawPath(){
 	ctx.beginPath();
 
 	pose_array.forEach((point, index) => {
-		const frame = tf.absoluteTransforms[point.header.frame_id];
-
-		if(!frame){
-			status.setError("Required transform frame not found.");
-			return false;
-		}
-
-		let transformed = tf.transformPose(
-			point.header.frame_id, 
-			tf.fixed_frame, 
-			point.pose.position, 
-			point.pose.orientation
-		);
-
 		const pos = view.fixedToScreen({
-			x: transformed.translation.x,
-			y: transformed.translation.y
+			x: point.translation.x,
+			y: point.translation.y
 		});
 
-		
 		if (index === 0) {
 			ctx.moveTo(pos.x, pos.y);
 		} else {
 			ctx.lineTo(pos.x, pos.y);
 		}
-		
 	});
 
 	ctx.stroke();
-
-	return true;
 }
 
 //Topic
@@ -115,8 +96,29 @@ function connect(){
 	status.setWarn("No data received.");
 	
 	listener = path_topic.subscribe((msg) => {
-		pose_array = msg.poses;
-		if(drawPath()){
+		let error = false;
+		let newposes = [];
+		msg.poses.forEach((point, index) => {
+			const frame = tf.absoluteTransforms[point.header.frame_id];
+	
+			if(!frame){
+				status.setError("Required transform frame not found.");
+				error = true;
+				return;
+			}
+	
+			newposes.push(tf.transformPose(
+				point.header.frame_id, 
+				tf.fixed_frame, 
+				point.pose.position, 
+				point.pose.orientation
+			));
+		});
+
+		pose_array = newposes;
+		drawPath();
+
+		if(!error){
 			status.setOK();
 		}
 	});

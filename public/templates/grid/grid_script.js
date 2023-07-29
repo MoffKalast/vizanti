@@ -19,6 +19,8 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	grid_size = loaded_data.size;
 	grid_thickness = loaded_data.thickness;
 	grid_colour = loaded_data.colour;
+}else{
+	saveSettings();
 }
 
 function saveSettings(){

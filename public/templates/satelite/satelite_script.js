@@ -52,7 +52,6 @@ tileServerString.addEventListener('input', function () {
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d');
 
-//Settings
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;

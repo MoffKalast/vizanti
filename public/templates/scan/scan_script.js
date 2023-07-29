@@ -10,7 +10,6 @@ let status = new Status(
 	document.getElementById("{uniqueID}_status")
 );
 
-
 let range_topic = undefined;
 let listener = undefined;
 

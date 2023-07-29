@@ -88,9 +88,7 @@ const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d');
 
 const view_container = document.getElementById("view_container");
-
 const icon = document.getElementById("{uniqueID}_icon");
-const iconImg = icon.getElementsByTagName('img')[0];
 
 let active = false;
 let sprite = new Image();

@@ -75,7 +75,6 @@ const ctx = canvas.getContext('2d');
 
 function drawCloud() {
 
-	const unit = view.getMapUnitsInPixels(1.0);
 	const pixel = view.getMapUnitsInPixels(thicknessSlider.value);
 
 	const wid = canvas.width;
@@ -160,10 +159,10 @@ function connect(){
 			return;
 		}
 
-		if(msg.width * msg.height != msg.data.length / msg.point_step){
+		/* if(msg.width * msg.height != msg.data.length / msg.point_step){
 			status.setError("Invalid cloud data, point count is inconsistent with binary blob length.");
 			return;
-		}
+		} */
 
 		const xData = msg.fields.find(field => field.name === 'x');
 		const yData = msg.fields.find(field => field.name === 'y');
