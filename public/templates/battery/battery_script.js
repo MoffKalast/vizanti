@@ -12,7 +12,10 @@ let status = new Status(
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
+}else{
+	saveSettings();
 }
+
 
 function saveSettings(){
 	settings["{uniqueID}"] = {

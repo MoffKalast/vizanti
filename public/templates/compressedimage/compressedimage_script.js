@@ -6,9 +6,6 @@ import { Status } from '/js/modules/status.js';
 let img_offset_x = "-999px";
 let img_offset_y = "-999px";
 
-let img_width = -1;
-let img_height = -1;
-
 let topic = getTopic("{uniqueID}");
 let status = new Status(
 	document.getElementById("{uniqueID}_icon"),
