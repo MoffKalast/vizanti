@@ -3,8 +3,11 @@ import { settings } from '/js/modules/persistent.js';
 import { imageToDataURL } from '/js/modules/util.js';
 import { Status } from '/js/modules/status.js';
 
-let img_offset_x = "-999px";
-let img_offset_y = "-999px";
+let img_offset_x = "-999";
+let img_offset_y = "-999";
+
+const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
+const vwToVh = vw => (vw * window.innerWidth) / window.innerHeight;
 
 let topic = getTopic("{uniqueID}");
 let status = new Status(
@@ -70,11 +73,10 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	widthValue.innerText = loaded_data.width;
 	rotationbox.value = loaded_data.rotation;
 
-	canvas.style.width = loaded_data.width+"%";
 	canvas.style.transform = `translate(-50%, -50%) rotate(${loaded_data.rotation}deg)`;
 	displayImageOffset(img_offset_x, img_offset_y);
 }else{
-	clampImagePos(0, window.innerHeight);
+	displayImageOffset(0, 100);
 	saveSettings();
 }
 
@@ -91,9 +93,8 @@ function saveSettings(){
 	settings.save();
 
 	canvas.style.opacity = opacitySlider.value;
-	canvas.style.width = widthSlider.value+"%";
-
 	canvas.style.transform = `translate(-50%, -50%) rotate(${rotationbox.value}deg)`;
+	displayImageOffset(img_offset_x, img_offset_y);
 }
 
 //Topic
@@ -110,6 +111,7 @@ async function getImage(src) {
 function connect(){
 
 	canvas.src = stock_images["loading"];
+	displayImageOffset(img_offset_x, img_offset_y);
 
 	if(topic == ""){
 		status.setError("Empty topic.");
@@ -129,16 +131,21 @@ function connect(){
 		throttle_rate: parseInt(throttle.value)
 	});
 	
+	let received = false;
 	listener = image_topic.subscribe(async (msg) => {  
 		const src = 'data:image/jpeg;base64,' + msg.data
 
 		getImage(src)
 			.then(() => {
 				canvas.src = src;
-				status.setOK();
+				if(!received){
+					displayImageOffset(img_offset_x, img_offset_y);
+					status.setOK();
+				}
 			})
 			.catch((e) => {
 				canvas.src = stock_images["error"];
+				displayImageOffset(img_offset_x, img_offset_y);
 				status.setError(e.message);
 			});
 	});
@@ -192,37 +199,26 @@ function onStart(event) {
 	document.addEventListener('touchend', onEnd);
 }
 
-function clampImagePos(x, y){
-	let offset_x = (x/window.innerWidth * 100);
-	let offset_y = (y/window.innerHeight * 100);
-	let img_width = widthSlider.value/2;
-	let img_height = (widthSlider.value * 3/4 * canvas.naturalHeight)/canvas.naturalWidth;
-
-	if(offset_x < img_width){
-		offset_x = img_width;
-	}else if(offset_x > 100 - img_width){
-		offset_x = 100 - img_width;
-	}
-
-	if(offset_y < img_height){
-		offset_y = img_height;
-	}else if(offset_y > 100 - img_height){
-		offset_y = 100 - img_height;
-	}
-
-	img_offset_x = offset_x +"%";
-	img_offset_y = offset_y +"%";
-
-	displayImageOffset(img_offset_x, img_offset_y);
-}
-
 function displayImageOffset(x, y){
-	imgpreview.style.left = `calc(${img_offset_x} - 50px)`;
-	imgpreview.style.top = `calc(${img_offset_y} - 50px)`;
+	let img_width = widthSlider.value;
+	let img_height = (vwToVh(img_width) * canvas.naturalHeight)/canvas.naturalWidth;
 
-	canvas.style.left = `calc(${img_offset_x})`;
-	canvas.style.top = `calc(${img_offset_y})`;
+	canvas.style.width = img_width+"vw";
+	canvas.style.height = img_height+"vh";
+
+	let offset_x = clamp(x, img_width/2, 100 - img_width/2);
+	let offset_y = clamp(y, img_height/2, 100 - img_height/2);
+
+	imgpreview.style.left = offset_x+"vw";
+	imgpreview.style.top = offset_y+"vh";
+
+	canvas.style.left = offset_x+"vw";
+	canvas.style.top = offset_y+"vh";
 }
+
+window.addEventListener('resize', ()=>{
+	displayImageOffset(img_offset_x, img_offset_y);
+});
 
 function onMove(event) {
 	if (preview_active) {
@@ -236,8 +232,13 @@ function onMove(event) {
 			currentX = event.clientX;
 			currentY = event.clientY;
 		}
+	
+		let img_width = widthSlider.value/2;
+		let img_height = (vwToVh(img_width) * canvas.naturalHeight)/canvas.naturalWidth;
+	
+		img_offset_x = clamp(currentX/window.innerWidth * 100, img_width, 100 - img_width);
+		img_offset_y = clamp(currentY/window.innerHeight * 100, img_height, 100 - img_height);
 
-		clampImagePos(currentX, currentY);
 		saveSettings();
 	}
 }

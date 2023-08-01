@@ -403,9 +403,9 @@ canvas {
 	z-index: 0;
 }
 
-.compessedimage {
+.compressedimage {
 	width: 25%;
-	height: auto;
+	height: 25%;
 
 	position: absolute;
 	top: 0;
@@ -413,6 +413,13 @@ canvas {
 	border: 3px solid #424242;
 
 	transition: transform 0.2s;  
+}
+
+.compressedimage_preview {
+	position: fixed;
+	bottom: 15vh; 
+	left: 50vw; 
+	transform: translate(-50px, -50px);
 }
 
 /* Buttons */
