@@ -1,6 +1,7 @@
 <div id="{uniqueID}_modal" class="modal_outer noselect">
 	<div class="modal_inner noselect">
 		<h3>Grid Renderer</h3>
+		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
 		<hr>
 
 		<label for="{uniqueID}_colorpicker">Colour:</label>
@@ -16,11 +17,13 @@
 		<label for="{uniqueID}_thickness">Line thickness (px):</label>
 		<input type="number" value="1" step="1" min="1" max="20" id="{uniqueID}_thickness">
 
+		<br>
+
+		<p>Note: Grids will stop rendering when the line density gets too high (to prevent lag). Create more grids with larger steps if you need a large range of scale.</p>
+
 		<hr>
 
 		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
-
-		<p>Note: Grids will stop rendering when the line density gets too high (to prevent lag). Create more grids with larger steps if you need a large range of scale.</p>
 
 	</div>
 </div>

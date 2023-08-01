@@ -1,8 +1,13 @@
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { imageToDataURL } from '/js/modules/util.js';
+import { Status } from '/js/modules/status.js';
+
+let status = new Status(
+	document.getElementById("{uniqueID}_icon"),
+	document.getElementById("{uniqueID}_status")
+);
 
 let url = document.getElementById("{uniqueID}_url");
-let statustext = document.getElementById("{uniqueID}_status");
 let icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
 
 // can't show images about reconnecting without preloading them before we lose connection
@@ -13,25 +18,23 @@ let img_disconnect = await imageToDataURL('assets/rosbridge_disconnected.svg');
 function update_gui(){
 	url.innerText = "Bridge URL: ws://"+rosbridge.url + ":"+rosbridge.port;
 
-	statustext.innerText = rosbridge.status;
-
 	switch (rosbridge.status) {
 		case "Reconnecting...":
 			icon.src = img_reconnect;
-			statustext.style.color = "orange";
+			status.setError(rosbridge.status);
 			break;
 		case "Connecting...":
 			icon.src = img_connect;
-			statustext.style.color = "yellow";
+			status.setWarn(rosbridge.status);
 			break;
 		case 'Connection lost.':
 		case 'Failed to connect.':
 			icon.src = img_disconnect;
-			statustext.style.color = "red";
+			status.setError(rosbridge.status);
 			break;
 		default:
 			icon.src = img_connect;
-			statustext.style.color = "lime";
+			status.setOK(rosbridge.status);
 	}
 }
 

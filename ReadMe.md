@@ -142,9 +142,13 @@ Render a Path message for navigation debugging.
 
 Render a Range message on the main view. Supports grouping multiple messages onto the same topic, as long as the tf frames are different. 
 
-#### <img src="wiki_assets/scan.png" alt="" title="LaserScan" width="30" height="30"/> LaserScan
+#### <img src="wiki_assets/scan.png" alt="" title="LaserScan" width="30" height="30"/> Laser Scan
 
 Display a LaserScan message on the main view. Heavily throttled by default.
+
+#### <img src="wiki_assets/pointcloud.png" alt="" title="LaserScan" width="30" height="30"/> Point Cloud
+
+Display a PointCloud2 message on the main view. Heavily throttled by default.
 
 #### <img src="wiki_assets/posewithcovariancestamped.png" alt="" title="PoseWithCovarianceStamped" width="30" height="30"/> Pose with Covariance (Stamped)
 

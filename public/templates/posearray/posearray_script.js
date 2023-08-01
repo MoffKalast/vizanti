@@ -2,8 +2,14 @@ import { view } from '/js/modules/view.js';
 import { tf } from '/js/modules/tf.js';
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
+import { Status } from '/js/modules/status.js';
 
 let topic = getTopic("{uniqueID}");
+let status = new Status(
+	document.getElementById("{uniqueID}_icon"),
+	document.getElementById("{uniqueID}_status")
+);
+
 let listener = undefined;
 let poses_topic = undefined;
 
@@ -32,6 +38,8 @@ if(settings.hasOwnProperty("{uniqueID}")){
 
 	scaleSlider.value = loaded_data.scale;
 	scaleSliderValue.textContent = scaleSlider.value;
+}else{
+	saveSettings();
 }
 
 function saveSettings(){
@@ -94,8 +102,10 @@ function drawArrows(){
 //Topic
 function connect(){
 
-	if(topic == "")
+	if(topic == ""){
+		status.setError("Empty topic.");
 		return;
+	}
 
 	if(poses_topic !== undefined){
 		poses_topic.unsubscribe(listener);
@@ -108,11 +118,15 @@ function connect(){
 		throttle_rate: 50,
 		compression: "cbor"
 	});
+
+	status.setWarn("No data received.");
 	
 	listener = poses_topic.subscribe((msg) => {
 
-		if(!tf.absoluteTransforms[msg.header.frame_id])
+		if(!tf.absoluteTransforms[msg.header.frame_id]){
+			status.setError("Required transform frame not found.");
 			return;
+		}
 
 		poses = [];
 		frame = tf.fixed_frame;
@@ -132,6 +146,8 @@ function connect(){
 			});
 		});
 		drawArrows();
+
+		status.setOK();
 	});
 
 	saveSettings();

@@ -6,12 +6,12 @@ let topic_list = new Set();
 
 let active = await getRecordingStatus();
 
-// Settings
-
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	path = loaded_data.path;
 	topic_list = new Set(loaded_data.topic_list);
+}else{
+	saveSettings();
 }
 
 function saveSettings(){

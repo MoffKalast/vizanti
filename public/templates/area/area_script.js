@@ -2,13 +2,21 @@ import { view } from '/js/modules/view.js';
 import { tf } from '/js/modules/tf.js';
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
+import { Status } from '/js/modules/status.js';
 
 let topic = getTopic("{uniqueID}");
+let status = new Status(
+	document.getElementById("{uniqueID}_icon"),
+	document.getElementById("{uniqueID}_status")
+);
+
 let seq = 0;
 
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
+}else{
+	saveSettings();
 }
 
 function saveSettings(){
@@ -19,8 +27,10 @@ function saveSettings(){
 }
 
 function sendMessage(start, end){
-	if(!start || !end)
+	if(!start || !end){
+		status.setError("Could not send message, area invalid.");
 		return;
+	}
 
 	let start_pos = view.screenToFixed(start);
 	let end_pos = view.screenToFixed(end);
@@ -47,7 +57,7 @@ function sendMessage(start, end){
 		messageType: 'geometry_msgs/PolygonStamped'
 	});
 
-	console.log("Points",start_pos,end_pos, point2, point3)
+	//console.log("Points",start_pos,end_pos, point2, point3)
 
 	const polygonMsg = new ROSLIB.Message({
 		header:{
@@ -64,6 +74,7 @@ function sendMessage(start, end){
 	});
 
 	publisher.publish(polygonMsg);
+	status.setOK();
 }
 
 const canvas = document.getElementById('{uniqueID}_canvas');

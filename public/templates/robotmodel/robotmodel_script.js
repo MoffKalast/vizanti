@@ -1,6 +1,8 @@
 import { view } from '/js/modules/view.js';
 import { tf } from '/js/modules/tf.js';
 import { settings } from '/js/modules/persistent.js';
+import { Status } from '/js/modules/status.js';
+
 import paths from '/assets/robot_model/paths';
 
 let models = {};
@@ -9,6 +11,11 @@ paths.map(file => {
 	models[name] = new Image();
 	models[name].src = "assets/robot_model/"+file;
 });
+
+let status = new Status(
+	document.getElementById("{uniqueID}_icon"),
+	document.getElementById("{uniqueID}_status")
+);
 
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d');
@@ -19,7 +26,7 @@ const spriteSelector = document.getElementById("{uniqueID}_sprite");
 const lengthSelector = document.getElementById("{uniqueID}_length");
 const previewImg = document.getElementById("{uniqueID}_previewimg");
 
-let frame = "base_link";
+let frame = "";
 let sprite = "4wd";
 
 if(settings.hasOwnProperty("{uniqueID}")){
@@ -30,6 +37,14 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	sprite = loaded_data.sprite;
 	spriteSelector.value = sprite;
 	previewImg.src = models[sprite].src;
+}else{
+
+	if(frame == ""){
+		frame = "base_link";
+		status.setWarn("No frame found, defaulting to base_link");
+	}
+
+	saveSettings();
 }
 
 function saveSettings(){
@@ -69,8 +84,10 @@ function drawRobot() {
 		ctx.rotate(Math.PI-yaw);
 		ctx.drawImage(modelimg, -unit/2, -(unit*ratio)/2, unit, unit*ratio);
 		ctx.restore();
+		status.setOK();
+	}else{
+		status.setError("Required transform frame not found.");
 	}
-
 }
 
 function resizeScreen(){
@@ -126,8 +143,6 @@ lengthSelector.addEventListener("input", saveSettings);
 frameSelector.addEventListener("click", setFrameList);
 icon.addEventListener("click", setFrameList);
 
-
-
 frameSelector.addEventListener("change", (event) =>{
 	frame = frameSelector.value;
 	drawRobot();
@@ -135,6 +150,5 @@ frameSelector.addEventListener("change", (event) =>{
 });
 
 resizeScreen();
-
 
 console.log("Model Widget Loaded {uniqueID}")

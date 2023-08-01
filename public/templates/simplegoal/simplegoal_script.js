@@ -2,17 +2,27 @@ import { view } from '/js/modules/view.js';
 import { tf } from '/js/modules/tf.js';
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
+import { Status } from '/js/modules/status.js';
 
 let topic = getTopic("{uniqueID}");
-let seq = 0;
+let status = new Status(
+	document.getElementById("{uniqueID}_icon"),
+	document.getElementById("{uniqueID}_status")
+);
 
-if(topic == ""){
-	topic = "/move_base_simple/goal";
-}
+let seq = 0;
 
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
+}else{
+	saveSettings();
+}
+
+if(topic == ""){
+	topic = "/move_base_simple/goal";
+	status.setWarn("No topic found, defaulting to /move_base_simple/goal");
+	saveSettings();
 }
 
 function saveSettings(){
@@ -23,8 +33,10 @@ function saveSettings(){
 }
 
 function sendMessage(pos, delta){
-	if(!pos || !delta)
+	if(!pos || !delta){
+		status.setError("Could not send message, pose invalid.");
 		return;
+	}
 
 	let yaw = Math.atan2(delta.y, -delta.x);
 	let quat = Quaternion.fromEuler(yaw, 0, 0, 'ZXY');
@@ -65,7 +77,7 @@ function sendMessage(pos, delta){
 		}
 	});	
 	publisher.publish(poseMessage);
-
+	status.setOK();
 }
 
 const canvas = document.getElementById('{uniqueID}_canvas');
@@ -197,6 +209,7 @@ async function loadTopics(){
 selectionbox.addEventListener("change", (event) => {
 	topic = selectionbox.value;
 	saveSettings();
+	status.setOK();
 });
 
 loadTopics();

@@ -1,6 +1,7 @@
 <div id="{uniqueID}_modal" class="modal_outer noselect">
 	<div class="modal_inner noselect">
 		<h3>Button</h3>
+		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
 		<hr>
 
 		<label for="{uniqueID}_name">Display Text:</label>
@@ -14,8 +15,10 @@
 		</select>
 		<hr>
 
-		<p>Publish an toggle message to a std_msgs/Bool topic and observe the value changes. Or publish onto an std_msgs/Empty topic. For more complex value changes I'd suggest using dynamic reconfigure.</p>
+		<p>Multifunctional button for displaying and toggling the state from a std_msgs/Bool topic and publishing to a std_msgs/Empty topic, depending on which topic type is selected.</p>
 
+		<p style="color:#b4b4b4;">Click the icon once to toggle the bool value or call the empty service. Long press the icon to open this menu.</p>
+		
 		<hr>
 
 		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>

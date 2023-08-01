@@ -2,9 +2,15 @@ import { view } from '/js/modules/view.js';
 import { tf } from '/js/modules/tf.js';
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
+import { Status } from '/js/modules/status.js';
 
 let topic = getTopic("{uniqueID}");
-let fixed_frame = "map"
+let status = new Status(
+	document.getElementById("{uniqueID}_icon"),
+	document.getElementById("{uniqueID}_status")
+);
+
+let fixed_frame = "";
 let seq = 0;
 let active = false;
 let points = [];
@@ -55,6 +61,14 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	fixed_frame = loaded_data.fixed_frame;
 
 	startCheckbox.checked = loaded_data.start_closest;
+}else{
+	saveSettings();
+}
+
+if(topic == ""){
+	topic = "/move_base_simple/waypoints";
+	status.setWarn("No topic found, defaulting to /move_base_simple/waypoints");
+	saveSettings();
 }
 
 function saveSettings(){
@@ -153,6 +167,7 @@ function sendMessage(pointlist){
 	});
 	publisher.publish(pathMessage);
 
+	status.setOK();
 }
 
 const canvas = document.getElementById('{uniqueID}_canvas');
@@ -227,8 +242,10 @@ function drawWaypoints() {
 
 	const frame = tf.absoluteTransforms[fixed_frame];
 
-	if(!frame)
+	if(!frame){
+		status.setError("Fixed transform frame not selected or the TF data is missing.");
 		return;
+	}
 
 	const startIndex = getStartIndex();
 	const viewPoints = points.map((point) =>
@@ -287,6 +304,8 @@ function drawWaypoints() {
 	viewPoints.forEach((pos, index) => {
 		ctx.fillText(index, pos.x, pos.y+5);
 	});
+
+	status.setOK();
 }
 
 let start_point = undefined;
@@ -405,10 +424,7 @@ function endDrag(event){
 			}else{
 				points.push(screenToPoint(newpoint));
 			}
-
-			
 		}
-
 		saveSettings();
 	}
 
@@ -507,6 +523,7 @@ async function loadTopics(){
 selectionbox.addEventListener("change", (event) => {
 	topic = selectionbox.value;
 	saveSettings();
+	status.setOK();
 });
 
 fixedFrameBox.addEventListener("change", (event) => {
