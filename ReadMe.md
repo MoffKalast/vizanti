@@ -20,10 +20,9 @@ git clone https://github.com/b1n-ch1kn/vizanti_interfaces
 
 cd ..
 rosdep install -i --from-path src --rosdistro humble -y
-colcon build --symlink-install
+colcon build #--symlink-install
 ```
-
-Or if rosdep fails for some reason, these are the main two deps:
+Symlink install is optional, it's very convenient if you intend to edit anything but may cause issues with other repos in the workspace. If rosdep fails for some reason, these are the main two deps:
 ```
 sudo apt install ros-humble-rosbridge-suite python3-flask
 ```
@@ -147,9 +146,13 @@ Render a Path message for navigation debugging.
 
 Render a Range message on the main view. Supports grouping multiple messages onto the same topic, as long as the tf frames are different. 
 
-#### <img src="wiki_assets/scan.png" alt="" title="LaserScan" width="30" height="30"/> LaserScan
+#### <img src="wiki_assets/scan.png" alt="" title="LaserScan" width="30" height="30"/> Laser Scan
 
 Display a LaserScan message on the main view. Heavily throttled by default.
+
+#### <img src="wiki_assets/pointcloud.png" alt="" title="LaserScan" width="30" height="30"/> Point Cloud
+
+Display a PointCloud2 message on the main view. Heavily throttled by default.
 
 #### <img src="wiki_assets/posewithcovariancestamped.png" alt="" title="PoseWithCovarianceStamped" width="30" height="30"/> Pose with Covariance (Stamped)
 

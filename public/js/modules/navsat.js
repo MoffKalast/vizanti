@@ -1,5 +1,5 @@
 import { IndexedDatabase } from './database.js';
-import { toDataURL } from '/js/modules/util.js';
+import { imageToDataURL } from '/js/modules/util.js';
 
 const db = new IndexedDatabase('tile_data');
 await db.openDB();
@@ -73,7 +73,7 @@ export class Navsat {
 	async fetchURL(url){
 		console.log("Fetching tile data:",url);
 
-		const data = await toDataURL(url);
+		const data = await imageToDataURL(url);
 		if (!data) {
 			return undefined;
 		}

@@ -210,6 +210,38 @@ The util class provides utility functions, the only one right now being imageToD
 ```javascript
 const persistent_image = await imageToDataURL("assets/image.svg");
 ```   
+-----
+### Status
+
+```javascript
+import { Status } from '/js/modules/status.js';
+```   
+A helper class that emulates the status indicator from rviz for each widget.
+
+First, add this element to the widget's modal, the current convention is directly below the title text.
+```html
+<p id="{uniqueID}_status" class="status">Status: Ok.</p>
+
+```
+
+Then instantiate the class and pass it the icon and status elements:
+
+```javascript
+//by default the status is "Ok" as defined in the html
+let status = new Status(
+	document.getElementById("{uniqueID}_icon"),
+	document.getElementById("{uniqueID}_status")
+);
+
+//show an errpr
+status.setError("Empty topic.");
+
+//show a warning
+status.setWarn("No data received.");
+
+//everything should be working fine
+status.setOK();
+```   
 
 -----
 ### Joysticks

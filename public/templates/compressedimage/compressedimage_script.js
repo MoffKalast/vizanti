@@ -1,11 +1,19 @@
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
 import { imageToDataURL } from '/js/modules/util.js';
+import { Status } from '/js/modules/status.js';
 
-let img_offset_x = "0%";
-let img_offset_y = "75px";
+let img_offset_x = "-999";
+let img_offset_y = "-999";
+
+const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
+const vwToVh = vw => (vw * window.innerWidth) / window.innerHeight;
 
 let topic = getTopic("{uniqueID}");
+let status = new Status(
+	document.getElementById("{uniqueID}_icon"),
+	document.getElementById("{uniqueID}_status")
+);
 
 //persistent loading, so we don't re-fetch on every update
 let stock_images = {};
@@ -63,14 +71,13 @@ if(settings.hasOwnProperty("{uniqueID}")){
 
 	widthSlider.value = loaded_data.width;
 	widthValue.innerText = loaded_data.width;
-	canvas.style.width = loaded_data.width+"%";
-
-	canvas.style.left = `calc(${img_offset_x})`;
-	canvas.style.top = `calc(${img_offset_y})`;
-
 	rotationbox.value = loaded_data.rotation;
-	canvas.style.transform = `translate(-50%, -50%) rotate(${loaded_data.rotation}deg)`;
 
+	canvas.style.transform = `translate(-50%, -50%) rotate(${loaded_data.rotation}deg)`;
+	displayImageOffset(img_offset_x, img_offset_y);
+}else{
+	displayImageOffset(0, 100);
+	saveSettings();
 }
 
 function saveSettings(){
@@ -86,9 +93,8 @@ function saveSettings(){
 	settings.save();
 
 	canvas.style.opacity = opacitySlider.value;
-	canvas.style.width = widthSlider.value+"%";
-
 	canvas.style.transform = `translate(-50%, -50%) rotate(${rotationbox.value}deg)`;
+	displayImageOffset(img_offset_x, img_offset_y);
 }
 
 //Topic
@@ -105,13 +111,18 @@ async function getImage(src) {
 function connect(){
 
 	canvas.src = stock_images["loading"];
+	displayImageOffset(img_offset_x, img_offset_y);
 
-	if(topic == "")
+	if(topic == ""){
+		status.setError("Empty topic.");
 		return;
+	}
 
 	if(image_topic !== undefined){
 		image_topic.unsubscribe(listener);
 	}
+
+	status.setWarn("No data received.");
 
 	image_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
@@ -120,15 +131,22 @@ function connect(){
 		throttle_rate: parseInt(throttle.value)
 	});
 	
+	let received = false;
 	listener = image_topic.subscribe(async (msg) => {  
 		const src = 'data:image/jpeg;base64,' + msg.data
 
 		getImage(src)
 			.then(() => {
 				canvas.src = src;
+				if(!received){
+					displayImageOffset(img_offset_x, img_offset_y);
+					status.setOK();
+				}
 			})
-			.catch(() => {
+			.catch((e) => {
 				canvas.src = stock_images["error"];
+				displayImageOffset(img_offset_x, img_offset_y);
+				status.setError(e.message);
 			});
 	});
 
@@ -166,8 +184,6 @@ selectionbox.addEventListener("click", connect);
 
 icon.addEventListener("click", ()=> {
 	loadTopics();
-	imgpreview.style.left = `calc(${img_offset_x} - 50px)`;
-	imgpreview.style.top = `calc(${img_offset_y} - 50px)`;	
 });
 
 loadTopics();
@@ -183,6 +199,27 @@ function onStart(event) {
 	document.addEventListener('touchend', onEnd);
 }
 
+function displayImageOffset(x, y){
+	let img_width = widthSlider.value;
+	let img_height = (vwToVh(img_width) * canvas.naturalHeight)/canvas.naturalWidth;
+
+	canvas.style.width = img_width+"vw";
+	canvas.style.height = img_height+"vh";
+
+	let offset_x = clamp(x, img_width/2, 100 - img_width/2);
+	let offset_y = clamp(y, img_height/2, 100 - img_height/2);
+
+	imgpreview.style.left = offset_x+"vw";
+	imgpreview.style.top = offset_y+"vh";
+
+	canvas.style.left = offset_x+"vw";
+	canvas.style.top = offset_y+"vh";
+}
+
+window.addEventListener('resize', ()=>{
+	displayImageOffset(img_offset_x, img_offset_y);
+});
+
 function onMove(event) {
 	if (preview_active) {
 		event.preventDefault();
@@ -195,16 +232,14 @@ function onMove(event) {
 			currentX = event.clientX;
 			currentY = event.clientY;
 		}
+	
+		let img_width = widthSlider.value/2;
+		let img_height = (vwToVh(img_width) * canvas.naturalHeight)/canvas.naturalWidth;
+	
+		img_offset_x = clamp(currentX/window.innerWidth * 100, img_width, 100 - img_width);
+		img_offset_y = clamp(currentY/window.innerHeight * 100, img_height, 100 - img_height);
 
-		img_offset_x = (currentX/window.innerWidth * 100) +"%";
-		img_offset_y = (currentY/window.innerHeight * 100) +"%";
 		saveSettings();
-
-		imgpreview.style.left = `calc(${img_offset_x} - 50px)`;
-		imgpreview.style.top = `calc(${img_offset_y} - 50px)`;
-
-		canvas.style.left = `calc(${img_offset_x})`;
-		canvas.style.top = `calc(${img_offset_y})`;
 	}
 }
 
@@ -219,6 +254,7 @@ function onEnd() {
 imgpreview.addEventListener('mousedown', onStart);
 imgpreview.addEventListener('touchstart', onStart);
 
+displayImageOffset(img_offset_x, img_offset_y);
 
 console.log("Image Widget Loaded {uniqueID}")
 

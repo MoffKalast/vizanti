@@ -1,6 +1,6 @@
 <div id="{uniqueID}_modal" class="modal_outer noselect">
 	<div class="modal_inner noselect">
-		<h3>Laser Scan</h3>
+		<h3>Point Cloud</h3>
 		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
 		<hr>
 
@@ -24,7 +24,7 @@
 		<br>
 
 		<label for="{uniqueID}_colorpicker">Colour:</label>
-		<input type="color" value="#ff1100" id="{uniqueID}_colorpicker">
+		<input type="color" value="#00aeff" id="{uniqueID}_colorpicker">
 
 		<br>
 
@@ -33,7 +33,9 @@
 
 		<br>
 
-		<p>Laser scans are typically high bandwidth topics, and as such can easily cause TCP congestion. Lower the socket throttle rate to get faster data updates, but note that other visualizers may stutter.</p>
+		<p>Point clouds are very high bandwidth topics, and as such can easily cause TCP congestion. Lower the socket throttle rate to get faster data updates, but note that other visualizers may stutter.</p>
+
+		<p style="color:#b4b4b4;">Currently experimental and might not decode all cloud formats correctly. XYZ coordinate data is required, the rest is ignored for now.</p>
 
 
 		<hr>

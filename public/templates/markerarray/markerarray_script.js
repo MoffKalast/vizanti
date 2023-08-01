@@ -2,8 +2,14 @@ import { view } from '/js/modules/view.js';
 import { tf } from '/js/modules/tf.js';
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
+import { Status } from '/js/modules/status.js';
 
 let topic = getTopic("{uniqueID}");
+let status = new Status(
+	document.getElementById("{uniqueID}_icon"),
+	document.getElementById("{uniqueID}_status")
+);
+
 let listener = undefined;
 let marker_topic = undefined;
 
@@ -19,7 +25,10 @@ const ctx = canvas.getContext('2d');
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
+}else{
+	saveSettings();
 }
+
 
 function saveSettings(){
 	settings["{uniqueID}"] = {
@@ -58,6 +67,9 @@ bool mesh_use_embedded_materials */
 
 function rgbaToFillColor(rosColorRGBA) {
 
+	if(rosColorRGBA === undefined)
+		return `white`;
+
 	// Clamp the RGBA values between 0 and 1
 	const r = Math.min(Math.max(rosColorRGBA.r, 0), 1);
 	const g = Math.min(Math.max(rosColorRGBA.g, 0), 1);
@@ -71,24 +83,6 @@ function rgbaToFillColor(rosColorRGBA) {
   
 	// Return the RGBA color string for HTML canvas context
 	return `rgba(${r255}, ${g255}, ${b255}, ${a})`;
-}
-
-function rgbaToStrokeColor(rosColorRGBA) {
-
-	// Clamp the RGBA values between 0 and 1
-	const r = Math.min(Math.max(rosColorRGBA.r, 0), 1);
-	const g = Math.min(Math.max(rosColorRGBA.g, 0), 1);
-	const b = Math.min(Math.max(rosColorRGBA.b, 0), 1);
-  
-	// Convert the RGBA values from the range [0, 1] to the range [0, 255]
-	const r255 = Math.round(r * 255);
-	const g255 = Math.round(g * 255);
-	const b255 = Math.round(b * 255);
-
-	console.log(rosColorRGBA)
-  
-	// Return the RGBA color string for HTML canvas context
-	return `rgb(${r255}, ${g255}, ${b255})`;
 }
 
 function drawMarkers(){
@@ -199,13 +193,13 @@ function drawMarkers(){
 			case 2: 
 			case 3: drawCircle(marker, unit); break; //SPHERE=2 CYLINDER=3
 			case 4: drawLine(marker, unit); break; //LINE_STRIP=4
-			case 5: break; //LINE_LIST=5
-			case 6: break; //CUBE_LIST=6
-			case 7: break; //SPHERE_LIST=7
-			case 8: break; //POINTS=8
+			case 5: status.setWarn("LINE_LIST markers are not supported yet."); break; //LINE_LIST=5
+			case 6: status.setWarn("CUBE_LIST markers are not supported yet."); break; //CUBE_LIST=6
+			case 7: status.setWarn("SPHERE_LIST markers are not supported yet."); break; //SPHERE_LIST=7
+			case 8: status.setWarn("POINTS markers are not supported yet."); break; //POINTS=8
 			case 9: drawText(marker, unit); //TEXT_VIEW_FACING=9
-			case 10: break; //MESH_RESOURCE=10
-			case 11: break; //TRIANGLE_LIST=11
+			case 10: status.setWarn("MESH_RESOURCE markers are not supported yet."); break; //MESH_RESOURCE=10
+			case 11: status.setWarn("TRIANGLE_LIST markers are not supported yet."); break; //TRIANGLE_LIST=11
 		}
 		ctx.restore();
 	}
@@ -214,8 +208,10 @@ function drawMarkers(){
 //Topic
 function connect(){
 
-	if(topic == "")
+	if(topic == ""){
+		status.setError("Empty topic.");
 		return;
+	}
 
 	if(marker_topic !== undefined){
 		marker_topic.unsubscribe(listener);
@@ -226,6 +222,8 @@ function connect(){
 		name : topic,
 		messageType : 'visualization_msgs/msg/MarkerArray'
 	});
+
+	status.setWarn("No data received.");
 	
 	listener = marker_topic.subscribe((msg) => {
 		msg.markers.forEach(m => {
@@ -247,6 +245,7 @@ function connect(){
 		
 			markers[id] = m;
 		});
+		status.setOK();
 		drawMarkers();
 	});
 

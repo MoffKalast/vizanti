@@ -25,6 +25,10 @@ h1, h2, h3, b, p {
 	scrollbar-width: thin;
 }
 
+h3 {
+	margin-bottom: 5px;
+}
+
 /* Icon bar */
 
 .icon-text {
@@ -55,10 +59,37 @@ h1, h2, h3, b, p {
 	transition: linear  0.2s;
 }
 
+.icon-warn {
+	background-color: rgba(185, 167, 0, 0.37); 
+}
+
+.icon-error {
+	background-color: rgba(175, 0, 0, 0.397);
+}
+
 .icon:hover {
 	background-color: rgba(185, 185, 185, 0.3);
 	transform: scale(1.05);
 }
+
+.status {
+	padding: 0;
+	margin: 0;
+	color: lime; 
+	font-size: 10px;
+}
+
+.status-warn {
+	color: rgb(255, 205, 42); 
+	font-weight: bold;
+}
+
+
+.status-error {
+	color: rgb(255, 60, 60);  
+	font-weight: bold;
+}
+
 
 #icon_container {
 	display: grid;
@@ -372,9 +403,9 @@ canvas {
 	z-index: 0;
 }
 
-.compessedimage {
+.compressedimage {
 	width: 25%;
-	height: auto;
+	height: 25%;
 
 	position: absolute;
 	top: 0;
@@ -382,6 +413,13 @@ canvas {
 	border: 3px solid #424242;
 
 	transition: transform 0.2s;  
+}
+
+.compressedimage_preview {
+	position: fixed;
+	bottom: 15vh; 
+	left: 50vw; 
+	transform: translate(-50px, -50px);
 }
 
 /* Buttons */

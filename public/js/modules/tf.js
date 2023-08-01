@@ -66,7 +66,7 @@ export function applyRotation(vector, r, inverse){
 
 export class TF {
 	constructor() {
-		this.fixed_frame = 'odom';
+		this.fixed_frame = '';
 
 		this.tf_tree = {};
 		this.transforms = {};

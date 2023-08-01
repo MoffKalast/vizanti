@@ -3,13 +3,20 @@ import subprocess
 import threading
 import logging
 import json
+import rclpy
 
 from flask import Flask, render_template, send_from_directory, make_response
 from werkzeug.serving import make_server, WSGIRequestHandler
-import rclpy
-from std_msgs.msg import String
 
-app = Flask(__name__, static_folder='../public', template_folder='../public')
+from std_msgs.msg import String
+from ament_index_python.packages import get_package_share_directory
+
+def get_public_dir():
+	if os.path.isdir("../public"):
+		return "../public" #for --symlink-install
+	return get_package_share_directory('vizanti')+ '/public/'
+
+app = Flask(__name__, static_folder=get_public_dir(), template_folder=get_public_dir())
 
 def get_files(path, valid_extensions):
 	templates_dir = os.path.join(app.static_folder, path)
@@ -104,6 +111,7 @@ def main(args=None):
     server.start()
 
     node.get_logger().info(f"Flask server running at http://{param_host}:{param_port}")
+    node.get_logger().info(f"Public directory set as {get_public_dir()}")
 
     rclpy.spin(node)
 

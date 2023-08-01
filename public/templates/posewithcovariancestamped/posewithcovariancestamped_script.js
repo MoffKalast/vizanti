@@ -2,8 +2,14 @@ import { view } from '/js/modules/view.js';
 import { tf } from '/js/modules/tf.js';
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
+import { Status } from '/js/modules/status.js';
 
 let topic = getTopic("{uniqueID}");
+let status = new Status(
+	document.getElementById("{uniqueID}_icon"),
+	document.getElementById("{uniqueID}_status")
+);
+
 let listener = undefined;
 let marker_topic = undefined;
 
@@ -32,6 +38,8 @@ if(settings.hasOwnProperty("{uniqueID}")){
 
 	scaleSlider.value = loaded_data.scale;
 	scaleSliderValue.textContent = scaleSlider.value;
+}else{
+	saveSettings();
 }
 
 function saveSettings(){
@@ -40,41 +48,6 @@ function saveSettings(){
 		scale: parseFloat(scaleSlider.value)
 	}
 	settings.save();
-}
-//Rendering
-function rgbaToFillColor(rosColorRGBA) {
-
-	// Clamp the RGBA values between 0 and 1
-	const r = Math.min(Math.max(rosColorRGBA.r, 0), 1);
-	const g = Math.min(Math.max(rosColorRGBA.g, 0), 1);
-	const b = Math.min(Math.max(rosColorRGBA.b, 0), 1);
-	const a = Math.min(Math.max(rosColorRGBA.a, 0), 1);
-  
-	// Convert the RGBA values from the range [0, 1] to the range [0, 255]
-	const r255 = Math.round(r * 255);
-	const g255 = Math.round(g * 255);
-	const b255 = Math.round(b * 255);
-  
-	// Return the RGBA color string for HTML canvas context
-	return `rgba(${r255}, ${g255}, ${b255}, ${a})`;
-}
-
-function rgbaToStrokeColor(rosColorRGBA) {
-
-	// Clamp the RGBA values between 0 and 1
-	const r = Math.min(Math.max(rosColorRGBA.r, 0), 1);
-	const g = Math.min(Math.max(rosColorRGBA.g, 0), 1);
-	const b = Math.min(Math.max(rosColorRGBA.b, 0), 1);
-  
-	// Convert the RGBA values from the range [0, 1] to the range [0, 255]
-	const r255 = Math.round(r * 255);
-	const g255 = Math.round(g * 255);
-	const b255 = Math.round(b * 255);
-
-	console.log(rosColorRGBA)
-  
-	// Return the RGBA color string for HTML canvas context
-	return `rgb(${r255}, ${g255}, ${b255})`;
 }
 
 function drawMarkers(){
@@ -163,8 +136,10 @@ function drawMarkers(){
 //Topic
 function connect(){
 
-	if(topic == "")
+	if(topic == ""){
+		status.setError("Empty topic.");
 		return;
+	}
 
 	if(marker_topic !== undefined){
 		marker_topic.unsubscribe(listener);
@@ -175,11 +150,15 @@ function connect(){
 		name : topic,
 		messageType : 'geometry_msgs/msg/PoseWithCovarianceStamped'
 	});
+
+	status.setWarn("No data received.");
 	
 	listener = marker_topic.subscribe((msg) => {
 		
-		if(!tf.absoluteTransforms[msg.header.frame_id])
+		if(!tf.absoluteTransforms[msg.header.frame_id]){
+			status.setError("Required transform frame not found.");
 			return;
+		}
 
 		frame = tf.fixed_frame;
 
@@ -187,6 +166,7 @@ function connect(){
 		const rotation_invalid = q.x == 0 && q.y == 0 && q.z == 0 && q.w == 0
 
 		if(rotation_invalid){
+			status.setWarn("Received invalid rotation, defaulting to indentity quat.");
 			q = new Quaternion();
 		}
 
@@ -208,6 +188,7 @@ function connect(){
 		};
 	
 		drawMarkers();
+		status.setOK();
 	});
 
 	saveSettings();
