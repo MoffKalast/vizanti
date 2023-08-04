@@ -2,6 +2,7 @@ import { view } from '/js/modules/view.js';
 import { tf } from '/js/modules/tf.js';
 import { rosbridge } from '/js/modules/rosbridge.js';
 import { settings } from '/js/modules/persistent.js';
+import { imageToDataURL } from '/js/modules/util.js';
 import { Status } from '/js/modules/status.js';
 
 async function saveMap(save_path, topic) {
@@ -51,6 +52,10 @@ let status = new Status(
 	document.getElementById("{uniqueID}_icon"),
 	document.getElementById("{uniqueID}_status")
 );
+
+let icons = {};
+icons["map"] = await imageToDataURL("assets/map.svg");
+icons["costmap"] = await imageToDataURL("assets/costmap.svg");
 
 let listener = undefined;
 let map_topic = undefined;
@@ -126,6 +131,13 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	opacityValue.innerText = loaded_data.opacity;
 
 	costmapCheckbox.checked =  loaded_data.costmap_mode ?? false;
+
+	if(costmapCheckbox.checked){
+		icon.src = icons["costmap"];
+	}else{
+		icon.src = icons["map"];
+	}
+
 }else{
 	saveSettings();
 }
@@ -319,6 +331,11 @@ async function loadTopics(){
 
 costmapCheckbox.addEventListener("change", (event) => {
 	status.setWarn("Display mode changed, waiting for map data...");
+	if(costmapCheckbox.checked){
+		icon.src = icons["costmap"];
+	}else{
+		icon.src = icons["map"];
+	}
 });
 
 selectionbox.addEventListener("change", (event) => {
