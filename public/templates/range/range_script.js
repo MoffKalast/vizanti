@@ -76,10 +76,12 @@ function drawRanges() {
 	ctx.clearRect(0, 0, wid, hei);
 	ctx.globalAlpha = opacitySlider.value;
 
+	let current_time = new Date();
+
 	for (const [key, sample] of Object.entries(data)) {
 
 		//skip old messages
-		if(new Date() - sample.stamp > decay.value)
+		if(current_time - sample.stamp > decay.value)
 			continue;
 
 		let pos = view.fixedToScreen({

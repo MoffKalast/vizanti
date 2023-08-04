@@ -159,12 +159,18 @@ function drawMarkers(){
 
 	ctx.clearRect(0, 0, wid, hei);
 
+	let current_time = new Date();
+
 	for (const [key, marker] of Object.entries(markers)) {
 		ctx.fillStyle = rgbaToFillColor(marker.color);
 
 		const frame = tf.absoluteTransforms[marker.header.frame_id];
 
 		if(!frame)
+			continue;
+
+		//skip old markers
+		if((current_time - marker.stamp)/1000.0 > marker.lifetime.sec + marker.lifetime.nanosec*1e-9)
 			continue;
 
 		let transformed = tf.transformPose(
@@ -244,7 +250,8 @@ function connect(){
 			const q = m.pose.orientation;
 			if(q.x == 0 && q.y == 0 && q.z == 0 && q.w == 0)
 				m.pose.orientation = new Quaternion();
-		
+
+			m.stamp = new Date();		
 			markers[id] = m;
 		});
 		status.setOK();
