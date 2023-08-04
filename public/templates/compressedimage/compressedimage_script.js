@@ -200,6 +200,10 @@ function onStart(event) {
 }
 
 function displayImageOffset(x, y){
+
+	if(canvas.naturalWidth == 0)
+		return;
+
 	let img_width = widthSlider.value;
 	let img_height = (vwToVh(img_width) * canvas.naturalHeight)/canvas.naturalWidth;
 

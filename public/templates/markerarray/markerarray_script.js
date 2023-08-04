@@ -96,7 +96,7 @@ function drawMarkers(){
 
 	function drawCube(marker, size){
 		ctx.scale(marker.scale.x, marker.scale.y);
-		ctx.fillRect(-size/4, -size/4, size/2, size/2);
+		ctx.fillRect(-size/2, -size/2, size, size);
 	}
 
 	function drawArrow(marker, size){
@@ -136,18 +136,20 @@ function drawMarkers(){
 	}
 
 	function drawText(marker, size){
-
 		ctx.scale(0.1, -0.1);
 
-		ctx.font = (1.2*size)+"px Monospace";
+		ctx.font = (marker.scale.z*10.0*size)+"px Monospace";
 		ctx.textAlign = "center";
-		ctx.fillStyle = "white";
+		ctx.fillStyle = rgbaToFillColor(marker.color);
 	
 		ctx.strokeStyle = "#161B21";
 		ctx.lineWidth = 0.3*size;
 
+		ctx.save();
+		ctx.translate(0, marker.scale.z*size*2.0);
 		ctx.strokeText(marker.text, 0, 0);
-		ctx.fillText(marker.text, 0, 0);	
+		ctx.fillText(marker.text, 0, 0);
+		ctx.restore();
 	}
 
 	const unit = view.getMapUnitsInPixels(1.0);
@@ -197,7 +199,7 @@ function drawMarkers(){
 			case 6: status.setWarn("CUBE_LIST markers are not supported yet."); break; //CUBE_LIST=6
 			case 7: status.setWarn("SPHERE_LIST markers are not supported yet."); break; //SPHERE_LIST=7
 			case 8: status.setWarn("POINTS markers are not supported yet."); break; //POINTS=8
-			case 9: drawText(marker, unit); //TEXT_VIEW_FACING=9
+			case 9: drawText(marker, unit); break;//TEXT_VIEW_FACING=9
 			case 10: status.setWarn("MESH_RESOURCE markers are not supported yet."); break; //MESH_RESOURCE=10
 			case 11: status.setWarn("TRIANGLE_LIST markers are not supported yet."); break; //TRIANGLE_LIST=11
 		}

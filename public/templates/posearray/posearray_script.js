@@ -25,6 +25,12 @@ scaleSlider.addEventListener('input', function () {
 
 scaleSlider.addEventListener('change', saveSettings);
 
+const colourpicker = document.getElementById("{uniqueID}_colorpicker");
+colourpicker.addEventListener("input", (event) =>{
+	saveSettings();
+});
+
+
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
 
@@ -36,6 +42,8 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
 
+	colourpicker.value = loaded_data.color ?? "#8B0000";
+
 	scaleSlider.value = loaded_data.scale;
 	scaleSliderValue.textContent = scaleSlider.value;
 }else{
@@ -45,7 +53,8 @@ if(settings.hasOwnProperty("{uniqueID}")){
 function saveSettings(){
 	settings["{uniqueID}"] = {
 		topic: topic,
-		scale: parseFloat(scaleSlider.value)
+		scale: parseFloat(scaleSlider.value),
+		color: colourpicker.value		
 	}
 	settings.save();
 }
@@ -80,7 +89,7 @@ function drawArrows(){
 	const scale = unit*parseFloat(scaleSlider.value);
 
 	ctx.clearRect(0, 0, wid, hei);
-	ctx.fillStyle = "darkred";
+	ctx.fillStyle = colourpicker.value;
 
 	if(frame === tf.fixed_frame){
 		poses.forEach((p) => {

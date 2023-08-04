@@ -65,8 +65,8 @@ if(settings.hasOwnProperty("{uniqueID}")){
 }
 
 if(topic == ""){
-	topic = "/move_base_simple/waypoints";
-	status.setWarn("No topic found, defaulting to /move_base_simple/waypoints");
+	topic = "/waypoints";
+	status.setWarn("No topic found, defaulting to /waypoints");
 	saveSettings();
 }
 

@@ -24,6 +24,10 @@ export class Settings {
 				{type:"tf", id:"tf_default"}
 			];
 			this.view = {
+				center: {
+					x: 0,
+					y: 0
+				},
 				scale: 50.0
 			};
 		}
