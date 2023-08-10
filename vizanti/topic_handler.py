@@ -54,6 +54,3 @@ def main(args=None):
     odr.destroy_node()
     rclpy.shutdown()
     spinner.join()
-
-if __name__ == '__main__':
-    main()

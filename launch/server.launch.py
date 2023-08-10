@@ -22,7 +22,8 @@ def generate_launch_description():
             {'fragment_timeout': fragment_timeout},
             {'delay_between_messages': delay_between_messages},
             {'max_message_size': max_message_size},
-            {'unregister_timeout': unregister_timeout}
+            {'unregister_timeout': unregister_timeout},
+            {'use_compression': True}
         ]
     )
 

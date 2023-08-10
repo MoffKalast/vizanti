@@ -1,21 +1,5 @@
 import { rosbridge } from '/js/modules/rosbridge.js';
 
-async function getDynamicReconfigureNodes() {
-	const getNodesService = new ROSLIB.Service({
-		ros: rosbridge.ros,
-		name: "/vizanti/get_dynamic_reconfigure_nodes",
-		serviceType: "std_srvs/Trigger",
-	});
-
-	return new Promise((resolve, reject) => {
-		getNodesService.callService(new ROSLIB.ServiceRequest(), (result) => {
-			resolve(result.message.split("\n"));
-		}, (error) => {
-			reject(error);
-		});
-	});
-}
-
 async function getNodeParameters(node) {
 	const getNodeParametersService = new ROSLIB.Service({
 		ros: rosbridge.ros,
@@ -26,48 +10,27 @@ async function getNodeParameters(node) {
 	return new Promise((resolve, reject) => {
 		const request = new ROSLIB.ServiceRequest({ node });
 		getNodeParametersService.callService(request, (result) => {
-			let parsedParams = JSON.parse(convertAlmostJsonToValidJson(result.parameters));
-			delete parsedParams.groups;
-			resolve(parsedParams);
+			resolve(JSON.parse(result.parameters));
 		}, (error) => {
 			reject(error);
 		});
 	});
+
 }
 
-const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
-const nodeSelector = document.getElementById("{uniqueID}_node");
-const loaderSpinner = document.getElementById("{uniqueID}_loader");
-const paramBox = document.getElementById("{uniqueID}_params");
-const refreshButton = document.getElementById("{uniqueID}_refresh");
-
-async function setNodeParamValue(fullname, type, newValue) {
+async function setNodeParameter(node, param, newValue) {
 	const setParamClient = new ROSLIB.Service({
 		ros: rosbridge.ros,
-		name: nodeName + '/set_parameters',
-		serviceType: 'dynamic_reconfigure/Reconfigure',
+		name: '/vizanti/set_node_parameter',
+		serviceType: 'vizanti_interfaces/SetNodeParameter',
 	});
 
-	let paramName = fullname.replace(nodeName+"/","");
-
-	let valueConfig = {
-		bools: [],
-		ints: [],
-		strs: [],
-		doubles: [],
-		groups: [],
-	};
-
-	switch (type) {
-		case "string": valueConfig.strs.push({ name: paramName, value: newValue }); break;
-		case "int": valueConfig.ints.push({ name: paramName, value: newValue }); break;
-		case "float": valueConfig.doubles.push({ name: paramName, value: newValue }); break;
-		case "bool": valueConfig.bools.push({ name: paramName, value: newValue }); break;
-		default: return Promise.reject(`Invalid parameter value type: ${valueType}`);
-	}
-
 	return new Promise((resolve, reject) => {
-		const request = new ROSLIB.ServiceRequest({ config: valueConfig });
+		const request = new ROSLIB.ServiceRequest({
+			 node: nodeName,
+			 parameter: param,
+			 value: newValue
+		});
 		setParamClient.callService(request, (response) => {
 			console.log(`Parameter ${paramName} set to:`, newValue);
 			resolve(response);
@@ -78,7 +41,8 @@ async function setNodeParamValue(fullname, type, newValue) {
 	});
 }
 
-function createParameterInput(fullname, defaultValue, type) {
+
+function createParameterInput(fullname, defaultValue, type, element) {
 	const name = fullname.replace(nodeName+"/","").replaceAll("_","_<wbr>");
 	const id = "${uniqueID}_"+fullname;
 	const arrowId = `${id}_arrow`;
@@ -88,25 +52,25 @@ function createParameterInput(fullname, defaultValue, type) {
 		case "string":
 			inputElement = `
 				<label for="${id}"><i>string </i> ${name}:</label>
-				<input id="${id}" type="text" value="${defaultValue}"><span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span>
+				<span><input id="${id}" type="text" value="${defaultValue}"><span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span></span>
 				<br>`;
 			break;
 		case "int":
 			inputElement = `
 				<label for="${id}"><i>int </i> ${name}:</label>
-				<input type="number" value="${defaultValue}" step="1" id="${id}"><span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span>
+				<span><input type="number" value="${defaultValue}" step="1" id="${id}"><span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span></span>
 				<br>`;
 			break;
 		case "float":
 			inputElement = `
 				<label for="${id}"><i>float </i>${name}:</label>
-				<input type="number" value="${defaultValue}" step="0.001" id="${id}"><span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span>
+				<span><input type="number" value="${defaultValue}" step="0.001" id="${id}"><span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span></span>
 				<br>`;
 			break;
 		case "bool":
 			inputElement = `
 				<label for="${id}"><i>bool </i>${name}:</label>
-				<input type="checkbox" id="${id}" ${defaultValue ? "checked" : ""}><span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span>
+				<span><input type="checkbox" id="${id}" ${defaultValue ? "checked" : ""}><span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span></span>
 				<br>`;
 			break;
 		default:
@@ -114,7 +78,7 @@ function createParameterInput(fullname, defaultValue, type) {
 			return;
 	}
 
-	paramBox.insertAdjacentHTML("beforeend", inputElement);
+	element.insertAdjacentHTML("beforeend", inputElement);
 
 	document.getElementById(id).addEventListener("change", (event) => {
 		let val;
@@ -125,7 +89,7 @@ function createParameterInput(fullname, defaultValue, type) {
 			case "float": val = parseFloat(event.target.value); break;
 			case "bool": val = event.target.checked; break;
 		}
-		setNodeParamValue(fullname, type, val);
+		setNodeParameter(nodeName, fullname, val);
 
 		const arrowElement = document.getElementById(arrowId);
 		arrowElement.style.visibility = "visible";
@@ -139,8 +103,6 @@ function createParameterInput(fullname, defaultValue, type) {
 		}, {once: true});
 	});
 }
-
-
 
 function detectValueType(value) {
 	if (typeof value == "boolean") {
@@ -159,58 +121,62 @@ function detectValueType(value) {
 	return "float";
 }
 
-function convertAlmostJsonToValidJson(almostJson) {
-	const validJson = almostJson.replace(/'/g, '"');
-	return validJson.replace(/(True|False)/g, (match) => {
-		return match.toLowerCase();
-	});
-}
+const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
+const nodeSelector = document.getElementById("{uniqueID}_node");
+const loaderSpinner = document.getElementById("{uniqueID}_loader");
+const paramBox = document.getElementById("{uniqueID}_params");
+const refreshButton = document.getElementById("{uniqueID}_refresh");
 
 let nodeName = "";
-let cached_params = undefined;
+let cached_params = {};
+
+function addParams(map, element){
+	for (const [key,value] of Object.entries(map)) {
+		if (typeof value == "object") {
+			const detailsElement = document.createElement('details');
+			detailsElement.innerHTML = "<summary>"+key+"</summary>";
+			element.appendChild(detailsElement);
+			addParams(value, detailsElement);
+		}else{
+			createParameterInput(key,value,detectValueType(value), element);
+		}
+	}
+}
 
 async function listParameters(){
-	if(nodeName == "" || !cached_params[nodeName]){
+	if(nodeName == ""){
 		return;
 	}
 	loaderSpinner.style.display = "block";
-
 	paramBox.innerHTML = "";
-	for (const [key,value] of Object.entries(cached_params[nodeName])) {
-		createParameterInput(key,value,detectValueType(value));
-	}
-	loaderSpinner.style.display = "none";
-}
 
-async function getAll(results){
-	loaderSpinner.style.display = "block";
-	cached_params = {};
-	for (const node of results) {
-		cached_params[node] = await getNodeParameters(node);
-		if(node == nodeName){
-			listParameters();
-		}
+	if(cached_params[nodeName]){
+		addParams(cached_params[nodeName], paramBox);
 	}
+	
+	const data = await getNodeParameters(nodeName);
+	paramBox.innerHTML = "";
+	addParams(data.ros__parameters, paramBox);
+	cached_params[nodeName] = data.ros__parameters;
+
 	loaderSpinner.style.display = "none";
 }
 
 async function setNodeList(){
-	let results = await getDynamicReconfigureNodes();
+	let results = await rosbridge.get_all_nodes();
 	let nodelist = "";
-	for (const node of results) {
-		nodelist += "<option value='"+node+"'>"+node+"</option>"
+	let nodes = [];
+	for (const node of results.nodes) {
+		if(!node.includes("vizanti")){
+			nodelist += "<option value='"+node+"'>"+node+"</option>"
+			nodes.push(node);
+		}
 	}
 	nodeSelector.innerHTML = nodelist;
+	loaderSpinner.style.display = "none";
 
-	if(nodeName == "")
-		nodeName = nodeSelector.value;
-	else if(results.includes(nodeName)){
-		nodeSelector.value = nodeName;
-	}
-
-	if(!cached_params){
-		await getAll(results);
-	}
+	nodeName = nodeSelector.value;
+	listParameters();
 }
 
 nodeSelector.addEventListener("change", (event)=>{
@@ -218,15 +184,7 @@ nodeSelector.addEventListener("change", (event)=>{
 	listParameters();
 });
 
+refreshButton.addEventListener("click", listParameters);
 icon.addEventListener("click", setNodeList);
 
-refreshButton.addEventListener("click", async (event)=>{
-	loaderSpinner.style.display = "block";
-	cached_params[nodeName] = await getNodeParameters(nodeName);
-	listParameters();
-	loaderSpinner.style.display = "none";
-});
-
-await setNodeList();
-
-console.log("Reconfigure Widget Loaded {uniqueID}")
+console.log("Reconfigure Widget Loaded {uniqueID}");

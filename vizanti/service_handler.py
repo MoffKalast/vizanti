@@ -3,37 +3,43 @@ import os
 import fcntl
 import sys
 import rclpy
+import yaml
+import json
+
 from rclpy.node import Node
 
+from rclpy.executors import  MultiThreadedExecutor
+from rclpy.callback_groups import ReentrantCallbackGroup
+
 from std_srvs.srv import Trigger
-from vizanti_interfaces.srv import GetNodeParameters
+from vizanti_interfaces.srv import GetNodeParameters, SetNodeParameter
 from vizanti_interfaces.srv import LoadMap, SaveMap
 from vizanti_interfaces.srv import RecordRosbag
 from vizanti_interfaces.srv import ManageNode, ListPackages, ListExecutables
 
 class ServiceHandler(Node):
-    def __init__(self):
+    def __init__(self, group):
         super().__init__("vizanti_topic_handler")
 
         self.proc = None
         self.packages = self.get_packages()
 
-        self.get_nodes_service = self.create_service(Trigger, 'vizanti/get_dynamic_reconfigure_nodes', self.get_dynamic_reconfigure_nodes)
-        self.get_node_parameters_service = self.create_service(GetNodeParameters, 'vizanti/get_node_parameters', self.get_node_parameters)
+        self.get_node_parameters_service = self.create_service(GetNodeParameters, 'vizanti/get_node_parameters', self.get_node_parameters, callback_group=group)
+        self.set_node_parameter_service = self.create_service(SetNodeParameter, 'vizanti/set_node_parameter', self.set_node_parameter, callback_group=group)
 
-        self.load_map_service = self.create_service(LoadMap, 'vizanti/load_map', self.load_map)
-        self.save_map_service = self.create_service(SaveMap, 'vizanti/save_map', self.save_map)
+        self.load_map_service = self.create_service(LoadMap, 'vizanti/load_map', self.load_map, callback_group=group)
+        self.save_map_service = self.create_service(SaveMap, 'vizanti/save_map', self.save_map, callback_group=group)
 
-        self.record_setup_service = self.create_service(RecordRosbag, 'vizanti/bag/setup', self.recording_setup)
-        self.record_status_service = self.create_service(Trigger, 'vizanti/bag/status', self.recording_status)
+        self.record_setup_service = self.create_service(RecordRosbag, 'vizanti/bag/setup', self.recording_setup, callback_group=group)
+        self.record_status_service = self.create_service(Trigger, 'vizanti/bag/status', self.recording_status, callback_group=group)
 
-        self.kill_service = self.create_service(ManageNode, 'vizanti/node/kill', self.node_kill)
-        self.start_service = self.create_service(ManageNode, 'vizanti/node/start', self.node_start)
-        self.info_service = self.create_service(ManageNode, 'vizanti/node/info', self.node_info)
-        self.info_service = self.create_service(Trigger, 'vizanti/roswtf', self.roswtf)
+        self.kill_service = self.create_service(ManageNode, 'vizanti/node/kill', self.node_kill, callback_group=group)
+        self.start_service = self.create_service(ManageNode, 'vizanti/node/start', self.node_start, callback_group=group)
+        self.info_service = self.create_service(ManageNode, 'vizanti/node/info', self.node_info, callback_group=group)
+        self.info_service = self.create_service(Trigger, 'vizanti/roswtf', self.roswtf, callback_group=group)
 
-        self.list_packages_service = self.create_service(ListPackages, 'vizanti/list_packages', self.list_packages_callback)
-        self.list_executables_service = self.create_service(ListExecutables, 'vizanti/list_executables', self.list_executables_callback)
+        self.list_packages_service = self.create_service(ListPackages, 'vizanti/list_packages', self.list_packages_callback, callback_group=group)
+        self.list_executables_service = self.create_service(ListExecutables, 'vizanti/list_executables', self.list_executables_callback, callback_group=group)
 
         self.get_logger().info("Service handler ready.")
 
@@ -222,29 +228,32 @@ class ServiceHandler(Node):
             res.message = str(e)
         return res
 
-    def get_dynamic_reconfigure_nodes(self, req, res):
-        process = subprocess.Popen(["ros2", "run", "rqt_reconfigure", "rqt_reconfigure"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        flags = fcntl.fcntl(process.stdout, fcntl.F_GETFL)
-        fcntl.fcntl(process.stdout, fcntl.F_SETFL, flags | os.O_NONBLOCK)
-
-        # Wait for it to either fail or not
-        rclpy.sleep(1)
-
-        # Check if the process is still running
-        if process.poll() is not None:
-            # Process terminated, read the error output
-            error_output = process.stdout.read().decode('utf-8')
-            res.success = False
-            res.message = "Failed to get dynamic reconfigure nodes: " + error_output
-        else:
-            res.success = True
-            res.message = "Got dynamic reconfigure nodes successfully"
-        return res
-
     def get_node_parameters(self, req, res):
-        node_params = subprocess.check_output(["ros2", "param", "list", req.node]).decode('utf-8')
+        #try:
+        proc = subprocess.Popen("ros2 param dump "+req.node, stdout=subprocess.PIPE, stderr=subprocess. STDOUT, shell=True)
+        node_params = proc.communicate(timeout=5)[0].decode('utf-8')
 
-        res.parameters = node_params
+       # if node_params.startswith("failed"):
+           # raise Exception
+
+        parsed = yaml.safe_load(node_params)
+        res.parameters = json.dumps(parsed[list(parsed.keys())[0]])
+        #except:
+            #res.parameters = "{}"
+        return res
+    
+    def set_node_parameter(self, req, res):
+        #try:
+        proc = subprocess.Popen("ros2 param set "+req.node+" "+req.param+" "+req.value, stdout=subprocess.PIPE, stderr=subprocess. STDOUT, shell=True)
+        node_params = proc.communicate(timeout=5)[0].decode('utf-8')
+
+       # if node_params.startswith("failed"):
+           # raise Exception
+
+        parsed = yaml.safe_load(node_params)
+        res.parameters = json.dumps(parsed[list(parsed.keys())[0]])
+        #except:
+            #res.parameters = "{}"
         return res
 
     def recording_status(self, req, res):
@@ -296,10 +305,15 @@ class ServiceHandler(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    service_handler = ServiceHandler()
-    rclpy.spin(service_handler)
+
+    service_handler = ServiceHandler(group=ReentrantCallbackGroup())
+    executor = MultiThreadedExecutor(num_threads=20)
+    executor.add_node(service_handler)
+
+    try:
+        executor.spin()
+    except rclpy.executors.ExternalShutdownException:
+        pass
+
     service_handler.destroy_node()
     rclpy.shutdown()
-
-if __name__ == '__main__':
-    main()

@@ -293,7 +293,7 @@ input[type=number] {
 }
 
 input[type=text] {
-	width: 100%;
+	width: 80%;
 	font-size: 1.0rem;
 	outline: 0;
 	color: white;
@@ -420,6 +420,27 @@ canvas {
 	bottom: 15vh; 
 	left: 50vw; 
 	transform: translate(-50px, -50px);
+}
+
+/* Details */
+
+details {
+	background-color: rgba(0.153, 0.2, 0.26, 0.15); /* Translucent black background */
+	padding: 5px; /* Add padding for better visual */
+	border-radius: 7px;
+	margin-bottom: 7px;
+}
+
+/* Style for summary elements */
+summary {
+	font-weight: bold;
+	cursor: pointer; /* Change cursor to pointer on hover */
+}
+
+/* Style for content within the details element */
+details > *:not(summary) {
+	margin-left: 5px; /* Add a slight indent */
+	margin-top: 5px; /* Add margin to separate summary from content */
 }
 
 /* Buttons */
