@@ -15,12 +15,13 @@ setup(
     zip_safe=True,
     maintainer='MoffKalast',
     maintainer_email='vid.rijavec@gmail.com',
-    description='Nav2 demo package for Vizanti',
+    description='Demo package for Vizanti',
     license='MIT',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'path_feeder = vizanti_demos.path_feeder:main'
+            'cloud_to_pose = vizanti_demos.cloud_to_pose:main',
+            'marker_array_publisher = vizanti_demos.marker_array_publisher:main'
         ],
     },
 )
