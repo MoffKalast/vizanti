@@ -35,7 +35,7 @@ def generate_launch_description():
 
     flask_node = launch_ros.actions.Node(
         name='vizanti_flask_node',
-        package='vizanti',
+        package='vizanti_server',
         executable='vizanti_flask_node',
         output='screen',
         parameters=[
@@ -47,14 +47,14 @@ def generate_launch_description():
 
     topic_handler_node = launch_ros.actions.Node(
         name='vizanti_topic_handler_node',
-        package='vizanti',
+        package='vizanti_server',
         executable='vizanti_topic_handler_node',
         output='screen'
     )
 
     service_handler_node = launch_ros.actions.Node(
         name='vizanti_service_handler_node',
-        package='vizanti',
+        package='vizanti_server',
         executable='vizanti_service_handler_node',
         output='screen'
     )

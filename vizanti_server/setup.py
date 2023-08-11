@@ -3,7 +3,7 @@ import os
 
 from setuptools import setup
 
-package_name = "vizanti"
+package_name = "vizanti_server"
 
 def generate_public_data_files():
     data_files = []
@@ -17,13 +17,12 @@ def generate_public_data_files():
 
 setup(
     name=package_name,
-    version="0.0.0",
+    version="0.1.0",
     packages=[package_name],
     data_files=[
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
         ("share/" + package_name, ["package.xml"]),
-        (os.path.join("share", package_name, "launch"), glob("launch/*.launch.py")),
-        (os.path.join("share", package_name, "meshes"), glob("wiki_assets/*.png")),
+        (os.path.join("share", package_name, "launch"), glob("launch/launch.py")),
     ] + generate_public_data_files(),
     install_requires=["setuptools"],
     zip_safe=True,
@@ -43,9 +42,9 @@ setup(
     tests_require=["pytest"],
     entry_points={
         "console_scripts": [
-            "vizanti_flask_node = vizanti.server:main",
-            "vizanti_topic_handler_node = vizanti.topic_handler:main",
-            "vizanti_service_handler_node = vizanti.service_handler:main",
+            "vizanti_flask_node = vizanti_server.server:main",
+            "vizanti_topic_handler_node = vizanti_server.topic_handler:main",
+            "vizanti_service_handler_node = vizanti_server.service_handler:main",
         ],
     },
 )

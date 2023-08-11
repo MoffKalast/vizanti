@@ -4,7 +4,7 @@ async function getNodeParameters(node) {
 	const getNodeParametersService = new ROSLIB.Service({
 		ros: rosbridge.ros,
 		name: "/vizanti/get_node_parameters",
-		serviceType: "vizanti/GetNodeParameters",
+		serviceType: "vizanti_msgs/GetNodeParameters",
 	});
 
 	return new Promise((resolve, reject) => {
@@ -22,7 +22,7 @@ async function setNodeParameter(node, param, newValue) {
 	const setParamClient = new ROSLIB.Service({
 		ros: rosbridge.ros,
 		name: '/vizanti/set_node_parameter',
-		serviceType: 'vizanti_interfaces/SetNodeParameter',
+		serviceType: 'vizanti_msgs/SetNodeParameter',
 	});
 
 	return new Promise((resolve, reject) => {

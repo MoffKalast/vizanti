@@ -12,10 +12,10 @@ from rclpy.executors import  MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
 
 from std_srvs.srv import Trigger
-from vizanti_interfaces.srv import GetNodeParameters, SetNodeParameter
-from vizanti_interfaces.srv import LoadMap, SaveMap
-from vizanti_interfaces.srv import RecordRosbag
-from vizanti_interfaces.srv import ManageNode, ListPackages, ListExecutables
+from vizanti_msgs.srv import GetNodeParameters, SetNodeParameter
+from vizanti_msgs.srv import LoadMap, SaveMap
+from vizanti_msgs.srv import RecordRosbag
+from vizanti_msgs.srv import ManageNode, ListPackages, ListExecutables
 
 class ServiceHandler(Node):
     def __init__(self, group):
