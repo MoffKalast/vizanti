@@ -3,7 +3,6 @@ from tf2_msgs.msg import TFMessage
 import threading
 import rclpy
 from rclpy.node import Node
-from rclpy.publisher import Publisher
 
 class TopicHandler(Node):
     def __init__(self):

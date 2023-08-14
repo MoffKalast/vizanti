@@ -1,5 +1,4 @@
 import os
-import subprocess
 import threading
 import logging
 import json
@@ -14,7 +13,7 @@ from ament_index_python.packages import get_package_share_directory
 def get_public_dir():
 	if os.path.isdir("../public"):
 		return "../public" #for --symlink-install
-	return get_package_share_directory('vizanti')+ '/public/'
+	return get_package_share_directory('vizanti_server')+ '/public/'
 
 app = Flask(__name__, static_folder=get_public_dir(), template_folder=get_public_dir())
 

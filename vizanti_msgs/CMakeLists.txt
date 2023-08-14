@@ -13,6 +13,7 @@ find_package(actionlib_msgs REQUIRED)
 # List of service files
 set(srv_files
     "srv/GetNodeParameters.srv"
+    "srv/SetNodeParameters.srv"
     "srv/SaveMap.srv"
     "srv/LoadMap.srv"
     "srv/RecordRosbag.srv"

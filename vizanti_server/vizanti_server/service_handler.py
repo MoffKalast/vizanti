@@ -12,7 +12,7 @@ from rclpy.executors import  MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
 
 from std_srvs.srv import Trigger
-from vizanti_msgs.srv import GetNodeParameters, SetNodeParameter
+from vizanti_msgs.srv import GetNodeParameters, SetNodeParameters
 from vizanti_msgs.srv import LoadMap, SaveMap
 from vizanti_msgs.srv import RecordRosbag
 from vizanti_msgs.srv import ManageNode, ListPackages, ListExecutables
@@ -25,7 +25,7 @@ class ServiceHandler(Node):
         self.packages = self.get_packages()
 
         self.get_node_parameters_service = self.create_service(GetNodeParameters, 'vizanti/get_node_parameters', self.get_node_parameters, callback_group=group)
-        self.set_node_parameter_service = self.create_service(SetNodeParameter, 'vizanti/set_node_parameter', self.set_node_parameter, callback_group=group)
+        self.set_node_parameter_service = self.create_service(SetNodeParameters, 'vizanti/set_node_parameter', self.set_node_parameter, callback_group=group)
 
         self.load_map_service = self.create_service(LoadMap, 'vizanti/load_map', self.load_map, callback_group=group)
         self.save_map_service = self.create_service(SaveMap, 'vizanti/save_map', self.save_map, callback_group=group)
@@ -229,31 +229,31 @@ class ServiceHandler(Node):
         return res
 
     def get_node_parameters(self, req, res):
-        #try:
-        proc = subprocess.Popen("ros2 param dump "+req.node, stdout=subprocess.PIPE, stderr=subprocess. STDOUT, shell=True)
-        node_params = proc.communicate(timeout=5)[0].decode('utf-8')
+        try:
+            proc = subprocess.Popen("ros2 param dump "+req.node, stdout=subprocess.PIPE, stderr=subprocess. STDOUT, shell=True)
+            node_params = proc.communicate(timeout=5)[0].decode('utf-8')
 
-       # if node_params.startswith("failed"):
-           # raise Exception
+            if node_params.startswith("failed"):
+                raise Exception
 
-        parsed = yaml.safe_load(node_params)
-        res.parameters = json.dumps(parsed[list(parsed.keys())[0]])
-        #except:
-            #res.parameters = "{}"
+            parsed = yaml.safe_load(node_params)
+            res.parameters = json.dumps(parsed[list(parsed.keys())[0]])
+        except:
+            res.parameters = "{}"
         return res
     
     def set_node_parameter(self, req, res):
-        #try:
-        proc = subprocess.Popen("ros2 param set "+req.node+" "+req.param+" "+req.value, stdout=subprocess.PIPE, stderr=subprocess. STDOUT, shell=True)
-        node_params = proc.communicate(timeout=5)[0].decode('utf-8')
+        try:
+            proc = subprocess.Popen("ros2 param set "+req.node+" "+req.param+" "+req.value, stdout=subprocess.PIPE, stderr=subprocess. STDOUT, shell=True)
+            node_params = proc.communicate(timeout=5)[0].decode('utf-8')
 
-       # if node_params.startswith("failed"):
-           # raise Exception
+            if node_params.startswith("failed"):
+                raise Exception
 
-        parsed = yaml.safe_load(node_params)
-        res.parameters = json.dumps(parsed[list(parsed.keys())[0]])
-        #except:
-            #res.parameters = "{}"
+            res.status = "Ok."
+        except:
+            res.status = "Error, could not set param."
+
         return res
 
     def recording_status(self, req, res):

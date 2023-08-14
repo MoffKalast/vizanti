@@ -1,7 +1,7 @@
 <package format="3">
     <name>vizanti_server</name>
     <version>0.1.0</version>
-    <description>Vizanti backend core and web server.</description>
+    <description>A mission planner and visualizer for controlling outdoor ROS robots.</description>
     <maintainer email="vid.rijavec@gmail.com">MoffKalast</maintainer>
     <maintainer email="albradford2468@gmail.com">Alastair Bradford</maintainer>
     <license>BSD</license>
@@ -16,7 +16,6 @@
     <depend>python3-flask</depend>
     <depend>rosbridge_suite</depend>
 
-    <exec_depend>vizanti_msgs</exec_depend>
     <exec_depend>ros2launch</exec_depend>
 
     <export>

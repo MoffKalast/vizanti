@@ -8,9 +8,9 @@
 
     <author email="vid.rijavec@gmail.com">MoffKalast</author>
 
-    <url type="website">http://ros.org/wiki/rosbridge_suite</url>
-    <url type="bugtracker">https://github.com/RobotWebTools/rosbridge_suite/issues</url>
-    <url type="repository">https://github.com/RobotWebTools/rosbridge_suite</url>
+    <url type="website">https://wiki.ros.org/vizanti</url>
+    <url type="bugtracker">https://github.com/MoffKalast/vizanti/issues</url>
+    <url type="repository">https://github.com/MoffKalast/vizanti</url>
 
     <buildtool_depend>ament_cmake_core</buildtool_depend>
 
