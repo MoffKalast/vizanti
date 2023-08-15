@@ -35,7 +35,7 @@ function closeModal(id){
 }
 
 //modal closing
-window.addEventListener("click", function(event){
+document.addEventListener("click", function(event){
 	if(event.target.classList.contains("modal_outer")) {
 		event.target.style.display = "none";
 	}
