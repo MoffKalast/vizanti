@@ -22,7 +22,7 @@ colcon build
 
 ## Run
 ```bash
-ros2 launch vizanti_server launch.py
+ros2 launch vizanti_server vizanti_server.launch.py
 ```
 The web app can be accessed at `http://<host_ip>:5000`. Client settings are automatically saved in localStorage. The satelite imagery renderer also uses the indexedDB to store tiles for offline use (note that this is IP specific). By default the rosbridge instance also occupies port 5001.
 
