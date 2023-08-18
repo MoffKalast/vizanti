@@ -1,6 +1,6 @@
 <package format="2">
     <name>vizanti</name>
-    <version>0.0.1</version>
+    <version>0.1.0</version>
     <description>A mission planner and visualizer for controlling outdoor ROS robots.</description>
     <maintainer email="vid.rijavec@gmail.com">MoffKalast</maintainer>
     <license>BSD</license>
