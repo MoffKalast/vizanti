@@ -12,13 +12,13 @@ Vizanti is split into the python based ROS-side server and the web browser clien
 
 The static content is served using Flask, with Jinja2 as the template engine. ROS related communications go through Rosbridge and Rosapi.
 
-[vizanti/server.py](vizanti/server.py)
+[server.py](vizanti_server/scripts/server.py)
 
 There are also two ROS nodes that provide additional functionality not covered by Rosbridge.
 
-[vizanti/service_handler.py](vizanti/service_handler.py)
+[service_handler.py](vizanti_server/scripts/service_handler.py)
 
-[vizanti/topic_handler.py](vizanti/topic_handler.py)
+[topic_handler.py](vizanti_server/scripts/topic_handler.py)
 
 ### Client
 

@@ -1,0 +1,24 @@
+<div id="{uniqueID}_modal" class="modal_outer noselect">
+	<div class="modal_inner noselect">
+		<h3>Area</h3>
+		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
+		<hr>
+
+		<label for="{uniqueID}_topic">Topic:</label>
+		<select id="{uniqueID}_topic" name="topic">
+			<option value=""></option>
+		</select>
+
+		<p>Defines an axis-alligned area in the fixed frame by dragging, and publishes it as a geometry_msgs/PolygonStamped rectangle.</p>
+
+		<p style="color:#b4b4b4;">Click the icon once to enable, drag on the view area and release to publish. Long press the icon to open this menu.</p>
+
+		<br>
+
+		<hr>
+
+		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
+
+		
+	</div>
+</div>

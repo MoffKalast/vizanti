@@ -1,0 +1,6 @@
+string[] topics
+bool start
+string path
+---
+bool success
+string message 

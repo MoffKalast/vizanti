@@ -1,0 +1,33 @@
+<div id="{uniqueID}_modal" class="modal_outer noselect">
+	<div class="modal_inner noselect">
+		<h3>Pose Array</h3>
+		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
+		<hr>
+
+		<label for="{uniqueID}_topic">Topic:</label>
+		<select id="{uniqueID}_topic" name="topic">
+			<!-- add topics here-->
+		</select>
+
+		<br>
+
+		<label for="{uniqueID}_colorpicker">Colour:</label>
+		<input type="color" value="#8B0000" id="{uniqueID}_colorpicker">
+
+		<br>
+
+		<p>Display an array of Poses as a cloud of arrows.</p>
+
+		<br>
+
+		<label for="{uniqueID}_scale">Arrow scale:</label>
+		<span id="{uniqueID}_scale_value">1.0</span>
+		<input type="range" value="1.0" step="0.01" min="0.1" max="10.0" id="{uniqueID}_scale">
+
+		<hr>
+
+		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
+
+		
+	</div>
+</div>
