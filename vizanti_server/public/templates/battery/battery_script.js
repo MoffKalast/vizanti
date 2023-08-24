@@ -66,6 +66,7 @@ const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('im
 
 const text_percent = document.getElementById("{uniqueID}_pecentage");
 const text_voltage = document.getElementById("{uniqueID}_voltage");
+const text_cell_voltage = document.getElementById("{uniqueID}_cell_voltage");
 const text_current = document.getElementById("{uniqueID}_current");
 const text_charge = document.getElementById("{uniqueID}_charge");
 
@@ -124,6 +125,16 @@ function connect(){
 
 		if(msg.charge)
 			text_charge.innerText = "Charge: "+msg.charge.toFixed(2)+"/"+msg.capacity.toFixed(2)+" Ah";
+
+		if(msg.cell_voltage.length > 0){
+			let cellstr = "Cell Voltages: ";
+
+			for(let i = 0; i < msg.cell_voltage.length; i++){
+				cellstr += msg.cell_voltage[i].toFixed(2)+" V, ";
+			}
+
+			text_cell_voltage.innerText = cellstr.substring(0, cellstr.length - 2);
+		}
 
 		text_status.innerText = "Status: "+STATUS[msg.power_supply_status];
 		text_health.innerText = "Health: "+HEALTH[msg.power_supply_health];
