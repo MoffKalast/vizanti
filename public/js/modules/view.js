@@ -35,11 +35,11 @@ const ZOOM_FACTOR = 1.05;
 export class View {
 
 	constructor() {
-		this.center = {
+		this.center = settings.view.center ?? {
 			x: 0,
 			y: 0
 		};
-		this.scale = settings.view.scale;
+		this.scale = settings.view.scale ?? 50.0;
 
 		this.drag_start = undefined;
 		this.input_movement = true;
@@ -57,6 +57,10 @@ export class View {
 		this.center = { x: 0,y: 0};
 		this.scale = 50.0;
 		this.drag_start = undefined;
+
+		settings.view.center = this.center;
+		settings.view.scale = this.scale;
+		settings.save();
 		window.dispatchEvent(new Event("view_changed"));
 	}
 
@@ -140,7 +144,9 @@ export class View {
 			x: this.drag_start.ref_center_x + delta.x / this.scale,
 			y: this.drag_start.ref_center_y + delta.y / this.scale,
 		};
-	
+
+		settings.view.center = this.center;
+		settings.save();
 		window.dispatchEvent(new Event("view_changed"));
 	}
 	
@@ -185,7 +191,8 @@ export class View {
 		};
 	
 		this.center = newCenter;
-		settings.view.scale = view.scale;
+		settings.view.center = this.center;
+		settings.view.scale = this.scale;
 		settings.save();
 	
 		window.dispatchEvent(new Event("view_changed"));

@@ -78,7 +78,7 @@ document.addEventListener("DOMContentLoaded", (event) =>{
 			}
 
 			const template = element_templates[event.widget_type];
-			const eid = "autoID" + uid++;
+			const eid = event.widget_type+"_autoID_" + uid++;
 			settings.navbar.push({ type: event.widget_type, id: eid });
 			settings.uid = uid;
 			settings.save();
