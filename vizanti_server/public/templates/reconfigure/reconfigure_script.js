@@ -27,9 +27,9 @@ async function setNodeParameter(node, param, newValue) {
 
 	return new Promise((resolve, reject) => {
 		const request = new ROSLIB.ServiceRequest({
-			 node: nodeName,
-			 parameter: param,
-			 value: newValue
+			 node: nodeName+"",
+			 param: param.toLocaleString('en-US'),
+			 value: newValue.toLocaleString('en-US')
 		});
 		setParamClient.callService(request, (response) => {
 			console.log(`Parameter ${paramName} set to:`, newValue);

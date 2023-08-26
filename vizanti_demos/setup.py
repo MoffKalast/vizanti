@@ -20,8 +20,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'cloud_to_pose = vizanti_demos.cloud_to_pose:main',
-            'marker_array_publisher = vizanti_demos.marker_array_publisher:main'
+            'particle_cloud_to_pose_array = vizanti_demos.particle_cloud_to_pose_array:main',
+            'marker_array_publisher = vizanti_demos.marker_array_publisher:main',
+            'path_to_nav2poses = vizanti_demos.path_to_nav2poses:main'
         ],
     },
 )

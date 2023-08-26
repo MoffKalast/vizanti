@@ -51,6 +51,3 @@ def main(args=None):
     rclpy.init(args=args)
     marker_array_publisher = MarkerArrayPublisher()
     rclpy.spin(marker_array_publisher)
-
-if __name__ == '__main__':
-    main()
