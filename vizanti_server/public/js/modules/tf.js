@@ -106,6 +106,7 @@ export class TF {
 		this.tf_static_listener = this.tf_static_topic.subscribe((msg) => {
 			this.updateTransforms(msg.transforms);
 		});
+	}
 
 	/* interpolateTransforms() {
 		if (this.lastReceivedTransforms !== null && this.previousTransforms !== null && performance.now() - this.lastReceivedTime > 15) {
