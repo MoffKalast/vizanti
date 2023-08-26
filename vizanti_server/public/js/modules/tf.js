@@ -86,40 +86,26 @@ export class TF {
 			throttle_rate: 33
 		});
 		
-		const setListener = () => {
-			this.tf_listener = this.tf_topic.subscribe((msg) => {
-				//this.previousTransforms = this.lastReceivedTransforms;
-				//this.previousTime = this.lastReceivedTime;
-	
-				//this.lastReceivedTransforms = msg.transforms;
-				//this.lastReceivedTime = performance.now();
-
-				this.updateTransforms(msg.transforms);
-				//this.absoluteTransformsHistory.add(msg.transforms[0].header.stamp, this.absoluteTransforms);
-			});
-		};
-
-		setListener();
-
 		this.tf_static_topic = new ROSLIB.Topic({
 			ros: rosbridge.ros,
 			name: 'tf_static',
 			messageType: 'tf2_msgs/msg/TFMessage'
 		});
 
+		this.tf_listener = this.tf_topic.subscribe((msg) => {
+			//this.previousTransforms = this.lastReceivedTransforms;
+			//this.previousTime = this.lastReceivedTime;
+
+			//this.lastReceivedTransforms = msg.transforms;
+			//this.lastReceivedTime = performance.now();
+
+			this.updateTransforms(msg.transforms);
+			//this.absoluteTransformsHistory.add(msg.transforms[0].header.stamp, this.absoluteTransforms);
+		});
+
 		this.tf_static_listener = this.tf_static_topic.subscribe((msg) => {
 			this.updateTransforms(msg.transforms);
 		});
-
-		setInterval(()=>{
-			if(performance.now() - this.lastReceivedTime > 1000){
-				console.log('%c TF Connection Reset!', 'background: #222; color: #bada55');
-
-				this.tf_topic.unsubscribe(this.tf_listener);
-				setListener();
-			}
-		},1000);
-	}
 
 	/* interpolateTransforms() {
 		if (this.lastReceivedTransforms !== null && this.previousTransforms !== null && performance.now() - this.lastReceivedTime > 15) {
