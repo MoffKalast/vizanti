@@ -12,23 +12,23 @@ Vizanti is split into the python based ROS-side server and the web browser clien
 
 The static content is served using Flask, with Jinja2 as the template engine. ROS related communications go through Rosbridge and Rosapi.
 
-[server.py](vizanti_server/scripts/server.py)
+[server.py](vizanti_server/vizanti_server/server.py)
 
 There are also two ROS nodes that provide additional functionality not covered by Rosbridge.
 
-[service_handler.py](vizanti_server/scripts/service_handler.py)
+[service_handler.py](vizanti_server/vizanti_server/service_handler.py)
 
-[topic_handler.py](vizanti_server/scripts/topic_handler.py)
+[topic_handler.py](vizanti_server/vizanti_server/topic_handler.py)
 
 ### Client
 
-The front end is written in vanilla JS with ES6 modules, while making use of Jinja templating and minimal fixed dependencies in [public/js/lib](public/js/lib).
+The front end is written in vanilla JS with ES6 modules, while making use of Jinja templating and minimal fixed dependencies in [vizanti_server/public/js/lib](vizanti_server/public/js/lib).
 
 ---
 
 ## Adding a new widget
 
-Upon client load, the server collects all widget templates in [public/templates](public/templates) and sends them to the client where they are processed by [main.js](public/js/main.js). As per the existing examples, the suported files are:
+Upon client load, the server collects all widget templates in [vizanti_server/public/templates](vizanti_server/public/templates) and sends them to the client where they are processed by [main.js](vizanti_server/public/js/main.js). As per the existing examples, the suported files are:
 
 - `name_icon.html` The mandatory icon element that will be added to the taskbar.
 
@@ -36,11 +36,11 @@ Upon client load, the server collects all widget templates in [public/templates]
 
 - `name_view.html` A canvas layer for drawing visualizers. Define the Z-order value so that your element is rendered in the right order. Canvases of the same type of widget will be rendered in the order they were added.
 
-- `name_script.js` A JS module that can import helper singletons from [public/js/modules](public/js/modules).
+- `name_script.js` A JS module that can import helper singletons from [vizanti_server/public/js/modules](vizanti_server/public/js/modules).
 
-To add the widget to the taskbar, it has to be defined in the `add_types_container` list in the [add_modal.html](public/templates/add/add_modal.html). The `data-topic` value is used for creating widgets from a specific topic.
+To add the widget to the taskbar, it has to be defined in the `add_types_container` list in the [add_modal.html](vizanti_server/public/templates/add/add_modal.html). The `data-topic` value is used for creating widgets from a specific topic.
 
-Any required assets should be put into [public/assets](public/assets).
+Any required assets should be put into [vizanti_server/public/assets](vizanti_server/public/assets).
 
 ### {uniqueID}
 
@@ -66,7 +66,7 @@ icon.src = "something.png"
 
 ## Helper Singletons
 
-Quaternion.js and Roslib.js are loaded globally. There are also two global functions to streamline opening and closing models, the aptly named `openModal(widget_id+"_modal")` and `closeModal(widget_id+"_modal")` found in [setup.js](public/js/setup.js). Typically called when an icon is clicked.
+Quaternion.js and Roslib.js are loaded globally. There are also two global functions to streamline opening and closing models, the aptly named `openModal(widget_id+"_modal")` and `closeModal(widget_id+"_modal")` found in [setup.js](vizanti_server/public/js/setup.js). Typically called when an icon is clicked.
 
 ### View
 
@@ -250,7 +250,7 @@ status.setOK();
 import { nipplejs } from '/js/modules/joystick.js';
 ```   
 
-Joystick.js is a module wrapper for nipple.js. Example usage in [teleop:script.js](public/templates/teleop/teleop_script.js)
+Joystick.js is a module wrapper for nipple.js. Example usage in [teleop:script.js](vizanti_server/public/templates/teleop/teleop_script.js)
 
 -----
 ### Satelite Tiles
@@ -258,7 +258,7 @@ Joystick.js is a module wrapper for nipple.js. Example usage in [teleop:script.j
 ```javascript
 import { navsat } from './js/modules/navsat.js';
 ```   
-A module for downloading, storing, and loading slippy map tiles, mainly for use in [satelite_script.js](public/templates/satelite/satelite_script.js).
+A module for downloading, storing, and loading slippy map tiles, mainly for use in [satelite_script.js](vizanti_server/public/templates/satelite/satelite_script.js).
 
 Example:
 ```javascript
