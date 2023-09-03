@@ -70,16 +70,20 @@ export class Navsat {
 		};
 	}
 
-	async fetchURL(url){
-		console.log("Fetching tile data:",url);
-
-		const data = await imageToDataURL(url);
-		if (!data) {
+	async fetchURL(url) {
+		console.log("Fetching tile data:", url);
+		try {
+			const data = await imageToDataURL(url);
+			if (!data) {
+				return undefined;
+			}
+	
+			db.setObject(url, data);
+			return data;
+		} catch (error) {
+			console.error(`Failed to fetch image from ${url} due to:`, error);
 			return undefined;
 		}
-
-		db.setObject(url, data);
-		return data;
 	}
 
 	async loadTile(keyurl) {
