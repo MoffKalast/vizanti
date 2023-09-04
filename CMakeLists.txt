@@ -35,7 +35,15 @@ include_directories(
     ${catkin_INCLUDE_DIRS}
 )
 
-install(PROGRAMS
-    src/server.py
+file(
+    GLOB PYTHON_SCRIPTS_DIR "scripts/*.py"
+)
+catkin_install_python(
+    PROGRAMS ${PYTHON_SCRIPTS_DIR}
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(
+    DIRECTORY public launch
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
