@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import rospy
+from rospkg import RosPack
 import threading
 import logging
 import json
@@ -8,7 +9,10 @@ import json
 from flask import Flask, render_template, send_from_directory, make_response
 from werkzeug.serving import make_server, WSGIRequestHandler
 
-app = Flask(__name__, static_folder='../public', template_folder='../public')
+
+public_dir = RosPack().get_path('vizanti') + '/public/'
+
+app = Flask(__name__, static_folder=public_dir, template_folder=public_dir)
 
 def get_files(path, valid_extensions):
 	templates_dir = os.path.join(app.static_folder, path)
