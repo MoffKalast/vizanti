@@ -71,7 +71,8 @@ Quaternion.js and Roslib.js are loaded globally. There are also two global funct
 ### View
 
 ```javascript
-import { view } from '/js/modules/view.js';
+let viewModule = await import(`${base_url}/js/modules/view.js`);
+let view = viewModule.view;
 ```
 Handles how the screen is moved and zoomed by the user for final rendering from ROS tf space into screen space. The TF and screen frames are currently not rotated, which simplifies rendering.
 
@@ -101,7 +102,8 @@ window.addEventListener("view_changed", drawWidget);
 ### TF Transforms
 
 ```javascript
-import { tf } from '/js/modules/tf.js';
+let tfModule = await import(`${base_url}/js/modules/tf.js`);
+let tf = tfModule.tf;
 ```
 An implementation of the TF graph that gets grouped TF data at 30 fps from the`/vizanti/tf_consolidated` topic.
 
@@ -134,7 +136,8 @@ window.addEventListener("tf_changed", drawWidget);
 ### Rosbridge
 
 ```javascript
-import { rosbridge } from '/js/modules/rosbridge.js';
+let rosbridgeModule = await import(`${base_url}/js/modules/rosbridge.js`);
+let rosbridge = rosbridgeModule.rosbridge;
 ```
 Wrapper for roslib.js, used for communicating with ROS.
 
@@ -170,7 +173,8 @@ listener = roslib_topic.subscribe((msg) => {
 ### Settings
 
 ```javascript
-import { settings } from '/js/modules/persistent.js';
+let persistentModule = await import(`${base_url}/js/modules/persistent.js`);
+let settings = persistentModule.settings;
 ```
 
 Provides a localStorage object for saving widget settings.
@@ -203,7 +207,8 @@ saveSettings();
 ### Util
 
 ```javascript
-import { imageToDataURL } from '/js/modules/util.js';
+let utilModule = await import(`${base_url}/js/modules/util.js`);
+let imageToDataURL = utilModule.imageToDataURL;
 ```   
 The util class provides utility functions, the only one right now being imageToDataURL for persistent image loading that doesn't trigger new server requests upon changing an Image .src param.
 
@@ -214,7 +219,8 @@ const persistent_image = await imageToDataURL("assets/image.svg");
 ### Status
 
 ```javascript
-import { Status } from '/js/modules/status.js';
+let StatusModule = await import(`${base_url}/js/modules/status.js`);
+let Status = StatusModule.Status;
 ```   
 A helper class that emulates the status indicator from rviz for each widget.
 
@@ -247,7 +253,8 @@ status.setOK();
 ### Joysticks
 
 ```javascript
-import { nipplejs } from '/js/modules/joystick.js';
+let joystickModule = await import(`${base_url}/js/modules/joystick.js`);
+let nipplejs = joystickModule.nipplejs;
 ```   
 
 Joystick.js is a module wrapper for nipple.js. Example usage in [teleop:script.js](public/templates/teleop/teleop_script.js)
@@ -256,7 +263,8 @@ Joystick.js is a module wrapper for nipple.js. Example usage in [teleop:script.j
 ### Satelite Tiles
 
 ```javascript
-import { navsat } from './js/modules/navsat.js';
+let navsatModule = await import(`${base_url}/js/modules/navsat.js`);
+let navsat = navsatModule.navsat;
 ```   
 A module for downloading, storing, and loading slippy map tiles, mainly for use in [satelite_script.js](public/templates/satelite/satelite_script.js).
 
