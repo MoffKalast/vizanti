@@ -1,6 +1,10 @@
-import { rosbridge } from '/js/modules/rosbridge.js';
-import { imageToDataURL } from '/js/modules/util.js';
-import { Status } from '/js/modules/status.js';
+let rosbridgeModule = await import(`${base_url}/js/modules/rosbridge.js`);
+let utilModule = await import(`${base_url}/js/modules/util.js`);
+let StatusModule = await import(`${base_url}/js/modules/status.js`);
+
+let rosbridge = rosbridgeModule.rosbridge;
+let imageToDataURL = utilModule.imageToDataURL;
+let Status = StatusModule.Status;
 
 let status = new Status(
 	document.getElementById("{uniqueID}_icon"),
