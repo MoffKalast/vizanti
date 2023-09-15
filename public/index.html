@@ -15,23 +15,26 @@
 		<!-- Modals templates get rendered in here -->
 	</div>
 
+	<script>
+		const base_url = "{{ base_url }}";
+	</script>
 	<div id="script_container">
 
 	</div>
 
 	<!-- global libraries -->
-	<script src="js/lib/quaternion.min.js"></script>
+	<script src="{{ url_for('serve_static', path='js/lib/quaternion.min.js') }}"></script>
 	
 	<!-- modules -->
-	<script type="module" src="js/modules/rosbridge.js"></script>
-	<script type="module" src="js/modules/persistent.js"></script>
-	<script type="module" src="js/modules/elements.js"></script>
-	<script type="module" src="js/modules/view.js"></script>
-	<script type="module" src="js/modules/tf.js"></script>
+	<script type="module" src="{{ url_for('serve_static', path='js/modules/rosbridge.js') }}"></script>
+	<script type="module" src="{{ url_for('serve_static', path='js/modules/persistent.js') }}"></script>
+	<script type="module" src="{{ url_for('serve_static', path='js/modules/elements.js') }}"></script>
+	<script type="module" src="{{ url_for('serve_static', path='js/modules/view.js') }}"></script>
+	<script type="module" src="{{ url_for('serve_static', path='js/modules/tf.js') }}"></script>
 
 	<!-- app -->
-	<script src="js/setup.js"></script>
-	<script type="module" src="js/main.js"></script>
+	<script src="{{ url_for('serve_static', path='js/setup.js') }}"></script>
+	<script type="module" src="{{ url_for('serve_static', path='js/main.js') }}"></script>
 
 </body>
 </html>

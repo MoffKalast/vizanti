@@ -4,6 +4,8 @@
 	<arg name="fragment_timeout" default="30" />
 	<arg name="delay_between_messages" default="0" />
 	<arg name="max_message_size" default="None" />
+	<arg name="base_url" default="" /> <!-- e.g. /vizanti -->
+	<arg name="flask_debug" default="True" />
 
 	<!-- Launch rosbridge without https so it works in AP mode. -->
 	<node name="vizanti_rosbridge" pkg="rosbridge_server" type="rosbridge_websocket" output="screen">
@@ -22,7 +24,8 @@
 	<node name="vizanti_flask_node" pkg="vizanti" type="server.py" output="screen">
 		<param name="host" value="0.0.0.0"/>
 		<param name="port" value="5000"/>
-		<param name="flask_debug" value="True"/>
+		<param name="base_url" value="$(arg base_url)"/>
+		<param name="flask_debug" value="$(arg flask_debug)"/>
 	</node>
 
 	<node name="vizanti_topic_handler_node" pkg="vizanti" type="topic_handler.py" output="screen"/>
