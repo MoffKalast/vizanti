@@ -1,5 +1,5 @@
  // Import nipplejs using the global window object
-import '/js/lib/nipplejs.js';
+ import '../lib/nipplejs.js';
 
 // Export the library as a named export
 export const nipplejs = window.nipplejs;
