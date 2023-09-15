@@ -1,6 +1,10 @@
-import { view } from '/js/modules/view.js';
-import { settings } from '/js/modules/persistent.js';
-import { Status } from '/js/modules/status.js';
+let viewModule = await import(`${base_url}/js/modules/view.js`);
+let persistentModule = await import(`${base_url}/js/modules/persistent.js`);
+let StatusModule = await import(`${base_url}/js/modules/status.js`);
+
+let view = viewModule.view;
+let settings = persistentModule.settings;
+let Status = StatusModule.Status;
 
 let status = new Status(
 	document.getElementById("{uniqueID}_icon"),
