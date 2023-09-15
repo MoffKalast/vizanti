@@ -1,7 +1,13 @@
-import { view } from '/js/modules/view.js';
-import { tf } from '/js/modules/tf.js';
-import { settings, saveJsonToFile } from '/js/modules/persistent.js';
-import { Status } from '/js/modules/status.js';
+let viewModule = await import(`${base_url}/js/modules/view.js`);
+let tfModule = await import(`${base_url}/js/modules/tf.js`);
+let persistentModule = await import(`${base_url}/js/modules/persistent.js`);
+let StatusModule = await import(`${base_url}/js/modules/status.js`);
+
+let view = viewModule.view;
+let tf = tfModule.tf;
+let settings = persistentModule.settings;
+let saveJsonToFile = persistentModule.saveJsonToFile;
+let Status = StatusModule.Status;
 
 let status = new Status(
 	document.getElementById("{uniqueID}_icon"),

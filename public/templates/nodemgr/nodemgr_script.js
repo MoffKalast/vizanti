@@ -1,4 +1,6 @@
-import { rosbridge } from '/js/modules/rosbridge.js';
+let rosbridgeModule = await import(`${base_url}/js/modules/rosbridge.js`);
+
+let rosbridge = rosbridgeModule.rosbridge;
 
 let packages = [];
 
