@@ -1,5 +1,5 @@
 import { IndexedDatabase } from './database.js';
-import { imageToDataURL } from '/js/modules/util.js';
+import { imageToDataURL } from './util.js';
 
 const db = new IndexedDatabase('tile_data');
 await db.openDB();

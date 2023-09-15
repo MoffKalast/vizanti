@@ -1,4 +1,4 @@
-import files from '/templates/files';
+import files from '../../templates/files';
 
 async function loadElementTemplates() {
 	let templates = {};
