@@ -49,16 +49,23 @@ export class View {
 		});
 
 		this.event_timestamp = performance.now();
-
-		window.addEventListener("tf_changed", ()=> {
-			this.event_timestamp = performance.now();
-		});
+		this.event_timeout = undefined;
 	}
 
 	async sendUpdateEvent(){
-		if(performance.now() - this.event_timestamp > 12){
+
+		if (this.event_timeout !== undefined) {
+			clearTimeout(this.event_timeout);
+		}
+		const delta = performance.now() - this.event_timestamp
+
+		if(delta > 12){
 			window.dispatchEvent(new Event("view_changed"));
 			this.event_timestamp = performance.now();
+		}else{
+			this.event_timeout = setTimeout(() => {
+				window.dispatchEvent(new Event("view_changed"));
+			}, 12 - delta);
 		}
 	}
 
