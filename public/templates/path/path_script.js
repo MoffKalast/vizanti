@@ -44,7 +44,7 @@ function saveSettings(){
 }
 
 //Rendering
-function drawPath(){
+async function drawPath(){
 
 	const wid = canvas.width;
     const hei = canvas.height;

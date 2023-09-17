@@ -50,7 +50,7 @@ function saveSettings(){
 	settings.save();
 }
 
-function drawMarkers(){
+async function drawMarkers(){
 
 	function drawCircle(size){
 		ctx.beginPath();

@@ -73,7 +73,7 @@ function saveSettings(){
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d');
 
-function drawCloud() {
+async function drawCloud() {
 
 	const pixel = view.getMapUnitsInPixels(thicknessSlider.value);
 

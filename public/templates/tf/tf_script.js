@@ -61,7 +61,7 @@ function saveSettings() {
 
 // Rendering
 
-function drawLines(origin, relative, absolute){
+async function drawLines(origin, relative, absolute){
 
 	ctx.strokeStyle = "#eba834";
 	ctx.lineWidth = 1*parseFloat(scaleSlider.value);
@@ -96,7 +96,7 @@ function drawLines(origin, relative, absolute){
 
 }
 
-function drawText(origin, relative, absolute){
+async function drawText(origin, relative, absolute){
 
 	ctx.font = (12*parseFloat(scaleSlider.value))+"px Monospace";
 	ctx.textAlign = "center";
@@ -136,7 +136,7 @@ function getBasisPoints(basis, translation, rotation){
 	];
 }
 
-function drawAxes(origin, relative, absolute) {
+async function drawAxes(origin, relative, absolute) {
 
 	const unit = view.getPixelsInMapUnits(30*parseFloat(scaleSlider.value));
 	const width_unit = view.getPixelsInMapUnits(2*parseFloat(scaleSlider.value));
@@ -202,7 +202,7 @@ function filterFrames(framelist){
 	return filteredlist;
 }
 
-function drawFrames() {
+async function drawFrames() {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 
 	const relative = filterFrames(tf.transforms);

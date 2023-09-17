@@ -32,7 +32,7 @@ function saveSettings(){
 	settings.save();
 }
 
-function drawGrid() {
+async function drawGrid() {
     const wid = canvas.width;
     const hei = canvas.height;
 

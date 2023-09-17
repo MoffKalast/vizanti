@@ -75,7 +75,7 @@ function saveSettings(){
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d');
 
-function drawScan() {
+async function drawScan() {
 
 	const unit = view.getMapUnitsInPixels(1.0);
 	const pixel = view.getMapUnitsInPixels(thicknessSlider.value);
