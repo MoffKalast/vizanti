@@ -47,6 +47,19 @@ export class View {
 		document.addEventListener("DOMContentLoaded", () => {
 			this.addListeners();
 		});
+
+		this.event_timestamp = performance.now();
+
+		window.addEventListener("tf_changed", ()=> {
+			this.event_timestamp = performance.now();
+		});
+	}
+
+	async sendUpdateEvent(){
+		if(performance.now() - this.event_timestamp > 12){
+			window.dispatchEvent(new Event("view_changed"));
+			this.event_timestamp = performance.now();
+		}
 	}
 
 	setInputMovementEnabled(value){
@@ -61,7 +74,7 @@ export class View {
 		settings.view.center = this.center;
 		settings.view.scale = this.scale;
 		settings.save();
-		window.dispatchEvent(new Event("view_changed"));
+		this.sendUpdateEvent();
 	}
 
 	fixedToScreen(coords) {
@@ -147,7 +160,7 @@ export class View {
 
 		settings.view.center = this.center;
 		settings.save();
-		window.dispatchEvent(new Event("view_changed"));
+		this.sendUpdateEvent();
 	}
 	
 	handleDragEnd() {
@@ -194,8 +207,7 @@ export class View {
 		settings.view.center = this.center;
 		settings.view.scale = this.scale;
 		settings.save();
-	
-		window.dispatchEvent(new Event("view_changed"));
+		this.sendUpdateEvent();
 	}
 
 	addListeners(){

@@ -172,10 +172,10 @@ async function drawTiles(){
 		);
 
 		// Calculate the range of tiles to cover the screen
-		const minX = Math.min(...cornerTileCoords.map((coord) => coord.x)) - fix_data.tilePos.x - 1;
-		const maxX = Math.max(...cornerTileCoords.map((coord) => coord.x)) - fix_data.tilePos.x + 1;
-		const minY = Math.min(...cornerTileCoords.map((coord) => coord.y)) - fix_data.tilePos.y - 1;
-		const maxY = Math.max(...cornerTileCoords.map((coord) => coord.y)) - fix_data.tilePos.y + 1;
+		const minX = Math.min(...cornerTileCoords.map((coord) => coord.x)) - fix_data.tilePos.x;// - 1;
+		const maxX = Math.max(...cornerTileCoords.map((coord) => coord.x)) - fix_data.tilePos.x;// + 1;
+		const minY = Math.min(...cornerTileCoords.map((coord) => coord.y)) - fix_data.tilePos.y;// - 1;
+		const maxY = Math.max(...cornerTileCoords.map((coord) => coord.y)) - fix_data.tilePos.y;// + 1;
 
 		for (let i = minX; i <= maxX; i++) {
 			for (let j = minY; j <= maxY; j++) {

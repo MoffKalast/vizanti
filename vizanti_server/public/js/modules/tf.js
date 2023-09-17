@@ -106,6 +106,21 @@ export class TF {
 		this.tf_static_listener = this.tf_static_topic.subscribe((msg) => {
 			this.updateTransforms(msg.transforms);
 		});
+
+		setInterval(()=>{
+			if(performance.now() - this.lastReceivedTime > 1000){
+				console.log('%c TF Connection Reset!', 'background: #222; color: #bada55');
+
+				this.tf_topic.unsubscribe(this.tf_listener);
+				setListener();
+			}
+		},1000);
+
+		this.event_timestamp = performance.now();
+
+		window.addEventListener("view_changed", ()=> {
+			this.event_timestamp = performance.now();
+		});
 	}
 
 	/* interpolateTransforms() {
@@ -160,6 +175,13 @@ export class TF {
 			this.updateTransforms(interpolatedTransforms);
 		}
 	} */
+
+	async sendUpdateEvent(){
+		if(performance.now() - this.event_timestamp > 12){
+			window.dispatchEvent(new Event("tf_changed"));
+			this.event_timestamp = performance.now();
+		}
+	}
 
 	addToTree(parentFrameId, childFrameId) {
 
@@ -236,7 +258,7 @@ export class TF {
 		});
 
 		this.recalculateAbsoluteTransforms();
-		window.dispatchEvent(new Event('tf_changed'));
+		this.sendUpdateEvent();
 	}
 
 	setFixedFrame(newframe) {

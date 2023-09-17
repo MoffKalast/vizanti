@@ -21,21 +21,44 @@ export class Navsat {
 		this.queue = new Set();
 		this.queue_history = new Set();
 
-		this.loadingloop = setInterval(async ()=>{
+		this.loadingloop = async ()=>{
 
-			if(this.queue.size == 0)
-				return;
+			while(this.queue.size > 0){
+				let items = Array.from(this.queue);
+				let tile_url = items[0];
+				let loaded = undefined;
 
-			let items = Array.from(this.queue);
-			let tile = items[Math.floor(Math.random() * items.length)];
+				//we already got it?
+				if(this.live_cache[tile_url] !== undefined){
+					this.queue.delete(tile_url);
+					continue;
+				}
 
-			let loaded = await this.loadTile(tile);
-			if(loaded){
-				this.live_cache[tile] = loaded;
-				this.queue.delete(tile);
+				//check the indexed DB
+				if(Boolean(await db.keyExists(tile_url))){
+					const data = await db.getObject(tile_url);
+					loaded = await dataToImage(data);
+				}else{
+					//download from tile server, in case there's no internet we don't hang forever
+					const timeout = new Promise(resolve => setTimeout(() => resolve(undefined), 4000));
+					const data = await Promise.race([imageToDataURL(tile_url), timeout]);
+
+					if(data){
+						//info.downloaded++;
+						db.setObject(tile_url, data);
+						loaded = await dataToImage(data);
+					}
+				}
+
+				if(loaded){
+					this.live_cache[tile_url] = loaded;
+					this.queue.delete(tile_url);
+				}
 			}
 
-		}, 300);
+			setTimeout(this.loadingloop, 500);
+		}
+		this.loadingloop();
 	}
 
 	async enqueue(keyurl){
@@ -43,15 +66,7 @@ export class Navsat {
 			return;
 
 		this.queue_history.add(keyurl);
-
-		if(Boolean(await db.keyExists(keyurl))){
-			const data = await db.getObject(keyurl);
-			this.live_cache[keyurl] = await dataToImage(data);
-			//console.log("Tile loaded from DB",keyurl)
-		}else{
-			//console.log("Tile Queued",keyurl)
-			this.queue.add(keyurl);
-		}
+		this.queue.add(keyurl);
 	}
 
 	//https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
@@ -68,35 +83,6 @@ export class Navsat {
 			latitude:(180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)))),
 			longitude: (x / Math.pow(2, z) * 360 - 180)
 		};
-	}
-
-	async fetchURL(url) {
-		console.log("Fetching tile data:", url);
-		try {
-			const data = await imageToDataURL(url);
-			if (!data) {
-				return undefined;
-			}
-	
-			db.setObject(url, data);
-			return data;
-		} catch (error) {
-			console.error(`Failed to fetch image from ${url} due to:`, error);
-			return undefined;
-		}
-	}
-
-	async loadTile(keyurl) {
-		const data = await this.fetchURL(keyurl);
-		if(data){
-			let image = new Image();
-			image.src = data;
-			return new Promise((resolve, reject) => {
-				image.onload = () => resolve(image);
-				image.onerror = () => resolve(undefined);
-			});
-		}
-		return undefined;
 	}
 
 	metersToDegrees(meters, latitude, zoomLevel) {
