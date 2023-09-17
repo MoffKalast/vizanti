@@ -160,7 +160,7 @@ function saveSettings(){
 
 //Rendering
 
-function drawMap(){
+async function drawMap(){
 	const wid = canvas.width;
     const hei = canvas.height;
 

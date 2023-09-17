@@ -61,7 +61,7 @@ function saveSettings(){
 	settings.save();
 }
 
-function drawRobot() {
+async function drawRobot() {
 
 	const unit = view.getMapUnitsInPixels(lengthSelector.value);
 

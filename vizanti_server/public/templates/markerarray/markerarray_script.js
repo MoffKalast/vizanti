@@ -91,7 +91,7 @@ function rgbaToFillColor(rosColorRGBA) {
 	return `rgba(${r255}, ${g255}, ${b255}, ${a})`;
 }
 
-function drawMarkers(){
+async function drawMarkers(){
 
 	function drawCircle(marker, size){
 		ctx.scale(marker.scale.x, marker.scale.y);
