@@ -299,6 +299,7 @@ window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);
 
 resizeScreen();
-updateVisibility();
+
+window.addEventListener("tf_changed", updateVisibility, {once : true});
 
 console.log("TF Widget Loaded {uniqueID}")
