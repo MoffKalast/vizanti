@@ -1,9 +1,16 @@
-import { view } from '/js/modules/view.js';
-import { tf } from '/js/modules/tf.js';
-import { rosbridge } from '/js/modules/rosbridge.js';
-import { settings } from '/js/modules/persistent.js';
-import { navsat } from './js/modules/navsat.js';
-import { Status } from '/js/modules/status.js';
+let viewModule = await import(`${base_url}/js/modules/view.js`);
+let tfModule = await import(`${base_url}/js/modules/tf.js`);
+let rosbridgeModule = await import(`${base_url}/js/modules/rosbridge.js`);
+let persistentModule = await import(`${base_url}/js/modules/persistent.js`);
+let navsatModule = await import(`${base_url}/js/modules/navsat.js`);
+let StatusModule = await import(`${base_url}/js/modules/status.js`);
+
+let view = viewModule.view;
+let tf = tfModule.tf;
+let rosbridge = rosbridgeModule.rosbridge;
+let settings = persistentModule.settings;
+let navsat = navsatModule.navsat;
+let Status = StatusModule.Status;
 
 let status = new Status(
 	document.getElementById("{uniqueID}_icon"),

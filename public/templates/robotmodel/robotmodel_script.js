@@ -1,15 +1,20 @@
-import { view } from '/js/modules/view.js';
-import { tf } from '/js/modules/tf.js';
-import { settings } from '/js/modules/persistent.js';
-import { Status } from '/js/modules/status.js';
+let viewModule = await import(`${base_url}/js/modules/view.js`);
+let tfModule = await import(`${base_url}/js/modules/tf.js`);
+let persistentModule = await import(`${base_url}/js/modules/persistent.js`);
+let StatusModule = await import(`${base_url}/js/modules/status.js`);
+let pathsModule = await import(`${base_url}/assets/robot_model/paths`);
 
-import paths from '/assets/robot_model/paths';
+let view = viewModule.view;
+let tf = tfModule.tf;
+let settings = persistentModule.settings;
+let Status = StatusModule.Status;
+let paths = pathsModule.default;
 
 let models = {};
 paths.map(file => {
 	const name = file.split('.png')[0].split("_")[1];
 	models[name] = new Image();
-	models[name].src = "assets/robot_model/"+file;
+	models[name].src = `${base_url}/assets/robot_model/${file}`;
 });
 
 let status = new Status(
