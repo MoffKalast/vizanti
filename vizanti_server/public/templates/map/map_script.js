@@ -231,9 +231,9 @@ function connect(){
 	listener = map_topic.subscribe((msg) => {
 
 		map_data = msg;
-		map_canvas = document.createElement('canvas');
+		let new_canvas = document.createElement('canvas');
 
-		const mapctx = map_canvas.getContext('2d');
+		const mapctx = new_canvas.getContext('2d');
 
 		const width = msg.info.width;
 		const height = msg.info.height;
@@ -244,9 +244,8 @@ function connect(){
 			return;
 		}
 	  
-	  
-		map_canvas.width = width;
-		map_canvas.height = height;
+		new_canvas.width = width;
+		new_canvas.height = height;
 	  
 		let map_img = mapctx.createImageData(width, height);
 
@@ -303,11 +302,14 @@ function connect(){
 			}
 		}
 
-		mapctx.putImageData(map_img, 0, 0);
+		setTimeout(()=>{
+			mapctx.putImageData(map_img, 0, 0);
+			map_canvas = new_canvas;
+			
+			drawMap();
+			status.setOK();
+		},1);
 
-		drawMap();
-
-		status.setOK();
 	});
 
 	saveSettings();
