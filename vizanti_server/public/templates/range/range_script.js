@@ -118,6 +118,8 @@ async function drawRanges() {
 		
 		ctx.restore();
 
+		yieldToMainThread();
+
 	}
 }
 
