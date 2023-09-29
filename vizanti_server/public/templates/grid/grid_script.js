@@ -40,7 +40,6 @@ async function drawGrid() {
     const wid = canvas.width;
     const hei = canvas.height;
 
-    ctx.clearRect(0, 0, wid, hei);
     ctx.strokeStyle = grid_colour;
 	ctx.lineWidth = grid_thickness;
 
@@ -57,6 +56,7 @@ async function drawGrid() {
 	const linesY = (maxY-minY)/grid_size;
 
 	if(linesX > 200 || linesY > 200){
+		ctx.clearRect(0, 0, wid, hei);
 		status.setWarn("Too many lines to render, increase step size.");
 		return;
 	}
@@ -95,6 +95,7 @@ async function drawGrid() {
         ctx.lineTo(parseInt(to.x), parseInt(to.y));
     }
 
+	ctx.clearRect(0, 0, wid, hei);
 	ctx.stroke();
 	
 	status.setOK();
