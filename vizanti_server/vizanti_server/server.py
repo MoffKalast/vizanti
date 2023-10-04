@@ -12,6 +12,8 @@ from ament_index_python.packages import get_package_share_directory
 
 from pathlib import Path
 
+param_base_url = ""
+
 def get_public_dir():
     p = Path(__file__).resolve()
     path = p.parents[1] / 'public'
@@ -55,19 +57,15 @@ def get_paths(path, valid_extensions):
 	response.headers['Content-Type'] = 'application/javascript'
 	return response
 
-@app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', base_url=param_base_url)
 
-@app.route('/templates/files')
 def list_template_files():
 	return get_files("templates", ['.html', '.js', '.css'])
 
-@app.route('/assets/robot_model/paths')
 def list_robot_model_files():
 	return get_paths("assets/robot_model", ['.png'])
 
-@app.route('/<path:path>')
 def serve_static(path):
     return send_from_directory(app.static_folder, path)
 
@@ -99,21 +97,30 @@ class ServerThread(threading.Thread):
         self.srv.shutdown()
 
 def main(args=None):
+    global param_base_url
+
     rclpy.init(args=args)
     node = rclpy.create_node('vizanti_flask_node')
 
     node.declare_parameter('host', '0.0.0.0')
     node.declare_parameter('port', 5000)
     node.declare_parameter('flask_debug', True)
+    node.declare_parameter('base_url', "")
 
     param_host = node.get_parameter('host').value
     param_port = node.get_parameter('port').value
+    param_base_url = node.get_parameter('base_url').value
+
     app.debug = node.get_parameter('flask_debug').value
-    
+    app.add_url_rule(param_base_url + '/', 'index', index)
+    app.add_url_rule(param_base_url + '/templates/files', 'list_template_files', list_template_files)
+    app.add_url_rule(param_base_url + '/assets/robot_model/paths', 'list_robot_model_files', list_robot_model_files)
+    app.add_url_rule(param_base_url + '/<path:path>', 'serve_static', serve_static)
+
     server = ServerThread(app, param_host, param_port)
     server.start()
 
-    node.get_logger().info(f"Flask server running at http://{param_host}:{param_port}")
+    node.get_logger().info(f"Flask server running at http://{param_host}:{param_port}{param_base_url}")
     node.get_logger().info(f"Public directory set as {get_public_dir()}")
 
     rclpy.spin(node)
