@@ -67,6 +67,7 @@ icons["costmap"] = await imageToDataURL("assets/costmap.svg");
 let listener = undefined;
 let map_topic = undefined;
 let map_data = undefined;
+let new_map_data = undefined;
 
 const worker_thread = new Worker(`${base_url}/templates/map/map_worker.js`);
 const map_canvas = document.createElement('canvas');
@@ -88,6 +89,12 @@ const saveButton = document.getElementById('{uniqueID}_save');
 
 const costmapCheckbox = document.getElementById('{uniqueID}_costmap_mode');
 costmapCheckbox.addEventListener('change', saveSettings);
+
+const throttle = document.getElementById('{uniqueID}_throttle');
+throttle.addEventListener("input", (event) =>{
+	saveSettings();
+	connect();
+});
 
 loadButton.addEventListener('click',  async () => {
 	let path = loadPathBox.value;
@@ -143,6 +150,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	opacityValue.innerText = loaded_data.opacity;
 
 	costmapCheckbox.checked =  loaded_data.costmap_mode ?? false;
+	throttle.value = loaded_data.throttle ?? 1000;
 
 	if(costmapCheckbox.checked){
 		icon.src = icons["costmap"];
@@ -158,7 +166,8 @@ function saveSettings(){
 	settings["{uniqueID}"] = {
 		topic: topic,
 		opacity: opacitySlider.value,
-		costmap_mode: costmapCheckbox.checked
+		costmap_mode: costmapCheckbox.checked,
+		throttle: throttle.value
 	}
 	settings.save();
 }
@@ -166,13 +175,8 @@ function saveSettings(){
 //Rendering
 
 async function drawMap(){
-	const wid = canvas.width;
-    const hei = canvas.height;
 
-	ctx.clearRect(0, 0, wid, hei);
-	ctx.imageSmoothingEnabled = false;
-
-	if(!map_canvas || !map_data)
+	if(!map_data)
 		return;
 
 	const map_width = view.getMapUnitsInPixels(
@@ -183,32 +187,23 @@ async function drawMap(){
 		map_canvas.height * map_data.info.resolution
 	);
 
-	const frame = tf.absoluteTransforms[map_data.header.frame_id];
+	const pos = view.fixedToScreen({
+		x: map_data.pose.translation.x,
+		y: map_data.pose.translation.y,
+	});
 
-	if(frame){
+	const yaw = map_data.pose.rotation.toEuler().h;
 
-		let transformed = tf.transformPose(
-			map_data.header.frame_id,
-			tf.fixed_frame,
-			map_data.info.origin.position,
-			map_data.info.origin.orientation
-		);
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	ctx.imageSmoothingEnabled = false;
 
-		const pos = view.fixedToScreen({
-			x: transformed.translation.x,
-			y: transformed.translation.y,
-		});
-	
-		const yaw = transformed.rotation.toEuler().h;
-
-		ctx.save();
-		ctx.globalAlpha = opacitySlider.value;
-		ctx.translate(pos.x, pos.y);
-		ctx.scale(1.0, -1.0);
-		ctx.rotate(yaw);
-		ctx.drawImage(map_canvas, 0, 0, map_width, map_height);
-		ctx.restore();
-	}
+	ctx.save();
+	ctx.globalAlpha = opacitySlider.value;
+	ctx.translate(pos.x, pos.y);
+	ctx.scale(1.0, -1.0);
+	ctx.rotate(yaw);
+	ctx.drawImage(map_canvas, 0, 0, map_width, map_height);
+	ctx.restore();
 }
 
 //Topic
@@ -228,16 +223,18 @@ function connect(){
 		ros : rosbridge.ros,
 		name : topic,
 		messageType : 'nav_msgs/OccupancyGrid',
-		throttle_rate: 1000, // throttle to once every second max
+		throttle_rate: parseInt(throttle.value), // throttle to once every second max
 		compression: "cbor"
-		
 	});
 
 	status.setWarn("No data received.");
 
 	worker_thread.onmessage = () => {
-		drawMap();
-		status.setOK();
+		setTimeout(()=>{
+			map_data = new_map_data;
+			drawMap();
+			status.setOK();
+		},12);
 	};
 	
 	listener = map_topic.subscribe((msg) => {
@@ -247,7 +244,20 @@ function connect(){
 			return;
 		}
 
-		map_data = msg;
+		if(!tf.absoluteTransforms[msg.header.frame_id]){
+			status.setError("Required transform frame not found.");
+			return;
+		}
+
+		msg.pose = tf.transformPose(
+			msg.header.frame_id,
+			tf.fixed_frame,
+			msg.info.origin.position,
+			msg.info.origin.orientation
+		);
+
+		new_map_data = msg;
+		map_data = undefined;
 
 		worker_thread.postMessage({
 			map_msg: msg,
@@ -292,8 +302,11 @@ costmapCheckbox.addEventListener("change", (event) => {
 
 selectionbox.addEventListener("change", (event) => {
 	topic = selectionbox.value;
+
 	map_data = undefined;
-	map_canvas = undefined;
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	ctx.imageSmoothingEnabled = false;
+
 	connect();
 });
 
