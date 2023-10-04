@@ -96,7 +96,7 @@ let active = false;
 let start_point = undefined;
 let end_point = undefined;
 
-function drawBox() {
+async function drawBox() {
     const wid = canvas.width;
     const hei = canvas.height;
 

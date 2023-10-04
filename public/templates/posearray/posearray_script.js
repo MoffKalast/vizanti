@@ -66,7 +66,7 @@ function saveSettings(){
 
 //Rendering
 
-function drawArrows(){
+async function drawArrows(){
 
 	function drawArrow(size){
 		const height = parseInt(size*0.5);

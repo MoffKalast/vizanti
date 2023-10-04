@@ -120,6 +120,12 @@ export class TF {
 				setListener();
 			}
 		},1000);
+
+		this.event_timestamp = performance.now();
+
+		window.addEventListener("view_changed", ()=> {
+			this.event_timestamp = performance.now();
+		});
 	}
 
 	/* interpolateTransforms() {
@@ -174,6 +180,13 @@ export class TF {
 			this.updateTransforms(interpolatedTransforms);
 		}
 	} */
+
+	async sendUpdateEvent(){
+		if(performance.now() - this.event_timestamp > 12){
+			window.dispatchEvent(new Event("tf_changed"));
+			this.event_timestamp = performance.now();
+		}
+	}
 
 	addToTree(parentFrameId, childFrameId) {
 
@@ -250,7 +263,7 @@ export class TF {
 		});
 
 		this.recalculateAbsoluteTransforms();
-		window.dispatchEvent(new Event('tf_changed'));
+		this.sendUpdateEvent();
 	}
 
 	setFixedFrame(newframe) {

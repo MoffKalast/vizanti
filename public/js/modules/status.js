@@ -7,8 +7,7 @@ export class Status {
         this.message = message_element;
     }
 
-
-    setOK(message){
+    async setOK(message){
         this.icon.classList.remove("icon-error");
         this.icon.classList.remove("icon-warn");
 
@@ -22,7 +21,7 @@ export class Status {
         }        
     }
 
-    setWarn(message){
+    async setWarn(message){
         this.icon.classList.remove("icon-error");
         this.icon.classList.add("icon-warn");
 
@@ -33,7 +32,7 @@ export class Status {
 
     }
 
-    setError(message){
+    async setError(message){
         this.icon.classList.remove("icon-warn");
         this.icon.classList.add("icon-error");
 

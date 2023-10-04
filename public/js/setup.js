@@ -34,6 +34,12 @@ function closeModal(id){
 	document.getElementById(id).style.display = "none";
 }
 
+function yieldToMainThread () {
+	return new Promise(resolve => {
+	  setTimeout(resolve, 0);
+	});
+  }
+
 //modal closing
 document.addEventListener("click", function(event){
 	if(event.target.classList.contains("modal_outer")) {

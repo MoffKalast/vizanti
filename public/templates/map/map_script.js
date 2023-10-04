@@ -67,7 +67,12 @@ icons["costmap"] = await imageToDataURL("assets/costmap.svg");
 let listener = undefined;
 let map_topic = undefined;
 let map_data = undefined;
-let map_canvas = undefined;
+
+const worker_thread = new Worker(`${base_url}/templates/map/map_worker.js`);
+const map_canvas = document.createElement('canvas');
+
+const offscreen_canvas = map_canvas.transferControlToOffscreen();
+worker_thread.postMessage({	canvas: offscreen_canvas}, [offscreen_canvas]);
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
@@ -160,14 +165,14 @@ function saveSettings(){
 
 //Rendering
 
-function drawMap(){
+async function drawMap(){
 	const wid = canvas.width;
     const hei = canvas.height;
 
 	ctx.clearRect(0, 0, wid, hei);
 	ctx.imageSmoothingEnabled = false;
 
-	if(!map_canvas)
+	if(!map_canvas || !map_data)
 		return;
 
 	const map_width = view.getMapUnitsInPixels(
@@ -229,86 +234,25 @@ function connect(){
 	});
 
 	status.setWarn("No data received.");
+
+	worker_thread.onmessage = () => {
+		drawMap();
+		status.setOK();
+	};
 	
 	listener = map_topic.subscribe((msg) => {
 
-		map_data = msg;
-		map_canvas = document.createElement('canvas');
-
-		const mapctx = map_canvas.getContext('2d');
-
-		const width = msg.info.width;
-		const height = msg.info.height;
-		const data = msg.data;
-
-		if(width == 0 || height == 0){
+		if(msg.info.width == 0 || msg.info.height == 0){
 			status.setWarn("Received empty map.");
 			return;
 		}
-	  
-		map_canvas.width = width;
-		map_canvas.height = height;
-	  
-		let map_img = mapctx.createImageData(width, height);
-	  
-		if(costmapCheckbox.checked)
-		{
-			// Iterate through the data array and set the canvas pixel colors
-			for (let i = 0; i < data.length; i++) {
-				let occupancyValue = data[i];
-				let color = 255; // White for unknown
 
-				if(occupancyValue < 0)
-					occupancyValue = 0;
+		map_data = msg;
 
-				color = (occupancyValue * 255) / 100;
-
-				if(occupancyValue == 100){
-					map_img.data[i * 4] = 255; // R
-					map_img.data[i * 4 + 1] = 0; // G
-					map_img.data[i * 4 + 2] = 128; // B
-					map_img.data[i * 4 + 3] = 255; // A
-				}
-				else if(occupancyValue > 80){
-					map_img.data[i * 4] = 0; // R
-					map_img.data[i * 4 + 1] = 255; // G
-					map_img.data[i * 4 + 2] = 255; // B
-					map_img.data[i * 4 + 3] = 255; // A
-				}
-				else{
-					map_img.data[i * 4] = color; // R
-					map_img.data[i * 4 + 1] = 0; // G
-					map_img.data[i * 4 + 2] = 255-color; // B
-					map_img.data[i * 4 + 3] = parseInt(occupancyValue*2.55); // A
-				}
-			}
-		}
-		else
-		{
-			// Iterate through the data array and set the canvas pixel colors
-			for (let i = 0; i < data.length; i++) {
-				let occupancyValue = data[i];
-				let color = 255; // White for unknown
-
-				if(occupancyValue < 0)
-					occupancyValue = 50;
-
-				if (occupancyValue >= 0 && occupancyValue <= 100) {
-					color = 255 - (occupancyValue * 255) / 100;
-				}
-
-				map_img.data[i * 4] = color; // R
-				map_img.data[i * 4 + 1] = color; // G
-				map_img.data[i * 4 + 2] = color; // B
-				map_img.data[i * 4 + 3] = 255; // A
-			}
-		}
-
-		mapctx.putImageData(map_img, 0, 0);
-
-		drawMap();
-
-		status.setOK();
+		worker_thread.postMessage({
+			map_msg: msg,
+			is_costmap: costmapCheckbox.checked,
+		});
 	});
 
 	saveSettings();

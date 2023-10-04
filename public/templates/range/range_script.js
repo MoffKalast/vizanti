@@ -62,7 +62,7 @@ function saveSettings(){
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d');
 
-function drawRanges() {
+async function drawRanges() {
 
 	function drawPizza(start_angle, end_angle, min_len, max_len){
         ctx.beginPath();
@@ -115,6 +115,8 @@ function drawRanges() {
 		drawPizza(start_angle, end_angle, minarc, unit*sample.range)
 		
 		ctx.restore();
+
+		yieldToMainThread();
 
 	}
 }
