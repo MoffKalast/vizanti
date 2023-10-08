@@ -1,4 +1,4 @@
-import '/js/lib/roslib.min.js';
+import '../lib/roslib.min.js';
 
 class Rosbridge {
 

@@ -1,8 +1,14 @@
-import { view } from '/js/modules/view.js';
-import { tf } from '/js/modules/tf.js';
-import { rosbridge } from '/js/modules/rosbridge.js';
-import { settings } from '/js/modules/persistent.js';
-import { Status } from '/js/modules/status.js';
+let viewModule = await import(`${base_url}/js/modules/view.js`);
+let tfModule = await import(`${base_url}/js/modules/tf.js`);
+let rosbridgeModule = await import(`${base_url}/js/modules/rosbridge.js`);
+let persistentModule = await import(`${base_url}/js/modules/persistent.js`);
+let StatusModule = await import(`${base_url}/js/modules/status.js`);
+
+let view = viewModule.view;
+let tf = tfModule.tf;
+let rosbridge = rosbridgeModule.rosbridge;
+let settings = persistentModule.settings;
+let Status = StatusModule.Status;
 
 let topic = getTopic("{uniqueID}");
 let status = new Status(
@@ -56,7 +62,7 @@ function saveSettings(){
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d');
 
-function drawRanges() {
+async function drawRanges() {
 
 	function drawPizza(start_angle, end_angle, min_len, max_len){
         ctx.beginPath();
@@ -111,6 +117,8 @@ function drawRanges() {
 		drawPizza(start_angle, end_angle, minarc, unit*sample.range)
 		
 		ctx.restore();
+
+		yieldToMainThread();
 
 	}
 }

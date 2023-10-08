@@ -47,6 +47,26 @@ export class View {
 		document.addEventListener("DOMContentLoaded", () => {
 			this.addListeners();
 		});
+
+		this.event_timestamp = performance.now();
+		this.event_timeout = undefined;
+	}
+
+	async sendUpdateEvent(){
+
+		if (this.event_timeout !== undefined) {
+			clearTimeout(this.event_timeout);
+		}
+		const delta = performance.now() - this.event_timestamp
+
+		if(delta > 12){
+			window.dispatchEvent(new Event("view_changed"));
+			this.event_timestamp = performance.now();
+		}else{
+			this.event_timeout = setTimeout(() => {
+				window.dispatchEvent(new Event("view_changed"));
+			}, 12 - delta);
+		}
 	}
 
 	setInputMovementEnabled(value){
@@ -61,7 +81,7 @@ export class View {
 		settings.view.center = this.center;
 		settings.view.scale = this.scale;
 		settings.save();
-		window.dispatchEvent(new Event("view_changed"));
+		this.sendUpdateEvent();
 	}
 
 	fixedToScreen(coords) {
@@ -147,7 +167,7 @@ export class View {
 
 		settings.view.center = this.center;
 		settings.save();
-		window.dispatchEvent(new Event("view_changed"));
+		this.sendUpdateEvent();
 	}
 	
 	handleDragEnd() {
@@ -194,8 +214,7 @@ export class View {
 		settings.view.center = this.center;
 		settings.view.scale = this.scale;
 		settings.save();
-	
-		window.dispatchEvent(new Event("view_changed"));
+		this.sendUpdateEvent();
 	}
 
 	addListeners(){

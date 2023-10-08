@@ -1,6 +1,10 @@
-import { view } from '/js/modules/view.js';
-import { settings } from '/js/modules/persistent.js';
-import { Status } from '/js/modules/status.js';
+let viewModule = await import(`${base_url}/js/modules/view.js`);
+let persistentModule = await import(`${base_url}/js/modules/persistent.js`);
+let StatusModule = await import(`${base_url}/js/modules/status.js`);
+
+let view = viewModule.view;
+let settings = persistentModule.settings;
+let Status = StatusModule.Status;
 
 let status = new Status(
 	document.getElementById("{uniqueID}_icon"),
@@ -32,11 +36,10 @@ function saveSettings(){
 	settings.save();
 }
 
-function drawGrid() {
+async function drawGrid() {
     const wid = canvas.width;
     const hei = canvas.height;
 
-    ctx.clearRect(0, 0, wid, hei);
     ctx.strokeStyle = grid_colour;
 	ctx.lineWidth = grid_thickness;
 
@@ -53,6 +56,7 @@ function drawGrid() {
 	const linesY = (maxY-minY)/grid_size;
 
 	if(linesX > 200 || linesY > 200){
+		ctx.clearRect(0, 0, wid, hei);
 		status.setWarn("Too many lines to render, increase step size.");
 		return;
 	}
@@ -91,6 +95,7 @@ function drawGrid() {
         ctx.lineTo(parseInt(to.x), parseInt(to.y));
     }
 
+	ctx.clearRect(0, 0, wid, hei);
 	ctx.stroke();
 	
 	status.setOK();

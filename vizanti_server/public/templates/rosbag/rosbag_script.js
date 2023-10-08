@@ -1,5 +1,8 @@
-import { rosbridge } from '/js/modules/rosbridge.js';
-import { settings } from '/js/modules/persistent.js';
+let rosbridgeModule = await import(`${base_url}/js/modules/rosbridge.js`);
+let persistentModule = await import(`${base_url}/js/modules/persistent.js`);
+
+let rosbridge = rosbridgeModule.rosbridge;
+let settings = persistentModule.settings;
 
 let path = "~/recording.bag";
 let topic_list = new Set();

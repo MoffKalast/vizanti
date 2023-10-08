@@ -1,7 +1,12 @@
-import { rosbridge } from '/js/modules/rosbridge.js';
-import { settings } from '/js/modules/persistent.js';
-import { nipplejs } from '/js/modules/joystick.js';
-import { Status } from '/js/modules/status.js';
+let rosbridgeModule = await import(`${base_url}/js/modules/rosbridge.js`);
+let persistentModule = await import(`${base_url}/js/modules/persistent.js`);
+let joystickModule = await import(`${base_url}/js/modules/joystick.js`);
+let StatusModule = await import(`${base_url}/js/modules/status.js`);
+
+let rosbridge = rosbridgeModule.rosbridge;
+let settings = persistentModule.settings;
+let nipplejs = joystickModule.nipplejs;
+let Status = StatusModule.Status;
 
 let topic = getTopic("{uniqueID}");
 let status = new Status(
