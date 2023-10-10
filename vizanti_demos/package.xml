@@ -4,8 +4,12 @@
   <name>vizanti_demos</name>
   <version>0.0.1</version>
   <description>Demonstration package for Vizanti</description>
-  <maintainer email="vid.rijavec@gmail.com">osboxes</maintainer>
-  <license>BSD3</license>
+  <maintainer email="vid.rijavec@gmail.com">MoffKalast</maintainer>
+  <maintainer email="albradford2468@gmail.com">Alastair Bradford</maintainer>
+  <license>BSD</license>
+  <author email="vid.rijavec@gmail.com">MoffKalast</author>
+  <url type="bugtracker">https://github.com/MoffKalast/vizanti/issues</url>
+  <url type="repository">https://github.com/MoffKalast/vizanti/tree/ros2</url>
   <export>
     <build_type>ament_python</build_type>
   </export>

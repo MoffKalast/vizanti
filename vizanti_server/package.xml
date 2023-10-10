@@ -5,8 +5,9 @@
     <maintainer email="vid.rijavec@gmail.com">MoffKalast</maintainer>
     <maintainer email="albradford2468@gmail.com">Alastair Bradford</maintainer>
     <license>BSD</license>
-
     <author email="vid.rijavec@gmail.com">MoffKalast</author>
+    <url type="bugtracker">https://github.com/MoffKalast/vizanti/issues</url>
+    <url type="repository">https://github.com/MoffKalast/vizanti/tree/ros2</url>
 
     <depend>std_srvs</depend>
     <depend>tf2_msgs</depend>
