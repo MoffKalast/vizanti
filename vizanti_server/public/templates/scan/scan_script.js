@@ -169,6 +169,7 @@ function connect(){
 		data.pose = pose;
 		data.msg = msg;
 		status.setOK();
+		drawScan();
 	});
 
 	saveSettings();

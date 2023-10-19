@@ -208,6 +208,7 @@ function connect(){
 			data.pose = pose;
 			data.points = pointarray;
 			status.setOK();
+			drawCloud();
 		}
 	});
 
