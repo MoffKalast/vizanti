@@ -178,19 +178,12 @@ async function drawMarkers(){
 		if((current_time - marker.stamp)/1000.0 > marker.lifetime.sec + marker.lifetime.nanosec*1e-9)
 			continue;
 
-		let transformed = tf.transformPose(
-			marker.header.frame_id, 
-			tf.fixed_frame, 
-			marker.pose.position, 
-			marker.pose.orientation
-		);
-
 		const pos = view.fixedToScreen({
-			x: transformed.translation.x,
-			y: transformed.translation.y
+			x: marker.transformed.translation.x,
+			y: marker.transformed.translation.y
 		});
 
-		const yaw = transformed.rotation.toEuler().h;
+		const yaw = marker.transformed.rotation.toEuler().h;
 
 		ctx.save();
 		ctx.translate(pos.x, pos.y);
@@ -257,6 +250,13 @@ function connect(){
 			if(q.x == 0 && q.y == 0 && q.z == 0 && q.w == 0)
 				m.pose.orientation = new Quaternion();
 		
+			m.transformed = tf.transformPose(
+				m.header.frame_id, 
+				tf.fixed_frame, 
+				m.pose.position, 
+				m.pose.orientation
+			);
+
 			m.stamp = new Date();	
 			markers[id] = m;
 		});
