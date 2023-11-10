@@ -74,6 +74,7 @@ if (settings.hasOwnProperty('{uniqueID}')) {
 
 	linearVelValue.textContent = linearVelSlider.value;
 	angularVelValue.textContent = angularVelSlider.value;
+	accelValue.textContent = accelSlider.value;
 }else{
 	saveSettings();
 }
