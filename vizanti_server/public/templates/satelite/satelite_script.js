@@ -34,6 +34,7 @@ const tileServerString = document.getElementById('{uniqueID}_tileserver');
 const opacitySlider = document.getElementById('{uniqueID}_opacity');
 const opacityValue = document.getElementById('{uniqueID}_opacity_value');
 const smoothingCheckbox = document.getElementById('{uniqueID}_smoothing');
+const ignoreRotationCheckbox = document.getElementById('{uniqueID}_ignore_rotation');
 
 const placeholder = new Image();
 placeholder.src = "assets/tile_loading.png";
@@ -44,6 +45,7 @@ opacitySlider.addEventListener('input', function () {
 });
 
 smoothingCheckbox.addEventListener('change', saveSettings);
+ignoreRotationCheckbox.addEventListener('change', saveSettings);
 
 tileServerString.addEventListener('input', function () {
 	server_url = this.value;
@@ -70,6 +72,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 		copyright = "";
 
 	smoothingCheckbox.checked = loaded_data.smoothing;
+	ignoreRotationCheckbox.checked = loaded_data.ignore_rotation ?? false;
 
 	opacitySlider.value = loaded_data.opacity;
 	opacityValue.innerText = loaded_data.opacity;
@@ -82,7 +85,8 @@ function saveSettings(){
 		topic: topic,
 		server_url: server_url,
 		opacity: opacitySlider.value,
-		smoothing: smoothingCheckbox.checked
+		smoothing: smoothingCheckbox.checked,
+		ignore_rotation: ignoreRotationCheckbox.checked
 	}
 	settings.save();
 }
@@ -103,12 +107,27 @@ function drawTile(screenSize, i, j){
 		navsat.enqueue(tileURL);
 	}
 
-	let transformed = tf.transformPose(
-		map_fix.header.frame_id,
-		tf.fixed_frame,
-		{x: -offsetX, y: offsetY, z: 0},
-		new Quaternion()
-	);
+	let transformed = undefined;
+
+	if(!ignoreRotationCheckbox.checked){
+		transformed = tf.transformPose(
+			map_fix.header.frame_id,
+			tf.fixed_frame,
+			{x: -offsetX, y: offsetY, z: 0},
+			new Quaternion()
+		);
+	}else{
+		transformed = tf.transformPose(
+			map_fix.header.frame_id,
+			tf.fixed_frame,
+			{x: 0, y: 0, z: 0},
+			new Quaternion()
+		);
+
+		transformed.translation.x -= offsetX;
+		transformed.translation.y += offsetY;
+		transformed.rotation = Quaternion()
+	}
 
 	const pos = view.fixedToScreen({
 		x: transformed.translation.x,
