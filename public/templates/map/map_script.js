@@ -90,6 +90,9 @@ const saveButton = document.getElementById('{uniqueID}_save');
 const costmapCheckbox = document.getElementById('{uniqueID}_costmap_mode');
 costmapCheckbox.addEventListener('change', saveSettings);
 
+const timestampCheckbox = document.getElementById('{uniqueID}_use_timestamp');
+timestampCheckbox.addEventListener('change', saveSettings);
+
 const throttle = document.getElementById('{uniqueID}_throttle');
 throttle.addEventListener("input", (event) =>{
 	saveSettings();
@@ -150,6 +153,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	opacityValue.innerText = loaded_data.opacity;
 
 	costmapCheckbox.checked =  loaded_data.costmap_mode ?? false;
+	timestampCheckbox.checked = loaded_data.use_timestamp ?? false;
 	throttle.value = loaded_data.throttle ?? 1000;
 
 	if(costmapCheckbox.checked){
@@ -167,7 +171,8 @@ function saveSettings(){
 		topic: topic,
 		opacity: opacitySlider.value,
 		costmap_mode: costmapCheckbox.checked,
-		throttle: throttle.value
+		throttle: throttle.value,
+		use_timestamp: timestampCheckbox.checked
 	}
 	settings.save();
 }
@@ -187,12 +192,23 @@ async function drawMap(){
 		map_canvas.height * map_data.info.resolution
 	);
 
+	let tf_pose = map_data.pose;
+
+	if(!timestampCheckbox.checked){
+		tf_pose = tf.transformPose(
+			map_data.header.frame_id,
+			tf.fixed_frame,
+			map_data.info.origin.position,
+			map_data.info.origin.orientation
+		);
+	}
+
 	const pos = view.fixedToScreen({
-		x: map_data.pose.translation.x,
-		y: map_data.pose.translation.y,
+		x: tf_pose.translation.x,
+		y: tf_pose.translation.y,
 	});
 
-	const yaw = map_data.pose.rotation.toEuler().h;
+	const yaw = tf_pose.rotation.toEuler().h;
 
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	ctx.imageSmoothingEnabled = false;

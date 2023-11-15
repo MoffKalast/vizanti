@@ -5,6 +5,7 @@ export function imageToDataURL(url) {
 			const object = document.createElement("object");
 			object.style.position = "absolute";
   			object.style.left = "-9999px";//trick chrome to hide the elements, since it doesn't fetch if display is set to none
+			object.style.visibility = "hidden";
 			object.type = "image/svg+xml";
 			object.data = url;
 			object.onload = () => {
