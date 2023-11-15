@@ -59,12 +59,14 @@ function saveSettings(){
 async function drawMarkers(){
 
 	function drawCircle(size){
+		ctx.fillStyle = "rgba(139, 0, 0, 0.9)";
 		ctx.beginPath();
 		ctx.arc(0, 0, size/2, 0, 2 * Math.PI, false);
 		ctx.fill();
 	}
 
 	function drawArrow(size){
+		ctx.fillStyle = "rgba(139, 0, 0, 0.9)";
 		const height = parseInt(size*2.0);
 		const width = parseInt(size*0.1*0.6)+1;
 		const tip = parseInt(size*0.24)+1;
@@ -81,25 +83,51 @@ async function drawMarkers(){
 		ctx.lineTo(0, -width);
 		ctx.fill();
 	}
+	function drawPizza(start_angle, end_angle, min_len, max_len){
+        ctx.beginPath();
+        ctx.arc(0, 0, min_len, start_angle, end_angle);
+        ctx.lineTo(max_len * Math.cos(end_angle), max_len * Math.sin(end_angle));
+        ctx.arc(0, 0, max_len, end_angle, start_angle, true);
+        ctx.lineTo(min_len * Math.cos(start_angle), min_len * Math.sin(start_angle));
+        ctx.closePath();
+        ctx.fill();
+	}
 	
-	function drawCovariance(covariance, size) {
-	  
-		// Extract the variance values for X and Y.
-		const varianceX = covariance[0];
-		const varianceY = covariance[7];
+	function drawTranslationalCovariance(covariance, size) {
+
+		const varianceX = Math.sqrt(covariance[0]);
+		const varianceY = Math.sqrt(covariance[7]);
 	  
 		// Compute the standard deviation, which will be the radius for our ellipse.
 		const radiusX = Math.sqrt(varianceX) * size;
 		const radiusY = Math.sqrt(varianceY) * size;
 	  
-		// Draw the ellipse. The factor of 3 is used to ensure that the 99.7% confidence interval is included.
+		// Compute the angle of rotation.
+		const theta = Math.atan2(covariance[1], covariance[0] - covariance[7]);
+
+		// Draw the ellipse.
+		ctx.fillStyle = 'rgba(204, 51, 204, 0.2)'; // Purple, semi-transparent
+
 		ctx.save();
-		ctx.scale(1, -1);
-		ctx.fillStyle = 'rgba(255, 255, 0, 0.2)'; // Yellow, semi-transparent
+		ctx.rotate(theta);
 		ctx.beginPath();
-		ctx.ellipse(0, 0, 3 * radiusX, 3 * radiusY, 0, 0, 2 * Math.PI);
+		ctx.ellipse(0, 0, radiusX, radiusY, 0, 0, 2 * Math.PI);
 		ctx.fill();
 		ctx.restore();
+	}
+
+	function drawAngularCovariance(covariance, size) {
+
+		// Calculate the 2-sigma standard deviation 
+		let angleUncertainty = 2 * Math.sqrt(covariance[35]);
+
+		if(angleUncertainty > Math.PI*2)
+			angleUncertainty = Math.PI*2;
+
+		const halfAngleZ = angleUncertainty * 0.5;
+
+		ctx.fillStyle = 'rgba(255, 255, 0, 0.4)'; // Yellow, semi-transparent
+		drawPizza(-halfAngleZ, halfAngleZ, 0, size*2);
 	}
 
 	const unit = view.getMapUnitsInPixels(1.0);
@@ -124,11 +152,10 @@ async function drawMarkers(){
 		if(!posemsg.rotation_invalid)
 			ctx.rotate(posemsg.yaw);
 
-		drawCovariance(posemsg.covariance, unit);
-
-		ctx.fillStyle = "rgba(139, 0, 0, 0.9)";
+		drawTranslationalCovariance(posemsg.covariance, unit);
 
 		if(!posemsg.rotation_invalid){
+			drawAngularCovariance(posemsg.covariance, unit);
 			drawArrow(scale);
 		}else{
 			drawCircle(scale*0.4);

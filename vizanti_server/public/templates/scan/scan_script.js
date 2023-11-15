@@ -102,23 +102,15 @@ async function drawScan() {
 		y: data.pose.translation.y,
 	});
 
-	let yaw = data.pose.rotation.toEuler().h;
-
 	ctx.save();
 	ctx.translate(pos.x, pos.y);
 	ctx.scale(1.0, -1.0);
-	ctx.rotate(yaw);
 
-	let delta = parseInt(pixel/2);
+	const delta = parseInt(pixel/2);
 
-	data.msg.ranges.forEach(function (item, index) {
-		if (item >= data.msg.range_min && item <= data.msg.range_max) {
-            const angle = data.msg.angle_min + index * data.msg.angle_increment;
-            const x = item * Math.cos(angle) * unit - delta;
-            const y = item * Math.sin(angle) * unit - delta;
-            ctx.fillRect(x, y, pixel, pixel);
-        }
-	});
+	for(let i = 0; i < data.points.length; i++){
+		ctx.fillRect(data.points[i].x * unit - delta, data.points[i].y * unit - delta, pixel, pixel);
+	}
 	
 	ctx.restore();
 }
@@ -165,10 +157,27 @@ function connect(){
 			return;
 		}
 
+		let rotatedPointCloud = [];
+		msg.ranges.forEach(function (item, index) {
+			if (item >= msg.range_min && item <= msg.range_max) {
+				const angle = msg.angle_min + index * msg.angle_increment;
+				rotatedPointCloud.push(tfModule.applyRotation(
+					{
+						x: item * Math.cos(angle), 
+						y: item * Math.sin(angle), 
+						z: 0 
+					}, 
+					pose.rotation, 
+					false
+				));
+			}
+		});
+
 		data = {};
 		data.pose = pose;
-		data.msg = msg;
+		data.points = rotatedPointCloud
 		status.setOK();
+		drawScan();
 	});
 
 	saveSettings();
