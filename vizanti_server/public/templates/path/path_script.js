@@ -109,7 +109,7 @@ function connect(){
 			const frame = tf.absoluteTransforms[point.header.frame_id];
 	
 			if(!frame){
-				status.setError("Required transform frame not found.");
+				status.setError("Required transform frame \""+point.header.frame_id+"\" not found.");
 				error = true;
 				return;
 			}

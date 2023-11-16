@@ -91,7 +91,7 @@ async function drawRobot() {
 		ctx.restore();
 		status.setOK();
 	}else{
-		status.setError("Required transform frame not found.");
+		status.setError("Required transform frame \""+frame+"\" not found.");
 	}
 }
 
