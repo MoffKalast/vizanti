@@ -73,11 +73,7 @@ export class TF {
 		this.absoluteTransforms = {};
 		//this.absoluteTransformsHistory = new TimeStampedData(20);
 		this.frame_list = new Set();
-
-		//this.previousTime = null;
-		//this.previousTransforms = null;
-		//this.lastReceivedTransforms = null;
-		//this.lastReceivedTime = null;
+		this.frame_timestamps = {};
 
 		this.tf_topic = new ROSLIB.Topic({
 			ros: rosbridge.ros,
@@ -86,21 +82,19 @@ export class TF {
 			throttle_rate: 33,
 			compression: "cbor"
 		});
-		
-		const setListener = () => {
-			this.tf_listener = this.tf_topic.subscribe((msg) => {
-				//this.previousTransforms = this.lastReceivedTransforms;
-				//this.previousTime = this.lastReceivedTime;
-	
-				//this.lastReceivedTransforms = msg.transforms;
-				//this.lastReceivedTime = performance.now();
 
-				this.updateTransforms(msg.transforms);
-				//this.absoluteTransformsHistory.add(msg.transforms[0].header.stamp, this.absoluteTransforms);
-			});
-		};
+		this.tf_listener = this.tf_topic.subscribe((msg) => {
 
-		setListener();
+			//local timestamping for removing inactive frames
+			const time_stamp = new Date();
+			msg.transforms.forEach((pose) => {
+				this.frame_timestamps[pose.child_frame_id] = time_stamp;
+				this.frame_timestamps[pose.header.frame_id] = time_stamp;
+			})
+
+			this.updateTransforms(msg.transforms, false);
+			//this.absoluteTransformsHistory.add(msg.transforms[0].header.stamp, this.absoluteTransforms);
+		});
 
 		this.tf_static_topic = new ROSLIB.Topic({
 			ros: rosbridge.ros,
@@ -109,23 +103,33 @@ export class TF {
 		});
 
 		this.tf_static_listener = this.tf_static_topic.subscribe((msg) => {
-			this.updateTransforms(msg.transforms);
+			this.updateTransforms(msg.transforms, true);
 		});
-
-		setInterval(()=>{
-			if(performance.now() - this.lastReceivedTime > 1000){
-				console.log('%c TF Connection Reset!', 'background: #222; color: #bada55');
-
-				this.tf_topic.unsubscribe(this.tf_listener);
-				setListener();
-			}
-		},1000);
 
 		this.event_timestamp = performance.now();
 
 		window.addEventListener("view_changed", ()=> {
 			this.event_timestamp = performance.now();
 		});
+
+		//removing inactive TF frames
+		setInterval(()=>{
+			const now = new Date()
+			let deleted_anything = false;
+			for (const [frame_id, time_stamp] of Object.entries(this.frame_timestamps)) {
+				if(now - time_stamp > 1000 * 10){
+					delete this.tf_tree[frame_id];
+					delete this.frame_list[frame_id];
+					delete this.transforms[frame_id];
+					delete this.absoluteTransforms[frame_id];
+					deleted_anything = true;
+				}
+			}
+
+			if(deleted_anything){
+				window.dispatchEvent(new Event("tf_changed"));
+			}
+		},5000)
 	}
 
 	/* interpolateTransforms() {

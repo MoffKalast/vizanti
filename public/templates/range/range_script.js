@@ -154,7 +154,6 @@ function connect(){
 	status.setWarn("No data received.");
 	
 	listener = range_topic.subscribe((msg) => {		
-		point
 		const pose = tf.absoluteTransforms[msg.header.frame_id];
 
 		if(!pose){
