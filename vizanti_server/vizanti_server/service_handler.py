@@ -5,6 +5,7 @@ import sys
 import rclpy
 import yaml
 import json
+import time
 
 from rclpy.node import Node
 
@@ -175,7 +176,7 @@ class ServiceHandler(Node):
             fcntl.fcntl(process.stdout, fcntl.F_SETFL, flags | os.O_NONBLOCK)
 
             # Wait for it to either fail or not
-            rclpy.sleep(1)
+            time.sleep(1)
 
             # Check if the process is still running
             if process.poll() is not None:
@@ -219,7 +220,7 @@ class ServiceHandler(Node):
                         break
 
                 # Sleep for a short period of time to avoid excessive CPU usage
-                rclpy.sleep(0.2)
+                time.sleep(0.2)
 
             res.success = True
             res.message = "Map saved successfully"
