@@ -90,20 +90,21 @@ async function drawRanges() {
 		if(current_time - sample.stamp > decay.value)
 			continue;
 
-		let pos = view.fixedToScreen({
+		if(sample.max_range == 0)
+			continue;
+
+		const pos = view.fixedToScreen({
 			x: sample.pose.translation.x,
 			y: sample.pose.translation.y,
 		});
-	
-		let yaw = sample.pose.rotation.toEuler().h;
 
-		let start_angle = -sample.field_of_view/2;
-		let end_angle = sample.field_of_view/2;
+		const start_angle = -sample.field_of_view/2;
+		const end_angle = sample.field_of_view/2;
 
 		ctx.save();
 		ctx.translate(pos.x, pos.y);
 		ctx.scale(1.0, -1.0);
-		ctx.rotate(yaw);
+		ctx.rotate(sample.yaw);
 
 		ctx.fillStyle = "#33414e96";
 		drawPizza(start_angle, end_angle, unit*sample.min_range, unit*sample.max_range)
@@ -164,11 +165,26 @@ function connect(){
 			return;
 		}
 
+		const front_vector = tfModule.applyRotation(
+			{
+				x: msg.max_range, 
+				y: 0,
+				z: 0 
+			}, 
+			pose.rotation, 
+			false
+		);
+
+		const yaw = Math.atan2(front_vector.y, front_vector.x);
+		const ratio = Math.hypot(front_vector.y, front_vector.x) / msg.max_range;
+		const angle = 3.14159 * (1.0 - ratio) + ratio * msg.field_of_view;
+
 		data[msg.header.frame_id] = {
-			field_of_view: msg.field_of_view,
-			min_range: msg.min_range,
-			max_range: msg.max_range,
-			range: msg.range,
+			yaw: yaw,
+			field_of_view: angle,
+			min_range: ratio * msg.min_range,
+			max_range: ratio * msg.max_range,
+			range: ratio * msg.range,
 			type: msg.radiation_type,
 			pose: pose,
 			stamp: new Date()
