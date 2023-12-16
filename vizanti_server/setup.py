@@ -43,7 +43,6 @@ setup(
     entry_points={
         "console_scripts": [
             "vizanti_flask_node = vizanti_server.server:main",
-            "vizanti_topic_handler_node = vizanti_server.topic_handler:main",
             "vizanti_service_handler_node = vizanti_server.service_handler:main",
         ],
     },

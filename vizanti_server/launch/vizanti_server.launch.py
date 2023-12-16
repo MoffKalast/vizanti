@@ -48,10 +48,10 @@ def generate_launch_description():
         ]
     )
 
-    topic_handler_node = launch_ros.actions.Node(
-        name='vizanti_topic_handler_node',
-        package='vizanti_server',
-        executable='vizanti_topic_handler_node',
+    tf_handler_node = launch_ros.actions.Node(
+        name='vizanti_tf_handler_node',
+        package='vizanti_cpp',
+        executable='tf_consolidator',
         output='screen'
     )
 
@@ -66,7 +66,7 @@ def generate_launch_description():
         rosbridge_node,
         rosapi_node,
         flask_node,
-        topic_handler_node,
+        tf_handler_node,
         service_handler_node
     ])
 

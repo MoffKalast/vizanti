@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>vizanti_cpp</name>
+  <version>0.0.1</version>
+  <description>An ament built package for any cpp nodes.</description>
+  <maintainer email="vid.rijavec@gmail.com">MoffKalast</maintainer>
+  <license>BSD</license>
+  <url type="bugtracker">https://github.com/MoffKalast/vizanti/issues</url>
+  <url type="repository">https://github.com/MoffKalast/vizanti/tree/ros2</url>
+
+  <depend>rclcpp</depend>
+  <depend>std_msgs</depend>
+  <depend>tf2_msgs</depend>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

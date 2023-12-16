@@ -196,7 +196,7 @@ class ServiceHandler(Node):
         file_path = os.path.expanduser(req.file_path)
         topic = req.topic
         try:
-            process = subprocess.Popen(["ros2", "run", "nav2_map_server", "map_saver", "-f", file_path, "map:=" + topic, "__name:=vizanti_map_saver"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            process = subprocess.Popen(["ros2", "run", "nav2_map_server", "map_saver_cli", "-f", file_path, "--ros-args", "map:=" + topic], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             flags = fcntl.fcntl(process.stdout, fcntl.F_GETFL)
             fcntl.fcntl(process.stdout, fcntl.F_SETFL, flags | os.O_NONBLOCK)
 
