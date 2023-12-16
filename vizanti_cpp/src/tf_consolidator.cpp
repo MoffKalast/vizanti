@@ -30,18 +30,6 @@ class TfConsolidator:public rclcpp::Node{
 			RCLCPP_INFO(get_logger(), "TF handler ready.");
 		}
 
-		/* void clear_old_tfs(){
-			for (const auto &key : transforms){
-				if (rclcpp::Clock().now().seconds() - transform_timeout[key.first].seconds() > 10.0){
-					const auto parent = transforms[key.first].header.frame_id;
-					transforms.erase(key.first);
-					transform_timeout.erase(key.first);
-					updated = true;
-					RCLCPP_WARN(get_logger(), "Deleted old TF link: %s -> %s", parent.c_str(), key.first.c_str());
-				}
-			}
-		} */
-
 		void clear_old_tfs(){
 			auto current_time = rclcpp::Clock().now();
 			for (auto it = transforms.begin(); it != transforms.end(); /* no increment */) {
@@ -85,7 +73,7 @@ int main(int argc, char *argv[])
 	rclcpp::init(argc, argv);
 	auto odr = std::make_shared<TfConsolidator>();
 
-	rclcpp::Rate rate(31);
+	rclcpp::Rate rate(30);
 	while (rclcpp::ok())
 	{
 		odr->publish();
