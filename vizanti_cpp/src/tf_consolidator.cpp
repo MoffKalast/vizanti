@@ -16,6 +16,7 @@ class TfConsolidator:public rclcpp::Node{
 		rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr tf_sub;
 		rclcpp::Publisher<tf2_msgs::msg::TFMessage>::SharedPtr tf_pub;
 		rclcpp::TimerBase::SharedPtr clear_timer;
+		rclcpp::TimerBase::SharedPtr publish_timer;
 
 		TfConsolidator():Node("vizanti_tf_consolidator"),  updated(false){
 			tf_sub = create_subscription<tf2_msgs::msg::TFMessage>("/tf", rclcpp::QoS(20), std::bind(&TfConsolidator::tf_callback, this, std::placeholders::_1));
@@ -26,6 +27,7 @@ class TfConsolidator:public rclcpp::Node{
 					.lifespan(rclcpp::Duration(0, 66000000))  // 66ms
 			);
 			clear_timer = create_wall_timer(std::chrono::seconds(5), std::bind(&TfConsolidator::clear_old_tfs, this));
+			publish_timer = create_wall_timer(std::chrono::milliseconds(33), std::bind(&TfConsolidator::publish, this));
 
 			RCLCPP_INFO(get_logger(), "TF handler ready.");
 		}
@@ -71,15 +73,8 @@ class TfConsolidator:public rclcpp::Node{
 int main(int argc, char *argv[])
 {
 	rclcpp::init(argc, argv);
-	auto odr = std::make_shared<TfConsolidator>();
-
-	rclcpp::Rate rate(30);
-	while (rclcpp::ok()){
-		rclcpp::spin_until_future_complete(odr, std::promise<bool>().get_future(), std::chrono::milliseconds(30)); //leave 3.3ms for publishing and sleep
-		odr->publish();
-		rate.sleep();
-	}
-
+	rclcpp::spin(std::make_shared<TfConsolidator>());
 	rclcpp::shutdown();
 	return 0;
 }
+
