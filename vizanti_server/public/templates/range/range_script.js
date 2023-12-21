@@ -64,6 +64,16 @@ const ctx = canvas.getContext('2d');
 
 async function drawRanges() {
 
+	function drawCircle(min_size, max_size) {
+		ctx.save();
+        ctx.beginPath();
+        ctx.arc(0, 0, (min_size+max_size)/2, 0, 2 * Math.PI);
+        ctx.closePath();
+		ctx.lineWidth = max_size - min_size;
+        ctx.stroke();
+		ctx.restore();
+	  }
+
 	function drawPizza(start_angle, end_angle, min_len, max_len){
         ctx.beginPath();
         ctx.arc(0, 0, min_len, start_angle, end_angle);
@@ -72,7 +82,7 @@ async function drawRanges() {
         ctx.lineTo(min_len * Math.cos(start_angle), min_len * Math.sin(start_angle));
         ctx.closePath();
         ctx.fill();
-	}
+	} 
 
 	const unit = view.getMapUnitsInPixels(1.0);
 
@@ -106,17 +116,40 @@ async function drawRanges() {
 		ctx.scale(1.0, -1.0);
 		ctx.rotate(sample.yaw);
 
-		ctx.fillStyle = "#33414e96";
-		drawPizza(start_angle, end_angle, unit*sample.min_range, unit*sample.max_range)
+		if(sample.cone_half_width < sample.max_range)
+		{
+			ctx.fillStyle = "#33414e96";
+			drawPizza(start_angle, end_angle, unit*sample.min_range, unit*sample.max_range, unit*sample.cone_half_width)
 
-		ctx.fillStyle = "#5eb4ffff";
-		let minarc = unit*sample.range-10;
+			ctx.fillStyle = "#5eb4ffff";
+			let minarc = unit*sample.range-10;
+	
+			if(minarc < 0)
+				minarc = 1;
+	
+			drawPizza(start_angle, end_angle, minarc, unit*sample.range, unit*sample.cone_half_width)
+			
+		}
+		else
+		{
+			ctx.strokeStyle = "#33414e96";
+			const scale = sample.cone_half_width / sample.max_range;
+			const min_range = sample.min_range * scale * unit;
+			const range = sample.range * scale * unit;
 
-		if(minarc < 0)
-			minarc = 10;
+			drawCircle(min_range, unit*sample.cone_half_width);
 
-		drawPizza(start_angle, end_angle, minarc, unit*sample.range)
-		
+			ctx.strokeStyle = "#5eb4ffff";
+			let minarc = range-10;
+			if(minarc < 0)
+				minarc = 1;
+
+			drawCircle(minarc, range)
+
+		}
+
+
+
 		ctx.restore();
 
 		yieldToMainThread();
@@ -175,13 +208,17 @@ function connect(){
 			false
 		);
 
+		//calculate the new values for displaying the cone in a rotated projection
 		const yaw = Math.atan2(front_vector.y, front_vector.x);
 		const ratio = Math.hypot(front_vector.y, front_vector.x) / msg.max_range;
-		const angle = 3.14159 * (1.0 - ratio) + ratio * msg.field_of_view;
+
+		const cone_half_width = Math.tan(msg.field_of_view * 0.5) * msg.max_range;
+		const ratio_fov = 2 * Math.atan(cone_half_width / (ratio * msg.max_range));
 
 		data[msg.header.frame_id] = {
 			yaw: yaw,
-			field_of_view: angle,
+			cone_half_width: cone_half_width,
+			field_of_view: ratio_fov,
 			min_range: ratio * msg.min_range,
 			max_range: ratio * msg.max_range,
 			range: ratio * msg.range,
