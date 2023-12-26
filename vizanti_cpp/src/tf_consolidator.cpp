@@ -18,12 +18,13 @@ class TfConsolidator:public rclcpp::Node{
 		rclcpp::TimerBase::SharedPtr clear_timer;
 		rclcpp::TimerBase::SharedPtr publish_timer;
 
+		//subscribes to all /tf frames published separately by different nodes and consolidates them into one throttled message
 		TfConsolidator():Node("vizanti_tf_consolidator"),  updated(false){
 			tf_sub = create_subscription<tf2_msgs::msg::TFMessage>("/tf", rclcpp::QoS(20), std::bind(&TfConsolidator::tf_callback, this, std::placeholders::_1));
 			tf_pub = create_publisher<tf2_msgs::msg::TFMessage>(
 				"/vizanti/tf_consolidated",
 				rclcpp::QoS(10)
-					.durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL)
+					.durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL) //latched in case there's no tf activity so that the web client can set itself up
 					.lifespan(rclcpp::Duration(0, 66000000))  // 66ms
 			);
 			clear_timer = create_wall_timer(std::chrono::seconds(5), std::bind(&TfConsolidator::clear_old_tfs, this));
@@ -32,6 +33,7 @@ class TfConsolidator:public rclcpp::Node{
 			RCLCPP_INFO(get_logger(), "TF handler ready.");
 		}
 
+		//removes any non-static frames that haven't been published for 10-15 seconds
 		void clear_old_tfs(){
 			auto current_time = rclcpp::Clock().now();
 			for (auto it = transforms.begin(); it != transforms.end(); /* no increment */) {
@@ -48,6 +50,7 @@ class TfConsolidator:public rclcpp::Node{
 			}
 		}
 
+		//send all frames at ~30 hz, so websocket throttling can skip packets if congested
 		void publish(){
 			if (!updated){
 				return;
@@ -61,6 +64,7 @@ class TfConsolidator:public rclcpp::Node{
 			tf_pub->publish(msg);
 		}
 
+		//adds extra timestamps for tracking staleness regardless of ros time skips, since old bags might shift time and presist otherwise
 		void tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg){
 			for (const auto &transform : msg->transforms){
 				transforms[transform.child_frame_id] = transform;
