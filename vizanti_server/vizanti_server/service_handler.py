@@ -159,7 +159,7 @@ class ServiceHandler(Node):
 
     def roswtf(self, req, res):
         try:
-            rosinfo = subprocess.check_output(["ros2", "doctor"]).decode('utf-8')
+            rosinfo = subprocess.check_output(["ros2", "doctor", "--report"]).decode('utf-8')
             res.success = True
             res.message = rosinfo
         except Exception as e:
