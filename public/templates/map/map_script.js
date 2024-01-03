@@ -261,7 +261,7 @@ function connect(){
 		}
 
 		if(!tf.absoluteTransforms[msg.header.frame_id]){
-			status.setError("Required transform frame not found.");
+			status.setError("Required transform frame \""+msg.header.frame_id+"\" not found.");
 			return;
 		}
 

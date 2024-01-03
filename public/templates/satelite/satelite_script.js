@@ -213,7 +213,7 @@ async function drawTiles(){
 
 		status.setOK();
 	}else{
-		status.setError("Required transform frame not found.");
+		status.setError("Required transform frame \""+map_fix.header.frame_id+"\" not found.");
 	}
 }
 
