@@ -18,7 +18,7 @@ There are also two ROS nodes that provide additional functionality not covered b
 
 [service_handler.py](vizanti_server/vizanti_server/service_handler.py)
 
-[topic_handler.py](vizanti_server/vizanti_server/topic_handler.py)
+[tf_consolidator.cpp](vizanti_cpp/src/tf_consolidator.cpp)
 
 ### Client
 

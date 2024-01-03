@@ -17,6 +17,7 @@ let status = new Status(
 );
 
 let fixed_frame = "";
+let base_link_frame = "";
 let active = false;
 let points = [];
 
@@ -64,6 +65,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	topic = loaded_data.topic;
 	points = loaded_data.points;
 	fixed_frame = loaded_data.fixed_frame;
+	base_link_frame = loaded_data.base_link_frame ?? "base_link";
 
 	startCheckbox.checked = loaded_data.start_closest;
 }else{
@@ -80,6 +82,7 @@ function saveSettings(){
 	settings["{uniqueID}"] = {
 		topic: topic,
 		fixed_frame: fixed_frame,
+		base_link_frame: base_link_frame,
 		points: points,
 		start_closest: startCheckbox.checked
 	}
@@ -179,11 +182,13 @@ const view_container = document.getElementById("view_container");
 
 function getStartIndex(){
 
-	if(!tf.transforms["base_link"])
+	if(base_link_frame == ""){
+		status.setError("Base link frame not selected or the TF data is missing.");
 		return 0;
+	}
 
 	let link = tf.transformPose(
-		"base_link", 
+		base_link_frame, 
 		fixed_frame, 
 		{x: 0, y: 0, z: 0}, 
 		new Quaternion()
@@ -204,7 +209,6 @@ function getStartIndex(){
             minIndex = i;
         }
     }
-
     return minIndex;
 }
 
@@ -485,6 +489,23 @@ function setActive(value){
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const fixedFrameBox = document.getElementById("{uniqueID}_fixed_frame");
+const baseLinkFrameBox = document.getElementById("{uniqueID}_base_link_frame");
+
+selectionbox.addEventListener("change", (event) => {
+	topic = selectionbox.value;
+	saveSettings();
+	status.setOK();baseLinkFrameBox
+});
+
+fixedFrameBox.addEventListener("change", (event) => {
+	fixed_frame = fixedFrameBox.value;
+	saveSettings();
+});
+
+baseLinkFrameBox.addEventListener("change", (event) => {
+	base_link_frame = baseLinkFrameBox.value;
+	saveSettings();
+});
 
 async function loadTopics(){
 	let result = await rosbridge.get_topics("nav_msgs/msg/Path");
@@ -507,6 +528,7 @@ async function loadTopics(){
 		}
 	}
 
+	//find world frames
 	let framelist = "";
 	for (const key of tf.frame_list.values()) {
 		framelist += "<option value='"+key+"'>"+key+"</option>"
@@ -517,22 +539,27 @@ async function loadTopics(){
 		fixedFrameBox.value = fixed_frame;
 	}else{
 		framelist += "<option value='"+fixed_frame+"'>"+fixed_frame+"</option>"
-		fixedFrameBox.innerHTML = framelist
+		fixedFrameBox.innerHTML = framelist;
 		fixedFrameBox.value = fixed_frame;
 	}
+
+	//find base frames
+	let baselist = "";
+	for (const key of tf.frame_list.values()) {
+		if (key.includes("base")) {
+			baselist += "<option value='"+key+"'>"+key+"</option>"
+		}
+	}
+	baseLinkFrameBox.innerHTML = baselist;
+	
+	if(tf.frame_list.has(base_link_frame)){
+		baseLinkFrameBox.value = base_link_frame;
+	}else{
+		baselist += "<option value='"+fixed_frame+"'>"+fixed_frame+"</option>"
+		baseLinkFrameBox.innerHTML = baselist;
+		baseLinkFrameBox.value = base_link_frame;
+	}
 }
-
-selectionbox.addEventListener("change", (event) => {
-	topic = selectionbox.value;
-	saveSettings();
-	status.setOK();
-});
-
-fixedFrameBox.addEventListener("change", (event) => {
-	fixed_frame = fixedFrameBox.value;
-	saveSettings();
-});
-
 
 loadTopics();
 

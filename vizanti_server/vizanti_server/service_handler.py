@@ -5,6 +5,7 @@ import sys
 import rclpy
 import yaml
 import json
+import time
 
 from rclpy.node import Node
 
@@ -158,7 +159,7 @@ class ServiceHandler(Node):
 
     def roswtf(self, req, res):
         try:
-            rosinfo = subprocess.check_output(["ros2", "doctor"]).decode('utf-8')
+            rosinfo = subprocess.check_output(["ros2", "doctor", "--report"]).decode('utf-8')
             res.success = True
             res.message = rosinfo
         except Exception as e:
@@ -175,7 +176,7 @@ class ServiceHandler(Node):
             fcntl.fcntl(process.stdout, fcntl.F_SETFL, flags | os.O_NONBLOCK)
 
             # Wait for it to either fail or not
-            rclpy.sleep(1)
+            time.sleep(1)
 
             # Check if the process is still running
             if process.poll() is not None:
@@ -195,7 +196,7 @@ class ServiceHandler(Node):
         file_path = os.path.expanduser(req.file_path)
         topic = req.topic
         try:
-            process = subprocess.Popen(["ros2", "run", "nav2_map_server", "map_saver", "-f", file_path, "map:=" + topic, "__name:=vizanti_map_saver"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            process = subprocess.Popen(["ros2", "run", "nav2_map_server", "map_saver_cli", "-f", file_path, "--ros-args", "map:=" + topic], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             flags = fcntl.fcntl(process.stdout, fcntl.F_GETFL)
             fcntl.fcntl(process.stdout, fcntl.F_SETFL, flags | os.O_NONBLOCK)
 
@@ -219,7 +220,7 @@ class ServiceHandler(Node):
                         break
 
                 # Sleep for a short period of time to avoid excessive CPU usage
-                rclpy.sleep(0.2)
+                time.sleep(0.2)
 
             res.success = True
             res.message = "Map saved successfully"
