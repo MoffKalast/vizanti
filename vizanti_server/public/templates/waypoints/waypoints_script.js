@@ -550,6 +550,14 @@ async function loadTopics(){
 			baselist += "<option value='"+key+"'>"+key+"</option>"
 		}
 	}
+
+	//if there's no base frame, it may have a nonstandard name so let's put any frame up for selection
+	if(baselist == ""){
+		for (const key of tf.frame_list.values()) {
+			baselist += "<option value='"+key+"'>"+key+"</option>"
+		}
+	}
+
 	baseLinkFrameBox.innerHTML = baselist;
 	
 	if(tf.frame_list.has(base_link_frame)){
