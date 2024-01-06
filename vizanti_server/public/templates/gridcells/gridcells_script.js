@@ -78,6 +78,8 @@ const ctx = canvas.getContext('2d');
 
 async function drawCells() {
 
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+
 	if(!data){
 		return;
 	}
@@ -149,7 +151,6 @@ function connect(){
 
 		if(msg.cells.length == 0){
 			status.setWarn("Received empty grid.");
-			return;
 		}
 
 		if(msg.cell_width == 0 | msg.cell_height == 0){
