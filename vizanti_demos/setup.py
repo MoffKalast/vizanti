@@ -1,3 +1,5 @@
+import os
+from glob import glob
 from setuptools import setup
 
 package_name = 'vizanti_demos'
@@ -10,18 +12,20 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        (os.path.join("share", package_name, "launch"), glob("launch/*")),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='MoffKalast',
     maintainer_email='vid.rijavec@gmail.com',
-    description='Demo package for Vizanti',
+    description='Demo and test package for Vizanti',
     license='MIT',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
             'particle_cloud_to_pose_array = vizanti_demos.particle_cloud_to_pose_array:main',
-            'marker_array_publisher = vizanti_demos.marker_array_publisher:main',
+            'test_marker_array = vizanti_demos.test_marker_array:main',
+            'test_grid_cells = vizanti_demos.test_grid_cells:main',
             'path_to_nav2poses = vizanti_demos.path_to_nav2poses:main'
         ],
     },

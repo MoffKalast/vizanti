@@ -1,6 +1,5 @@
-from glob import glob
 import os
-
+from glob import glob
 from setuptools import setup
 
 package_name = "vizanti_server"

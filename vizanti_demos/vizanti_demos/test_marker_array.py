@@ -8,11 +8,11 @@ import random
 
 class MarkerArrayPublisher(Node):
     def __init__(self):
-        super().__init__('marker_array_publisher')
+        super().__init__('test_marker_array')
 
         latch = QoSProfile(depth=1, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL)
 
-        self.marker_array_publisher = self.create_publisher(MarkerArray, 'visualization_marker_array', latch)
+        self.marker_array_publisher = self.create_publisher(MarkerArray, 'test_marker_array', latch)
 
         marker_array = MarkerArray()
 
@@ -24,7 +24,7 @@ class MarkerArrayPublisher(Node):
         for i, particle_type in enumerate(particle_types):
             for j in range(num_variations):
                 marker = Marker()
-                marker.header.frame_id = 'map'
+                marker.header.frame_id = 'test_link'
                 marker.id = i * num_variations + j
                 marker.type = particle_type
                 marker.action = Marker.ADD

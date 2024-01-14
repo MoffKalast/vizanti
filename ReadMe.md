@@ -117,6 +117,10 @@ Display an OccupancyGrid. Also has some experimental map_server controls for sav
 
 Display satelite imagery, by default from OpenStreetMap. Requires a Fix origin with the correct frame in its header.
 
+#### <img src="vizanti_server/readme_assets/gridcells.png" alt="" title="Map" width="30" height="30"/> GridCells
+
+Displays a grid of cells.
+
 #### <img src="vizanti_server/readme_assets/battery.png" alt="" title="Battery" width="30" height="30"/> Battery
 
 Display a BatteryState message.
