@@ -102,4 +102,4 @@ class Rosbridge {
 	}
 }
 
-export var rosbridge = new Rosbridge(window.location.hostname, 5001);
+export var rosbridge = new Rosbridge(window.location.hostname, 5002);

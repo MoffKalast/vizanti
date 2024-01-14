@@ -25,7 +25,7 @@ async function getExecutables(pkg_name) {
 	const getExecutablesService = new ROSLIB.Service({
 		ros: rosbridge.ros,
 		name: "/vizanti/list_executables",
-		serviceType: "vizanti/ListExecutables",
+		serviceType: "vizanti_msgs/ListExecutables",
 	});
 
 	return new Promise((resolve, reject) => {
@@ -42,7 +42,7 @@ async function getPackages() {
 	const getPackagesService = new ROSLIB.Service({
 		ros: rosbridge.ros,
 		name: "/vizanti/list_packages",
-		serviceType: "vizanti/ListPackages",
+		serviceType: "vizanti_msgs/ListPackages",
 	});
 
 	return new Promise((resolve, reject) => {
@@ -58,7 +58,7 @@ async function startNode(command) {
 	const startService = new ROSLIB.Service({
 		ros: rosbridge.ros,
 		name: "/vizanti/node/start",
-		serviceType: "vizanti/ManageNode",
+		serviceType: "vizanti_msgs/ManageNode",
 	});
 
 	return new Promise((resolve, reject) => {
@@ -74,7 +74,7 @@ async function killNode(name) {
 	const killService = new ROSLIB.Service({
 		ros: rosbridge.ros,
 		name: "/vizanti/node/kill",
-		serviceType: "vizanti/ManageNode",
+		serviceType: "vizanti_msgs/ManageNode",
 	});
 
 	return new Promise((resolve, reject) => {
@@ -91,7 +91,7 @@ async function nodeInfo(name) {
 	const infoService = new ROSLIB.Service({
 		ros: rosbridge.ros,
 		name: "/vizanti/node/info",
-		serviceType: "vizanti/ManageNode",
+		serviceType: "vizanti_msgs/ManageNode",
 	});
 
 	return new Promise((resolve, reject) => {

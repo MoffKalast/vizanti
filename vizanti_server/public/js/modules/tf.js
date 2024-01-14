@@ -77,7 +77,7 @@ export class TF {
 
 		this.tf_topic = new ROSLIB.Topic({
 			ros: rosbridge.ros,
-			name: 'vizanti/tf_consolidated',
+			name: '/vizanti/tf_consolidated',
 			messageType: 'tf2_msgs/msg/TFMessage',
 			throttle_rate: 33
 		});
@@ -96,11 +96,13 @@ export class TF {
 
 		this.tf_static_topic = new ROSLIB.Topic({
 			ros: rosbridge.ros,
-			name: 'tf_static',
-			messageType: 'tf2_msgs/msg/TFMessage'
+			name: '/tf_static',
+			messageType: 'tf2_msgs/msg/TFMessage',
+			latch: true
 		});
 
 		this.tf_static_listener = this.tf_static_topic.subscribe((msg) => {
+			console.log(msg.transforms)
 			this.updateTransforms(msg.transforms, true);
 		});
 
