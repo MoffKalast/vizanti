@@ -1,3 +1,5 @@
+import os
+from glob import glob
 from setuptools import setup
 
 package_name = 'vizanti_demos'
@@ -10,12 +12,13 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        (os.path.join("share", package_name, "launch"), glob("launch/*")),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='MoffKalast',
     maintainer_email='vid.rijavec@gmail.com',
-    description='Demo package for Vizanti',
+    description='Demo and test package for Vizanti',
     license='MIT',
     tests_require=['pytest'],
     entry_points={

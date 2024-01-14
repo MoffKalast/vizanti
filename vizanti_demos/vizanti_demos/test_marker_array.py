@@ -24,7 +24,7 @@ class MarkerArrayPublisher(Node):
         for i, particle_type in enumerate(particle_types):
             for j in range(num_variations):
                 marker = Marker()
-                marker.header.frame_id = 'map'
+                marker.header.frame_id = 'test_link'
                 marker.id = i * num_variations + j
                 marker.type = particle_type
                 marker.action = Marker.ADD
