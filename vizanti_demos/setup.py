@@ -21,7 +21,8 @@ setup(
     entry_points={
         'console_scripts': [
             'particle_cloud_to_pose_array = vizanti_demos.particle_cloud_to_pose_array:main',
-            'marker_array_publisher = vizanti_demos.marker_array_publisher:main',
+            'test_marker_array = vizanti_demos.test_marker_array:main',
+            'test_grid_cells = vizanti_demos.test_grid_cells:main',
             'path_to_nav2poses = vizanti_demos.path_to_nav2poses:main'
         ],
     },
