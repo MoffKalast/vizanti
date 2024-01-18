@@ -26,9 +26,26 @@ ros2 launch vizanti_server vizanti_server.launch.py
 ```
 The web app can be accessed at `http://<host_ip>:5000`. Client settings are automatically saved in localStorage. The satelite imagery renderer also uses the indexedDB to store tiles for offline use (note that this is IP specific). By default the rosbridge instance also occupies port 5001.
 
-If you're using a mobile device connected to a robot's hotspot that doesn't have internet access, make sure to turn off mobile data. This will prevent Android from sending packets to the wrong gateway.
+If you're using a mobile device connected to a robot's hotspot that doesn't have internet access and can't load the page, turn off mobile data. This will prevent the browser from sending packets to the wrong gateway.
 
-Note that the client uses the web fetch API to load a fair few things, make sure your browser is at least somewhat up to date or some features may not work.
+## Optional - Experimental RWS Backend
+
+With rosbridge being a Tornado python based package and rclpy being overly CPU heavy, this cpp drop-in replacement server should result in a ~5x lower overhead.
+
+```bash
+cd ~/colcon_ws/src
+git clone -b humble https://github.com/v-kiniv/rws.git
+
+cd ..
+rosdep install -i --from-path src --rosdistro humble -y
+colcon build
+```
+
+Then run the RWS launch instead:
+
+```bash
+ros2 launch vizanti_server vizanti_rws.launch.py
+```
 
 ----
 

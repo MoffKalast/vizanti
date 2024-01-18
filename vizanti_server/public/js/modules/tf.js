@@ -102,7 +102,6 @@ export class TF {
 		});
 
 		this.tf_static_listener = this.tf_static_topic.subscribe((msg) => {
-			console.log(msg.transforms)
 			this.updateTransforms(msg.transforms, true);
 		});
 
