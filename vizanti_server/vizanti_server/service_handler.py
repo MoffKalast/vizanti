@@ -38,12 +38,19 @@ class ServiceHandler(Node):
         self.start_service = self.create_service(ManageNode, 'vizanti/node/start', self.node_start, callback_group=group)
         self.info_service = self.create_service(ManageNode, 'vizanti/node/info', self.node_info, callback_group=group)
         self.info_service = self.create_service(Trigger, 'vizanti/roswtf', self.roswtf, callback_group=group)
+        self.test_service = self.create_service(Trigger, 'vizanti/test', self.test, callback_group=group)
 
         self.list_packages_service = self.create_service(ListPackages, 'vizanti/list_packages', self.list_packages_callback, callback_group=group)
         self.list_executables_service = self.create_service(ListExecutables, 'vizanti/list_executables', self.list_executables_callback, callback_group=group)
 
         self.get_logger().info("Service handler ready.")
 
+    def test(self, req, res):
+        self.get_logger().info("Test service called!")
+        res.success = True
+        res.message = "Service handler online."
+        return res
+    
     def get_packages(self):
         # Use aros2pkg to get list of packages
         process = subprocess.Popen(['ros2', 'pkg', 'list'], stdout=subprocess.PIPE)

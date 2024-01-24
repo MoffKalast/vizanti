@@ -64,6 +64,27 @@ class Rosbridge {
 		});
 
 		window.dispatchEvent(new Event('rosbridge_change'));
+
+		this.run_test();
+	}
+
+	//temporary service test
+	async run_test() {
+		const serviceTest = new ROSLIB.Service({
+			ros: this.ros,
+			name: "/vizanti/test",
+			serviceType: "std_srvs/srv/Trigger",
+		});
+	
+		return new Promise((resolve, reject) => {
+			serviceTest.callService(new ROSLIB.ServiceRequest(), (result) => {
+				alert(JSON.stringify(result));
+				resolve(result)
+			}, (error) => {
+				reject(error);
+				alert(error);
+			});
+		});
 	}
 
 	async get_all_nodes() {
