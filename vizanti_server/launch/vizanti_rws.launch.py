@@ -3,17 +3,19 @@ import launch_ros.actions
 
 def generate_launch_description():
     base_url = launch.substitutions.LaunchConfiguration('base_url', default='') #e.g. /vizanti
+    port = launch.substitutions.LaunchConfiguration('port', default=5000)
+    port_rosbridge = launch.substitutions.LaunchConfiguration('port_rosbridge', default=5001)
     flask_debug = launch.substitutions.LaunchConfiguration('flask_debug', default=True)
 
     #https://github.com/v-kiniv/rws
     rws_server_node = launch_ros.actions.Node(
         package='rws',
         executable='rws_server',
-        name='rws_server',
+        name='vizanti_rws_server',
         output='screen',
         parameters=[
             {'rosbridge_compatible ': True},
-            {'port': 5001},
+            {'port': port_rosbridge},
             {'watchdog ': False}
         ]
     )
@@ -25,7 +27,9 @@ def generate_launch_description():
         output='screen',
         parameters=[
             {'host': '0.0.0.0'},
-            {'port': 5000},
+            {'port': port},
+            {'port_rosbridge': port_rosbridge},
+            {'use_rws': True},
             {'flask_debug': flask_debug},
             {'base_url': base_url}
         ]

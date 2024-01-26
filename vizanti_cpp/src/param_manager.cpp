@@ -11,7 +11,7 @@ class ParamManager:public rclcpp::Node{
 		rclcpp::TimerBase::SharedPtr timer;
 
 		ParamManager():Node("vizanti_param_manager"){
-			timer = create_wall_timer(std::chrono::seconds(20), std::bind(&ParamManager::update, this));
+			/* timer = create_wall_timer(std::chrono::seconds(20), std::bind(&ParamManager::update, this));
 			RCLCPP_INFO(get_logger(), "Param manager handler ready.");
 
 			auto parameters_client = rclcpp::SyncParametersClient(shared_from_this(), "/rviz");
@@ -29,16 +29,17 @@ class ParamManager:public rclcpp::Node{
 			RCLCPP_INFO(get_logger(), "List of Parameters:");
 			for (const auto &param : parameters.names) {
 				RCLCPP_INFO(get_logger(), param);
-			}
+			} */
+
 		}
 
 		void update(){
-			RCLCPP_INFO(get_logger(), "get_node_names");
+			/*RCLCPP_INFO(get_logger(), "get_node_names");
 			auto node_names = get_node_names();
 
 			for (const auto &pair : node_names) {
 				RCLCPP_INFO(get_logger(), "Node Name: %s", pair.c_str());
-			}
+			}*/
 		}
 };
 

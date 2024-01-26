@@ -104,12 +104,16 @@ def main(args=None):
 
     node.declare_parameter('host', '0.0.0.0')
     node.declare_parameter('port', 5000)
+    node.declare_parameter('port_rosbridge', 5001)
+    node.declare_parameter('use_rws', False)
     node.declare_parameter('flask_debug', True)
     node.declare_parameter('base_url', "")
 
     param_host = node.get_parameter('host').value
     param_port = node.get_parameter('port').value
+    param_port_rosbridge = node.get_parameter('port_rosbridge').value
     param_base_url = node.get_parameter('base_url').value
+    param_use_rws = node.get_parameter('use_rws').value
 
     app.debug = node.get_parameter('flask_debug').value
     app.add_url_rule(param_base_url + '/', 'index', index)

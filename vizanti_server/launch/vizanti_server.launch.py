@@ -7,6 +7,8 @@ def generate_launch_description():
     delay_between_messages = launch.substitutions.LaunchConfiguration('delay_between_messages', default='0')
     max_message_size = launch.substitutions.LaunchConfiguration('max_message_size', default='10000000')
     base_url = launch.substitutions.LaunchConfiguration('base_url', default='') #e.g. /vizanti
+    port = launch.substitutions.LaunchConfiguration('port', default=5000)
+    port_rosbridge = launch.substitutions.LaunchConfiguration('port_rosbridge', default=5001)
     flask_debug = launch.substitutions.LaunchConfiguration('flask_debug', default=True)
     unregister_timeout = launch.substitutions.LaunchConfiguration('unregister_timeout', default='9999999.9')
     #https://github.com/RobotWebTools/rosbridge_suite/issues/298
@@ -18,7 +20,7 @@ def generate_launch_description():
         output='screen',
         parameters=[
             {'authenticate': False},
-            {'port': 5001},
+            {'port': port_rosbridge},
             {'address': ''},
             {'retry_startup_delay': retry_startup_delay},
             {'fragment_timeout': fragment_timeout},
@@ -30,7 +32,7 @@ def generate_launch_description():
     )
 
     rosapi_node = launch_ros.actions.Node(
-        name='vizanti_rosapi',
+        name='rosapi',
         package='rosapi',
         executable='rosapi_node'
     )
@@ -42,7 +44,8 @@ def generate_launch_description():
         output='screen',
         parameters=[
             {'host': '0.0.0.0'},
-            {'port': 5000},
+            {'port': port},
+            {'port_rosbridge': port_rosbridge},
             {'flask_debug': flask_debug},
             {'base_url': base_url}
         ]
