@@ -30,7 +30,7 @@ If you're using a mobile device connected to a robot's hotspot that doesn't have
 
 ## Optional - Experimental RWS Backend
 
-With rosbridge being a Tornado python based package and rclpy being overly CPU heavy, this cpp drop-in replacement server should result in a ~5x lower overhead. Works with CycloneDDS normally, but for FastDDS it requires the `rmw_fastrtps_dynamic_cpp` version which includes interface introspection.
+With rosbridge being a Tornado python based package and rclpy being overly CPU heavy, this cpp drop-in replacement server should result in a ~5x lower overhead and faster response times. It works with CycloneDDS out of the box, but for FastDDS it requires the `rmw_fastrtps_dynamic_cpp` version which includes interface introspection.
 
 ```bash
 cd ~/colcon_ws/src
@@ -39,6 +39,13 @@ git clone -b humble https://github.com/v-kiniv/rws.git
 cd ..
 rosdep install -i --from-path src --rosdistro humble -y
 colcon build
+```
+
+If using FastDDS:
+
+```bash
+sudo apt install ros-humble-rmw-fastrtps-dynamic-cpp
+export RMW_IMPLEMENTATION=rmw_fastrtps_dynamic_cpp
 ```
 
 Then run the RWS launch instead:

@@ -72,6 +72,8 @@ let new_map_data = undefined;
 const worker_thread = new Worker(`${base_url}/templates/map/map_worker.js`);
 const map_canvas = document.createElement('canvas');
 
+//offscreen rendering is currently half broken in firefox
+//https://bugzilla.mozilla.org/show_bug.cgi?id=1833496
 const offscreen_canvas = map_canvas.transferControlToOffscreen();
 worker_thread.postMessage({	canvas: offscreen_canvas}, [offscreen_canvas]);
 
@@ -88,6 +90,7 @@ const loadButton = document.getElementById('{uniqueID}_load');
 const saveButton = document.getElementById('{uniqueID}_save');
 
 const costmapCheckbox = document.getElementById('{uniqueID}_costmap_mode');
+costmapCheckbox.checked = topic.includes("cost");
 costmapCheckbox.addEventListener('change', saveSettings);
 
 const timestampCheckbox = document.getElementById('{uniqueID}_use_timestamp');
@@ -155,15 +158,14 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	costmapCheckbox.checked =  loaded_data.costmap_mode ?? false;
 	timestampCheckbox.checked = loaded_data.use_timestamp ?? false;
 	throttle.value = loaded_data.throttle ?? 1000;
-
-	if(costmapCheckbox.checked){
-		icon.src = icons["costmap"];
-	}else{
-		icon.src = icons["map"];
-	}
-
 }else{
 	saveSettings();
+}
+
+if(costmapCheckbox.checked){
+	icon.src = icons["costmap"];
+}else{
+	icon.src = icons["map"];
 }
 
 function saveSettings(){
