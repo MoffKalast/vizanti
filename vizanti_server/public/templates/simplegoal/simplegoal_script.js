@@ -24,8 +24,8 @@ if(settings.hasOwnProperty("{uniqueID}")){
 }
 
 if(topic == ""){
-	topic = "/move_base_simple/goal";
-	status.setWarn("No topic found, defaulting to /move_base_simple/goal");
+	topic = "/goal_pose";
+	status.setWarn("No topic found, defaulting to /goal_pose");
 	saveSettings();
 }
 
