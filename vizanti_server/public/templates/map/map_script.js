@@ -69,6 +69,9 @@ let map_topic = undefined;
 let map_data = undefined;
 let new_map_data = undefined;
 
+//firefox bug workaround
+const temp_canvas = document.createElement('canvas');
+
 const worker_thread = new Worker(`${base_url}/templates/map/map_worker.js`);
 const map_canvas = document.createElement('canvas');
 
@@ -187,11 +190,11 @@ async function drawMap(){
 		return;
 
 	const map_width = view.getMapUnitsInPixels(
-		map_canvas.width * map_data.info.resolution
+		temp_canvas.width * map_data.info.resolution
 	);
 
 	const map_height = view.getMapUnitsInPixels(
-		map_canvas.height * map_data.info.resolution
+		temp_canvas.height * map_data.info.resolution
 	);
 
 	let tf_pose = map_data.pose;
@@ -220,7 +223,7 @@ async function drawMap(){
 	ctx.translate(pos.x, pos.y);
 	ctx.scale(1.0, -1.0);
 	ctx.rotate(yaw);
-	ctx.drawImage(map_canvas, 0, 0, map_width, map_height);
+	ctx.drawImage(temp_canvas, 0, 0, map_width, map_height);
 	ctx.restore();
 }
 
@@ -246,8 +249,13 @@ function connect(){
 
 	status.setWarn("No data received.");
 
-	worker_thread.onmessage = () => {
+	worker_thread.onmessage = (e) => {
 		setTimeout(()=>{
+
+			const img = e.data.image
+			temp_canvas.width = img.width
+			temp_canvas.height = img.height
+			temp_canvas.getContext('2d').putImageData(img, 0, 0);
 			map_data = new_map_data;
 			drawMap();
 			status.setOK();
