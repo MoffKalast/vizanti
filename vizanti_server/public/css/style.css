@@ -108,7 +108,7 @@ h3 {
 	overflow: hidden;
 	overflow-x: scroll;
 	overflow-y: hidden;
-	scrollbar-color: #424242 #999999;
+	scrollbar-color: #999999 #424242;
 	scrollbar-width: thin;
 	display: block;
 	position: relative;
