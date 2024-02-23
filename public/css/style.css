@@ -84,12 +84,10 @@ h3 {
 	font-weight: bold;
 }
 
-
 .status-error {
 	color: rgb(255, 60, 60);  
 	font-weight: bold;
 }
-
 
 #icon_container {
 	display: grid;
@@ -141,11 +139,15 @@ h3 {
 	content: '';
 	display: block;
 	position: absolute;
-	background-color:#666666;
+	background-color:#444444;
 	height: 7px;
 	width: 100%;
 	bottom: 0;
 	left: 0;
+}
+
+#icon_bar_handle:hover::before {
+	background-color: #333333;
 }
 
 /* Modal windows */
