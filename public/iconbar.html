@@ -9,6 +9,7 @@
 
 
 <script>
+
 	function iconBarHandler(event) {
 		event.preventDefault();
 
@@ -40,6 +41,7 @@
 		iconBarHandle.style.width = requiredWidth + 'px';
 	}
 
+	//expand the bar to multiple rows
 	function iconBarMouseMove(event) {
 		const iconBar = document.getElementById('icon_bar');
 		const iconContainer = document.getElementById('icon_container');
@@ -65,4 +67,11 @@
 
 	window.addEventListener('icons_changed', calculateWidth);
 	window.addEventListener('resize', calculateWidth);
+
+	//allow scrolling without holding down shift
+	document.getElementById('icon_bar').addEventListener("wheel", function (e) {
+		const item = document.getElementById('icon_bar')
+		item.scrollLeft += e.deltaY*0.5;
+	});
+
 </script>
