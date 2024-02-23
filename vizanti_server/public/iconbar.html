@@ -1,15 +1,40 @@
 <div id="icon_bar">
 
-	<div id="icon_container">
+	<div id="icon_container" onmousedown="iconContainerScrollHandler(event)">
 		<!-- Icon templates get rendered in here  -->
 	</div>
 
 	<div id="icon_bar_handle" ontouchstart="iconBarHandler(event)" onmousedown="iconBarHandler(event)"></div>
+	
 </div>
-
 
 <script>
 
+	//drag scrolling with a mouse
+	function iconContainerScrollHandler(event) {
+		event.preventDefault();
+
+		const container = document.getElementById('icon_container');
+		container.setAttribute("mouse_start", event.clientX)
+		container.setAttribute("scroll_start", document.getElementById('icon_bar').scrollLeft)
+
+		document.addEventListener('mousemove', iconContainerMouseMove);
+		document.addEventListener('mouseup', iconContainerMouseUp);
+	}
+
+	function iconContainerMouseMove(event) {
+		const container = document.getElementById('icon_container');
+		const scroll_start = parseFloat(container.getAttribute("scroll_start"));
+		const mouse_start = parseFloat(container.getAttribute("mouse_start"));
+		document.getElementById('icon_bar').scrollLeft = scroll_start + (mouse_start - event.clientX);
+	}
+
+	function iconContainerMouseUp() {
+		document.removeEventListener('mousemove', iconContainerMouseMove);
+		document.removeEventListener('mouseup', iconContainerMouseUp);
+	}
+
+	//dra expanding the icon bar downwards
 	function iconBarHandler(event) {
 		event.preventDefault();
 
@@ -39,9 +64,9 @@
 
 		iconContainer.style.width = requiredWidth + 'px';
 		iconBarHandle.style.width = requiredWidth + 'px';
+		
 	}
 
-	//expand the bar to multiple rows
 	function iconBarMouseMove(event) {
 		const iconBar = document.getElementById('icon_bar');
 		const iconContainer = document.getElementById('icon_container');
@@ -70,8 +95,7 @@
 
 	//allow scrolling without holding down shift
 	document.getElementById('icon_bar').addEventListener("wheel", function (e) {
-		const item = document.getElementById('icon_bar')
-		item.scrollLeft += e.deltaY*0.5;
+		document.getElementById('icon_bar').scrollLeft += e.deltaY*0.5;
 	});
 
 </script>
