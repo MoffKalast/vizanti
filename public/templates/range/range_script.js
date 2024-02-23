@@ -75,6 +75,13 @@ async function drawRanges() {
 	  }
 
 	function drawPizza(start_angle, end_angle, min_len, max_len){
+
+		if(min_len <= 0)
+			min_len = 1;
+
+		if(max_len <= 0)
+			max_len = min_len+1;
+
         ctx.beginPath();
         ctx.arc(0, 0, min_len, start_angle, end_angle);
         ctx.lineTo(max_len * Math.cos(end_angle), max_len * Math.sin(end_angle));
@@ -121,9 +128,6 @@ async function drawRanges() {
 
 			ctx.fillStyle = "#5eb4ffff";
 			let minarc = unit*sample.range-10;
-	
-			if(minarc < 0)
-				minarc = 1;
 	
 			drawPizza(start_angle, end_angle, minarc, unit*sample.range, unit*sample.cone_half_width)
 			

@@ -69,9 +69,14 @@ let map_topic = undefined;
 let map_data = undefined;
 let new_map_data = undefined;
 
+//firefox bug workaround
+const temp_canvas = document.createElement('canvas');
+
 const worker_thread = new Worker(`${base_url}/templates/map/map_worker.js`);
 const map_canvas = document.createElement('canvas');
 
+//offscreen rendering is currently half broken in firefox
+//https://bugzilla.mozilla.org/show_bug.cgi?id=1833496
 const offscreen_canvas = map_canvas.transferControlToOffscreen();
 worker_thread.postMessage({	canvas: offscreen_canvas}, [offscreen_canvas]);
 
@@ -88,6 +93,7 @@ const loadButton = document.getElementById('{uniqueID}_load');
 const saveButton = document.getElementById('{uniqueID}_save');
 
 const costmapCheckbox = document.getElementById('{uniqueID}_costmap_mode');
+costmapCheckbox.checked = topic.includes("cost");
 costmapCheckbox.addEventListener('change', saveSettings);
 
 const timestampCheckbox = document.getElementById('{uniqueID}_use_timestamp');
@@ -156,14 +162,14 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	timestampCheckbox.checked = loaded_data.use_timestamp ?? false;
 	throttle.value = loaded_data.throttle ?? 1000;
 
-	if(costmapCheckbox.checked){
-		icon.src = icons["costmap"];
-	}else{
-		icon.src = icons["map"];
-	}
-
 }else{
 	saveSettings();
+}
+
+if(costmapCheckbox.checked){
+	icon.src = icons["costmap"];
+}else{
+	icon.src = icons["map"];
 }
 
 function saveSettings(){
@@ -185,11 +191,11 @@ async function drawMap(){
 		return;
 
 	const map_width = view.getMapUnitsInPixels(
-		map_canvas.width * map_data.info.resolution
+		temp_canvas.width * map_data.info.resolution
 	);
 
 	const map_height = view.getMapUnitsInPixels(
-		map_canvas.height * map_data.info.resolution
+		temp_canvas.height * map_data.info.resolution
 	);
 
 	let tf_pose = map_data.pose;
@@ -218,7 +224,7 @@ async function drawMap(){
 	ctx.translate(pos.x, pos.y);
 	ctx.scale(1.0, -1.0);
 	ctx.rotate(yaw);
-	ctx.drawImage(map_canvas, 0, 0, map_width, map_height);
+	ctx.drawImage(temp_canvas, 0, 0, map_width, map_height);
 	ctx.restore();
 }
 
@@ -245,8 +251,13 @@ function connect(){
 
 	status.setWarn("No data received.");
 
-	worker_thread.onmessage = () => {
+	worker_thread.onmessage = (e) => {
 		setTimeout(()=>{
+
+			const img = e.data.image
+			temp_canvas.width = img.width
+			temp_canvas.height = img.height
+			temp_canvas.getContext('2d').putImageData(img, 0, 0);
 			map_data = new_map_data;
 			drawMap();
 			status.setOK();

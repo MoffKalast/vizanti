@@ -92,6 +92,9 @@ async function drawCells() {
 
 	let tf_pose = timestampCheckbox.checked ? data.pose : tf.absoluteTransforms[data.msg.header.frame_id];
 
+	if(tf_pose == undefined)
+		return;
+
 	const pos = view.fixedToScreen({
 		x: tf_pose.translation.x,
 		y: tf_pose.translation.y,

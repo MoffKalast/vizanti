@@ -75,8 +75,8 @@ self.addEventListener('message', function(event) {
         }
     }
 
-    mapctx.putImageData(map_img, 0, 0);
+    //mapctx.putImageData(map_img, 0, 0);
 
-    self.postMessage({});
+    self.postMessage({image: map_img});
 
 }, false);
