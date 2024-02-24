@@ -1,10 +1,13 @@
 import '../lib/roslib.min.js';
 
+const paramsModule = await import(`${base_url}/ros_launch_params`);
+const params = paramsModule.default;
+
 class Rosbridge {
 
-	constructor(url, port) { 
+	constructor(url) { 
 		this.url = url;
-		this.port = port;
+		this.port = params.port_rosbridge;
 		this.connected = false;
 
 		this.connect();
@@ -102,4 +105,4 @@ class Rosbridge {
 	}
 }
 
-export var rosbridge = new Rosbridge(window.location.hostname, 5001);
+export var rosbridge = new Rosbridge(window.location.hostname);

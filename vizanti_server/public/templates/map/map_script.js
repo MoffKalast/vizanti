@@ -4,6 +4,7 @@ let rosbridgeModule = await import(`${base_url}/js/modules/rosbridge.js`);
 let persistentModule = await import(`${base_url}/js/modules/persistent.js`);
 let utilModule = await import(`${base_url}/js/modules/util.js`);
 let StatusModule = await import(`${base_url}/js/modules/status.js`);
+let paramsModule = await import(`${base_url}/ros_launch_params`);
 
 let view = viewModule.view;
 let tf = tfModule.tf;
@@ -11,6 +12,8 @@ let rosbridge = rosbridgeModule.rosbridge;
 let settings = persistentModule.settings;
 let imageToDataURL = utilModule.imageToDataURL;
 let Status = StatusModule.Status;
+let params = paramsModule.default;
+
 
 async function saveMap(save_path, topic) {
 	const saveMapService = new ROSLIB.Service({
@@ -244,7 +247,8 @@ function connect(){
 		ros : rosbridge.ros,
 		name : topic,
 		messageType : 'nav_msgs/msg/OccupancyGrid',
-		throttle_rate: parseInt(throttle.value) // throttle to once every two seconds max
+		throttle_rate: parseInt(throttle.value), // throttle to once every two seconds max
+		compression: "cbor"
 	});
 
 	status.setWarn("No data received.");

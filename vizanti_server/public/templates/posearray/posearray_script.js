@@ -130,7 +130,8 @@ function connect(){
 		ros : rosbridge.ros,
 		name : topic,
 		messageType : 'geometry_msgs/msg/PoseArray',
-		throttle_rate: 50
+		throttle_rate: 50,
+		compression: "cbor"
 	});
 
 	status.setWarn("No data received.");

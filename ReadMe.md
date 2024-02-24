@@ -30,7 +30,7 @@ If you're using a mobile device connected to a robot's hotspot that doesn't have
 
 ## Optional - Experimental RWS Backend
 
-With rosbridge being a Tornado python based package and rclpy being overly CPU heavy, this cpp drop-in replacement server should result in a ~5x lower overhead and faster response times. It works with CycloneDDS out of the box, but for FastDDS it requires the `rmw_fastrtps_dynamic_cpp` version which includes interface introspection.
+With rosbridge being a Tornado python based package and rclpy being overly CPU heavy, this cpp drop-in replacement server should result in a ~5x lower overhead and faster response times. It works with CycloneDDS out of the box, and for FastDDS it requires the `rmw_fastrtps_dynamic_cpp` version which includes interface introspection. Note that only one concurrent client connection is supported right now, so having multiple instances open might spit topic data between the two in unpredictable ways.
 
 ```bash
 cd ~/colcon_ws/src

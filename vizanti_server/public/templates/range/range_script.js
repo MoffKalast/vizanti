@@ -184,7 +184,8 @@ function connect(){
 	range_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : 'sensor_msgs/msg/Range'
+		messageType : 'sensor_msgs/msg/Range',
+		compression: "cbor"
 	});
 
 	status.setWarn("No data received.");

@@ -29,7 +29,7 @@ def generate_launch_description():
             {'host': '0.0.0.0'},
             {'port': port},
             {'port_rosbridge': port_rosbridge},
-            {'use_rws': True},
+            {'use_compression': True}, #RWS only
             {'flask_debug': flask_debug},
             {'base_url': base_url}
         ]
