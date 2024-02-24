@@ -103,7 +103,6 @@ function saveSettings(){
 }
 
 //Topic
-
 async function getImage(src) {
     return new Promise((resolve, reject) => {
         let img = new Image();
