@@ -97,7 +97,7 @@ function connect(){
 		name : topic,
 		messageType : 'nav_msgs/msg/Path',
 		throttle: 30,
-		compression: "cbor"
+		compression: rosbridge.compression
 	});
 
 	status.setWarn("No data received.");

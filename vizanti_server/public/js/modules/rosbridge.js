@@ -8,6 +8,7 @@ class Rosbridge {
 	constructor(url) { 
 		this.url = url;
 		this.port = params.port_rosbridge;
+		this.compression = params.compression;
 		this.connected = false;
 
 		this.connect();

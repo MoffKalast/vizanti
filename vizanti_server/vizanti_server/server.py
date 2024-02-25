@@ -15,6 +15,7 @@ from pathlib import Path
 param_base_url = ""
 param_port = 5000
 param_port_rosbridge = 5001
+param_compression = "none"
 
 def get_public_dir():
     p = Path(__file__).resolve()
@@ -71,7 +72,8 @@ def list_robot_model_files():
 def list_ros_launch_params():
     params = {
         "port": param_port,
-        "port_rosbridge": param_port_rosbridge
+        "port_rosbridge": param_port_rosbridge,
+        "compression": param_compression
     }
     js_module = f"const params = {json.dumps(params)};\n\nexport default params;"
     response = make_response(js_module)
@@ -109,7 +111,7 @@ class ServerThread(threading.Thread):
         self.srv.shutdown()
 
 def main(args=None):
-    global param_base_url, param_port_rosbridge
+    global param_base_url, param_port_rosbridge, param_compression
 
     rclpy.init(args=args)
     node = rclpy.create_node('vizanti_flask_node')
@@ -119,11 +121,13 @@ def main(args=None):
     node.declare_parameter('port_rosbridge', 5001)
     node.declare_parameter('flask_debug', True)
     node.declare_parameter('base_url', "")
+    node.declare_parameter('compression', "none")
 
     param_host = node.get_parameter('host').value
     param_port = node.get_parameter('port').value
     param_port_rosbridge = node.get_parameter('port_rosbridge').value
     param_base_url = node.get_parameter('base_url').value
+    param_compression = node.get_parameter('compression').value
 
     app.debug = node.get_parameter('flask_debug').value
     app.add_url_rule(param_base_url + '/', 'index', index)

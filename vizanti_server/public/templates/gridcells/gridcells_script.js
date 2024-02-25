@@ -143,7 +143,7 @@ function connect(){
 		name : topic,
 		messageType : 'nav_msgs/msg/GridCells',
 		throttle_rate: parseInt(throttle.value),
-		compression: "cbor"
+		compression: rosbridge.compression
 	});
 
 	status.setWarn("No data received.");

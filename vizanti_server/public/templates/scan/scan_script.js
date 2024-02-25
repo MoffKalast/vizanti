@@ -144,7 +144,7 @@ function connect(){
 		name : topic,
 		messageType : 'sensor_msgs/msg/LaserScan',
 		throttle_rate: parseInt(throttle.value),
-		compression: "cbor"
+		compression: rosbridge.compression
 	});
 
 	status.setWarn("No data received.");

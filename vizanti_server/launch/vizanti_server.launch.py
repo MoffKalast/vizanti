@@ -47,7 +47,8 @@ def generate_launch_description():
             {'port': port},
             {'port_rosbridge': port_rosbridge},
             {'flask_debug': flask_debug},
-            {'base_url': base_url}
+            {'base_url': base_url},
+            {'compression': "none"}
         ]
     )
 

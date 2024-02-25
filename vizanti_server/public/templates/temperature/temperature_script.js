@@ -66,7 +66,7 @@ function connect(){
 		ros : rosbridge.ros,
 		name : topic,
 		messageType : 'sensor_msgs/msg/Temperature',
-		compression: "cbor"
+		compression: rosbridge.compression
 	});
 
 	status.setWarn("No data received.");
