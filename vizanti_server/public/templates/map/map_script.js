@@ -4,6 +4,7 @@ let rosbridgeModule = await import(`${base_url}/js/modules/rosbridge.js`);
 let persistentModule = await import(`${base_url}/js/modules/persistent.js`);
 let utilModule = await import(`${base_url}/js/modules/util.js`);
 let StatusModule = await import(`${base_url}/js/modules/status.js`);
+let paramsModule = await import(`${base_url}/ros_launch_params`);
 
 let view = viewModule.view;
 let tf = tfModule.tf;
@@ -11,12 +12,14 @@ let rosbridge = rosbridgeModule.rosbridge;
 let settings = persistentModule.settings;
 let imageToDataURL = utilModule.imageToDataURL;
 let Status = StatusModule.Status;
+let params = paramsModule.default;
+
 
 async function saveMap(save_path, topic) {
 	const saveMapService = new ROSLIB.Service({
 		ros: rosbridge.ros,
 		name: "/vizanti/save_map",
-		serviceType: "vizanti/SaveMap",
+		serviceType: "vizanti_msgs/srv/SaveMap",
 	});
 
 	const request = new ROSLIB.ServiceRequest({
@@ -37,7 +40,7 @@ async function loadMap(load_path, topic) {
 	const loadMapService = new ROSLIB.Service({
 		ros: rosbridge.ros,
 		name: "/vizanti/load_map",
-		serviceType: "vizanti/LoadMap",
+		serviceType: "vizanti_msgs/srv/LoadMap",
 	});
 
 	const request = new ROSLIB.ServiceRequest({
@@ -69,9 +72,14 @@ let map_topic = undefined;
 let map_data = undefined;
 let new_map_data = undefined;
 
+//firefox bug workaround
+const temp_canvas = document.createElement('canvas');
+
 const worker_thread = new Worker(`${base_url}/templates/map/map_worker.js`);
 const map_canvas = document.createElement('canvas');
 
+//offscreen rendering is currently half broken in firefox
+//https://bugzilla.mozilla.org/show_bug.cgi?id=1833496
 const offscreen_canvas = map_canvas.transferControlToOffscreen();
 worker_thread.postMessage({	canvas: offscreen_canvas}, [offscreen_canvas]);
 
@@ -88,6 +96,7 @@ const loadButton = document.getElementById('{uniqueID}_load');
 const saveButton = document.getElementById('{uniqueID}_save');
 
 const costmapCheckbox = document.getElementById('{uniqueID}_costmap_mode');
+costmapCheckbox.checked = topic.includes("cost");
 costmapCheckbox.addEventListener('change', saveSettings);
 
 const timestampCheckbox = document.getElementById('{uniqueID}_use_timestamp');
@@ -155,15 +164,14 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	costmapCheckbox.checked =  loaded_data.costmap_mode ?? false;
 	timestampCheckbox.checked = loaded_data.use_timestamp ?? false;
 	throttle.value = loaded_data.throttle ?? 1000;
-
-	if(costmapCheckbox.checked){
-		icon.src = icons["costmap"];
-	}else{
-		icon.src = icons["map"];
-	}
-
 }else{
 	saveSettings();
+}
+
+if(costmapCheckbox.checked){
+	icon.src = icons["costmap"];
+}else{
+	icon.src = icons["map"];
 }
 
 function saveSettings(){
@@ -185,11 +193,11 @@ async function drawMap(){
 		return;
 
 	const map_width = view.getMapUnitsInPixels(
-		map_canvas.width * map_data.info.resolution
+		temp_canvas.width * map_data.info.resolution
 	);
 
 	const map_height = view.getMapUnitsInPixels(
-		map_canvas.height * map_data.info.resolution
+		temp_canvas.height * map_data.info.resolution
 	);
 
 	let tf_pose = map_data.pose;
@@ -218,7 +226,7 @@ async function drawMap(){
 	ctx.translate(pos.x, pos.y);
 	ctx.scale(1.0, -1.0);
 	ctx.rotate(yaw);
-	ctx.drawImage(map_canvas, 0, 0, map_width, map_height);
+	ctx.drawImage(temp_canvas, 0, 0, map_width, map_height);
 	ctx.restore();
 }
 
@@ -239,13 +247,19 @@ function connect(){
 		ros : rosbridge.ros,
 		name : topic,
 		messageType : 'nav_msgs/msg/OccupancyGrid',
-		throttle_rate: parseInt(throttle.value) // throttle to once every two seconds max
+		throttle_rate: parseInt(throttle.value), // throttle to once every two seconds max
+		compression: rosbridge.compression
 	});
 
 	status.setWarn("No data received.");
 
-	worker_thread.onmessage = () => {
+	worker_thread.onmessage = (e) => {
 		setTimeout(()=>{
+
+			const img = e.data.image
+			temp_canvas.width = img.width
+			temp_canvas.height = img.height
+			temp_canvas.getContext('2d').putImageData(img, 0, 0);
 			map_data = new_map_data;
 			drawMap();
 			status.setOK();

@@ -32,18 +32,19 @@ class ServiceHandler(Node):
         self.save_map_service = self.create_service(SaveMap, 'vizanti/save_map', self.save_map, callback_group=group)
 
         self.record_setup_service = self.create_service(RecordRosbag, 'vizanti/bag/setup', self.recording_setup, callback_group=group)
-        self.record_status_service = self.create_service(Trigger, 'vizanti/bag/status', self.recording_status, callback_group=group)
+
 
         self.kill_service = self.create_service(ManageNode, 'vizanti/node/kill', self.node_kill, callback_group=group)
         self.start_service = self.create_service(ManageNode, 'vizanti/node/start', self.node_start, callback_group=group)
         self.info_service = self.create_service(ManageNode, 'vizanti/node/info', self.node_info, callback_group=group)
         self.info_service = self.create_service(Trigger, 'vizanti/roswtf', self.roswtf, callback_group=group)
+        self.record_status_service = self.create_service(Trigger, 'vizanti/bag/status', self.recording_status, callback_group=group)
 
         self.list_packages_service = self.create_service(ListPackages, 'vizanti/list_packages', self.list_packages_callback, callback_group=group)
         self.list_executables_service = self.create_service(ListExecutables, 'vizanti/list_executables', self.list_executables_callback, callback_group=group)
 
         self.get_logger().info("Service handler ready.")
-
+    
     def get_packages(self):
         # Use aros2pkg to get list of packages
         process = subprocess.Popen(['ros2', 'pkg', 'list'], stdout=subprocess.PIPE)
@@ -115,6 +116,7 @@ class ServiceHandler(Node):
         try:
             #ros 2 doesn't let you kill nodes in a legit way, so we have to be extra janky lol
             #this seems to also have the weird side effect that it takes a year for ros2 node list to show the change
+            self.get_logger().info("Attempting to kill node "+str(req.node))
             subprocess.call("ps aux | grep '"+req.node+"' | awk '{print $2}' | xargs kill -9", shell=True)
             res.success = True
             res.message = f'Killed node {req.node}'
@@ -139,6 +141,8 @@ class ServiceHandler(Node):
 
             subprocess.Popen(args, stdout=devnull, stderr=devnull, preexec_fn=preexec)
 
+            self.get_logger().info("Starting node "+str(req.node))
+
             res.success = True
             res.message = f'Started node {req.node}'
         except Exception as e:
@@ -159,6 +163,7 @@ class ServiceHandler(Node):
 
     def roswtf(self, req, res):
         try:
+            self.get_logger().info("Compiling doctor report...")
             rosinfo = subprocess.check_output(["ros2", "doctor", "--report"]).decode('utf-8')
             res.success = True
             res.message = rosinfo
@@ -290,6 +295,8 @@ class ServiceHandler(Node):
                 self.proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 response.success = True
                 response.message = "Recording started."
+
+                self.get_logger().info("Recording ros2 bag to "+str(expanded_path))
         else:
             if self.proc is not None:
                 # Terminate the rosbag record process
@@ -298,9 +305,12 @@ class ServiceHandler(Node):
                 self.proc = None
                 response.success = True
                 response.message = "Recording stopped."
+
+                self.get_logger().info("Recording stopped.")
             else:
                 response.success = False
                 response.message = "No active recording found."
+                self.get_logger().info("No active recording found.")
 
         return response
 

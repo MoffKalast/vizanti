@@ -2,39 +2,22 @@ import launch
 import launch_ros.actions
 
 def generate_launch_description():
-    retry_startup_delay = launch.substitutions.LaunchConfiguration('retry_startup_delay', default='10.0')
-    fragment_timeout = launch.substitutions.LaunchConfiguration('fragment_timeout', default='30')
-    delay_between_messages = launch.substitutions.LaunchConfiguration('delay_between_messages', default='0')
-    max_message_size = launch.substitutions.LaunchConfiguration('max_message_size', default='10000000')
     base_url = launch.substitutions.LaunchConfiguration('base_url', default='') #e.g. /vizanti
     port = launch.substitutions.LaunchConfiguration('port', default=5000)
     port_rosbridge = launch.substitutions.LaunchConfiguration('port_rosbridge', default=5001)
     flask_debug = launch.substitutions.LaunchConfiguration('flask_debug', default=True)
-    unregister_timeout = launch.substitutions.LaunchConfiguration('unregister_timeout', default='9999999.9')
-    #https://github.com/RobotWebTools/rosbridge_suite/issues/298
 
-    rosbridge_node = launch_ros.actions.Node(
-        name='vizanti_rosbridge',
-        package='rosbridge_server',
-        executable='rosbridge_websocket',
+    #https://github.com/v-kiniv/rws
+    rws_server_node = launch_ros.actions.Node(
+        package='rws',
+        executable='rws_server',
+        name='vizanti_rws_server',
         output='screen',
         parameters=[
-            {'authenticate': False},
+            {'rosbridge_compatible ': True},
             {'port': port_rosbridge},
-            {'address': ''},
-            {'retry_startup_delay': retry_startup_delay},
-            {'fragment_timeout': fragment_timeout},
-            {'delay_between_messages': delay_between_messages},
-            {'max_message_size': max_message_size},
-            {'unregister_timeout': unregister_timeout},
-            {'use_compression': True}
+            {'watchdog ': False}
         ]
-    )
-
-    rosapi_node = launch_ros.actions.Node(
-        name='rosapi',
-        package='rosapi',
-        executable='rosapi_node'
     )
 
     flask_node = launch_ros.actions.Node(
@@ -48,7 +31,7 @@ def generate_launch_description():
             {'port_rosbridge': port_rosbridge},
             {'flask_debug': flask_debug},
             {'base_url': base_url},
-            {'compression': "none"}
+            {'compression': "cbor"}
         ]
     )
 
@@ -67,8 +50,7 @@ def generate_launch_description():
     )
 
     return launch.LaunchDescription([
-        rosbridge_node,
-        rosapi_node,
+        rws_server_node,
         flask_node,
         tf_handler_node,
         service_handler_node

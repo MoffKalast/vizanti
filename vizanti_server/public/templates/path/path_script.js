@@ -96,7 +96,8 @@ function connect(){
 		ros : rosbridge.ros,
 		name : topic,
 		messageType : 'nav_msgs/msg/Path',
-		throttle: 30
+		throttle: 30,
+		compression: rosbridge.compression
 	});
 
 	status.setWarn("No data received.");

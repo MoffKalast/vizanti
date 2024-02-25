@@ -1,10 +1,14 @@
 import '../lib/roslib.min.js';
 
+const paramsModule = await import(`${base_url}/ros_launch_params`);
+const params = paramsModule.default;
+
 class Rosbridge {
 
-	constructor(url, port) { 
+	constructor(url) { 
 		this.url = url;
-		this.port = port;
+		this.port = params.port_rosbridge;
+		this.compression = params.compression;
 		this.connected = false;
 
 		this.connect();
@@ -57,7 +61,7 @@ class Rosbridge {
 			serviceType : 'rosapi_msgs/srv/Topics',
 		});
 
-		this.nodes_clinet = new ROSLIB.Service({
+		this.nodes_client = new ROSLIB.Service({
 			ros : this.ros,
 			name : '/rosapi/nodes',
 			serviceType : 'rosapi_msgs/srv/Nodes',
@@ -68,7 +72,7 @@ class Rosbridge {
 
 	async get_all_nodes() {
 		return new Promise(async (resolve) => {
-			this.nodes_clinet.callService(new ROSLIB.ServiceRequest({}), function (result) {
+			this.nodes_client.callService(new ROSLIB.ServiceRequest({}), function (result) {
 				resolve(result);
 			});
 		});
@@ -102,4 +106,4 @@ class Rosbridge {
 	}
 }
 
-export var rosbridge = new Rosbridge(window.location.hostname, 5001);
+export var rosbridge = new Rosbridge(window.location.hostname);

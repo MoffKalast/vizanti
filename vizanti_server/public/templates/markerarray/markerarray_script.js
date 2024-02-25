@@ -227,7 +227,8 @@ function connect(){
 	marker_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : 'visualization_msgs/msg/MarkerArray'
+		messageType : 'visualization_msgs/msg/MarkerArray',
+		compression: rosbridge.compression
 	});
 
 	status.setWarn("No data received.");

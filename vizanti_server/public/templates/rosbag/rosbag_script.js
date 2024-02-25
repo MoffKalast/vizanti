@@ -29,13 +29,12 @@ async function getRecordingStatus(topics, start, path) {
 	const recordRosbagService = new ROSLIB.Service({
 		ros: rosbridge.ros,
 		name: "/vizanti/bag/status",
-		serviceType: "std_srvs/Trigger",
+		serviceType: "std_srvs/srv/Trigger",
 	});
 
 	return new Promise((resolve, reject) => {
 		const request = new ROSLIB.ServiceRequest({ topics, start, path });
 		recordRosbagService.callService(request, (result) => {
-			console.log(result.message);
 			resolve(result.success);
 		}, (error) => {
 			console.log(error);
@@ -59,7 +58,7 @@ async function recordRosbag(topics, start, path) {
 	const recordRosbagService = new ROSLIB.Service({
 		ros: rosbridge.ros,
 		name: "/vizanti/bag/setup",
-		serviceType: "vizanti/RecordRosbag",
+		serviceType: "vizanti_msgs/srv/RecordRosbag",
 	});
 
 	const timestamp = getCurrentDateTimeString();
@@ -106,7 +105,6 @@ function setState(state){
 async function startRecording() {
 	if(await confirm("Are you sure you want to start recording a bag?")){
 		const result = await recordRosbag(Array.from(topic_list), true, path);
-		console.log(result);
 		setState(result.success);
 		alert(result.message)
 	}
@@ -115,7 +113,6 @@ async function startRecording() {
 async function stopRecording() {
 	if(await confirm("Are you sure you want to stop recording?")){
 		const result = await recordRosbag([], false, '');
-		console.log(result);
 		setState(!result.success);
 		alert(result.message)
 	}

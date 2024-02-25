@@ -142,7 +142,8 @@ function connect(){
 		ros : rosbridge.ros,
 		name : topic,
 		messageType : 'nav_msgs/msg/GridCells',
-		throttle_rate: parseInt(throttle.value)
+		throttle_rate: parseInt(throttle.value),
+		compression: rosbridge.compression
 	});
 
 	status.setWarn("No data received.");

@@ -12,6 +12,7 @@ let status = new Status(
 );
 
 let url = document.getElementById("{uniqueID}_url");
+let compression = document.getElementById("{uniqueID}_compression");
 let icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
 
 // can't show images about reconnecting without preloading them before we lose connection
@@ -21,6 +22,7 @@ let img_disconnect = await imageToDataURL('assets/rosbridge_disconnected.svg');
 
 function update_gui(){
 	url.innerText = "Bridge URL: ws://"+rosbridge.url + ":"+rosbridge.port;
+	compression.innerText = "Topic compression type: "+rosbridge.compression;
 
 	switch (rosbridge.status) {
 		case "Reconnecting...":

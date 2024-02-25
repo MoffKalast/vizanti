@@ -1,14 +1,13 @@
 let rosbridgeModule = await import(`${base_url}/js/modules/rosbridge.js`);
 
 let rosbridge = rosbridgeModule.rosbridge;
-
 let packages = [];
 
 async function runRosWTF() {
 	const wtfService = new ROSLIB.Service({
 		ros: rosbridge.ros,
 		name: "/vizanti/roswtf",
-		serviceType: "std_srvs/Trigger",
+		serviceType: "std_srvs/srv/Trigger",
 	});
 
 	return new Promise((resolve, reject) => {
@@ -21,16 +20,16 @@ async function runRosWTF() {
 		});
 	});
 }
+
 async function getExecutables(pkg_name) {
 	const getExecutablesService = new ROSLIB.Service({
 		ros: rosbridge.ros,
 		name: "/vizanti/list_executables",
-		serviceType: "vizanti/ListExecutables",
+		serviceType: "vizanti_msgs/srv/ListExecutables",
 	});
 
 	return new Promise((resolve, reject) => {
 		getExecutablesService.callService(new ROSLIB.ServiceRequest({package : pkg_name}), (result) => {
-			console.log(result)
 			resolve(result.executables);
 		}, (error) => {
 			reject(error);
@@ -42,7 +41,7 @@ async function getPackages() {
 	const getPackagesService = new ROSLIB.Service({
 		ros: rosbridge.ros,
 		name: "/vizanti/list_packages",
-		serviceType: "vizanti/ListPackages",
+		serviceType: "vizanti_msgs/srv/ListPackages",
 	});
 
 	return new Promise((resolve, reject) => {
@@ -58,7 +57,7 @@ async function startNode(command) {
 	const startService = new ROSLIB.Service({
 		ros: rosbridge.ros,
 		name: "/vizanti/node/start",
-		serviceType: "vizanti/ManageNode",
+		serviceType: "vizanti_msgs/srv/ManageNode",
 	});
 
 	return new Promise((resolve, reject) => {
@@ -74,7 +73,7 @@ async function killNode(name) {
 	const killService = new ROSLIB.Service({
 		ros: rosbridge.ros,
 		name: "/vizanti/node/kill",
-		serviceType: "vizanti/ManageNode",
+		serviceType: "vizanti_msgs/srv/ManageNode",
 	});
 
 	return new Promise((resolve, reject) => {
@@ -91,7 +90,7 @@ async function nodeInfo(name) {
 	const infoService = new ROSLIB.Service({
 		ros: rosbridge.ros,
 		name: "/vizanti/node/info",
-		serviceType: "vizanti/ManageNode",
+		serviceType: "vizanti_msgs/srv/ManageNode",
 	});
 
 	return new Promise((resolve, reject) => {
@@ -161,7 +160,6 @@ wtfButton.addEventListener('click', async () => {
 	wtfText.innerText = "Waiting for roswtf report (might take several seconds)...";
 	openModal("{uniqueID}_roswtfmodal");
 	wtfText.innerText = await runRosWTF();
-	console.log(wtfText.innerText)
 });
 
 
@@ -202,13 +200,11 @@ nameBox.addEventListener('change', async function(e) {
 
 async function updatePackageList(){
 	packages = await getPackages();
-
 	packages.forEach(pkg => {
 		let option = document.createElement('option');
 		option.value = pkg;
 		packageDataList.appendChild(option);
 	});
-
 }
 
 executeButton.addEventListener('click', async () => {

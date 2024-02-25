@@ -65,7 +65,8 @@ function connect(){
 	temperature_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : 'sensor_msgs/msg/Temperature'
+		messageType : 'sensor_msgs/msg/Temperature',
+		compression: rosbridge.compression
 	});
 
 	status.setWarn("No data received.");
