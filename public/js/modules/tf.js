@@ -99,7 +99,8 @@ export class TF {
 		this.tf_static_topic = new ROSLIB.Topic({
 			ros: rosbridge.ros,
 			name: 'tf_static',
-			messageType: 'tf/tfMessage'
+			messageType: 'tf/tfMessage',
+			compression: "cbor"
 		});
 
 		this.tf_static_listener = this.tf_static_topic.subscribe((msg) => {

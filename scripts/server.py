@@ -13,6 +13,7 @@ rospy.init_node('vizanti_flask_node')
 
 param_host = rospy.get_param('~host', '0.0.0.0')
 param_port = rospy.get_param('~port', 5000)
+param_port_rosbridge = rospy.get_param('~port_rosbridge', 5001)
 param_base_url = rospy.get_param('~base_url', '')
 
 public_dir = RosPack().get_path('vizanti') + '/public/'
@@ -65,6 +66,17 @@ def list_template_files():
 @app.route(param_base_url + '/assets/robot_model/paths')
 def list_robot_model_files():
 	return get_paths("assets/robot_model", ['.png'])
+
+@app.route(param_base_url + '/ros_launch_params')
+def list_ros_launch_params():
+    params = {
+        "port": param_port,
+        "port_rosbridge": param_port_rosbridge
+    }
+    js_module = f"const params = {json.dumps(params)};\n\nexport default params;"
+    response = make_response(js_module)
+    response.headers['Content-Type'] = 'application/javascript'
+    return response
 
 @app.route(param_base_url + '/<path:path>')
 def serve_static(path):
