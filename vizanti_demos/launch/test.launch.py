@@ -5,7 +5,7 @@ from launch.substitutions import LaunchConfiguration
 def generate_launch_description():
     test_grid_cells = Node(
         package='vizanti_demos',
-        executable='test_grid_cells',
+        executable='test_grid_cells.py',
         name='test_grid_cells',
         output='screen',
         emulate_tty=True
@@ -13,7 +13,7 @@ def generate_launch_description():
 
     test_marker_array = Node(
         package='vizanti_demos',
-        executable='test_marker_array',
+        executable='test_marker_array.py',
         name='test_marker_array',
         output='screen',
         emulate_tty=True

@@ -15,7 +15,8 @@ class PathToNavigateThroughPosesNode(Node):
             Path,
             '/navigate_through_path',
             self.path_callback,
-            10)
+            10
+        )
         
         self.action_client = ActionClient(self, NavigateThroughPoses, '/navigate_through_poses')
         while not self.action_client.wait_for_server(timeout_sec=1.0):
@@ -61,3 +62,6 @@ def main(args=None):
 
     node.destroy_node()
     rclpy.shutdown()
+
+if __name__ == "__main__":
+    main()
