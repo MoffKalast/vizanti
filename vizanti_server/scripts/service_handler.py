@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import subprocess
 import os
 import fcntl
@@ -328,3 +330,6 @@ def main(args=None):
 
     service_handler.destroy_node()
     rclpy.shutdown()
+
+if __name__ == "__main__":
+    main()
