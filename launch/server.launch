@@ -1,7 +1,7 @@
 <launch>
 
-	<arg name="port" default="5003" />
-	<arg name="port_rosbridge" default="6002" />
+	<arg name="port" default="5000" />
+	<arg name="port_rosbridge" default="5001" />
 	<arg name="base_url" default="" /> <!-- e.g. /vizanti -->
 
 	<arg name="retry_startup_delay" default="10" />

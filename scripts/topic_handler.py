@@ -4,6 +4,7 @@ import rospy
 import time
 import threading
 
+from rospy.exceptions import ROSTimeMovedBackwardsException
 from tf2_msgs.msg import TFMessage
 
 class TopicHandler:
@@ -60,5 +61,8 @@ class TopicHandler:
 odr = TopicHandler()
 rate = rospy.Rate(30)
 while not rospy.is_shutdown():
-	odr.publish()
-	rate.sleep()
+	try:
+		odr.publish()
+		rate.sleep()
+	except ROSTimeMovedBackwardsException as e:
+		print(e)

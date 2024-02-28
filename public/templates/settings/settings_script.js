@@ -30,7 +30,7 @@ if (settings.hasOwnProperty('{uniqueID}')) {
 	document.body.style.backgroundColor = loadedData.background_color;
 }else{
 	if(tf.fixed_frame == ""){
-		tf.setFixedFrame("odom");
+		tf.setFixedFrame("base_link");
 		status.setWarn("No frame selected, defaulting to odom");
 	}
 	saveSettings();
