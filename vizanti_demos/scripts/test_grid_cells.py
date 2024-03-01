@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import rclpy
 from rclpy.node import Node
 from nav_msgs.msg import GridCells
@@ -53,3 +55,6 @@ def main(args=None):
     rclpy.spin(random_grid_cells_publisher)
     random_grid_cells_publisher.destroy_node()
     rclpy.shutdown()
+
+if __name__ == "__main__":
+    main()

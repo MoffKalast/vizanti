@@ -1,6 +1,6 @@
 <package format="3">
     <name>vizanti_server</name>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
     <description>A mission planner and visualizer for controlling outdoor ROS robots.</description>
     <maintainer email="vid.rijavec@gmail.com">MoffKalast</maintainer>
     <maintainer email="albradford2468@gmail.com">Alastair Bradford</maintainer>
@@ -9,6 +9,8 @@
     <url type="bugtracker">https://github.com/MoffKalast/vizanti/issues</url>
     <url type="repository">https://github.com/MoffKalast/vizanti/tree/ros2</url>
 
+    <depend>rclpy</depend>
+    <depend>rclcpp</depend>
     <depend>std_srvs</depend>
     <depend>tf2_msgs</depend>
     <depend>geometry_msgs</depend>
@@ -17,9 +19,12 @@
     <depend>python3-flask</depend>
     <depend>rosbridge_suite</depend>
 
+    <buildtool_depend>ament_cmake</buildtool_depend>
+    <buildtool_depend>ament_cmake_python</buildtool_depend>
+
     <exec_depend>ros2launch</exec_depend>
 
     <export>
-        <build_type>ament_python</build_type>
+    <build_type>ament_cmake</build_type>
     </export>
 </package>

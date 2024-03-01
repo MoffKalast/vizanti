@@ -15,18 +15,21 @@ class ParticleCloudToPoseArrayNode(Node):
         
         qos_profile = QoSProfile(
             depth=1,
-            reliability=0)
+            reliability=0
+        )
         
         self.subscription = self.create_subscription(
             ParticleCloud,
             '/particle_cloud',
             self.particle_cloud_callback,
-            qos_profile)
+            qos_profile
+        )
         
         self.publisher = self.create_publisher(
             PoseArray,
             '/poses',
-            qos_profile)
+            qos_profile
+        )
 
     def particle_cloud_callback(self, msg):
         selected_indices = random.sample(msg.particles, 20)
@@ -51,3 +54,6 @@ def main(args=None):
 
     node.destroy_node()
     rclpy.shutdown()
+
+if __name__ == "__main__":
+    main()
