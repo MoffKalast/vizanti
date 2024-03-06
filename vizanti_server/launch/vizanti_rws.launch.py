@@ -16,7 +16,7 @@ def generate_launch_description():
         parameters=[
             {'rosbridge_compatible ': True},
             {'port': port_rosbridge},
-            {'watchdog ': False}
+            {'watchdog': True}
         ]
     )
 
