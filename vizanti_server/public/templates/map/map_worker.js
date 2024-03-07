@@ -29,7 +29,7 @@ self.addEventListener('message', function(event) {
             let occupancyValue = data[i];
             let color = 255; // White for unknown
 
-            if(occupancyValue < 0)
+            if(occupancyValue < 0 || occupancyValue == 255)
                 occupancyValue = 0;
 
             color = (occupancyValue * 255) / 100;
