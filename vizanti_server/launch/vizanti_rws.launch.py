@@ -3,8 +3,8 @@ import launch_ros.actions
 
 def generate_launch_description():
     base_url = launch.substitutions.LaunchConfiguration('base_url', default='') #e.g. /vizanti
-    port = launch.substitutions.LaunchConfiguration('port', default=5000)
-    port_rosbridge = launch.substitutions.LaunchConfiguration('port_rosbridge', default=5001)
+    port = launch.substitutions.LaunchConfiguration('port', default=5010)
+    port_rosbridge = launch.substitutions.LaunchConfiguration('port_rosbridge', default=5011)
     flask_debug = launch.substitutions.LaunchConfiguration('flask_debug', default=True)
 
     #https://github.com/v-kiniv/rws
