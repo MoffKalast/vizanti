@@ -261,7 +261,7 @@ h3 {
 	font-size: 0.8rem;
 	color: lightgray;
 	overflow-x: auto;
-	scrollbar-color: #4242426a #99999978;
+	scrollbar-color: #99999978 #4242426a;
 	scrollbar-width: thin;
 }
 
@@ -348,6 +348,40 @@ input[type="checkbox"]:before {
   
 input[type="checkbox"]:checked:before {
 	left: calc(100% - 20px);
+}
+
+.tf_label {
+	white-space: nowrap;
+	width: 100%;
+	margin: 0;
+	overflow-x: auto;
+	scrollbar-color: #99999978 #4242426a;
+	scrollbar-width: thin;
+}
+
+.tf_label::-webkit-scrollbar {
+	height: 3px;
+}
+
+.tf_label::-webkit-scrollbar-thumb {
+	background-color: #99999978;
+	border-radius: 2px;
+}
+
+.tf_label::-webkit-scrollbar-track {
+	background-color: #4242426a;
+	height: 3px;
+}
+
+.tf_details {
+	background: linear-gradient(to right, #1D2835, transparent);
+	padding: 5px;
+	border-radius: 5px;
+}
+
+.tf_summary {
+	color: lightgray;
+	font-style: italic;
 }
 
 input[type="range"] {
@@ -446,6 +480,7 @@ button {
 
 	color: white;
 	background-color: #484848;
+	margin-bottom: 5px;
 }
 
 .delete_button {
