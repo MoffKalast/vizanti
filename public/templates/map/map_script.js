@@ -63,11 +63,14 @@ let status = new Status(
 let icons = {};
 icons["map"] = await imageToDataURL("assets/map.svg");
 icons["costmap"] = await imageToDataURL("assets/costmap.svg");
+icons["raw"] = await imageToDataURL("assets/rawmap.svg");
 
 let listener = undefined;
 let map_topic = undefined;
 let map_data = undefined;
 let new_map_data = undefined;
+
+let received_msg = undefined;
 
 //firefox bug workaround
 const temp_canvas = document.createElement('canvas');
@@ -92,9 +95,10 @@ const savePathBox = document.getElementById("{uniqueID}_savepath");
 const loadButton = document.getElementById('{uniqueID}_load');
 const saveButton = document.getElementById('{uniqueID}_save');
 
-const costmapCheckbox = document.getElementById('{uniqueID}_costmap_mode');
-costmapCheckbox.checked = topic.includes("cost");
-costmapCheckbox.addEventListener('change', saveSettings);
+//rendring colour modes: 0 = map, 1 = costmap, 2 = raw
+const colourSchemeBox = document.getElementById('{uniqueID}_colour_scheme');
+colourSchemeBox.selectedIndex = topic.includes("cost") ? 1 : 0;
+colourSchemeBox.addEventListener('change', saveSettings);
 
 const timestampCheckbox = document.getElementById('{uniqueID}_use_timestamp');
 timestampCheckbox.addEventListener('change', saveSettings);
@@ -158,7 +162,12 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	opacitySlider.value = loaded_data.opacity;
 	opacityValue.innerText = loaded_data.opacity;
 
-	costmapCheckbox.checked =  loaded_data.costmap_mode ?? false;
+	if(loaded_data.costmap_mode !== undefined){
+		colourSchemeBox.selectedIndex = loaded_data.costmap_mode ? 1 : 0;
+	}else{
+		colourSchemeBox.selectedIndex = loaded_data.colour_scheme;
+	}
+
 	timestampCheckbox.checked = loaded_data.use_timestamp ?? false;
 	throttle.value = loaded_data.throttle ?? 1000;
 
@@ -166,17 +175,13 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	saveSettings();
 }
 
-if(costmapCheckbox.checked){
-	icon.src = icons["costmap"];
-}else{
-	icon.src = icons["map"];
-}
+icon.src = icons[colourSchemeBox.value];
 
 function saveSettings(){
 	settings["{uniqueID}"] = {
 		topic: topic,
 		opacity: opacitySlider.value,
-		costmap_mode: costmapCheckbox.checked,
+		colour_scheme: colourSchemeBox.selectedIndex,
 		throttle: throttle.value,
 		use_timestamp: timestampCheckbox.checked
 	}
@@ -276,23 +281,28 @@ function connect(){
 			return;
 		}
 
-		msg.pose = tf.transformPose(
-			msg.header.frame_id,
-			tf.fixed_frame,
-			msg.info.origin.position,
-			msg.info.origin.orientation
-		);
-
-		new_map_data = msg;
-		map_data = undefined;
-
-		worker_thread.postMessage({
-			map_msg: msg,
-			is_costmap: costmapCheckbox.checked,
-		});
+		queueWorkerMsg(msg);
+		received_msg = msg;
 	});
 
 	saveSettings();
+}
+
+function queueWorkerMsg(msg){
+	msg.pose = tf.transformPose(
+		msg.header.frame_id,
+		tf.fixed_frame,
+		msg.info.origin.position,
+		msg.info.origin.orientation
+	);
+
+	new_map_data = msg;
+	map_data = undefined;
+
+	worker_thread.postMessage({
+		map_msg: msg,
+		colour_scheme: colourSchemeBox.value,
+	});
 }
 
 async function loadTopics(){
@@ -318,13 +328,9 @@ async function loadTopics(){
 	connect();
 }
 
-costmapCheckbox.addEventListener("change", (event) => {
-	status.setWarn("Display mode changed, waiting for map data...");
-	if(costmapCheckbox.checked){
-		icon.src = icons["costmap"];
-	}else{
-		icon.src = icons["map"];
-	}
+colourSchemeBox.addEventListener("change", (event) => {
+	icon.src = icons[colourSchemeBox.value];
+	queueWorkerMsg(received_msg);
 });
 
 selectionbox.addEventListener("change", (event) => {
