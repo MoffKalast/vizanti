@@ -8,7 +8,7 @@ self.addEventListener('message', function(event) {
     }
 
     const msg = event.data.map_msg;
-    const is_costmap = event.data.is_costmap;
+    const colour_scheme = event.data.colour_scheme;
 
     const width = msg.info.width;
     const height = msg.info.height;
@@ -22,55 +22,63 @@ self.addEventListener('message', function(event) {
     
     let map_img = mapctx.createImageData(width, height);
     
-    if(is_costmap)
+    if(colour_scheme == "costmap")
     {
         // Iterate through the data array and set the canvas pixel colors
         for (let i = 0; i < data.length; i++) {
             let occupancyValue = data[i];
-            let color = 255; // White for unknown
-
-            if(occupancyValue < 0)
-                occupancyValue = 0;
-
-            color = (occupancyValue * 255) / 100;
-
-            if(occupancyValue == 100){
-                map_img.data[i * 4] = 255; // R
-                map_img.data[i * 4 + 1] = 0; // G
-                map_img.data[i * 4 + 2] = 128; // B
-                map_img.data[i * 4 + 3] = 255; // A
+            let color = [0, 255, 0, 0]; // Green for illegal positive values
+        
+            if (occupancyValue === 0) {
+                color = [0, 0, 0, 0]; // Black for value 0
+            } else if (occupancyValue >= 1 && occupancyValue <= 98) {
+                let v = (255 * occupancyValue) / 100;
+                color = [v, 0, 255 - v, 255]; // Gradient from blue to green
+            } else if (occupancyValue === 99) {
+                color = [0, 255, 255, 255]; // Cyan for obstacle values
+            } else if (occupancyValue === 100) {
+                color = [255, 0, 255, 255]; // Purple for lethal obstacle values
+            } else if (occupancyValue < 0) {
+                color = [0x70, 0x89, 0x86, 15]; // Legal negative value -1
             }
-            else if(occupancyValue > 80){
-                map_img.data[i * 4] = 0; // R
-                map_img.data[i * 4 + 1] = 255; // G
-                map_img.data[i * 4 + 2] = 255; // B
-                map_img.data[i * 4 + 3] = 255; // A
+        
+            map_img.data[i * 4] = color[0]; // R
+            map_img.data[i * 4 + 1] = color[1]; // G
+            map_img.data[i * 4 + 2] = color[2]; // B
+            map_img.data[i * 4 + 3] = color[3]; // A
+        }
+    }
+    else if(colour_scheme == "map")
+    {
+        for (let i = 0; i < data.length; i++) {
+            let occupancyValue = data[i];
+            let color = [255, 255, 255, 255]; // White for clear
+            if (occupancyValue >= 0 && occupancyValue <= 100) {
+                let v = 255 - (255 * occupancyValue) / 100;
+                color = [v, v, v, 255];
+            } else if (occupancyValue < 0) {
+                color = [0x70, 0x89, 0x86, 30]; // Legal negative value -1
+            } else if (occupancyValue > 100) {
+                color = [0, 255, 0, 30]; // Illegal positive value
             }
-            else{
-                map_img.data[i * 4] = color; // R
-                map_img.data[i * 4 + 1] = 0; // G
-                map_img.data[i * 4 + 2] = 255-color; // B
-                map_img.data[i * 4 + 3] = parseInt(occupancyValue*2.55); // A
-            }
+        
+            map_img.data[i * 4] = color[0]; // R
+            map_img.data[i * 4 + 1] = color[1]; // G
+            map_img.data[i * 4 + 2] = color[2]; // B
+            map_img.data[i * 4 + 3] = color[3]; // A
         }
     }
     else
     {
-        // Iterate through the data array and set the canvas pixel colors
         for (let i = 0; i < data.length; i++) {
-            let occupancyValue = data[i];
-            let color = 255; // White for unknown
+            let val = data[i];
 
-            if(occupancyValue < 0)
-                occupancyValue = 50;
+            if(val < 0)
+                val = 255;
 
-            if (occupancyValue >= 0 && occupancyValue <= 100) {
-                color = 255 - (occupancyValue * 255) / 100;
-            }
-
-            map_img.data[i * 4] = color; // R
-            map_img.data[i * 4 + 1] = color; // G
-            map_img.data[i * 4 + 2] = color; // B
+            map_img.data[i * 4] = val; // R
+            map_img.data[i * 4 + 1] = val; // G
+            map_img.data[i * 4 + 2] = val; // B
             map_img.data[i * 4 + 3] = 255; // A
         }
     }
