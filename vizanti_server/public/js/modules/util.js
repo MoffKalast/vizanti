@@ -42,62 +42,35 @@ export function imageToDataURL(url) {
 	});
 }
 
-function get_prefix(words) {
-	if (!words[0] || words.length == 1) return words[0] || '';
-	let i = 0;
-	while (words[0][i] && words.every(w => w[i] === words[0][i])) {
-		i++;
-	}
-	return words[0].substr(0, i);
-}
+export function groupStringsByPrefix(strings, minPrefixLength=2) {
 
-export function groupStringsByPrefix(strings, min_prefix_len=4, min_group_size=3) {
-
-	let sorted = strings.sort();
-	const prefixes = new Set();
-
-	for (let i = 0; i < strings.length - min_group_size+1; i++) {
-		let group = [];
-		for (let j = 0; j < min_group_size; j++) {
-			group.push(sorted[i + j]);
-		}
-
-		const prefix = get_prefix(group);
-		if(prefix.length >= min_prefix_len){
-			prefixes.add(prefix);
-		}
+	function getPrefix(str, minPrefixLength) {
+		const prefixEnd = str.indexOf('/') === -1 ? str.indexOf('_') : str.indexOf('/');
+		const prefix = prefixEnd === -1 ? str : str.slice(0, prefixEnd);
+		return prefix.length >= minPrefixLength ? prefix : null;
 	}
 
-	const longest_prefix = Array.from(prefixes).sort((a, b) => b.length - a.length);
-
-	let groups = {};
-
-	for (let i = 0; i < longest_prefix.length; i++) {
-		const prefix = longest_prefix[i];
-		let namelist = [];
-
-		for (let j = 0; j < sorted.length; j++) {
-			if(sorted[j].indexOf(prefix) == 0){
-				namelist.push(sorted[j]);
-				sorted.splice(j, 1);
-				j--;
-			}
+	const prefixMap = new Map();
+	for (const str of strings) {
+		const prefix = getPrefix(str, minPrefixLength);
+		if (!prefixMap.has(prefix)) {
+			prefixMap.set(prefix, []);
 		}
-
-		groups[prefix] = namelist;
-	}
-	
-	sorted = sorted.concat(longest_prefix).sort();
-	
-	let returnarray = [];
-	for (let i = 0; i < sorted.length; i++) {
-		const name = sorted[i];
-		if(name in groups){
-			returnarray.push([name].concat(groups[name]));
-		}  else{
-			returnarray.push([name]);
-		}
+		prefixMap.get(prefix).push(str);
 	}
 
-	return returnarray;
+	let result = [];
+	for (const [prefix, group] of prefixMap) {
+		if(group.length == 1){
+			result.push([group[0]]);
+		}else{
+			result.push([prefix, ...group]);
+		}
+	}
+	 
+	return result.sort((a,b) => {
+		if (a[0] < b[0]) return -1;
+		if (a[0] > b[0]) return 1;
+		return 0;
+	});
 }
