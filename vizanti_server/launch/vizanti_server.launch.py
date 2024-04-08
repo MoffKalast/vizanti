@@ -5,7 +5,7 @@ def generate_launch_description():
     retry_startup_delay = launch.substitutions.LaunchConfiguration('retry_startup_delay', default='10.0')
     fragment_timeout = launch.substitutions.LaunchConfiguration('fragment_timeout', default='30')
     delay_between_messages = launch.substitutions.LaunchConfiguration('delay_between_messages', default='0')
-    max_message_size = launch.substitutions.LaunchConfiguration('max_message_size', default='10000000')
+    max_message_size = launch.substitutions.LaunchConfiguration('max_message_size', default='999999999')
     base_url = launch.substitutions.LaunchConfiguration('base_url', default='') #e.g. /vizanti
     port = launch.substitutions.LaunchConfiguration('port', default=5000)
     port_rosbridge = launch.substitutions.LaunchConfiguration('port_rosbridge', default=5001)
