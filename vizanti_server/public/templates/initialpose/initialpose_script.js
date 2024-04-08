@@ -60,8 +60,8 @@ function sendMessage(pos, delta){
 	const poseMessage = new ROSLIB.Message({
 		header: {
 			stamp: {
-				secs: currentTimeSecs,
-      			nsecs: currentTimeNsecs
+				sec: currentTimeSecs,
+				nanosec: currentTimeNsecs
 			},
 			frame_id: tf.fixed_frame
 		},
