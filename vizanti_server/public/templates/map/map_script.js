@@ -168,7 +168,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	if(loaded_data.costmap_mode !== undefined){
 		colourSchemeBox.selectedIndex = loaded_data.costmap_mode ? 1 : 0;
 	}else{
-		colourSchemeBox.selectedIndex = loaded_data.colour_scheme;
+		colourSchemeBox.selectedIndex = loaded_data.colour_scheme > 0 ? loaded_data.colour_scheme: 0;
 	}
 
 	timestampCheckbox.checked = loaded_data.use_timestamp ?? false;
