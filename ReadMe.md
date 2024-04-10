@@ -33,7 +33,7 @@ The web app can be accessed at `http://<host_ip>:5000`. Client settings are auto
 
 If you're using a mobile device connected to a robot's hotspot that doesn't have internet access, make sure to turn off mobile data. This will prevent Android from sending packets to the wrong gateway.
 
-Note that the client uses the web fetch API to load a fair few things, make sure your browser is at least somewhat up to date or some features may not work.
+If you are seeing unusually slow rendering in Chrome on Linux, set "Force color profile" to "sRGB" in `chrome://flags/#force-color-profile`. This should speed up canvas rendering.
 
 ----
 
