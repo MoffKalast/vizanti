@@ -16,18 +16,19 @@
 		<span id="{uniqueID}_opacity_value">0.7</span>
 		<input type="range" value="0.7" step="0.05" min="0.1" max="1.0" id="{uniqueID}_opacity">
 
-		<label>Costmap colouring:</label>
-		<input type="checkbox" id="{uniqueID}_costmap_mode">	
-		
-		<p style="color:#b4b4b4;">Alternative costmap colouring can be used to differentiate local and global costmaps from regular maps. Rendering mode applies upon receiving the next message.</p>
+		<label for="{uniqueID}_colour_scheme">Colour scheme:</label>
+		<select id="{uniqueID}_colour_scheme">
+		  <option value="map">Map</option>
+		  <option value="costmap">Costmap</option>
+		  <option value="raw">Raw</option>
+		</select>
 
 		<br>
 
 		<label>Use Timestamp:</label>
 		<input type="checkbox" id="{uniqueID}_use_timestamp">	
 
-		<p style="color:#b4b4b4;">Turns out that rendering maps at their published timestamp has them lag behind when focusing on frames other than the map frame. Rviz uses this trick to compensate, and I sure don't have any better ideas. Enable for techincally correct rendering.</p>
-
+		<p style="color:#b4b4b4;">Rendering maps at their published timestamp has them lag behind when focusing on frames other than the map frame. Rviz uses this trick to compensate. Enable for techincally correct rendering.</p>
 
 		<label for="{uniqueID}_throttle">Socket throttle (ms):</label>
 		<input type="number" value="1000" step="0" min="0" max="10000" id="{uniqueID}_throttle">

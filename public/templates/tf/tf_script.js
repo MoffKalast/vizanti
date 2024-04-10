@@ -2,6 +2,7 @@ let viewModule = await import(`${base_url}/js/modules/view.js`);
 let tfModule = await import(`${base_url}/js/modules/tf.js`);
 let persistentModule = await import(`${base_url}/js/modules/persistent.js`);
 let StatusModule = await import(`${base_url}/js/modules/status.js`);
+let utilModule = await import(`${base_url}/js/modules/util.js`);
 
 let view = viewModule.view;
 let tf = tfModule.tf;
@@ -231,7 +232,12 @@ async function drawFrames() {
 
 const framesDiv = document.getElementById('{uniqueID}_frames');
 
+let prev_transforms = new Set();
+let grouped_frames = [];
+
 function updateVisibility(){
+
+	const eqSet = (xs, ys) => xs.size === ys.size && [...xs].every((x) => ys.has(x));
 
 	let current_transforms = new Set();
 
@@ -251,8 +257,7 @@ function updateVisibility(){
 		current_transforms.add(parent);
 	});
 
-	framesDiv.innerHTML = '';
-	current_transforms.forEach(key => {
+	function getEntry(key){
 		const checkbox = document.createElement('input');
 		checkbox.type = 'checkbox';
 		checkbox.id = `{uniqueID}_${key}`;
@@ -265,27 +270,73 @@ function updateVisibility(){
 		const label = document.createElement('label');
 		label.textContent = ` ${key}`;
 
-		const br = document.createElement('br');
+		const div = document.createElement('div');
+		div.classList.add('tf_label');
+		div.appendChild(checkbox);
+		div.appendChild(label);
+		return div;
+	}
 
-		framesDiv.appendChild(checkbox);
-		framesDiv.appendChild(label);
-		framesDiv.appendChild(br);
-	});
+	if (!eqSet(prev_transforms, current_transforms)){
+		grouped_frames = utilModule.groupStringsByPrefix(Array.from(current_transforms), 2);
+		prev_transforms = current_transforms;
+	}
+
+	framesDiv.innerHTML = '';
+	for(let i = 0; i < grouped_frames.length; i++){
+		const elementlist = grouped_frames[i];
+
+		if(elementlist.length == 1){
+			framesDiv.appendChild(getEntry(elementlist[0]));
+		}else{
+			const detailsElement = document.createElement("details");
+			detailsElement.setAttribute("open", "open");
+			detailsElement.classList.add("tf_details");
+
+			const summaryElement = document.createElement("summary");
+			summaryElement.classList.add("tf_summary");
+			summaryElement.textContent = elementlist[0];
+
+			detailsElement.appendChild(summaryElement);
+			detailsElement.appendChild(document.createElement('br'));
+			for(let j = 1; j < elementlist.length; j++){
+				detailsElement.appendChild(getEntry(elementlist[j]));
+				detailsElement.appendChild(document.createElement('br'));
+			}		  
+			framesDiv.appendChild(detailsElement);
+		}
+
+		framesDiv.appendChild(document.createElement('br'));
+	}
 }
 
-/* function updateFrameBox(){
-	let updatevisibility = false;
-	Object.keys(tf.transforms).forEach(key => {
-		if(!frame_visibility.hasOwnProperty(key)){
-			updatevisibility = true;
-			frame_visibility[key] = true;
-		}
-	});
-
-	if (updatevisibility) {
-		updateVisibility();
+document.getElementById('{uniqueID}_enable_all').addEventListener('click',  async () => {
+	for (const [key, value] of Object.entries(frame_visibility)) {
+		frame_visibility[key] = true;
 	}
-} */
+	saveSettings();
+	updateVisibility();
+});
+
+document.getElementById('{uniqueID}_standard_only').addEventListener('click',  async () => {
+	const standard_frames = ["world", "earth", "map", "odom", "base_link", "base_footprint", "laser", "base_stabilized"];
+	const hasStandardFrame = (str) => standard_frames.some(frame => str.includes(frame));
+
+	for (const [key, value] of Object.entries(frame_visibility)) {
+		frame_visibility[key] = hasStandardFrame(key);
+	}
+	saveSettings();
+	updateVisibility();
+
+});
+
+document.getElementById('{uniqueID}_disable_all').addEventListener('click',  async () => {
+	for (const [key, value] of Object.entries(frame_visibility)) {
+		frame_visibility[key] = false;
+	}
+	saveSettings();
+	updateVisibility();
+});
 
 icon.addEventListener("click", updateVisibility);
 
