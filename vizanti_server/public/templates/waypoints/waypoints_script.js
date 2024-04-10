@@ -97,8 +97,8 @@ function getStamp(){
 	const currentTimeNsecs = (currentTime.getTime() % 1000) * 1e6;
 
 	return {
-		secs: currentTimeSecs,
-		nsecs: currentTimeNsecs
+		sec: currentTimeSecs,
+		nanosec: currentTimeNsecs
 	}
 }
 

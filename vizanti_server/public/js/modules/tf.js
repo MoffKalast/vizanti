@@ -7,10 +7,10 @@ import { rosbridge } from './rosbridge.js';
 		this.index = new Map();
 	}
 
-	getKey({ secs, nsecs }) {
+	getKey({ sec, nanosec }) {
 		// Use the provided data structure to form a unique key
 		// The precision should be enough for up to 1ns resolution over approximately 285 years.
-		return secs * 1e9 + nsecs;
+		return sec * 1e9 + nanosec;
 	}
 
 	add(key, value) {
