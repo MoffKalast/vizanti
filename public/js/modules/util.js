@@ -42,62 +42,85 @@ export function imageToDataURL(url) {
 	});
 }
 
-function get_prefix(words) {
-	if (!words[0] || words.length == 1) return words[0] || '';
-	let i = 0;
-	while (words[0][i] && words.every(w => w[i] === words[0][i])) {
-		i++;
-	}
-	return words[0].substr(0, i);
-}
+export function groupStringsByPrefix(strings, minPrefixLength=2) {
 
-export function groupStringsByPrefix(strings, min_prefix_len=4, min_group_size=3) {
-
-	let sorted = strings.sort();
-	const prefixes = new Set();
-
-	for (let i = 0; i < strings.length - min_group_size+1; i++) {
-		let group = [];
-		for (let j = 0; j < min_group_size; j++) {
-			group.push(sorted[i + j]);
-		}
-
-		const prefix = get_prefix(group);
-		if(prefix.length >= min_prefix_len){
-			prefixes.add(prefix);
-		}
-	}
-
-	const longest_prefix = Array.from(prefixes).sort((a, b) => b.length - a.length);
-
-	let groups = {};
-
-	for (let i = 0; i < longest_prefix.length; i++) {
-		const prefix = longest_prefix[i];
-		let namelist = [];
-
-		for (let j = 0; j < sorted.length; j++) {
-			if(sorted[j].indexOf(prefix) == 0){
-				namelist.push(sorted[j]);
-				sorted.splice(j, 1);
-				j--;
+	function splitPrefix(string_list) {		
+		class Node {
+			constructor() {
+				this.list = {};
 			}
 		}
 
-		groups[prefix] = namelist;
-	}
-	
-	sorted = sorted.concat(longest_prefix).sort();
-	
-	let returnarray = [];
-	for (let i = 0; i < sorted.length; i++) {
-	    const name = sorted[i];
-	    if(name in groups){
-	        returnarray.push([name].concat(groups[name]));
-	    }  else{
-	        returnarray.push([name]);
-	    }
+		const root = new Node();
+		for (const i of string_list) {
+			const replaced = i.replaceAll("/","@@/")
+							.replaceAll("_","@@_")
+							.replaceAll("-","@@-");
+
+			const path = replaced.split("@@");
+
+			let currentNode = root;
+			for(let j = 0; j < path.length; j++){
+				const segment = path[j];
+				if (!(segment in currentNode.list))
+					currentNode.list[segment] = new Node();
+				currentNode = currentNode.list[segment];
+			}
+
+			currentNode.link_name = i;
+		}		
+		return root;
 	}
 
-	return returnarray;
+	function getLinks(tree){
+		let links = "link_name" in tree ? [tree.link_name] : [];
+
+		for (const [key, value] of Object.entries(tree.list)) {
+			links = links.concat(getLinks(value));
+		}
+
+		return links;
+	}
+
+	function getGroups(tree){
+		let groups = {};
+		for (const [key, value] of Object.entries(tree.list)) {
+			const links = getLinks(value);
+
+			if(links.length < 8){
+				groups[key] = links;
+			}else{
+				let subgroups = getGroups(value);
+				for (const [subkey, subvalue] of Object.entries(subgroups)) {
+					if(subvalue.length > 2){
+						groups[key+subkey] = subvalue;
+					}else{
+						if(key in groups)
+							groups[key] = groups[key].concat(subvalue);
+						else
+							groups[key] = subvalue;
+					}					
+				}
+			}
+		}
+		return groups;
+	}
+
+	let fragmented = splitPrefix(strings);
+	let dict = getGroups(fragmented);
+
+	//format for rendering
+	let result = [];
+	for (const [key, value] of Object.entries(dict)) {
+		if (value.length > 1)
+			result.push([key, ...value])
+		else
+			result.push(value)
+	}
+
+	return result.sort((a,b) => {
+		if (a[0] < b[0]) return -1;
+		if (a[0] > b[0]) return 1;
+		return 0;
+	});
 }

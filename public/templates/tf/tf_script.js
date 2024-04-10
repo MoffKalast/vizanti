@@ -278,7 +278,7 @@ function updateVisibility(){
 	}
 
 	if (!eqSet(prev_transforms, current_transforms)){
-		grouped_frames = utilModule.groupStringsByPrefix(Array.from(current_transforms), 4, 2);
+		grouped_frames = utilModule.groupStringsByPrefix(Array.from(current_transforms), 2);
 		prev_transforms = current_transforms;
 	}
 
@@ -295,7 +295,7 @@ function updateVisibility(){
 
 			const summaryElement = document.createElement("summary");
 			summaryElement.classList.add("tf_summary");
-			summaryElement.textContent = elementlist[0].replace(/_+$/, '');
+			summaryElement.textContent = elementlist[0];
 
 			detailsElement.appendChild(summaryElement);
 			detailsElement.appendChild(document.createElement('br'));
