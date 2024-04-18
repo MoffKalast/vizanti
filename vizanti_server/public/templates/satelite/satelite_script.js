@@ -160,9 +160,23 @@ async function drawTiles(){
 
 	const frame = tf.absoluteTransforms[map_fix.header.frame_id];
 
+	// claculatinig zoomLevel
+	if(view.scale > 7500){
+		tempZoomLevel = 19;
+	}
+	else if(view.scale > 5000){
+		tempZoomLevel = 14
+	}
+	else if(view.scale > 0.1){
+		tempZoomLevel = 10
+	}
+
+
+
 	if(frame){
 
-		const tileScreenSize = view.getMapUnitsInPixels(fix_data.metersSize);
+		let metersSize = navsat.tileSizeInMeters(map_fix.latitude, tempZoomLevel)
+		const tileScreenSize = view.getMapUnitsInPixels(metersSize);
 		const corners = [
 			{ x: 0, y: 0, z: 0 },
 			{ x: wid, y: 0, z: 0 },
