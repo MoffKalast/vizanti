@@ -29,7 +29,7 @@ function hasClassInParentChain(element, className) {
 }
 
 const MAX_SCALE = 10000;
-const MIN_SCALE = 3.0;
+const MIN_SCALE = 0.01;
 const ZOOM_FACTOR = 1.05;
 
 export class View {
