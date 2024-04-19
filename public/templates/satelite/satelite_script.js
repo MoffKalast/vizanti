@@ -21,7 +21,7 @@ let copyright = "© OpenStreetMap";
 let topic = getTopic("{uniqueID}");
 let server_url = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 let listener = undefined;
-let zoomLevel = 19;
+let zoomLevel = 12;
 
 let map_topic = undefined;
 let map_fix = undefined;
@@ -90,16 +90,16 @@ function saveSettings(){
 	}
 	settings.save();
 }
-
-function drawTile(screenSize, i, j){
+// newMetersSize, zoomLevel
+function drawTile(screenSize, i, j, tempMeterSize ,tempZoomLevel){
 
 	const x = fix_data.tilePos.x + i;
 	const y = fix_data.tilePos.y + j;
 
-	const offsetX = fix_data.offset.x - i * fix_data.metersSize;
-	const offsetY = fix_data.offset.y - j * fix_data.metersSize;
+	const offsetX = fix_data.offset.x - i * tempMeterSize;
+	const offsetY = fix_data.offset.y - j * tempMeterSize;
 
-	const tileURL = server_url.replace("{z}",zoomLevel).replace("{x}",x).replace("{y}",y);
+	const tileURL = server_url.replace("{z}",tempZoomLevel).replace("{x}",x).replace("{y}",y);
 	let tileImage = navsat.live_cache[tileURL];
 
 	if(!tileImage || !tileImage.complete){
@@ -143,7 +143,13 @@ function drawTile(screenSize, i, j){
 	ctx.drawImage(tileImage, 0, 0, screenSize, screenSize);
 	ctx.restore();
 }
-
+function clamp(val, from, to){
+    if(val > to)
+        return to;
+    if(val < from)
+        return from;
+    return val;
+}
 //Rendering
 async function drawTiles(){
 
@@ -159,24 +165,36 @@ async function drawTiles(){
 	}
 
 	const frame = tf.absoluteTransforms[map_fix.header.frame_id];
+	var tempZoomLevel = 12;
+	zoomLevel = 12;
 
+	tempZoomLevel = Math.round(Math.log2(view.scale)+17);
+	tempZoomLevel = clamp(tempZoomLevel, 7, 19);
+	zoomLevel = tempZoomLevel;
 	// claculatinig zoomLevel
-	if(view.scale > 7500){
-		tempZoomLevel = 19;
-	}
-	else if(view.scale > 5000){
-		tempZoomLevel = 14
-	}
-	else if(view.scale > 0.1){
-		tempZoomLevel = 10
-	}
-
+	// if(view.scale > 2){
+	// 	tempZoomLevel = 19;
+	// 	zoomLevel = 19;
+	// 	// console.log("tempZoomLevel = 19");
+	// }
+	// else if(view.scale > 1){
+	// 	tempZoomLevel = 17;
+	// 	zoomLevel = 17;
+	// }
+	// else if(view.scale > 0.25){
+	// 	tempZoomLevel = 15;
+	// 	zoomLevel = 15;
+	// }
+	console.log(view.scale);
+	console.log(zoomLevel);
 
 
 	if(frame){
 
 		let metersSize = navsat.tileSizeInMeters(map_fix.latitude, tempZoomLevel)
 		const tileScreenSize = view.getMapUnitsInPixels(metersSize);
+		// const tileScreenSize = view.getMapUnitsInPixels(fix_data.metersSize);
+
 		const corners = [
 			{ x: 0, y: 0, z: 0 },
 			{ x: wid, y: 0, z: 0 },
@@ -201,7 +219,7 @@ async function drawTiles(){
 
 		// Convert the corners to tile coordinates
 		const cornerTileCoords = cornerCoords.map((coord) =>
-			navsat.coordToTile(coord.longitude, coord.latitude, zoomLevel)
+			navsat.coordToTile(coord.longitude, coord.latitude, tempZoomLevel)
 		);
 
 		// Calculate the range of tiles to cover the screen
@@ -212,7 +230,7 @@ async function drawTiles(){
 
 		for (let i = minX; i <= maxX; i++) {
 			for (let j = minY; j <= maxY; j++) {
-				drawTile(tileScreenSize, i, j);
+				drawTile(tileScreenSize, i, j, metersSize, tempZoomLevel); // 
 			}
 		}
 

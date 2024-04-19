@@ -28,8 +28,8 @@ function hasClassInParentChain(element, className) {
 	return hasClassInParentChain(element.parentElement, className);
 }
 
-const MAX_SCALE = 10000;
-const MIN_SCALE = 0.01;
+const MAX_SCALE = 100;
+const MIN_SCALE = 0.001;
 const ZOOM_FACTOR = 1.05;
 
 export class View {
@@ -66,6 +66,7 @@ export class View {
 		if(delta > 12){
 			window.dispatchEvent(new Event("view_changed"));
 			this.event_timestamp = performance.now();
+			console.log("coscos");
 		}else{
 			this.event_timeout = setTimeout(() => {
 				window.dispatchEvent(new Event("view_changed"));
