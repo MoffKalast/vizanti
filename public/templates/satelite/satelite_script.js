@@ -171,22 +171,8 @@ async function drawTiles(){
 	tempZoomLevel = Math.round(Math.log2(view.scale)+17);
 	tempZoomLevel = clamp(tempZoomLevel, 7, 19);
 	zoomLevel = tempZoomLevel;
-	// claculatinig zoomLevel
-	// if(view.scale > 2){
-	// 	tempZoomLevel = 19;
-	// 	zoomLevel = 19;
-	// 	// console.log("tempZoomLevel = 19");
-	// }
-	// else if(view.scale > 1){
-	// 	tempZoomLevel = 17;
-	// 	zoomLevel = 17;
-	// }
-	// else if(view.scale > 0.25){
-	// 	tempZoomLevel = 15;
-	// 	zoomLevel = 15;
-	// }
-	console.log(view.scale);
-	console.log(zoomLevel);
+	// console.log(view.scale);
+	// console.log(zoomLevel);
 
 
 	if(frame){

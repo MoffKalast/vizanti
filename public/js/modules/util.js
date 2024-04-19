@@ -35,7 +35,7 @@ export function imageToDataURL(url) {
 		img.onerror = (error) => {
 			setTimeout(() => {
 				img.src = url;
-			}, 3000);
+			}, 1000);
 		};
 
 		img.src = url;
