@@ -165,14 +165,14 @@ async function drawTiles(){
 	}
 
 	const frame = tf.absoluteTransforms[map_fix.header.frame_id];
-	var tempZoomLevel = 12;
-	zoomLevel = 12;
 
-	tempZoomLevel = Math.round(Math.log2(view.scale)+17);
+
+	let	tempZoomLevel = Math.round(Math.log2(view.scale)+17);
 	tempZoomLevel = clamp(tempZoomLevel, 7, 19);
-	zoomLevel = tempZoomLevel;
-	// console.log(view.scale);
-	// console.log(zoomLevel);
+	if(tempZoomLevel != zoomLevel){
+		navsat.clear_queue();
+		zoomLevel = tempZoomLevel;
+	  }
 
 
 	if(frame){
