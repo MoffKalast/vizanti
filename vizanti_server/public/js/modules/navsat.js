@@ -56,7 +56,7 @@ export class Navsat {
 				}
 			}
 
-			setTimeout(this.loadingloop, 500);
+			setTimeout(this.loadingloop, 200);
 		}
 		this.loadingloop();
 	}
@@ -67,6 +67,11 @@ export class Navsat {
 
 		this.queue_history.add(keyurl);
 		this.queue.add(keyurl);
+	}
+
+	async clear_queue(keyurl){
+		this.queue = new Set();
+		this.queue_history = new Set();
 	}
 
 	//https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
