@@ -44,9 +44,13 @@ export class View {
 		this.drag_start = undefined;
 		this.input_movement = true;
 
-		document.addEventListener("DOMContentLoaded", () => {
+		if (document.readyState !== 'loading') {
 			this.addListeners();
-		});
+		} else {
+			document.addEventListener('DOMContentLoaded', function () {
+				this.addListeners();
+			});
+		}
 
 		this.event_timestamp = performance.now();
 		this.event_timeout = undefined;

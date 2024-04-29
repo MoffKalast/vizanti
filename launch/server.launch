@@ -3,12 +3,13 @@
 	<arg name="port" default="5000" />
 	<arg name="port_rosbridge" default="5001" />
 	<arg name="base_url" default="" /> <!-- e.g. /vizanti -->
+	<arg name="default_widget_config" default="" /> <!-- e.g. ~/your_custom_config.json-->
+	<arg name="flask_debug" default="True" />
 
 	<arg name="retry_startup_delay" default="10" />
 	<arg name="fragment_timeout" default="30" />
 	<arg name="delay_between_messages" default="0" />
 	<arg name="max_message_size" default="None" />
-	<arg name="flask_debug" default="True" />
 
 	<!-- Launch rosbridge without https so it works in AP mode. -->
 	<node name="vizanti_rosbridge" pkg="rosbridge_server" type="rosbridge_websocket" output="screen">
@@ -30,6 +31,7 @@
 		<param name="port_rosbridge" value="$(arg port_rosbridge)"/>
 		<param name="base_url" value="$(arg base_url)"/>
 		<param name="flask_debug" value="$(arg flask_debug)"/>
+		<param name="default_widget_config" value="$(arg default_widget_config)"/>
 	</node>
 
 	<node name="vizanti_topic_handler_node" pkg="vizanti" type="topic_handler.py" output="screen"/>

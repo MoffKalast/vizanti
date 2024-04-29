@@ -1,0 +1,27 @@
+{
+  "navbar": [
+    {
+      "type": "settings",
+      "id": "settings_default"
+    },
+    {
+      "type": "rosbridge",
+      "id": "rosbridge_default"
+    },
+    {
+      "type": "grid",
+      "id": "grid_default"
+    },
+    {
+      "type": "tf",
+      "id": "tf_default"
+    }
+  ],
+  "view": {
+    "center": {
+      "x": 0,
+      "y": 0
+    },
+    "scale": 50
+  }
+}
