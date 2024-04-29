@@ -30,7 +30,6 @@ function initializeNav() {
 	const script_container = document.getElementById("script_container");
 
 	let scripts = [];
-
 	for(let i = 0; i < settings.navbar.length; i++){
 		const type = settings.navbar[i].type;
 		const eid = settings.navbar[i].id;
@@ -60,7 +59,7 @@ function initializeNav() {
 	window.dispatchEvent(new Event("icons_changed"));
 }
 
-document.addEventListener("DOMContentLoaded", (event) =>{
+function loadAll(){
 	Promise.all([elementTemplatesPromise]).then((values) => {
 		element_templates = values[0];
 
@@ -120,5 +119,13 @@ document.addEventListener("DOMContentLoaded", (event) =>{
 
 		initializeNav();
 	});	
-});
+}
+
+if (document.readyState !== 'loading') {
+    loadAll();
+} else {
+    document.addEventListener('DOMContentLoaded', function () {
+        loadAll();
+    });
+}
 

@@ -1,3 +1,6 @@
+const defaultConfigModule = await import(`${base_url}/default_widget_config`);
+const default_config = defaultConfigModule.default;
+
 export function saveJsonToFile(data, filename) {
 	const jsonData = JSON.stringify(data, null, 2);
 	const blob = new Blob([jsonData], { type: 'application/json' });
@@ -17,19 +20,7 @@ export class Settings {
 		if (localStorage.hasOwnProperty("settings")) {
 			this.fromJSON(localStorage.getItem("settings"));
 		}else{
-			this.navbar = [
-				{type:"settings", id:"settings_default"},
-				{type:"rosbridge", id:"rosbridge_default"},
-				{type:"grid", id:"grid_default"},
-				{type:"tf", id:"tf_default"}
-			];
-			this.view = {
-				center: {
-					x: 0,
-					y: 0
-				},
-				scale: 50.0
-			};
+			this.fromJSON(default_config);
 		}
 	}
 
