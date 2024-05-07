@@ -236,7 +236,7 @@ function connect(){
 		}
 		drawRanges();
 
-		if(error){
+		if(!error){
 			status.setOK();
 		}
 	});
