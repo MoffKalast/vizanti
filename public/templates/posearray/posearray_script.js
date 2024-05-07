@@ -137,6 +137,13 @@ function connect(){
 	
 	listener = poses_topic.subscribe((msg) => {
 
+		let error = false;
+		if(msg.header.frame_id == ""){
+			status.setWarn("Transform frame is an empty string, falling back to fixed frame. Fix your publisher ;)");
+			msg.header.frame_id = tf.fixed_frame;
+			error = true;
+		}
+
 		if(!tf.absoluteTransforms[msg.header.frame_id]){
 			status.setError("Required transform frame \""+msg.header.frame_id+"\" not found.");
 			return;
@@ -161,7 +168,9 @@ function connect(){
 		});
 		drawArrows();
 
-		status.setOK();
+		if(!error){
+			status.setOK();
+		}		
 	});
 
 	saveSettings();
