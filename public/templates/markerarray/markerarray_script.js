@@ -249,7 +249,7 @@ function connect(){
 			}
 
 			const q = m.pose.orientation;
-			if(q.x == 0 && q.y == 0 && q.z == 0 && q.w == 0)
+			if(q.x == 0 && q.y == 0 && q.z == 0 && q.w == 0){
 				m.pose.orientation = new Quaternion();
 			}
 
