@@ -60,7 +60,8 @@ function initializeNav() {
 	window.dispatchEvent(new Event("icons_changed"));
 }
 
-document.addEventListener("DOMContentLoaded", (event) =>{
+
+function loadAll(){
 	Promise.all([elementTemplatesPromise]).then((values) => {
 		element_templates = values[0];
 
@@ -119,6 +120,13 @@ document.addEventListener("DOMContentLoaded", (event) =>{
 		});
 
 		initializeNav();
-	});	
-});
+	});
+}
 
+if (document.readyState !== 'loading') {
+    loadAll();
+} else {
+    document.addEventListener('DOMContentLoaded', function () {
+        loadAll();
+    });
+}
