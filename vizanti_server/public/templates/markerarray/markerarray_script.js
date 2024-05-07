@@ -234,6 +234,8 @@ function connect(){
 	status.setWarn("No data received.");
 	
 	listener = marker_topic.subscribe((msg) => {
+
+		let error = false;
 		msg.markers.forEach(m => {
 			if(m.action == 3){
 				markers = {};
@@ -251,6 +253,12 @@ function connect(){
 			if(q.x == 0 && q.y == 0 && q.z == 0 && q.w == 0){
 				m.pose.orientation = new Quaternion();
 			}
+
+			if(m.header.frame_id == ""){
+				status.setWarn("Transform frame is an empty string, falling back to fixed frame. Fix your publisher ;)");
+				m.header.frame_id = tf.fixed_frame;
+				error = true;
+			}
 		
 			m.transformed = tf.transformPose(
 				m.header.frame_id, 
@@ -262,7 +270,10 @@ function connect(){
 			m.stamp = new Date();	
 			markers[id] = m;
 		});
-		status.setOK();
+
+		if(!error){
+			status.setOK();
+		}
 		drawMarkers();
 	});
 

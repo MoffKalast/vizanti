@@ -2,16 +2,20 @@ import launch
 import launch_ros.actions
 
 def generate_launch_description():
-    retry_startup_delay = launch.substitutions.LaunchConfiguration('retry_startup_delay', default='10.0')
-    fragment_timeout = launch.substitutions.LaunchConfiguration('fragment_timeout', default='30')
-    delay_between_messages = launch.substitutions.LaunchConfiguration('delay_between_messages', default='0')
-    max_message_size = launch.substitutions.LaunchConfiguration('max_message_size', default='999999999')
+
+    #general params
     base_url = launch.substitutions.LaunchConfiguration('base_url', default='') #e.g. /vizanti
     port = launch.substitutions.LaunchConfiguration('port', default=5000)
     port_rosbridge = launch.substitutions.LaunchConfiguration('port_rosbridge', default=5001)
     flask_debug = launch.substitutions.LaunchConfiguration('flask_debug', default=True)
+    default_widget_config = launch.substitutions.LaunchConfiguration('default_widget_config', default='') #e.g. ~/your_custom_config.json
+
+    #rosbridge internal params
     unregister_timeout = launch.substitutions.LaunchConfiguration('unregister_timeout', default='9999999.9')
-    #https://github.com/RobotWebTools/rosbridge_suite/issues/298
+    retry_startup_delay = launch.substitutions.LaunchConfiguration('retry_startup_delay', default='10.0')
+    fragment_timeout = launch.substitutions.LaunchConfiguration('fragment_timeout', default='30')
+    delay_between_messages = launch.substitutions.LaunchConfiguration('delay_between_messages', default='0')
+    max_message_size = launch.substitutions.LaunchConfiguration('max_message_size', default='999999999')
 
     rosbridge_node = launch_ros.actions.Node(
         name='vizanti_rosbridge',
@@ -48,7 +52,8 @@ def generate_launch_description():
             {'port_rosbridge': port_rosbridge},
             {'flask_debug': flask_debug},
             {'base_url': base_url},
-            {'compression': "none"}
+            {'compression': "none"},
+            {'default_widget_config': default_widget_config}
         ]
     )
 

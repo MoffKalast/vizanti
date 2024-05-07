@@ -6,6 +6,7 @@ def generate_launch_description():
     port = launch.substitutions.LaunchConfiguration('port', default=5000)
     port_rosbridge = launch.substitutions.LaunchConfiguration('port_rosbridge', default=5001)
     flask_debug = launch.substitutions.LaunchConfiguration('flask_debug', default=True)
+    default_widget_config = launch.substitutions.LaunchConfiguration('default_widget_config', default='') #e.g. ~/your_custom_config.json
 
     #https://github.com/v-kiniv/rws
     rws_server_node = launch_ros.actions.Node(
@@ -31,7 +32,8 @@ def generate_launch_description():
             {'port_rosbridge': port_rosbridge},
             {'flask_debug': flask_debug},
             {'base_url': base_url},
-            {'compression': "cbor"}
+            {'compression': "cbor"},
+            {'default_widget_config': default_widget_config}
         ]
     )
 

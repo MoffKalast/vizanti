@@ -278,6 +278,11 @@ function connect(){
 			return;
 		}
 
+		if(msg.header.frame_id == ""){
+			status.setWarn("Transform frame is an empty string, falling back to fixed frame. Fix your publisher ;)");
+			msg.header.frame_id = tf.fixed_frame;
+		}
+
 		if(!tf.absoluteTransforms[msg.header.frame_id]){
 			status.setError("Required transform frame \""+msg.header.frame_id+"\" not found.");
 			return;

@@ -107,6 +107,13 @@ function connect(){
 		let error = false;
 		let newposes = [];
 		msg.poses.forEach((point, index) => {
+
+			if(point.header.frame_id == ""){
+				status.setWarn("Transform frame is an empty string, falling back to fixed frame. Fix your publisher ;)");
+				point.header.frame_id = tf.fixed_frame;
+				error = true;
+			}
+
 			const frame = tf.absoluteTransforms[point.header.frame_id];
 	
 			if(!frame){
