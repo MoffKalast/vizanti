@@ -151,6 +151,13 @@ function connect(){
 	
 	listener = range_topic.subscribe((msg) => {	
 
+		let error = false;
+		if(msg.header.frame_id == ""){
+			status.setWarn("Transform frame is an empty string, falling back to fixed frame. Fix your publisher ;)");
+			msg.header.frame_id = tf.fixed_frame;
+			error = true;
+		}
+
 		const pose = tf.absoluteTransforms[msg.header.frame_id];
 
 		if(!pose){
@@ -177,8 +184,11 @@ function connect(){
 		data = {};
 		data.pose = pose;
 		data.points = rotatedPointCloud
-		status.setOK();
 		drawScan();
+
+		if(!error){
+			status.setOK();
+		}
 	});
 
 	saveSettings();

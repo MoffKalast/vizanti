@@ -158,6 +158,13 @@ function connect(){
 
 	listener = range_topic.subscribe((msg) => {	
 
+		let error = false;
+		if(msg.header.frame_id == ""){
+			status.setWarn("Transform frame is an empty string, falling back to fixed frame. Fix your publisher ;)");
+			msg.header.frame_id = tf.fixed_frame;
+			error = true;
+		}
+
 		const pose = tf.absoluteTransforms[msg.header.frame_id];
 
 		if(!pose){
@@ -206,9 +213,11 @@ function connect(){
 		if(pointarray.length > 0){
 			data = {};
 			data.pose = pose;
-			data.points = pointarray;
-			status.setOK();
+			data.points = pointarray;			
 			drawCloud();
+			if(!error){
+				status.setOK();
+			}
 		}
 	});
 
