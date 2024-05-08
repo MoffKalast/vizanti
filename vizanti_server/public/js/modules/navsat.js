@@ -21,13 +21,14 @@ export class Navsat {
 		this.queue = new Set();
 		this.queue_history = new Set();
 
+		this.download_queue = new Set();
+		this.currently_downloading = new Set();
+
 		this.loadingloop = async ()=>{
 
-			while(this.queue.size > 0){
-				let items = Array.from(this.queue);
-				let tile_url = items[0];
-				let loaded = undefined;
-
+			let items = Array.from(this.queue);
+			for(let tile_url of items){
+				
 				//we already got it?
 				if(this.live_cache[tile_url] !== undefined){
 					this.queue.delete(tile_url);
@@ -37,28 +38,46 @@ export class Navsat {
 				//check the indexed DB
 				if(Boolean(await db.keyExists(tile_url))){
 					const data = await db.getObject(tile_url);
-					loaded = await dataToImage(data);
-				}else{
-					//download from tile server, in case there's no internet we don't hang forever
-					const timeout = new Promise(resolve => setTimeout(() => resolve(undefined), 4000));
-					const data = await Promise.race([imageToDataURL(tile_url), timeout]);
-
-					if(data){
-						//info.downloaded++;
-						db.setObject(tile_url, data);
-						loaded = await dataToImage(data);
-					}
-				}
-
-				if(loaded){
-					this.live_cache[tile_url] = loaded;
+					this.live_cache[tile_url] = await dataToImage(data);
 					this.queue.delete(tile_url);
+					continue;
 				}
+
+				//hit up the CDN
+				this.download_queue.add(tile_url);
 			}
 
-			setTimeout(this.loadingloop, 200);
+			setTimeout(this.loadingloop, 100);
 		}
 		this.loadingloop();
+
+		this.downloadingloop = async ()=>{
+
+			const attemptDownload = async (tile_url) => {
+				//download from tile server, in case there's no internet we don't hang forever
+				const timeout = new Promise(resolve => setTimeout(() => resolve(undefined), 4000));
+				const data = await Promise.race([imageToDataURL(tile_url), timeout]);
+			
+				if (data) {
+					await db.setObject(tile_url, data);
+					this.live_cache[tile_url] = await dataToImage(data);
+					this.download_queue.delete(tile_url);
+				}
+
+				this.currently_downloading.delete(tile_url);
+			}
+			
+			// Inside your loop
+			let items = Array.from(this.download_queue);
+			for (let tile_url of items) {
+				if(tile_url && !this.currently_downloading.has(tile_url)){
+					this.currently_downloading.add(tile_url);
+					attemptDownload(tile_url);
+				}
+			}
+			setTimeout(this.downloadingloop, 500);
+		}
+		this.downloadingloop();
 	}
 
 	async enqueue(keyurl){
@@ -72,6 +91,7 @@ export class Navsat {
 	async clear_queue(keyurl){
 		this.queue = new Set();
 		this.queue_history = new Set();
+		this.download_queue = new Set();
 	}
 
 	//https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames

@@ -66,7 +66,6 @@ export class View {
 		if(delta > 12){
 			window.dispatchEvent(new Event("view_changed"));
 			this.event_timestamp = performance.now();
-			console.log("coscos");
 		}else{
 			this.event_timeout = setTimeout(() => {
 				window.dispatchEvent(new Event("view_changed"));
