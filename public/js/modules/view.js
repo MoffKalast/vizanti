@@ -28,8 +28,8 @@ function hasClassInParentChain(element, className) {
 	return hasClassInParentChain(element.parentElement, className);
 }
 
-const MAX_SCALE = 10000;
-const MIN_SCALE = 3.0;
+const MAX_SCALE = 5000;
+const MIN_SCALE = 0.001;
 const ZOOM_FACTOR = 1.05;
 
 export class View {
