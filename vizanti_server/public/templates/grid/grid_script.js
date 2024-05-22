@@ -140,8 +140,8 @@ linethickness.addEventListener("input", (event) =>{
 });
 
 gridstep.addEventListener("input", (event) =>{
-	if(gridstep.value > 10000)
-		grid_size = 10000;	
+	if(gridstep.value > 1000000)
+		grid_size = 1000000;	
 	else if(gridstep.value < 0.01)
 		grid_size = 0.01;	
 	else if(isNaN(gridstep.value))
