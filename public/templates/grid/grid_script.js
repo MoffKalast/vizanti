@@ -12,7 +12,7 @@ let status = new Status(
 );
 
 const canvas = document.getElementById('{uniqueID}_canvas');
-const ctx = canvas.getContext('2d');
+const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
 
 let grid_size = 1.0;
 let grid_thickness = 1;

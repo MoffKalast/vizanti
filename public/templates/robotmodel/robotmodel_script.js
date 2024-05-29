@@ -23,7 +23,7 @@ let status = new Status(
 );
 
 const canvas = document.getElementById('{uniqueID}_canvas');
-const ctx = canvas.getContext('2d');
+const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
 
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
 const frameSelector = document.getElementById("{uniqueID}_frame");

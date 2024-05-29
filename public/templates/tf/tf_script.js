@@ -17,7 +17,7 @@ let status = new Status(
 status.setWarn("No TF data received yet.");
 
 const canvas = document.getElementById('{uniqueID}_canvas');
-const ctx = canvas.getContext('2d');
+const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
 
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
 

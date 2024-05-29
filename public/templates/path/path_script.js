@@ -25,7 +25,7 @@ const selectionbox = document.getElementById("{uniqueID}_topic");
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
 
 const canvas = document.getElementById('{uniqueID}_canvas');
-const ctx = canvas.getContext('2d');
+const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
 
 const colourpicker = document.getElementById("{uniqueID}_colorpicker");
 colourpicker.addEventListener("input", (event) =>{
@@ -104,6 +104,13 @@ function connect(){
 	listener = path_topic.subscribe((msg) => {
 		let error = false;
 		let newposes = [];
+
+		if(msg.poses == undefined){
+			status.setWarn("Received uninitialized list of poses. Wat.");
+			error = true;
+			return;
+		}
+
 		msg.poses.forEach((point, index) => {
 
 			if(point.header.frame_id == ""){
