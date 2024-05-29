@@ -153,7 +153,7 @@ opacitySlider.addEventListener('input', () =>  {
 });
 
 const canvas = document.getElementById('{uniqueID}_canvas');
-const ctx = canvas.getContext('2d');
+const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
 
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
@@ -262,7 +262,7 @@ function connect(){
 			const img = e.data.image
 			temp_canvas.width = img.width
 			temp_canvas.height = img.height
-			temp_canvas.getContext('2d').putImageData(img, 0, 0);
+			temp_canvas.getContext('2d', { colorSpace: 'srgb' }).putImageData(img, 0, 0);
 			map_data = new_map_data;
 			drawMap();
 			status.setOK();

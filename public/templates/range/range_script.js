@@ -60,7 +60,7 @@ function saveSettings(){
 }
 
 const canvas = document.getElementById('{uniqueID}_canvas');
-const ctx = canvas.getContext('2d');
+const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
 
 async function drawRanges() {
 

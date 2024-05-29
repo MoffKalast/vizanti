@@ -85,7 +85,7 @@ function sendMessage(start, end){
 }
 
 const canvas = document.getElementById('{uniqueID}_canvas');
-const ctx = canvas.getContext('2d');
+const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
 
 const view_container = document.getElementById("view_container");
 
