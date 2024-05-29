@@ -16,7 +16,7 @@ self.addEventListener('message', function(event) {
     canvas.width = width;
     canvas.height = height;
 
-    const mapctx = canvas.getContext('2d');
+    const mapctx = canvas.getContext('2d', { colorSpace: 'srgb' });
     
     const data = msg.data;
     

@@ -117,7 +117,7 @@ export class Navsat {
 		const metersPerPixel = (2 * Math.PI * earthRadius * Math.cos(latitude * Math.PI / 180)) / (this.tile_size * Math.pow(2, zoomLevel));
 	
 		// Convert the distance in meters to degrees	
-		return meters / metersPerPixel;;
+		return meters / metersPerPixel;
 	}
 
 	tileSizeInMeters(latitude, zoom) {
