@@ -4,7 +4,7 @@
 
 Vizanti is a web-based visualization and control tool developed for more convenient operation of outdoor robots running the Robot Operating System (ROS). The application attempts to replicate RViz's orthographic 2D view as closely as possible with a smartphone friendly interface. The second goal is to allow planning and executing movement and mission commands, i.e. goals and waypoints, with custom buttons and parameter reconfigure.
 
-<img src="vizanti_server/readme_assets/preview.jpg" alt=""/> 
+<img src="vizanti_server/public/assets/icon/preview.jpg" alt=""/> 
 
 ## Installation
 
