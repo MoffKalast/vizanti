@@ -3,6 +3,7 @@ let tfModule = await import(`${base_url}/js/modules/tf.js`);
 let rosbridgeModule = await import(`${base_url}/js/modules/rosbridge.js`);
 let persistentModule = await import(`${base_url}/js/modules/persistent.js`);
 let StatusModule = await import(`${base_url}/js/modules/status.js`);
+let utilModule = await import(`${base_url}/js/modules/util.js`);
 
 let view = viewModule.view;
 let tf = tfModule.tf;
@@ -33,6 +34,7 @@ scaleSlider.addEventListener('change', saveSettings);
 
 const colourpicker = document.getElementById("{uniqueID}_colorpicker");
 colourpicker.addEventListener("input", (event) =>{
+	icon.style.filter = utilModule.hexColourToIconFilter(colourpicker.value);
 	saveSettings();
 });
 
@@ -41,7 +43,6 @@ const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('im
 
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
-
 //Settings
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
@@ -51,9 +52,12 @@ if(settings.hasOwnProperty("{uniqueID}")){
 
 	scaleSlider.value = loaded_data.scale;
 	scaleSliderValue.textContent = scaleSlider.value;
+
 }else{
 	saveSettings();
 }
+
+icon.style.filter = utilModule.hexColourToIconFilter(colourpicker.value);
 
 function saveSettings(){
 	settings["{uniqueID}"] = {
