@@ -3,6 +3,7 @@ let tfModule = await import(`${base_url}/js/modules/tf.js`);
 let rosbridgeModule = await import(`${base_url}/js/modules/rosbridge.js`);
 let persistentModule = await import(`${base_url}/js/modules/persistent.js`);
 let StatusModule = await import(`${base_url}/js/modules/status.js`);
+let utilModule = await import(`${base_url}/js/modules/util.js`);
 
 let view = viewModule.view;
 let tf = tfModule.tf;
@@ -39,6 +40,7 @@ thicknessSlider.addEventListener('input', () =>  {
 
 const colourpicker = document.getElementById("{uniqueID}_colorpicker");
 colourpicker.addEventListener("input", (event) =>{
+	icon.style.filter = utilModule.hexColourToIconFilter(colourpicker.value);
 	saveSettings();
 });
 
@@ -47,6 +49,7 @@ throttle.addEventListener("input", (event) =>{
 	saveSettings();
 	connect();
 });
+
 
 //Settings
 if(settings.hasOwnProperty("{uniqueID}")){
@@ -61,9 +64,12 @@ if(settings.hasOwnProperty("{uniqueID}")){
 
 	colourpicker.value = loaded_data.color;
 	throttle.value = loaded_data.throttle;
+	
 }else{
 	saveSettings();
 }
+
+icon.style.filter = utilModule.hexColourToIconFilter(colourpicker.value);
 
 function saveSettings(){
 	settings["{uniqueID}"] = {
