@@ -27,6 +27,7 @@ const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('im
 
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
+ctx.clip = function(){};
 
 const colourpicker = document.getElementById("{uniqueID}_colorpicker");
 colourpicker.addEventListener("input", (event) =>{
@@ -60,7 +61,7 @@ async function drawPath(){
     const hei = canvas.height;
 	ctx.clearRect(0, 0, wid, hei);
 
-	if(pose_array === undefined){
+	if(pose_array === undefined || pose_array.length < 2){
 		return false;
 	}
 
@@ -68,18 +69,20 @@ async function drawPath(){
 	ctx.strokeStyle = colourpicker.value;
 	ctx.beginPath();
 
-	pose_array.forEach((point, index) => {
+	const firstPos = view.fixedToScreen({
+		x: pose_array[0].translation.x,
+		y: pose_array[0].translation.y
+	});
+	ctx.moveTo(firstPos.x, firstPos.y);
+
+	for (let i = 1; i < pose_array.length; i++) {
+		const point = pose_array[i];
 		const pos = view.fixedToScreen({
 			x: point.translation.x,
 			y: point.translation.y
 		});
-
-		if (index === 0) {
-			ctx.moveTo(pos.x, pos.y);
-		} else {
-			ctx.lineTo(pos.x, pos.y);
-		}
-	});
+		ctx.lineTo(pos.x, pos.y);
+	}
 
 	ctx.stroke();
 }

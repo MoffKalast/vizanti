@@ -111,9 +111,17 @@ async function drawScan() {
 
 	const delta = parseInt(pixel/2);
 
+	ctx.beginPath();
 	for(let i = 0; i < data.points.length; i++){
-		ctx.fillRect(data.points[i].x * unit - delta, data.points[i].y * unit - delta, pixel, pixel);
+		const x = data.points[i].x * unit - delta;
+		const y = data.points[i].y * unit - delta;
+		ctx.moveTo(x, y);
+		ctx.lineTo(x + pixel, y);
+		ctx.lineTo(x + pixel, y + pixel);
+		ctx.lineTo(x, y + pixel);
+		ctx.lineTo(x, y);
 	}
+	ctx.fill();
 	
 	ctx.restore();
 }
