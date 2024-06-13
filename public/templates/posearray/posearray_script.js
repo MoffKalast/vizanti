@@ -43,6 +43,8 @@ const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('im
 
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
+ctx.clip = function(){};
+
 //Settings
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
@@ -72,13 +74,7 @@ function saveSettings(){
 
 async function drawArrows(){
 
-	function drawArrow(size){
-		const height = parseInt(size*0.5);
-		const width = parseInt(size*0.01)+1;
-		const tip = parseInt(size*0.07)+1;
-		const tipwidth = parseInt(size*0.07)+1;
-
-		ctx.beginPath();
+	function drawArrow(height, width, tip, tipwidth){
 		ctx.moveTo(0, -width);
 		ctx.lineTo(height - tip, -width);
 		ctx.lineTo(height - tip, -tipwidth);
@@ -87,7 +83,6 @@ async function drawArrows(){
 		ctx.lineTo(height - tip, width);
 		ctx.lineTo(0, width);
 		ctx.lineTo(0, -width);
-		ctx.fill();
 	}
 
 	const unit = view.getMapUnitsInPixels(1.0);
@@ -95,14 +90,20 @@ async function drawArrows(){
 	const wid = canvas.width;
     const hei = canvas.height;
 
-	const scale = unit*parseFloat(scaleSlider.value);
+	const scale = unit * parseFloat(scaleSlider.value);
+	const arrow_height = parseInt(scale*0.5);
+	const arrow_width = parseInt(scale*0.01)+1;
+	const arrow_tip = parseInt(scale*0.07)+1;
+	const arrow_tipwidth = parseInt(scale*0.07)+1;
 
 	ctx.clearRect(0, 0, wid, hei);
 	ctx.fillStyle = colourpicker.value;
 
 	if(frame === tf.fixed_frame){
-		poses.forEach((p) => {
+		ctx.beginPath();
 
+		for (let i = 0; i < poses.length; i++) {
+			const p = poses[i];
 			const screenpos = view.fixedToScreen(p);
 
 			ctx.save();
@@ -110,10 +111,12 @@ async function drawArrows(){
 			ctx.scale(1, -1);
 			ctx.rotate(p.yaw);
 
-			drawArrow(scale);
+			drawArrow(arrow_height, arrow_width, arrow_tip, arrow_tipwidth);
 
 			ctx.restore();
-		});
+		}
+
+		ctx.fill();
 	}
 }
 

@@ -101,17 +101,19 @@ async function drawCloud() {
 	}
 
 	let delta = parseInt(pixel/2);
-
-	data.points.forEach((transform) => {
-		const screenpos = view.fixedToScreen(transform.translation);
-		ctx.fillRect(
-			screenpos.x - delta,
-			screenpos.y - delta,
-			pixel,
-			pixel
-		);
-	});
-	
+	ctx.beginPath();
+	for(let i = 0; i < data.points.length; i++){
+		const screenpos = view.fixedToScreen(data.points[i].translation);
+		const x = screenpos.x - delta;
+		const y = screenpos.y - delta;
+		
+		ctx.moveTo(x, y);
+		ctx.lineTo(x + pixel, y);
+		ctx.lineTo(x + pixel, y + pixel);
+		ctx.lineTo(x, y + pixel); 
+		ctx.lineTo(x, y);
+	}
+	ctx.fill();
 	ctx.restore();
 }
 
@@ -219,7 +221,7 @@ function connect(){
 		if(pointarray.length > 0){
 			data = {};
 			data.pose = pose;
-			data.points = pointarray;			
+			data.points = pointarray;
 			drawCloud();
 			if(!error){
 				status.setOK();
