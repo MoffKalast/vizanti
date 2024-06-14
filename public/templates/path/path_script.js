@@ -27,7 +27,6 @@ const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('im
 
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
-ctx.clip = function(){};
 
 const colourpicker = document.getElementById("{uniqueID}_colorpicker");
 colourpicker.addEventListener("input", (event) =>{
