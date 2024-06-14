@@ -110,10 +110,17 @@ async function drawCells() {
 	const wid = Math.abs(data.msg.cell_width) * unit;
 	const hei = Math.abs(data.msg.cell_height) * unit;
 
+	ctx.beginPath();
 	for(let i = 0; i < data.msg.cells.length; i++){
-		ctx.fillRect(data.msg.cells[i].x * unit - wid/2 + 1, data.msg.cells[i].y * unit - hei/2 + 1, wid-1, hei-1);
+		const x = data.msg.cells[i].x * unit - wid / 2 + 1;
+		const y = data.msg.cells[i].y * unit - hei / 2 + 1;
+		ctx.moveTo(x, y);
+		ctx.lineTo(x + wid - 1, y);
+		ctx.lineTo(x + wid - 1, y + hei - 1);
+		ctx.lineTo(x, y + hei - 1);
+		ctx.lineTo(x, y);
 	}
-	
+	ctx.fill();
 	ctx.restore();
 }
 

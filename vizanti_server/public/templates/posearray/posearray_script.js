@@ -44,7 +44,6 @@ const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('im
 
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
-ctx.clip = function(){};
 
 //Settings
 if(settings.hasOwnProperty("{uniqueID}")){
