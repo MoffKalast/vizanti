@@ -452,6 +452,7 @@ function resizeScreen(){
 
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);
+window.addEventListener("view_changed", drawWaypoints);
 
 window.addEventListener("tf_fixed_frame_changed", drawWaypoints);
 window.addEventListener("tf_changed", ()=>{
@@ -459,7 +460,7 @@ window.addEventListener("tf_changed", ()=>{
 		drawWaypoints();
 	}
 });
-window.addEventListener("view_changed", drawWaypoints);
+
 
 function addListeners(){
 	view_container.addEventListener('mousedown', startDrag);

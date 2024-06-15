@@ -25,9 +25,12 @@ window.addEventListener("load", function(){
 	window.dispatchEvent(new Event('resize'));
 }, false); 
 
+var widgetTarget = "icon_container";
+
 //modal opening
-function openModal(id){
+function openModal(id, widgetTargetID = "icon_container"){
 	document.getElementById(id).style.display = "flex";
+	widgetTarget = widgetTargetID;
 }
 
 function closeModal(id){
@@ -52,6 +55,7 @@ function addWidget(type, topic){
 	let event = new Event("add_widget");
 	event.widget_type = type;
 	event.widget_topic = topic;
+	event.container_target = widgetTarget;
 	window.dispatchEvent(event);
 	document.getElementById("modal_add_element").style.display = "none";
 }
