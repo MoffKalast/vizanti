@@ -452,7 +452,13 @@ function resizeScreen(){
 
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);
-window.addEventListener("tf_changed", drawWaypoints);
+
+window.addEventListener("tf_fixed_frame_changed", drawWaypoints);
+window.addEventListener("tf_changed", ()=>{
+	if(fixed_frame != tf.fixed_frame){
+		drawWaypoints();
+	}
+});
 window.addEventListener("view_changed", drawWaypoints);
 
 function addListeners(){

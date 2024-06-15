@@ -227,7 +227,7 @@ function resizeScreen(){
 	drawArrows();
 }
 
-window.addEventListener("tf_changed", drawArrows);
+window.addEventListener("tf_fixed_frame_changed", drawArrows);
 window.addEventListener("view_changed", drawArrows);
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);

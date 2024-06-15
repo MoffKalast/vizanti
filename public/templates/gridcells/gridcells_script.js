@@ -133,7 +133,13 @@ function resizeScreen(){
 	drawCells();
 }
 
-window.addEventListener("tf_changed", drawCells);
+window.addEventListener("tf_fixed_frame_changed", drawCells);
+window.addEventListener("tf_changed", ()=>{
+	if (data && data.msg.frame_id != tf.fixed_frame){
+		drawCells();
+	}
+});
+
 window.addEventListener("view_changed", drawCells);
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);
@@ -233,4 +239,4 @@ icon.addEventListener("click", loadTopics);
 loadTopics();
 resizeScreen();
 
-console.log("Laserscan Widget Loaded {uniqueID}")
+console.log("Gridcells Widget Loaded {uniqueID}")

@@ -324,7 +324,7 @@ function resizeScreen(){
 	drawMarkers();
 }
 
-window.addEventListener("tf_changed", drawMarkers);
+window.addEventListener("tf_fixed_frame_changed", drawMarkers);
 window.addEventListener("view_changed", drawMarkers);
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);

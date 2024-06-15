@@ -197,7 +197,7 @@ function resizeScreen(){
 	drawPath();
 }
 
-window.addEventListener("tf_changed", drawPath);
+window.addEventListener("tf_fixed_frame_changed", drawPath);
 window.addEventListener("view_changed", drawPath);
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);

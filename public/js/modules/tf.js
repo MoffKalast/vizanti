@@ -274,6 +274,7 @@ export class TF {
 	setFixedFrame(newframe) {
 		this.fixed_frame = newframe;
 		this.recalculateAbsoluteTransforms();
+		window.dispatchEvent(new Event("tf_fixed_frame_changed"));
 	}
 
 	recalculateAbsoluteTransforms() {
