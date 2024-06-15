@@ -123,7 +123,7 @@ function resizeScreen(){
 	drawCloud();
 }
 
-window.addEventListener("tf_changed", drawCloud);
+window.addEventListener("tf_fixed_frame_changed", drawCloud);
 window.addEventListener("view_changed", drawCloud);
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);

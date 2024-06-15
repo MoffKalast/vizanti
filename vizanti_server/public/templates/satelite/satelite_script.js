@@ -356,7 +356,13 @@ function resizeScreen(){
 	drawTiles();
 }
 
-window.addEventListener("tf_changed", drawTiles);
+window.addEventListener("tf_fixed_frame_changed", drawTiles);
+window.addEventListener("tf_changed", ()=>{
+	if(map_fix && map_fix.header.frame_id != tf.fixed_frame){
+		drawTiles();
+	}
+});
+
 window.addEventListener("view_changed", drawTiles);
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);
