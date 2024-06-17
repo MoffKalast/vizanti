@@ -62,7 +62,6 @@ const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
 ctx.clip = function(){};
 
-
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
@@ -356,6 +355,7 @@ function resizeScreen(){
 	drawTiles();
 }
 
+window.addEventListener("navsat_tilecache_updated", drawTiles);
 window.addEventListener("tf_fixed_frame_changed", drawTiles);
 window.addEventListener("tf_changed", ()=>{
 	if(map_fix && map_fix.header.frame_id != tf.fixed_frame){
