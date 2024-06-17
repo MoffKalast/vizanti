@@ -37,6 +37,8 @@ function initializeNav() {
 		const container = settings.navbar[i].container_id;
 		const template = element_templates[type];
 
+		console.log(type, eid, container);
+
 		if(typeof container === 'undefined' || container == "icon_container")
 			icon_container.appendChild(createElement(template.icon, eid));
 		else if(typeof container !== 'undefined' && container !== "icon_container"){
@@ -118,8 +120,9 @@ function loadAll(){
 				});
 
 				settings.navbar.splice(elementIndex, 1);
-				settings.save();
+				delete settings[uniqueID];
 
+				settings.save();
 				window.dispatchEvent(new Event("icons_changed"));
 			}
 		});
