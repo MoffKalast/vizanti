@@ -1,0 +1,42 @@
+<div id="{uniqueID}_modal" class="modal_outer noselect">
+	<div class="modal_inner noselect">
+		<h3>Altimeter</h3>
+		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
+		<hr>
+
+		<label for="{uniqueID}_frame">Frame:</label>
+		<select id="{uniqueID}_frame" name="topic">
+			<option value='base_link'>base_link</option>
+		</select>
+
+		<p>Displays the Z value of the frame on a depth/altitude gauge.</p>
+
+		<br>
+
+		<label for="{uniqueID}_topic">Topic:</label>
+		<select id="{uniqueID}_topic" name="topic">
+			<option value=""></option>
+		</select>
+
+		<p>Publishes a target std_msgs/Float32 value to this topic.</p>
+
+		<br>
+
+		<label for="{uniqueID}_mode">Display Mode:</label>
+		<select id="{uniqueID}_mode" name="topic">
+			<option value='altitude_positive'>Altitude (Z+)</option>
+			<option value='depth_negative'>Depth (Z-)</option>
+			<option value='altitude_negative'>Altitude inverted (Z-)</option>
+			<option value='depth_positive'>Depth inverted (Z+)</option>
+		</select>
+
+		<br>
+
+		<p id="{uniqueID}_altitude">Altitude: ?</p>
+
+		<hr>
+
+		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
+
+	</div>
+</div>
