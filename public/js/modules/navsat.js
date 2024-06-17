@@ -40,6 +40,7 @@ export class Navsat {
 					const data = await db.getObject(tile_url);
 					this.live_cache[tile_url] = await dataToImage(data);
 					this.queue.delete(tile_url);
+					window.dispatchEvent(new Event("navsat_tilecache_updated"));
 					continue;
 				}
 
@@ -62,6 +63,7 @@ export class Navsat {
 					await db.setObject(tile_url, data);
 					this.live_cache[tile_url] = await dataToImage(data);
 					this.download_queue.delete(tile_url);
+					window.dispatchEvent(new Event("navsat_tilecache_updated"));
 				}
 
 				this.currently_downloading.delete(tile_url);
