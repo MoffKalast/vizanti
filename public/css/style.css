@@ -41,6 +41,18 @@ h3 {
     font-size: 0.8em;
 }
 
+.icon-img {
+    position: absolute;
+    top: 65%;
+    left: 50%;
+    margin: 0;
+    transform: translate(-50%, -50%);
+	font-weight: bold;
+    font-size: 0.8em;
+	pointer-events: none;
+	display: none;
+}
+
 .icon {
 	display: inline-block;
 	position: relative;
@@ -207,10 +219,29 @@ h3 {
 	border-radius: 15px;
 	padding: 15px;
 
-	max-width: 90%;
+	max-width: 95%;
 	min-width: 50%;
 	margin: 50px;
 	pointer-events: auto;
+}
+
+.folder_modal {
+	background-color: rgba(0, 0, 0, 0.6);
+	border-style: solid;
+	border-color:#444444;
+	border-width: 6px;
+	border-radius: 5px;
+	min-width: 70%;
+	margin-top: 70px;
+}
+
+.folder_icon_container {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+	grid-auto-flow: rows;
+	height: 100%;
+	justify-content: start;
+	align-content: start;
 }
 
 /* Media query for non-touch devices (usually desktop) */
@@ -481,6 +512,10 @@ button {
 	color: white;
 	background-color: #484848;
 	margin-bottom: 5px;
+}
+
+.tablinks{
+	margin-bottom: 0px;
 }
 
 .delete_button {

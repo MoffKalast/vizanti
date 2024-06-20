@@ -3,6 +3,7 @@ let tfModule = await import(`${base_url}/js/modules/tf.js`);
 let rosbridgeModule = await import(`${base_url}/js/modules/rosbridge.js`);
 let persistentModule = await import(`${base_url}/js/modules/persistent.js`);
 let StatusModule = await import(`${base_url}/js/modules/status.js`);
+let utilModule = await import(`${base_url}/js/modules/util.js`);
 
 let view = viewModule.view;
 let tf = tfModule.tf;
@@ -39,6 +40,7 @@ thicknessSlider.addEventListener('input', () =>  {
 
 const colourpicker = document.getElementById("{uniqueID}_colorpicker");
 colourpicker.addEventListener("input", (event) =>{
+	icon.style.filter = utilModule.hexColourToIconFilter(colourpicker.value);
 	saveSettings();
 });
 
@@ -47,6 +49,7 @@ throttle.addEventListener("input", (event) =>{
 	saveSettings();
 	connect();
 });
+
 
 //Settings
 if(settings.hasOwnProperty("{uniqueID}")){
@@ -61,9 +64,12 @@ if(settings.hasOwnProperty("{uniqueID}")){
 
 	colourpicker.value = loaded_data.color;
 	throttle.value = loaded_data.throttle;
+	
 }else{
 	saveSettings();
 }
+
+icon.style.filter = utilModule.hexColourToIconFilter(colourpicker.value);
 
 function saveSettings(){
 	settings["{uniqueID}"] = {
@@ -95,17 +101,19 @@ async function drawCloud() {
 	}
 
 	let delta = parseInt(pixel/2);
-
-	data.points.forEach((transform) => {
-		const screenpos = view.fixedToScreen(transform.translation);
-		ctx.fillRect(
-			screenpos.x - delta,
-			screenpos.y - delta,
-			pixel,
-			pixel
-		);
-	});
-	
+	ctx.beginPath();
+	for(let i = 0; i < data.points.length; i++){
+		const screenpos = view.fixedToScreen(data.points[i].translation);
+		const x = screenpos.x - delta;
+		const y = screenpos.y - delta;
+		
+		ctx.moveTo(x, y);
+		ctx.lineTo(x + pixel, y);
+		ctx.lineTo(x + pixel, y + pixel);
+		ctx.lineTo(x, y + pixel); 
+		ctx.lineTo(x, y);
+	}
+	ctx.fill();
 	ctx.restore();
 }
 
@@ -115,7 +123,7 @@ function resizeScreen(){
 	drawCloud();
 }
 
-window.addEventListener("tf_changed", drawCloud);
+window.addEventListener("tf_fixed_frame_changed", drawCloud);
 window.addEventListener("view_changed", drawCloud);
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);
@@ -213,7 +221,7 @@ function connect(){
 		if(pointarray.length > 0){
 			data = {};
 			data.pose = pose;
-			data.points = pointarray;			
+			data.points = pointarray;
 			drawCloud();
 			if(!error){
 				status.setOK();

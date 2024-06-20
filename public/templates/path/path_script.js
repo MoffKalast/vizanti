@@ -3,6 +3,7 @@ let tfModule = await import(`${base_url}/js/modules/tf.js`);
 let rosbridgeModule = await import(`${base_url}/js/modules/rosbridge.js`);
 let persistentModule = await import(`${base_url}/js/modules/persistent.js`);
 let StatusModule = await import(`${base_url}/js/modules/status.js`);
+let utilModule = await import(`${base_url}/js/modules/util.js`);
 
 let view = viewModule.view;
 let tf = tfModule.tf;
@@ -29,6 +30,7 @@ const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
 
 const colourpicker = document.getElementById("{uniqueID}_colorpicker");
 colourpicker.addEventListener("input", (event) =>{
+	icon.style.filter = utilModule.hexColourToIconFilter(colourpicker.value);
 	saveSettings();
 });
 
@@ -40,6 +42,8 @@ if(settings.hasOwnProperty("{uniqueID}")){
 }else{
 	saveSettings();
 }
+
+icon.style.filter = utilModule.hexColourToIconFilter(colourpicker.value);
 
 function saveSettings(){
 	settings["{uniqueID}"] = {
@@ -56,7 +60,7 @@ async function drawPath(){
     const hei = canvas.height;
 	ctx.clearRect(0, 0, wid, hei);
 
-	if(pose_array === undefined){
+	if(pose_array === undefined || pose_array.length < 2){
 		return false;
 	}
 
@@ -64,18 +68,20 @@ async function drawPath(){
 	ctx.strokeStyle = colourpicker.value;
 	ctx.beginPath();
 
-	pose_array.forEach((point, index) => {
+	const firstPos = view.fixedToScreen({
+		x: pose_array[0].translation.x,
+		y: pose_array[0].translation.y
+	});
+	ctx.moveTo(firstPos.x, firstPos.y);
+
+	for (let i = 1; i < pose_array.length; i++) {
+		const point = pose_array[i];
 		const pos = view.fixedToScreen({
 			x: point.translation.x,
 			y: point.translation.y
 		});
-
-		if (index === 0) {
-			ctx.moveTo(pos.x, pos.y);
-		} else {
-			ctx.lineTo(pos.x, pos.y);
-		}
-	});
+		ctx.lineTo(pos.x, pos.y);
+	}
 
 	ctx.stroke();
 }
@@ -191,7 +197,7 @@ function resizeScreen(){
 	drawPath();
 }
 
-window.addEventListener("tf_changed", drawPath);
+window.addEventListener("tf_fixed_frame_changed", drawPath);
 window.addEventListener("view_changed", drawPath);
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);

@@ -21,6 +21,7 @@ let base_link_frame = "";
 let seq = 0;
 let active = false;
 let points = [];
+let shift_pressed = false;
 
 const icon = document.getElementById("{uniqueID}_icon");
 
@@ -318,6 +319,7 @@ function drawWaypoints() {
 	status.setOK();
 }
 
+let start_stamp = undefined;
 let start_point = undefined;
 let delta = undefined;
 let drag_point = -1;
@@ -348,10 +350,18 @@ function startDrag(event){
 	if(drag_point >= 0){
 		view.setInputMovementEnabled(false);
 	}
+
+	start_stamp = new Date();
 }
 
 function drag(event){
-	const { clientX, clientY } = event.touches ? event.touches[0] : event;
+	let { clientX, clientY } = event.touches ? event.touches[0] : event;
+
+	if(shift_pressed){
+		clientX = Math.round(clientX/20) * 20;
+		clientY = Math.round(clientY/20) * 20;
+	}
+
 	if(drag_point >= 0){
 		points[drag_point] = screenToPoint({
 			x: clientX,
@@ -398,9 +408,15 @@ function endDrag(event){
 		moveDist = Math.hypot(delta.x,delta.y);
 	}
 
-	if(moveDist < 10){
+	if(moveDist < 10 && new Date() - start_stamp  < 500){
 
-		const { clientX, clientY } = event.touches ? event.touches[0] : event;
+		let { clientX, clientY } = event.touches ? event.touches[0] : event;
+
+		if(shift_pressed){
+			clientX = Math.round(clientX/20) * 20;
+			clientY = Math.round(clientY/20) * 20;
+		}
+
 		const newpoint = {
 			x: clientX,
 			y: clientY
@@ -452,8 +468,14 @@ function resizeScreen(){
 
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);
-window.addEventListener("tf_changed", drawWaypoints);
 window.addEventListener("view_changed", drawWaypoints);
+
+window.addEventListener("tf_fixed_frame_changed", drawWaypoints);
+window.addEventListener("tf_changed", ()=>{
+	if(fixed_frame != tf.fixed_frame){
+		drawWaypoints();
+	}
+});
 
 function addListeners(){
 	view_container.addEventListener('mousedown', startDrag);
@@ -489,8 +511,23 @@ function setActive(value){
 	}
 }
 
-// Topics
+// Shift clamp to axis
+function handleKeyDown(event) {
+	if (event.key === "Shift") {
+		shift_pressed = true;
+	}
+}
 
+function handleKeyUp(event) {
+	if (event.key === "Shift") {
+		shift_pressed = false;
+	}
+}
+
+window.addEventListener("keydown", handleKeyDown);
+window.addEventListener("keyup", handleKeyUp);
+
+// Topics
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const fixedFrameBox = document.getElementById("{uniqueID}_fixed_frame");
 const baseLinkFrameBox = document.getElementById("{uniqueID}_base_link_frame");
@@ -585,6 +622,8 @@ icon.addEventListener("click", (event) =>{
 		setActive(!active);
 	else
 		isLongPress = false;
+
+	drawWaypoints();
 });
 
 icon.addEventListener("mousedown", startLongPress);

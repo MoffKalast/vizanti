@@ -364,7 +364,13 @@ function resizeScreen(){
 	drawMap();
 }
 
-window.addEventListener("tf_changed", drawMap);
+window.addEventListener("tf_fixed_frame_changed", drawMap);
+window.addEventListener("tf_changed", ()=>{
+	if(received_msg && received_msg.header.frame_id != tf.fixed_frame){
+		drawMap();
+	}
+});
+
 window.addEventListener("view_changed", drawMap);
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);

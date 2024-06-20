@@ -34,9 +34,17 @@ function initializeNav() {
 	for(let i = 0; i < settings.navbar.length; i++){
 		const type = settings.navbar[i].type;
 		const eid = settings.navbar[i].id;
+		const container = settings.navbar[i].container_id;
 		const template = element_templates[type];
 
-		icon_container.appendChild(createElement(template.icon, eid));
+		console.log(type, eid, container);
+
+		if(typeof container === 'undefined' || container == "icon_container")
+			icon_container.appendChild(createElement(template.icon, eid));
+		else if(typeof container !== 'undefined' && container !== "icon_container"){
+			const container_element = document.getElementById(container);
+			container_element.insertBefore(createElement(template.icon, eid), container_element.querySelector("[data-uniqueid='addbutton']"));
+		}
 
 		if (template.hasOwnProperty("modal"))
 			modal_container.appendChild(createElement(template.modal, eid));
@@ -65,7 +73,6 @@ function loadAll(){
 	Promise.all([elementTemplatesPromise]).then((values) => {
 		element_templates = values[0];
 
-		const icon_container = document.getElementById("icon_container");
 		const modal_container = document.getElementById("modal_container");
 		const view_container = document.getElementById("view_container");
 		const script_container = document.getElementById("script_container");
@@ -80,15 +87,15 @@ function loadAll(){
 
 			const template = element_templates[event.widget_type];
 			const eid = event.widget_type+"_autoID_" + uid++;
-			settings.navbar.push({ type: event.widget_type, id: eid });
+			settings.navbar.push({ type: event.widget_type, id: eid, container_id: event.container_target });
 			settings.uid = uid;
 			settings.save();
 	
-			const add_button = document.querySelector("#icon_container [data-uniqueid='addbutton']");
-
 			const icon_element = createElement(template.icon, eid);
 			icon_element.dataset.topic = event.widget_topic;
-			icon_container.insertBefore(icon_element, add_button);
+
+			const icon_container = document.getElementById(event.container_target);
+			icon_container.insertBefore(icon_element, icon_container.querySelector("[data-uniqueid='addbutton']"));
 
 			if (template.hasOwnProperty("modal"))
 				modal_container.appendChild(createElement(template.modal, eid));
@@ -113,8 +120,9 @@ function loadAll(){
 				});
 
 				settings.navbar.splice(elementIndex, 1);
-				settings.save();
+				delete settings[uniqueID];
 
+				settings.save();
 				window.dispatchEvent(new Event("icons_changed"));
 			}
 		});
