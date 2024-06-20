@@ -3,6 +3,7 @@ let tfModule = await import(`${base_url}/js/modules/tf.js`);
 let rosbridgeModule = await import(`${base_url}/js/modules/rosbridge.js`);
 let persistentModule = await import(`${base_url}/js/modules/persistent.js`);
 let StatusModule = await import(`${base_url}/js/modules/status.js`);
+let utilModule = await import(`${base_url}/js/modules/util.js`);
 
 let view = viewModule.view;
 let tf = tfModule.tf;
@@ -36,6 +37,7 @@ opacitySlider.addEventListener('input', () =>  {
 
 const colourpicker = document.getElementById("{uniqueID}_colorpicker");
 colourpicker.addEventListener("input", (event) =>{
+	icon.style.filter = utilModule.hexColourToIconFilter(colourpicker.value);
 	saveSettings();
 });
 
@@ -46,7 +48,6 @@ throttle.addEventListener("input", (event) =>{
 });
 
 //Settings
-
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
@@ -61,6 +62,8 @@ if(settings.hasOwnProperty("{uniqueID}")){
 }else{
 	saveSettings();
 }
+
+icon.style.filter = utilModule.hexColourToIconFilter(colourpicker.value);
 
 function saveSettings(){
 	settings["{uniqueID}"] = {
@@ -107,10 +110,17 @@ async function drawCells() {
 	const wid = Math.abs(data.msg.cell_width) * unit;
 	const hei = Math.abs(data.msg.cell_height) * unit;
 
+	ctx.beginPath();
 	for(let i = 0; i < data.msg.cells.length; i++){
-		ctx.fillRect(data.msg.cells[i].x * unit - wid/2 + 1, data.msg.cells[i].y * unit - hei/2 + 1, wid-1, hei-1);
+		const x = data.msg.cells[i].x * unit - wid / 2 + 1;
+		const y = data.msg.cells[i].y * unit - hei / 2 + 1;
+		ctx.moveTo(x, y);
+		ctx.lineTo(x + wid - 1, y);
+		ctx.lineTo(x + wid - 1, y + hei - 1);
+		ctx.lineTo(x, y + hei - 1);
+		ctx.lineTo(x, y);
 	}
-	
+	ctx.fill();
 	ctx.restore();
 }
 
@@ -120,7 +130,13 @@ function resizeScreen(){
 	drawCells();
 }
 
-window.addEventListener("tf_changed", drawCells);
+window.addEventListener("tf_fixed_frame_changed", drawCells);
+window.addEventListener("tf_changed", ()=>{
+	if (data && data.msg.frame_id != tf.fixed_frame){
+		drawCells();
+	}
+});
+
 window.addEventListener("view_changed", drawCells);
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);
@@ -220,4 +236,4 @@ icon.addEventListener("click", loadTopics);
 loadTopics();
 resizeScreen();
 
-console.log("Laserscan Widget Loaded {uniqueID}")
+console.log("Gridcells Widget Loaded {uniqueID}")

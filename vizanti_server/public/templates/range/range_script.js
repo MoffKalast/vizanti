@@ -163,7 +163,7 @@ function resizeScreen(){
 	drawRanges();
 }
 
-window.addEventListener("tf_changed", drawRanges);
+window.addEventListener("tf_fixed_frame_changed", drawRanges);
 window.addEventListener("view_changed", drawRanges);
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);

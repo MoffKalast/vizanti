@@ -101,7 +101,13 @@ function resizeScreen(){
 	drawRobot();
 }
 
-window.addEventListener("tf_changed", drawRobot);
+window.addEventListener("tf_fixed_frame_changed", drawRobot);
+window.addEventListener("tf_changed", ()=>{
+	if(frame != tf.fixed_frame){
+		drawRobot();
+	}
+});
+
 window.addEventListener("view_changed", drawRobot);
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);
