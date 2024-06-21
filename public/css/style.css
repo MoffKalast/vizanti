@@ -251,6 +251,23 @@ h3 {
 	}
 }
 
+.altimeter_canvas {
+	pointer-events: none; 
+	z-index: 11; 
+	border-left: 5px solid #4070bfff;
+	width: 110px;
+	background-image: linear-gradient(to right, rgba(0, 0, 0, 0.589) , transparent);
+}
+
+.altimeter_arrow {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 60px;
+	height: 60px;
+	z-index: 12; 
+  }
+  
 
 /*Add widget cards*/
 
