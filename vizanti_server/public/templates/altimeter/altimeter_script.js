@@ -152,7 +152,7 @@ async function drawWidget() {
 			ctx.moveTo(0, y);
 			ctx.lineTo(50, y);
 			
-			ctx.fillText(lineCount.toFixed(1), 55, y + 4);
+			ctx.fillText(Number.isInteger(lineCount) ? lineCount : lineCount.toFixed(1), 55, y + 4);
 			lineCount += step;
 		}else{
 			ctx.moveTo(0, y);
