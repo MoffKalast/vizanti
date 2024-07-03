@@ -25,6 +25,9 @@ let status = new Status(
 	document.getElementById("{uniqueID}_status")
 );
 
+let img_offset_x = "0";
+
+const arrow = document.getElementById('{uniqueID}_arrow');
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
 
@@ -34,6 +37,8 @@ const frameSelector = document.getElementById("{uniqueID}_frame");
 const modeSelector = document.getElementById("{uniqueID}_mode");
 const text_altitude = document.getElementById("{uniqueID}_altitude");
 const stepBox = document.getElementById("{uniqueID}_step");
+
+const imgpreview = document.getElementById('{uniqueID}_imgpreview');
 
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
@@ -45,6 +50,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	frameSelector.value = frame;
 	selectionbox.value = topic;
 
+	img_offset_x = loaded_data.img_offset_x;
 }else{
 
 	if(frame == ""){
@@ -57,6 +63,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 		status.setWarn("No topic found, defaulting to /depth_tgt");
 	}
 
+	img_offset_x = (document.querySelectorAll('.altimeter_canvas').length-1) * 110;
 	saveSettings();
 }
 
@@ -65,7 +72,8 @@ function saveSettings(){
 		mode: modeSelector.value,
 		frame: frame,
 		topic: topic,
-		step: stepBox.value
+		step: stepBox.value,
+		img_offset_x: img_offset_x
 	}
 	settings.save();
 }
@@ -107,6 +115,113 @@ function getMeters(){
 	}
 }
 
+function drawDepth(){
+
+	const hei = canvas.height;
+	const centerY = hei / 2;
+	const step = Math.min(Math.max(0.1, parseFloat(stepBox.value)), 1000);
+
+	const offsetMeters = meters;
+    const pixelOffset = (offsetMeters / step) * -100 + centerY;
+
+	const flip = img_offset_x > window.innerWidth/2;
+	const flip_offset = flip ? 110: 0;
+	const flip_mult = flip ? -1: 1;
+
+	ctx.fillStyle = "#4070bfff";
+	ctx.fillRect(flip ? 60: 0, pixelOffset-50, 50, 50);
+
+	ctx.strokeStyle = "lightgray";
+	ctx.lineWidth = 1;
+	ctx.beginPath();
+	for (let y = pixelOffset, x = 0; y <= hei; y += 10, x+=1) {
+		if(x % 5 == 0)
+			continue;
+
+		ctx.moveTo(flip_offset, y);
+		ctx.lineTo(flip_offset + 25 * flip_mult, y);
+	}
+	ctx.stroke();
+
+	ctx.strokeStyle = "white";
+	ctx.lineWidth = 2;
+
+	ctx.font = "bold 16px Monospace";
+	ctx.fillStyle = "white";
+	ctx.textAlign = flip ? "right" : "left";
+
+	ctx.beginPath();
+	let lineCount = 0.0;
+	for (let y = pixelOffset, x = 0; y <= hei; y += 50, x+=1) {
+
+		if(x % 2 == 0){
+			ctx.moveTo(flip_offset, y);
+			ctx.lineTo(flip_offset + 50 * flip_mult, y);
+
+			ctx.fillText(Number.isInteger(lineCount) ? lineCount : lineCount.toFixed(1), 55, y + 4);
+			lineCount += step;
+		}else{
+			ctx.moveTo(flip_offset, y);
+			ctx.lineTo(flip_offset + 35 * flip_mult, y);
+		}
+	}
+	ctx.stroke();
+}
+
+function drawAltitude(){
+
+	const hei = canvas.height;
+	const centerY = hei / 2;
+	const step = Math.min(Math.max(0.1, parseFloat(stepBox.value)), 1000);
+
+	const offsetMeters = meters;
+    const pixelOffset = (offsetMeters / step) * 100 + centerY;
+
+	const flip = img_offset_x > window.innerWidth/2;
+	const flip_offset = flip ? 110: 0;
+	const flip_mult = flip ? -1: 1;
+
+	ctx.fillStyle = "#4070bfff";
+	ctx.fillRect(flip ? 60: 0, pixelOffset, 50, 50);
+
+	ctx.strokeStyle = "lightgray";
+	ctx.lineWidth = 1;
+	ctx.beginPath();
+	for (let y = pixelOffset, x = 0; y >= 0; y -= 10, x+=1) {
+		if(x % 5 == 0)
+			continue;
+
+		ctx.moveTo(flip_offset, y);
+		ctx.lineTo(flip_offset + 25 * flip_mult, y);
+	}
+	ctx.stroke();
+
+	ctx.strokeStyle = "white";
+	ctx.lineWidth = 2;
+
+	ctx.font = "bold 16px Monospace";
+	ctx.fillStyle = "white";
+	ctx.textAlign = flip ? "right" : "left";
+
+	ctx.beginPath();
+	let lineCount = 0.0;
+	for (let y = pixelOffset, x = 0; y >= 0; y -= 50, x+=1) {
+
+		if(x % 2 == 0){
+			ctx.moveTo(flip_offset, y);
+			ctx.lineTo(flip_offset + 50 * flip_mult, y);
+
+			ctx.fillText(Number.isInteger(lineCount) ? lineCount : lineCount.toFixed(1), 55, y + 4);
+			lineCount += step;
+		}else{
+			ctx.moveTo(flip_offset, y);
+			ctx.lineTo(flip_offset + 35 * flip_mult, y);
+		}
+
+	}
+	ctx.stroke();
+}
+
 async function drawWidget() {
 
 	const mode = MODES[modeSelector.value];
@@ -116,50 +231,13 @@ async function drawWidget() {
 	else
 		text_altitude.innerText = "Altitude: "+meters.toFixed(3)+" m";
 
-	const icon_offset = document.getElementById("icon_bar").getBoundingClientRect().height;
-	const wid = canvas.width;
-	const hei = canvas.height;
-	const centerY = hei / 2;
-	const step = Math.min(Math.max(0.1, parseFloat(stepBox.value)), 1000);
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-	const offsetMeters = meters;
-    const pixelOffset = (offsetMeters / step) * -100 + centerY;
-
-	ctx.clearRect(0, 0, wid, hei);
-	
-	ctx.strokeStyle = "lightgray";
-	ctx.lineWidth = 1;
-	ctx.beginPath();
-	for (let y = pixelOffset, x = 0; y <= hei; y += 10, x+=1) {
-		if(x % 5 == 0)
-			continue;
-
-		ctx.moveTo(0, y);
-		ctx.lineTo(25, y);
-	}
-	ctx.stroke();
-
-	ctx.strokeStyle = "white";
-	ctx.lineWidth = 2;
-	ctx.font = "bold 16px Monospace";
-	ctx.fillStyle = "white";
-	
-	ctx.beginPath();
-	let lineCount = 0.0;
-	for (let y = pixelOffset, x = 0; y <= hei; y += 50, x+=1) {
-
-		if(x % 2 == 0){
-			ctx.moveTo(0, y);
-			ctx.lineTo(50, y);
-			
-			ctx.fillText(Number.isInteger(lineCount) ? lineCount : lineCount.toFixed(1), 55, y + 4);
-			lineCount += step;
-		}else{
-			ctx.moveTo(0, y);
-			ctx.lineTo(30, y);
-		}
-	}
-	ctx.stroke();
+ 	if(mode.dir === "depth"){
+		drawDepth();
+	}else{
+		drawAltitude();
+	} 
 }
 
 function resizeScreen(){
@@ -250,5 +328,83 @@ icon.addEventListener("click", ()=>{
 
 resizeScreen();
 loadTopics();
+
+//preview for definining position
+const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
+
+let preview_active = false;
+
+function onStart(event) {
+	preview_active = true;
+	document.addEventListener('mousemove', onMove);
+	document.addEventListener('touchmove', onMove);
+	document.addEventListener('mouseup', onEnd);
+	document.addEventListener('touchend', onEnd);
+}
+
+function displayImageOffset(x){
+	imgpreview.style.left = x + canvas.width/2 + "px";
+	canvas.style.left = x +"px";
+
+	if(img_offset_x > window.innerWidth/2){
+		canvas.style.borderLeft = "5px none transparent";
+		canvas.style.borderRight = "5px solid #4070bfff";
+		canvas.style.backgroundImage = "linear-gradient(to left, rgba(0, 0, 0, 0.589) , transparent)";
+		icon.style.transform = "rotate(180deg)";
+
+		arrow.style.left = (x+55) +"px";
+		arrow.style.transform = "translateY(-50%) rotate(180deg)";
+	}else{
+
+		canvas.style.borderRight = "5px none transparent";
+		canvas.style.borderLeft = "5px solid #4070bfff";
+		canvas.style.backgroundImage = "linear-gradient(to right, rgba(0, 0, 0, 0.589) , transparent)";
+		icon.style.transform = "";
+
+		arrow.style.left = x +"px";
+		arrow.style.transform = "translateY(-50%)";
+	}
+}
+
+window.addEventListener('resize', ()=>{
+	displayImageOffset(img_offset_x);
+});
+
+function onMove(event) {
+	if (preview_active) {
+		event.preventDefault();
+		const wid = window.innerWidth-5;
+		let currentX;
+
+		if (event.type === "touchmove") {
+			currentX = event.touches[0].clientX;
+		} else {
+			currentX = event.clientX;
+		}
+
+		if(currentX > wid/2){
+			currentX = wid - currentX + 110;
+			img_offset_x = wid - parseInt(currentX/110)*110;
+		}else{
+			img_offset_x = parseInt(currentX/110)*110;
+		}
+
+		displayImageOffset(img_offset_x);
+		saveSettings();
+	}
+}
+
+function onEnd() {
+	preview_active = false;
+	document.removeEventListener('mousemove', onMove);
+	document.removeEventListener('touchmove', onMove);
+	document.removeEventListener('mouseup', onEnd);
+	document.removeEventListener('touchend', onEnd);
+}
+  
+imgpreview.addEventListener('mousedown', onStart);
+imgpreview.addEventListener('touchstart', onStart);
+
+displayImageOffset(img_offset_x);
 
 console.log("Altimeter Widget Loaded {uniqueID}")
