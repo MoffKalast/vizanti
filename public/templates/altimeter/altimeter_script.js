@@ -337,17 +337,20 @@ function setFrameList(){
 
 modeSelector.addEventListener("change", (event) => {
 	saveSettings();
+	refreshStyleSetup();
 	drawWidget();
 });
 
 frameSelector.addEventListener("change", (event) =>{
 	frame = frameSelector.value;
 	saveSettings();
+	refreshStyleSetup();
 	drawWidget();
 });
 
 stepBox.addEventListener("change", (event) =>{	
 	saveSettings();
+	refreshStyleSetup();
 	drawWidget();
 });
 
@@ -429,11 +432,11 @@ function setTargetFromPixels(y){
 		newtgt = ((y - centerY) / -100 + (meters_smooth / step)) * step;
 	}
 
-	if(newtgt > 0){
-		target = newtgt;
+	if(newtgt > -1){
+		target = newtgt > 0 ? newtgt: 0;
 		publishTarget();
 		drawWidget();
-	}	
+	}
 }
 
 let targeting_active = false;
@@ -479,9 +482,9 @@ canvas.addEventListener('touchstart', onTargetStart);
 //preview for definining position
 let preview_active = false;
 
-function displayImageOffset(x){
-	imgpreview.style.left = x + canvas.width/2 + "px";
-	canvas.style.left = x +"px";
+function refreshStyleSetup(){
+	imgpreview.style.left = img_offset_x + canvas.width/2 + "px";
+	canvas.style.left = img_offset_x +"px";
 
 	let color;
 	if(MODES[modeSelector.value].dir == "depth"){
@@ -500,7 +503,7 @@ function displayImageOffset(x){
 		canvas.style.backgroundImage = "linear-gradient(to left, rgba(0, 0, 0, 0.589) , transparent)";
 		icon.style.transform = "rotate(180deg)";
 
-		arrow.style.left = (x+55) +"px";
+		arrow.style.left = (img_offset_x + 50) +"px";
 		arrow.style.transform = "translateY(-50%) rotate(180deg)";
 	}else{
 
@@ -509,13 +512,13 @@ function displayImageOffset(x){
 		canvas.style.backgroundImage = "linear-gradient(to right, rgba(0, 0, 0, 0.589) , transparent)";
 		icon.style.transform = "";
 
-		arrow.style.left = x +"px";
+		arrow.style.left = img_offset_x +"px";
 		arrow.style.transform = "translateY(-50%)";
 	}
 }
 
 window.addEventListener('resize', ()=>{
-	displayImageOffset(img_offset_x);
+	refreshStyleSetup();
 });
 
 function onStart(event) {
@@ -539,7 +542,7 @@ function onMove(event) {
 			img_offset_x = parseInt(currentX/110)*110;
 		}
 
-		displayImageOffset(img_offset_x);
+		refreshStyleSetup();
 		saveSettings();
 	}
 }
@@ -555,7 +558,7 @@ function onEnd() {
 imgpreview.addEventListener('mousedown', onStart);
 imgpreview.addEventListener('touchstart', onStart);
 
-displayImageOffset(img_offset_x);
+refreshStyleSetup();
 enqueueRender();
 
 //manual targeting
