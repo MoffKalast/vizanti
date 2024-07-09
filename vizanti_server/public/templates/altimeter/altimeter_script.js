@@ -18,6 +18,8 @@ let MODES = {
 };
 
 let meters = 0;
+let meters_smooth = 0;
+
 let frame = "";
 let topic = getTopic("{uniqueID}");
 let status = new Status(
@@ -27,10 +29,13 @@ let status = new Status(
 
 let img_offset_x = "0";
 
+const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
+
 const arrow = document.getElementById('{uniqueID}_arrow');
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
 
+const icon_bar = document.getElementById("icon_bar");
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const frameSelector = document.getElementById("{uniqueID}_frame");
@@ -121,7 +126,7 @@ function drawDepth(){
 	const centerY = hei / 2;
 	const step = Math.min(Math.max(0.1, parseFloat(stepBox.value)), 1000);
 
-	const offsetMeters = meters;
+	const offsetMeters = meters_smooth;
     const pixelOffset = (offsetMeters / step) * -100 + centerY;
 
 	const flip = img_offset_x > window.innerWidth/2;
@@ -135,7 +140,7 @@ function drawDepth(){
 	ctx.lineWidth = 1;
 	ctx.beginPath();
 	for (let y = pixelOffset, x = 0; y <= hei; y += 10, x+=1) {
-		if(x % 5 == 0)
+		if(x % 5 == 0 || y < 0)
 			continue;
 
 		ctx.moveTo(flip_offset, y);
@@ -154,6 +159,12 @@ function drawDepth(){
 	let lineCount = 0.0;
 	for (let y = pixelOffset, x = 0; y <= hei; y += 50, x+=1) {
 
+		if(y < 0){
+			if(x % 2 == 0)
+				lineCount += step;
+			continue;
+		}
+			
 		if(x % 2 == 0){
 			ctx.moveTo(flip_offset, y);
 			ctx.lineTo(flip_offset + 50 * flip_mult, y);
@@ -174,7 +185,7 @@ function drawAltitude(){
 	const centerY = hei / 2;
 	const step = Math.min(Math.max(0.1, parseFloat(stepBox.value)), 1000);
 
-	const offsetMeters = meters;
+	const offsetMeters = meters_smooth;
     const pixelOffset = (offsetMeters / step) * 100 + centerY;
 
 	const flip = img_offset_x > window.innerWidth/2;
@@ -188,7 +199,7 @@ function drawAltitude(){
 	ctx.lineWidth = 1;
 	ctx.beginPath();
 	for (let y = pixelOffset, x = 0; y >= 0; y -= 10, x+=1) {
-		if(x % 5 == 0)
+		if(x % 5 == 0 || y > hei)
 			continue;
 
 		ctx.moveTo(flip_offset, y);
@@ -207,6 +218,12 @@ function drawAltitude(){
 	let lineCount = 0.0;
 	for (let y = pixelOffset, x = 0; y >= 0; y -= 50, x+=1) {
 
+		if(y > hei){
+			if(x % 2 == 0)
+				lineCount += step;
+			continue;
+		}
+
 		if(x % 2 == 0){
 			ctx.moveTo(flip_offset, y);
 			ctx.lineTo(flip_offset + 50 * flip_mult, y);
@@ -223,7 +240,6 @@ function drawAltitude(){
 }
 
 async function drawWidget() {
-
 	const mode = MODES[modeSelector.value];
 
 	if(mode.dir === "depth")
@@ -240,9 +256,24 @@ async function drawWidget() {
 	} 
 }
 
+function enqueueRender() {
+	if(Math.abs(meters - meters_smooth) > 0.005){
+		meters_smooth = meters_smooth * 0.95 + meters * 0.05;
+		drawWidget();
+	}
+
+	window.requestAnimationFrame(enqueueRender);
+}
+
 function resizeScreen(){
-	canvas.height = window.innerHeight;
 	canvas.width = 110;
+	canvas.height = window.innerHeight - icon_bar.offsetHeight;
+
+	canvas.style.height = (window.innerHeight - icon_bar.offsetHeight) +"px";
+	canvas.style.width = "110px";
+
+	arrow.style.bottom = (canvas.height/2 - 60) +"px";
+
 	drawWidget();
 }
 
@@ -257,6 +288,7 @@ window.addEventListener("tf_changed", ()=>{
 
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);
+window.addEventListener("iconbar_height_change", resizeScreen);
 
 // TF frame list
 function setFrameList(){
@@ -290,7 +322,6 @@ stepBox.addEventListener("change", (event) =>{
 	saveSettings();
 	drawWidget();
 });
-
 
 
 // Topics
@@ -329,9 +360,11 @@ icon.addEventListener("click", ()=>{
 resizeScreen();
 loadTopics();
 
-//preview for definining position
-const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
+//targeting
 
+
+
+//preview for definining position
 let preview_active = false;
 
 function onStart(event) {
@@ -406,5 +439,6 @@ imgpreview.addEventListener('mousedown', onStart);
 imgpreview.addEventListener('touchstart', onStart);
 
 displayImageOffset(img_offset_x);
+enqueueRender();
 
 console.log("Altimeter Widget Loaded {uniqueID}")
