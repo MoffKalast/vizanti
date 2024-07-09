@@ -64,7 +64,8 @@
 
 		iconContainer.style.width = requiredWidth + 'px';
 		iconBarHandle.style.width = requiredWidth + 'px';
-		
+
+		window.dispatchEvent(new Event("iconbar_height_change"));		
 	}
 
 	function iconBarMouseMove(event) {
