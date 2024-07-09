@@ -252,7 +252,7 @@ h3 {
 }
 
 .altimeter_canvas {
-	pointer-events: none; 
+	pointer-events: auto;
 	z-index: 11; 
 	border-left: 5px solid #4070bfff;
 	width: 110px;
@@ -262,6 +262,7 @@ h3 {
 }
 
 .altimeter_arrow {
+	pointer-events: none;
 	position: absolute;
 	bottom: 50%;
 	transform: translateY(-50%);

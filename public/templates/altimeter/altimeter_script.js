@@ -19,6 +19,7 @@ let MODES = {
 
 let meters = 0;
 let meters_smooth = 0;
+let target = NaN;
 
 let frame = "";
 let topic = getTopic("{uniqueID}");
@@ -83,7 +84,13 @@ function saveSettings(){
 	settings.save();
 }
 
-function sendMessage(floatval){
+function publishTarget(){
+
+	let targetval = target;
+
+	if(MODES[modeSelector.value].invert)
+		targetval = -targetval;
+
 	const publisher = new ROSLIB.Topic({
 		ros: rosbridge.ros,
 		name: topic,
@@ -91,7 +98,7 @@ function sendMessage(floatval){
 	});
 
 	const floatMsg = new ROSLIB.Message({
-		data: floatval
+		data: targetval
 	});
 
 	publisher.publish(floatMsg);
@@ -120,14 +127,24 @@ function getMeters(){
 	}
 }
 
+function drawTarget(flip_offset, flip_mult, pos){
+	ctx.fillStyle = "yellow";
+	ctx.lineWidth = 1;
+	ctx.beginPath();
+	ctx.moveTo(flip_offset, pos);
+	ctx.lineTo(flip_offset+ 50 * flip_mult, pos);
+	ctx.lineTo(flip_offset+ 50 * flip_mult, pos+10);
+	ctx.lineTo(flip_offset, pos+2);
+	ctx.lineTo(flip_offset, pos);
+	ctx.fill();
+}
+
 function drawDepth(){
 
 	const hei = canvas.height;
 	const centerY = hei / 2;
 	const step = Math.min(Math.max(0.1, parseFloat(stepBox.value)), 1000);
-
-	const offsetMeters = meters_smooth;
-    const pixelOffset = (offsetMeters / step) * -100 + centerY;
+    const pixelOffset = (meters_smooth / step) * -100 + centerY;
 
 	const flip = img_offset_x > window.innerWidth/2;
 	const flip_offset = flip ? 110: 0;
@@ -177,6 +194,11 @@ function drawDepth(){
 		}
 	}
 	ctx.stroke();
+
+	if(!isNaN(target)){
+		const pos = pixelOffset + ((target / step) * 100);
+		drawTarget(flip_offset, flip_mult, pos);
+	}
 }
 
 function drawAltitude(){
@@ -184,9 +206,7 @@ function drawAltitude(){
 	const hei = canvas.height;
 	const centerY = hei / 2;
 	const step = Math.min(Math.max(0.1, parseFloat(stepBox.value)), 1000);
-
-	const offsetMeters = meters_smooth;
-    const pixelOffset = (offsetMeters / step) * 100 + centerY;
+    const pixelOffset = (meters_smooth / step) * 100 + centerY;
 
 	const flip = img_offset_x > window.innerWidth/2;
 	const flip_offset = flip ? 110: 0;
@@ -237,6 +257,11 @@ function drawAltitude(){
 
 	}
 	ctx.stroke();
+
+	if(!isNaN(target)){
+		const pos = pixelOffset + ((target / step) * -100);
+		drawTarget(flip_offset, flip_mult, pos);
+	}
 }
 
 async function drawWidget() {
@@ -253,7 +278,7 @@ async function drawWidget() {
 		drawDepth();
 	}else{
 		drawAltitude();
-	} 
+	}
 }
 
 function enqueueRender() {
@@ -361,19 +386,90 @@ resizeScreen();
 loadTopics();
 
 //targeting
+let targeting_active = false;
 
+function getEventXY(event){
+	let currentX, currentY;
+	if (event.type === "touchmove") {
+		currentX = event.touches[0].clientX;
+		currentY = event.touches[0].clientY;
+	} else {
+		currentX = event.clientX;
+		currentY = event.clientY;
+	}
+	return [currentX, currentY];
+}
+
+function getEventLocalXY(event){
+	const [currentX, currentY] = getEventXY(event);
+
+	const rect = event.target.getBoundingClientRect();
+	let x = currentX - rect.left;
+	let y = currentY - rect.top;
+
+	//are we flipped
+	if(img_offset_x > window.innerWidth/2)
+		x = rect.width - x;
+
+	return [x, y];
+}
+
+function setTargetFromPixels(y){
+	const centerY = canvas.height / 2;
+	const step = Math.min(Math.max(0.1, parseFloat(stepBox.value)), 1000);
+	let newtgt = 0;
+
+	if(MODES[modeSelector.value].dir == "depth"){
+		newtgt = ((y - centerY) / 100 + (meters_smooth / step)) * step;
+		drawWidget();
+	}else{
+		newtgt = ((y - centerY) / -100 + (meters_smooth / step)) * step;
+		drawWidget();
+	}
+
+	if(newtgt > 0){
+		target = newtgt;
+		publishTarget();
+	}	
+}
+
+function onTargetStart(event) {
+
+	const [x, y] = getEventLocalXY(event);
+	if(x > 30)
+		return;
+
+	setTargetFromPixels(y);
+
+	targeting_active = true;
+	document.addEventListener('mousemove', onTargetMove);
+	document.addEventListener('touchmove', onTargetMove);
+	document.addEventListener('mouseup', onTargetEnd);
+	document.addEventListener('touchend', onTargetEnd);
+}
+
+function onTargetMove(event) {
+	if (targeting_active) {
+		event.preventDefault();
+		const [x, y] = getEventLocalXY(event);
+		setTargetFromPixels(y);
+	}
+}
+
+function onTargetEnd() {
+	targeting_active = false;
+	document.removeEventListener('mousemove', onTargetMove);
+	document.removeEventListener('touchmove', onTargetMove);
+	document.removeEventListener('mouseup', onTargetEnd);
+	document.removeEventListener('touchend', onTargetEnd);
+}
+  
+canvas.addEventListener('mousedown', onTargetStart);
+canvas.addEventListener('touchstart', onTargetStart);
 
 
 //preview for definining position
 let preview_active = false;
-
-function onStart(event) {
-	preview_active = true;
-	document.addEventListener('mousemove', onMove);
-	document.addEventListener('touchmove', onMove);
-	document.addEventListener('mouseup', onEnd);
-	document.addEventListener('touchend', onEnd);
-}
 
 function displayImageOffset(x){
 	imgpreview.style.left = x + canvas.width/2 + "px";
@@ -403,17 +499,19 @@ window.addEventListener('resize', ()=>{
 	displayImageOffset(img_offset_x);
 });
 
+function onStart(event) {
+	preview_active = true;
+	document.addEventListener('mousemove', onMove);
+	document.addEventListener('touchmove', onMove);
+	document.addEventListener('mouseup', onEnd);
+	document.addEventListener('touchend', onEnd);
+}
+
 function onMove(event) {
 	if (preview_active) {
 		event.preventDefault();
 		const wid = window.innerWidth-5;
-		let currentX;
-
-		if (event.type === "touchmove") {
-			currentX = event.touches[0].clientX;
-		} else {
-			currentX = event.clientX;
-		}
+		const [currentX, currentY] = getEventXY(event);
 
 		if(currentX > wid/2){
 			currentX = wid - currentX + 110;
