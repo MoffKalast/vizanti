@@ -386,26 +386,25 @@ resizeScreen();
 loadTopics();
 
 //targeting
-let targeting_active = false;
-
 function getEventXY(event){
-	let currentX, currentY;
+	let globalX, globalY;
 	if (event.type === "touchmove") {
-		currentX = event.touches[0].clientX;
-		currentY = event.touches[0].clientY;
+		globalX = event.touches[0].clientX;
+		globalY = event.touches[0].clientY;
 	} else {
-		currentX = event.clientX;
-		currentY = event.clientY;
+		globalX = event.clientX;
+		globalY = event.clientY;
 	}
-	return [currentX, currentY];
+	return [globalX, globalY];
 }
 
 function getEventLocalXY(event){
-	const [currentX, currentY] = getEventXY(event);
+
+	const [globalX, globalY] = getEventXY(event);
 
 	const rect = event.target.getBoundingClientRect();
-	let x = currentX - rect.left;
-	let y = currentY - rect.top;
+	let x = globalX - rect.left;
+	let y = globalY - rect.top;
 
 	//are we flipped
 	if(img_offset_x > window.innerWidth/2)
@@ -421,17 +420,22 @@ function setTargetFromPixels(y){
 
 	if(MODES[modeSelector.value].dir == "depth"){
 		newtgt = ((y - centerY) / 100 + (meters_smooth / step)) * step;
-		drawWidget();
 	}else{
 		newtgt = ((y - centerY) / -100 + (meters_smooth / step)) * step;
-		drawWidget();
 	}
 
 	if(newtgt > 0){
 		target = newtgt;
 		publishTarget();
+		drawWidget();
 	}	
 }
+
+let targeting_active = false;
+let targeting_point = {
+	x: 0, 
+	y: 0
+};
 
 function onTargetStart(event) {
 
@@ -439,29 +443,28 @@ function onTargetStart(event) {
 	if(x > 30)
 		return;
 
-	setTargetFromPixels(y);
+	const [globalX, globalY] = getEventXY(event);
 
 	targeting_active = true;
-	document.addEventListener('mousemove', onTargetMove);
-	document.addEventListener('touchmove', onTargetMove);
+	targeting_point.x = globalX;
+	targeting_point.y = globalY;
+
 	document.addEventListener('mouseup', onTargetEnd);
 	document.addEventListener('touchend', onTargetEnd);
 }
 
-function onTargetMove(event) {
-	if (targeting_active) {
-		event.preventDefault();
+function onTargetEnd(event) {
+
+	targeting_active = false;
+	document.removeEventListener('mouseup', onTargetEnd);
+	document.removeEventListener('touchend', onTargetEnd);
+
+	const [globalX, globalY] = getEventXY(event);
+
+	if(Math.hypot(targeting_point.y - globalY, targeting_point.x - globalX) < 15){
 		const [x, y] = getEventLocalXY(event);
 		setTargetFromPixels(y);
 	}
-}
-
-function onTargetEnd() {
-	targeting_active = false;
-	document.removeEventListener('mousemove', onTargetMove);
-	document.removeEventListener('touchmove', onTargetMove);
-	document.removeEventListener('mouseup', onTargetEnd);
-	document.removeEventListener('touchend', onTargetEnd);
 }
   
 canvas.addEventListener('mousedown', onTargetStart);
@@ -538,5 +541,16 @@ imgpreview.addEventListener('touchstart', onStart);
 
 displayImageOffset(img_offset_x);
 enqueueRender();
+
+//manual targeting
+document.getElementById("{uniqueID}_manual_target").addEventListener("click", async (event) =>{
+
+	let value = await prompt("Enter target "+MODES[modeSelector.value].dir+" (meters, positive only):", "0.0");
+	if (value != null) {
+		target = Math.abs(value);
+		publishTarget();
+		drawWidget();
+	}
+});
 
 console.log("Altimeter Widget Loaded {uniqueID}")
