@@ -29,7 +29,7 @@
 		<label for="{uniqueID}_step">Step (meter):</label>
 		<input type="number" value="1.0" step="0.1" min="0.1" max="1000" id="{uniqueID}_step">
 
-		<p>Displays the Z value of the frame on a depth/altitude gauge. Inverted modes treat negative values to positive.</p>
+		<p style="color:#b4b4b4;">Displays the Z value of the frame on a depth/altitude gauge. Inverted modes treat negative values to positive.</p>
 
 		<hr>
 		<br>
@@ -43,7 +43,9 @@
 			<option value="/depth_tgt">/depth_tgt</option>
 		</select>
 
-		<p>Clicking the altimeter will mark the depth/alitude with a yellow flag and send a std_msgs/Float32 value to this topic. Or click the button below and input it manually.</p>
+		<p>Send a std_msgs/Float32 value to this topic.</p>
+
+		<p style="color:#b4b4b4;">Clicking the altimeter will mark the depth/alitude with a yellow flag and publish it. Or click the button below and input it manually.</p>
 
 		<button id="{uniqueID}_manual_target" class="export_button">Input and send target manually</button>
 

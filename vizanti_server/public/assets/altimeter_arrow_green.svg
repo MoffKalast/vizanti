@@ -9,7 +9,7 @@
    viewBox="0 0 512 512"
    style="enable-background:new 0 0 512 512;"
    xml:space="preserve"
-   sodipodi:docname="altimeter_arrow.svg"
+   sodipodi:docname="altimeter_arrow_green.svg"
    inkscape:version="1.3.2 (1:1.3.2+202311252150+091e20ef0f)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -44,5 +44,5 @@
 
 <path
    id="rect1"
-   style="fill:#78cbed;fill-opacity:1;stroke:none;stroke-width:115.431;stroke-dasharray:none;stroke-opacity:1"
+   style="fill:#7aed78;fill-opacity:1;stroke:none;stroke-width:115.431;stroke-dasharray:none;stroke-opacity:1"
    d="M 0,70.318468 V 441.68153 L 185.6816,256 Z" /></svg>

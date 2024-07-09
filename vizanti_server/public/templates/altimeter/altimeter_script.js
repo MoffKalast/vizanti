@@ -142,7 +142,7 @@ function drawTarget(flip_offset, flip_mult, pos){
 function drawDepth(){
 
 	const hei = canvas.height;
-	const centerY = hei / 2;
+	const centerY = hei * 1/3;
 	const step = Math.min(Math.max(0.1, parseFloat(stepBox.value)), 1000);
     const pixelOffset = (meters_smooth / step) * -100 + centerY;
 
@@ -204,7 +204,7 @@ function drawDepth(){
 function drawAltitude(){
 
 	const hei = canvas.height;
-	const centerY = hei / 2;
+	const centerY = hei * 2/3;
 	const step = Math.min(Math.max(0.1, parseFloat(stepBox.value)), 1000);
     const pixelOffset = (meters_smooth / step) * 100 + centerY;
 
@@ -212,7 +212,7 @@ function drawAltitude(){
 	const flip_offset = flip ? 110: 0;
 	const flip_mult = flip ? -1: 1;
 
-	ctx.fillStyle = "#4070bfff";
+	ctx.fillStyle = "#5a9558ff";
 	ctx.fillRect(flip ? 60: 0, pixelOffset, 50, 50);
 
 	ctx.strokeStyle = "lightgray";
@@ -297,7 +297,10 @@ function resizeScreen(){
 	canvas.style.height = (window.innerHeight - icon_bar.offsetHeight) +"px";
 	canvas.style.width = "110px";
 
-	arrow.style.bottom = (canvas.height/2 - 60) +"px";
+	if(MODES[modeSelector.value].dir == "depth")
+		arrow.style.bottom = (canvas.height * 2/3 - 60) +"px";
+	else
+		arrow.style.bottom = (canvas.height * 1/3 - 60) +"px";
 
 	drawWidget();
 }
@@ -414,13 +417,15 @@ function getEventLocalXY(event){
 }
 
 function setTargetFromPixels(y){
-	const centerY = canvas.height / 2;
+	
 	const step = Math.min(Math.max(0.1, parseFloat(stepBox.value)), 1000);
 	let newtgt = 0;
 
 	if(MODES[modeSelector.value].dir == "depth"){
+		const centerY = canvas.height * 1/3;
 		newtgt = ((y - centerY) / 100 + (meters_smooth / step)) * step;
 	}else{
+		const centerY = canvas.height * 2/3;
 		newtgt = ((y - centerY) / -100 + (meters_smooth / step)) * step;
 	}
 
@@ -478,9 +483,20 @@ function displayImageOffset(x){
 	imgpreview.style.left = x + canvas.width/2 + "px";
 	canvas.style.left = x +"px";
 
+	let color;
+	if(MODES[modeSelector.value].dir == "depth"){
+		arrow.src = "assets/altimeter_arrow.svg"
+		icon.src = "assets/altimeter.svg";
+		color = "#4070bfff";
+	}else{
+		arrow.src = "assets/altimeter_arrow_green.svg";
+		icon.src = "assets/altimeter_green.svg";
+		color = "#5a9558ff";
+	}
+
 	if(img_offset_x > window.innerWidth/2){
 		canvas.style.borderLeft = "5px none transparent";
-		canvas.style.borderRight = "5px solid #4070bfff";
+		canvas.style.borderRight = "5px solid "+color;
 		canvas.style.backgroundImage = "linear-gradient(to left, rgba(0, 0, 0, 0.589) , transparent)";
 		icon.style.transform = "rotate(180deg)";
 
@@ -489,7 +505,7 @@ function displayImageOffset(x){
 	}else{
 
 		canvas.style.borderRight = "5px none transparent";
-		canvas.style.borderLeft = "5px solid #4070bfff";
+		canvas.style.borderLeft = "5px solid "+color;
 		canvas.style.backgroundImage = "linear-gradient(to right, rgba(0, 0, 0, 0.589) , transparent)";
 		icon.style.transform = "";
 
@@ -514,7 +530,7 @@ function onMove(event) {
 	if (preview_active) {
 		event.preventDefault();
 		const wid = window.innerWidth-5;
-		const [currentX, currentY] = getEventXY(event);
+		let [currentX, currentY] = getEventXY(event);
 
 		if(currentX > wid/2){
 			currentX = wid - currentX + 110;
