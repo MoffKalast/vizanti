@@ -17,12 +17,17 @@ let MODES = {
 	"depth_positive": {dir: "depth", invert: false},
 };
 
+let step = 1.0;
 let meters = 0;
 let meters_smooth = 0;
 let target = NaN;
 
 let frame = "";
 let topic = getTopic("{uniqueID}");
+
+let float_topic = undefined;
+let listener = undefined;
+
 let status = new Status(
 	document.getElementById("{uniqueID}_icon"),
 	document.getElementById("{uniqueID}_status")
@@ -56,6 +61,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	frameSelector.value = frame;
 	selectionbox.value = topic;
 
+	step = loaded_data.step;
 	img_offset_x = loaded_data.img_offset_x;
 }else{
 
@@ -64,10 +70,10 @@ if(settings.hasOwnProperty("{uniqueID}")){
 		status.setWarn("No frame found, defaulting to base_link");
 	}
 
-	if(topic == ""){
+	/* if(topic == ""){
 		topic = "/depth_tgt";
 		status.setWarn("No topic found, defaulting to /depth_tgt");
-	}
+	} */
 
 	img_offset_x = (document.querySelectorAll('.altimeter_canvas').length-1) * 110;
 	saveSettings();
@@ -78,18 +84,45 @@ function saveSettings(){
 		mode: modeSelector.value,
 		frame: frame,
 		topic: topic,
-		step: stepBox.value,
+		step: step,
 		img_offset_x: img_offset_x
 	}
 	settings.save();
 }
 
-function publishTarget(){
+//topic
+function connect(){
 
-	let targetval = target;
+	if(topic == ""){
+		status.setWarn("Empty topic.");
+		return;
+	}
+
+	if(float_topic !== undefined){
+		float_topic.unsubscribe(listener);
+	}
+
+	float_topic = new ROSLIB.Topic({
+		ros : rosbridge.ros,
+		name : topic,
+		messageType : 'std_msgs/Float32'
+	});
+	
+	listener = float_topic.subscribe((msg) => {
+		target = msg.data;
+		drawWidget();
+	});
+
+	saveSettings();
+}
+
+function publishTarget(value){
+
+	if(topic == "")
+		return;
 
 	if(MODES[modeSelector.value].invert)
-		targetval = -targetval;
+		value = -value;
 
 	const publisher = new ROSLIB.Topic({
 		ros: rosbridge.ros,
@@ -98,7 +131,7 @@ function publishTarget(){
 	});
 
 	const floatMsg = new ROSLIB.Message({
-		data: targetval
+		data: value
 	});
 
 	publisher.publish(floatMsg);
@@ -128,22 +161,21 @@ function getMeters(){
 }
 
 function drawTarget(flip_offset, flip_mult, pos){
-	ctx.fillStyle = "yellow";
+	ctx.fillStyle = "#e3df6f";
 	ctx.lineWidth = 1;
 	ctx.beginPath();
-	ctx.moveTo(flip_offset, pos);
-	ctx.lineTo(flip_offset+ 50 * flip_mult, pos);
-	ctx.lineTo(flip_offset+ 50 * flip_mult, pos+10);
-	ctx.lineTo(flip_offset, pos+2);
-	ctx.lineTo(flip_offset, pos);
+	ctx.moveTo(flip_offset, pos-25);
+	ctx.lineTo(flip_offset+ 25 * flip_mult, pos);
+	ctx.lineTo(flip_offset+ 25 * flip_mult, pos);
+	ctx.lineTo(flip_offset, pos+25);
+	ctx.lineTo(flip_offset, pos-25);
 	ctx.fill();
 }
 
 function drawDepth(){
 
 	const hei = canvas.height;
-	const centerY = hei * 1/3;
-	const step = Math.min(Math.max(0.1, parseFloat(stepBox.value)), 1000);
+	const centerY = hei/2;
     const pixelOffset = (meters_smooth / step) * -100 + centerY;
 
 	const flip = img_offset_x > window.innerWidth/2;
@@ -196,7 +228,7 @@ function drawDepth(){
 	ctx.stroke();
 
 	if(!isNaN(target)){
-		const pos = pixelOffset + ((target / step) * 100);
+		const pos = pixelOffset + ((target / step) * -100);
 		drawTarget(flip_offset, flip_mult, pos);
 	}
 }
@@ -204,8 +236,7 @@ function drawDepth(){
 function drawAltitude(){
 
 	const hei = canvas.height;
-	const centerY = hei * 2/3;
-	const step = Math.min(Math.max(0.1, parseFloat(stepBox.value)), 1000);
+	const centerY = hei/2;
     const pixelOffset = (meters_smooth / step) * 100 + centerY;
 
 	const flip = img_offset_x > window.innerWidth/2;
@@ -259,7 +290,7 @@ function drawAltitude(){
 	ctx.stroke();
 
 	if(!isNaN(target)){
-		const pos = pixelOffset + ((target / step) * -100);
+		const pos = pixelOffset + ((target / step) * 100);
 		drawTarget(flip_offset, flip_mult, pos);
 	}
 }
@@ -282,7 +313,7 @@ async function drawWidget() {
 }
 
 function enqueueRender() {
-	if(Math.abs(meters - meters_smooth) > 0.005){
+	if(Math.abs(meters - meters_smooth) > step * 0.01){
 		meters_smooth = meters_smooth * 0.95 + meters * 0.05;
 		drawWidget();
 	}
@@ -298,9 +329,9 @@ function resizeScreen(){
 	canvas.style.width = "110px";
 
 	if(MODES[modeSelector.value].dir == "depth")
-		arrow.style.bottom = (canvas.height * 2/3 - 60) +"px";
+		arrow.style.bottom = (canvas.height/2 - 60) +"px";
 	else
-		arrow.style.bottom = (canvas.height * 1/3 - 60) +"px";
+		arrow.style.bottom = (canvas.height/2 - 60) +"px";
 
 	drawWidget();
 }
@@ -349,6 +380,7 @@ frameSelector.addEventListener("change", (event) =>{
 });
 
 stepBox.addEventListener("change", (event) =>{	
+	step = Math.min(Math.max(0.1, parseFloat(stepBox.value)), 1000);
 	saveSettings();
 	refreshStyleSetup();
 	drawWidget();
@@ -376,11 +408,14 @@ async function loadTopics(){
 			selectionbox.value = topic;
 		}
 	}
+
+	connect();
 }
 
 selectionbox.addEventListener("change", (event) => {
 	topic = selectionbox.value;
 	saveSettings();
+	connect();
 });
 
 icon.addEventListener("click", ()=>{
@@ -421,21 +456,17 @@ function getEventLocalXY(event){
 
 function setTargetFromPixels(y){
 	
-	const step = Math.min(Math.max(0.1, parseFloat(stepBox.value)), 1000);
+	const centerY = canvas.height/2;
 	let newtgt = 0;
 
 	if(MODES[modeSelector.value].dir == "depth"){
-		const centerY = canvas.height * 1/3;
 		newtgt = ((y - centerY) / 100 + (meters_smooth / step)) * step;
 	}else{
-		const centerY = canvas.height * 2/3;
 		newtgt = ((y - centerY) / -100 + (meters_smooth / step)) * step;
 	}
 
 	if(newtgt > -1){
-		target = newtgt > 0 ? newtgt: 0;
-		publishTarget();
-		drawWidget();
+		publishTarget(newtgt > 0 ? newtgt: 0);
 	}
 }
 
@@ -446,6 +477,9 @@ let targeting_point = {
 };
 
 function onTargetStart(event) {
+
+	if(topic == "")
+		return;
 
 	const [x, y] = getEventLocalXY(event);
 	if(x > 30)
@@ -503,7 +537,7 @@ function refreshStyleSetup(){
 		canvas.style.backgroundImage = "linear-gradient(to left, rgba(0, 0, 0, 0.589) , transparent)";
 		icon.style.transform = "rotate(180deg)";
 
-		arrow.style.left = (img_offset_x + 50) +"px";
+		arrow.style.left = (img_offset_x + 55) +"px";
 		arrow.style.transform = "translateY(-50%) rotate(180deg)";
 	}else{
 
@@ -566,8 +600,7 @@ document.getElementById("{uniqueID}_manual_target").addEventListener("click", as
 
 	let value = await prompt("Enter target "+MODES[modeSelector.value].dir+" (meters, positive only):", "0.0");
 	if (value != null) {
-		target = Math.abs(value);
-		publishTarget();
+		publishTarget(Math.abs(value));
 		drawWidget();
 	}
 });
