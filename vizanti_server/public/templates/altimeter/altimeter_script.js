@@ -109,7 +109,24 @@ function connect(){
 	});
 	
 	listener = float_topic.subscribe((msg) => {
-		target = msg.data;
+		const mode = MODES[modeSelector.value];
+		target = Math.abs(msg.data);
+
+		if(msg.data > 0){
+			if(mode.dir == "depth" && mode.invert)
+				target = NaN;
+
+			if(mode.dir == "altitude" && mode.invert)
+				target = NaN;
+
+		}else if (msg.data < 0){
+			if(mode.dir == "depth" && !mode.invert)
+				target = NaN;
+
+			if(mode.dir == "altitude" && !mode.invert)
+				target = NaN;
+		}
+		
 		drawWidget();
 	});
 
