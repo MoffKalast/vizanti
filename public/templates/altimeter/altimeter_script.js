@@ -245,7 +245,7 @@ function drawDepth(){
 	ctx.stroke();
 
 	if(!isNaN(target)){
-		const pos = pixelOffset + ((target / step) * -100);
+		const pos = pixelOffset + ((target / step) * 100);
 		drawTarget(flip_offset, flip_mult, pos);
 	}
 }
@@ -307,7 +307,7 @@ function drawAltitude(){
 	ctx.stroke();
 
 	if(!isNaN(target)){
-		const pos = pixelOffset + ((target / step) * 100);
+		const pos = pixelOffset + ((target / step) * -100);
 		drawTarget(flip_offset, flip_mult, pos);
 	}
 }
