@@ -105,7 +105,7 @@ function connect(){
 	float_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : 'std_msgs/Float32'
+		messageType : 'std_msgs/msg/Float32'
 	});
 	
 	listener = float_topic.subscribe((msg) => {
@@ -127,7 +127,7 @@ function publishTarget(value){
 	const publisher = new ROSLIB.Topic({
 		ros: rosbridge.ros,
 		name: topic,
-		messageType: 'std_msgs/Float32'
+		messageType: 'std_msgs/msg/Float32'
 	});
 
 	const floatMsg = new ROSLIB.Message({
@@ -228,7 +228,7 @@ function drawDepth(){
 	ctx.stroke();
 
 	if(!isNaN(target)){
-		const pos = pixelOffset + ((target / step) * -100);
+		const pos = pixelOffset + ((target / step) * 100);
 		drawTarget(flip_offset, flip_mult, pos);
 	}
 }
@@ -290,7 +290,7 @@ function drawAltitude(){
 	ctx.stroke();
 
 	if(!isNaN(target)){
-		const pos = pixelOffset + ((target / step) * 100);
+		const pos = pixelOffset + ((target / step) * -100);
 		drawTarget(flip_offset, flip_mult, pos);
 	}
 }
@@ -389,7 +389,7 @@ stepBox.addEventListener("change", (event) =>{
 
 // Topics
 async function loadTopics(){
-	let result = await rosbridge.get_topics("std_msgs/Float32");
+	let result = await rosbridge.get_topics("std_msgs/msg/Float32");
 
 	let topiclist = "";
 	result.forEach(element => {
