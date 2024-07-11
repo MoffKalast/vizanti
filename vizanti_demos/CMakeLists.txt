@@ -33,6 +33,7 @@ install(PROGRAMS
   scripts/path_to_nav2poses.py
   scripts/test_grid_cells.py
   scripts/test_marker_array.py
+  scripts/test_tf.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
