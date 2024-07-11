@@ -35,8 +35,14 @@ function set_icons(){
 	}
 }
 
+//updating the two icons when any are added
 const observer = new MutationObserver(set_icons);
 observer.observe(icon_container, { childList: true });
+
+//on click
+icon.addEventListener("click", set_icons);
+
+//and once after start
 setTimeout(set_icons, 200);
 
 remove_button.addEventListener('click', async () => {

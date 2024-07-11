@@ -1,0 +1,66 @@
+<div id="{uniqueID}_modal" class="modal_outer noselect">
+
+	<div id="{uniqueID}_imgpreview" class="noselect compressedimage_preview">
+		<img  src="assets/joypos.svg" alt="Image Preview" width="100" height="100">
+	</div> 
+
+	<div class="modal_inner noselect">
+		<h3>Altimeter</h3>
+		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
+		<hr>
+
+		<label for="{uniqueID}_frame">Robot Frame:</label>
+		<select id="{uniqueID}_frame" name="topic">
+			<option value='base_link'>base_link</option>
+		</select>
+
+		<br>
+
+		<label for="{uniqueID}_mode">Display Mode:</label>
+		<select id="{uniqueID}_mode" name="topic">
+			<option value='altitude_positive'>Altitude (Z+)</option>
+			<option value='depth_negative'>Depth (Z-)</option>
+			<option value='altitude_negative'>Altitude inverted (Z-)</option>
+			<option value='depth_positive'>Depth inverted (Z+)</option>
+		</select>
+
+		<br>
+
+		<label for="{uniqueID}_step">Step (meter):</label>
+		<input type="number" value="1.0" step="0.1" min="0.1" max="1000" id="{uniqueID}_step">
+
+		<p style="color:#b4b4b4;">Displays the Z value of the frame on a depth/altitude gauge. Inverted modes treat negative values to positive.</p>
+
+		<hr>
+		<br>
+
+		<b>Targeting</b>
+
+		<br>
+
+		<label for="{uniqueID}_topic">Value Topic:</label>
+		<select id="{uniqueID}_topic" name="topic">
+			<option value="/depth_tgt">/depth_tgt</option>
+		</select>
+
+		<p>Send a std_msgs/Float32 value to this topic.</p>
+
+		<p style="color:#b4b4b4;">Clicking the altimeter will mark the depth/alitude with a yellow flag and publish it. Or click the button below and input it manually.</p>
+
+		<button id="{uniqueID}_manual_target" class="export_button">Input and send target manually</button>
+
+		<br>
+
+		<p id="{uniqueID}_altitude">Altitude: ?</p>
+
+		<hr>
+
+		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
+
+	</div>
+
+	<div style="height: 180vh; width: 1px;">
+		<!-- Scroll spacer-->
+	</div>
+
+</div>
