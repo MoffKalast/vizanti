@@ -56,9 +56,11 @@ async function update_topics(){
 			types[type].forEach(element => {
 				let newnode = element.cloneNode(true);
 				let title = newnode.querySelector('.card_title');
+				let desc = newnode.querySelector('.card_desc');
 				
 				newnode.setAttribute('onclick', newnode.getAttribute("onclick").replace(",\'\')",",\'"+result.topics[i]+"\')"));
-	
+
+				desc.innerText = title.innerText + " ["+type + "]";
 				title.innerText = result.topics[i];
 				topicDiv.appendChild(newnode);
 			});

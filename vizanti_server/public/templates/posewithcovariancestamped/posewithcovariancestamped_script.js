@@ -3,6 +3,7 @@ let tfModule = await import(`${base_url}/js/modules/tf.js`);
 let rosbridgeModule = await import(`${base_url}/js/modules/rosbridge.js`);
 let persistentModule = await import(`${base_url}/js/modules/persistent.js`);
 let StatusModule = await import(`${base_url}/js/modules/status.js`);
+let utilModule = await import(`${base_url}/js/modules/util.js`);
 
 let view = viewModule.view;
 let tf = tfModule.tf;
@@ -16,6 +17,7 @@ let status = new Status(
 	document.getElementById("{uniqueID}_status")
 );
 
+let typedict = {};
 let listener = undefined;
 let marker_topic = undefined;
 
@@ -24,15 +26,20 @@ let frame = "";
 
 const scaleSlider = document.getElementById('{uniqueID}_scale');
 const scaleSliderValue = document.getElementById('{uniqueID}_scale_value');
-
+scaleSlider.addEventListener('change', saveSettings);
 scaleSlider.addEventListener('input', function () {
 	scaleSliderValue.textContent = this.value;
 });
 
-scaleSlider.addEventListener('change', saveSettings);
+const colourpicker = document.getElementById("{uniqueID}_colorpicker");
+colourpicker.addEventListener("input", (event) =>{
+	icon.style.filter = utilModule.hexColourToIconFilter(colourpicker.value);
+	saveSettings();
+});
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
+const icon_cov = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[1];
 
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
@@ -42,16 +49,24 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
 
+	colourpicker.value = loaded_data.color ?? "#8B0000";
+
 	scaleSlider.value = loaded_data.scale;
 	scaleSliderValue.textContent = scaleSlider.value;
+
+	typedict = loaded_data.typedict ?? {};
 }else{
 	saveSettings();
 }
 
+icon.style.filter = utilModule.hexColourToIconFilter(colourpicker.value);
+
 function saveSettings(){
 	settings["{uniqueID}"] = {
 		topic: topic,
-		scale: parseFloat(scaleSlider.value)
+		scale: parseFloat(scaleSlider.value),
+		typedict: typedict,
+		color: colourpicker.value
 	}
 	settings.save();
 }
@@ -66,7 +81,7 @@ async function drawMarkers(){
 	}
 
 	function drawArrow(size){
-		ctx.fillStyle = "rgba(139, 0, 0, 0.9)";
+		ctx.fillStyle = colourpicker.value;
 		const height = parseInt(size*2.0);
 		const width = parseInt(size*0.1*0.6)+1;
 		const tip = parseInt(size*0.24)+1;
@@ -94,6 +109,9 @@ async function drawMarkers(){
 	}
 	
 	function drawTranslationalCovariance(covariance, size) {
+		
+		if(covariance === undefined)
+			return;
 
 		const varianceX = Math.sqrt(covariance[0]);
 		const varianceY = Math.sqrt(covariance[7]);
@@ -117,6 +135,9 @@ async function drawMarkers(){
 	}
 
 	function drawAngularCovariance(covariance, size) {
+
+		if(covariance === undefined)
+			return;
 
 		// Calculate the 2-sigma standard deviation 
 		let angleUncertainty = 2 * Math.sqrt(covariance[35]);
@@ -181,10 +202,14 @@ function connect(){
 	marker_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : 'geometry_msgs/msg/PoseWithCovarianceStamped'
+		messageType : typedict[topic]
 	});
 
 	status.setWarn("No data received.");
+
+	const skip_covariance = typedict[topic] == "geometry_msgs/msgs/PoseStamped";
+	icon_cov.hidden = skip_covariance;
+	icon_cov.display = skip_covariance ? "none": "block";
 	
 	listener = marker_topic.subscribe((msg) => {
 
@@ -202,7 +227,9 @@ function connect(){
 
 		frame = tf.fixed_frame;
 
-		let q = msg.pose.pose.orientation;
+		let pose = skip_covariance ? msg.pose : msg.pose.pose;
+
+		let q = pose.orientation;
 		const rotation_invalid = q.x == 0 && q.y == 0 && q.z == 0 && q.w == 0
 
 		if(rotation_invalid){
@@ -213,7 +240,7 @@ function connect(){
 		const transformed = tf.transformPose(
 			msg.header.frame_id, 
 			tf.fixed_frame, 
-			msg.pose.pose.position, 
+			pose.position, 
 			q
 		);
 
@@ -223,7 +250,7 @@ function connect(){
 			y: transformed.translation.y,
 			yaw: transformed.rotation.toEuler().h,
 			rotation_invalid: rotation_invalid,
-			covariance: msg.pose.covariance
+			covariance: skip_covariance ? undefined : msg.pose.covariance
 		};
 	
 		drawMarkers();
@@ -237,18 +264,24 @@ function connect(){
 }
 
 async function loadTopics(){
-	let result = await rosbridge.get_topics("geometry_msgs/msg/PoseWithCovarianceStamped");
+	let pose_topics = await rosbridge.get_topics("geometry_msgs/msgs/PoseStamped");
+	let posecov_topics = await rosbridge.get_topics("geometry_msgs/msgs/PoseWithCovarianceStamped");
 
 	let topiclist = "";
-	result.forEach(element => {
-		topiclist += "<option value='"+element+"'>"+element+"</option>"
+	pose_topics.forEach(element => {
+		topiclist += "<option value='"+element+"'>"+element+" (PoseStamped)</option>"
+		typedict[element] = "geometry_msgs/msgs/PoseStamped";
+	});
+	posecov_topics.forEach(element => {
+		topiclist += "<option value='"+element+"'>"+element+" (PoseWithCovarianceStamped)</option>"
+		typedict[element] = "geometry_msgs/msgs/PoseWithCovarianceStamped";
 	});
 	selectionbox.innerHTML = topiclist
 
 	if(topic == "")
 		topic = selectionbox.value;
 	else{
-		if(result.includes(topic)){
+		if(pose_topics.includes(topic) || posecov_topics.includes(topic)){
 			selectionbox.value = topic;
 		}else{
 			topiclist += "<option value='"+topic+"'>"+topic+"</option>"
