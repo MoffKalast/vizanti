@@ -53,6 +53,18 @@ h3 {
 	display: none;
 }
 
+.icon-stack-img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin: 0;
+    transform: translate(-50%, -50%);
+	font-weight: bold;
+    font-size: 0.8em;
+	pointer-events: none;
+	z-index: -1;
+}
+
 .icon {
 	display: inline-block;
 	position: relative;

@@ -384,6 +384,7 @@ function setFrameList(){
 }
 
 modeSelector.addEventListener("change", (event) => {
+	target = NaN;
 	saveSettings();
 	refreshStyleSetup();
 	drawWidget();
