@@ -34,12 +34,12 @@ scaleSlider.addEventListener('change', saveSettings);
 
 const colourpicker = document.getElementById("{uniqueID}_colorpicker");
 colourpicker.addEventListener("input", (event) =>{
-	icon.style.filter = utilModule.hexColourToIconFilter(colourpicker.value);
+	utilModule.setIconColor(icon, colourpicker.value);
 	saveSettings();
 });
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
-const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
+const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('object')[0];
 
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
@@ -49,7 +49,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
 
-	colourpicker.value = loaded_data.color ?? "#8B0000";
+	colourpicker.value = loaded_data.color ?? "#f74127";
 
 	scaleSlider.value = loaded_data.scale;
 	scaleSliderValue.textContent = scaleSlider.value;
@@ -58,7 +58,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	saveSettings();
 }
 
-icon.style.filter = utilModule.hexColourToIconFilter(colourpicker.value);
+utilModule.setIconColor(icon, colourpicker.value);
 
 function saveSettings(){
 	settings["{uniqueID}"] = {

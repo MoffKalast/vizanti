@@ -33,13 +33,12 @@ scaleSlider.addEventListener('input', function () {
 
 const colourpicker = document.getElementById("{uniqueID}_colorpicker");
 colourpicker.addEventListener("input", (event) =>{
-	icon.style.filter = utilModule.hexColourToIconFilter(colourpicker.value);
+	utilModule.setIconColor(icon, colourpicker.value);
 	saveSettings();
 });
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
-const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
-const icon_cov = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[1];
+const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('object')[0];
 
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
@@ -49,17 +48,17 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
 
-	colourpicker.value = loaded_data.color ?? "#8B0000";
+	colourpicker.value = loaded_data.color ?? "#f74127";
+	utilModule.setIconColor(icon, colourpicker.value);
 
 	scaleSlider.value = loaded_data.scale;
 	scaleSliderValue.textContent = scaleSlider.value;
 
 	typedict = loaded_data.typedict ?? {};
+
 }else{
 	saveSettings();
 }
-
-icon.style.filter = utilModule.hexColourToIconFilter(colourpicker.value);
 
 function saveSettings(){
 	settings["{uniqueID}"] = {
@@ -207,8 +206,10 @@ function connect(){
 	status.setWarn("No data received.");
 
 	const skip_covariance = typedict[topic] == "geometry_msgs/PoseStamped";
-	icon_cov.hidden = skip_covariance;
-	icon_cov.display = skip_covariance ? "none": "block";
+	icon.data = skip_covariance ? "assets/pose.svg" : "assets/posewithcovariancestamped.svg";
+	icon.addEventListener('load', function() {
+		utilModule.setIconColor(icon, colourpicker.value);
+	}, true);
 	
 	listener = marker_topic.subscribe((msg) => {
 
@@ -326,5 +327,8 @@ window.addEventListener('orientationchange', resizeScreen);
 
 resizeScreen();
 
-console.log("MarkerArray Widget Loaded {uniqueID}")
+utilModule.setIconColor(icon, colourpicker.value);
+
+
+console.log("Pose Widget Loaded {uniqueID}")
 

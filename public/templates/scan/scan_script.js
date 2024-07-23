@@ -23,7 +23,7 @@ let listener = undefined;
 let data = undefined;
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
-const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
+const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('object')[0];
 
 const opacitySlider = document.getElementById('{uniqueID}_opacity');
 const opacityValue = document.getElementById('{uniqueID}_opacity_value');
@@ -41,7 +41,7 @@ thicknessSlider.addEventListener('input', () =>  {
 
 const colourpicker = document.getElementById("{uniqueID}_colorpicker");
 colourpicker.addEventListener("input", (event) =>{
-	icon.style.filter = utilModule.hexColourToIconFilter(colourpicker.value);
+	utilModule.setIconColor(icon, colourpicker.value);
 	saveSettings();
 });
 
@@ -68,7 +68,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	saveSettings();
 }
 
-icon.style.filter = utilModule.hexColourToIconFilter(colourpicker.value);
+utilModule.setIconColor(icon, colourpicker.value);
 
 function saveSettings(){
 	settings["{uniqueID}"] = {
