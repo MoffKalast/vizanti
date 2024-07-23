@@ -124,41 +124,18 @@ export function groupStringsByPrefix(strings, minPrefixLength=2) {
 	});
 }
 
-export function hexColourToIconFilter(hex) {
-	hex = hex.replace(/^#/, '');
-	let bigint = parseInt(hex, 16);
-	let r = (bigint >> 16) & 255;
-	let g = (bigint >> 8) & 255;
-	let b = bigint & 255;
+//SVG icons must have the objects that should be recolored flagged with id="fillColor" or id="strokeColor" depending on which part needs coloring
+export function setIconColor(icon, hexcol){
+	if (icon && icon.contentDocument) {
+		const svgDoc = icon.contentDocument;
+		const fillChange = svgDoc.querySelectorAll("#fillColor");
+		for(let i = 0; i < fillChange.length; i++){
+			fillChange[i].style.fill = hexcol;
+		}
 
-	r /= 255;
-	g /= 255;
-	b /= 255;
-
-	let max = Math.max(r, g, b);
-	let min = Math.min(r, g, b);
-	let delta = max - min;
-	let h, s, v = max;
-	let l = (min+max)/2.0;
-
-	if (delta === 0) {
-		h = 0;
-	} else if (max === r) {
-		h = ((g - b) / delta) % 6;
-	} else if (max === g) {
-		h = (b - r) / delta + 2;
-	} else {
-		h = (r - g) / delta + 4;
+		const strokeChange = svgDoc.querySelectorAll("#strokeColor");
+		for(let i = 0; i < strokeChange.length; i++){
+			strokeChange[i].style.stroke = hexcol;
+		}
 	}
-
-	h = Math.round(h * 60);
-	if (h < 0) h += 360;
-
-	s = max === 0 ? 0 : delta / max;
-
-	let saturate = s * 100;
-	let brightness = l * 600;
-
-	//icons are assumed have hue=0 (red) saturation=100 value=100
-	return `hue-rotate(${h}deg) saturate(${saturate}%) brightness(${brightness}%) contrast(250%)`;
 }

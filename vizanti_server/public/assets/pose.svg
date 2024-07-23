@@ -28,8 +28,8 @@
    inkscape:deskcolor="#505050"
    showgrid="false"
    inkscape:zoom="0.77441408"
-   inkscape:cx="172.38839"
-   inkscape:cy="94.264815"
+   inkscape:cx="41.967212"
+   inkscape:cy="148.49937"
    inkscape:window-width="1920"
    inkscape:window-height="1107"
    inkscape:window-x="0"
@@ -42,11 +42,9 @@
 	.st0{fill:#333333;}
 </style>
 
-<g
-   id="arrow"
-   transform="matrix(0.8585053,0,0,0.8585053,42.222645,30.222645)"><path
-     d="M 421.62333,130.89433 213.52855,333.21199 255.57123,377.63671 90.376667,416.84968 137.65845,253.04326 179.70112,297.46797 387.79589,95.150317 404.70963,113.02234 Z"
-     fill="#112244"
-     id="path2"
-     style="fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:0.703;stroke-dasharray:none"
-     sodipodi:nodetypes="ccccccccc" /></g></svg>
+<path
+   d="m 420.16174,130.53054 -198.71978,193.20293 40.14859,42.42331 -157.75229,37.44637 45.15167,-156.42669 40.14857,42.42332 198.71978,-193.20293 16.15175,17.06686 z"
+   fill="#112244"
+   id="fillColor"
+   style="fill:#f74127;fill-opacity:1;stroke:none;stroke-width:0.671371"
+   sodipodi:nodetypes="ccccccccc" /></svg>
