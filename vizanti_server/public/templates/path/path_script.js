@@ -33,6 +33,7 @@ const colourpicker = document.getElementById("{uniqueID}_colorpicker");
 colourpicker.addEventListener("input", (event) =>{
 	utilModule.setIconColor(icon, colourpicker.value);
 	saveSettings();
+	drawPath();
 });
 
 //Settings

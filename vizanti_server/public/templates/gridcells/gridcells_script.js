@@ -34,12 +34,14 @@ const opacityValue = document.getElementById('{uniqueID}_opacity_value');
 opacitySlider.addEventListener('input', () =>  {
 	opacityValue.textContent = opacitySlider.value;
 	saveSettings();
+	drawCells();
 });
 
 const colourpicker = document.getElementById("{uniqueID}_colorpicker");
 colourpicker.addEventListener("input", (event) =>{
 	utilModule.setIconColor(icon, colourpicker.value);
 	saveSettings();
+	drawCells();
 });
 
 const throttle = document.getElementById('{uniqueID}_throttle');

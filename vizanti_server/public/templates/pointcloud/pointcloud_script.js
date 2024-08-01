@@ -30,6 +30,7 @@ const opacityValue = document.getElementById('{uniqueID}_opacity_value');
 opacitySlider.addEventListener('input', () =>  {
 	opacityValue.textContent = opacitySlider.value;
 	saveSettings();
+	drawCloud();
 });
 
 const thicknessSlider = document.getElementById('{uniqueID}_thickness');
@@ -37,12 +38,14 @@ const thicknessValue = document.getElementById('{uniqueID}_thickness_value');
 thicknessSlider.addEventListener('input', () =>  {
 	thicknessValue.textContent = thicknessSlider.value;
 	saveSettings();
+	drawCloud();
 });
 
 const colourpicker = document.getElementById("{uniqueID}_colorpicker");
 colourpicker.addEventListener("input", (event) =>{
 	utilModule.setIconColor(icon, colourpicker.value);
 	saveSettings();
+	drawCloud();
 });
 
 const throttle = document.getElementById('{uniqueID}_throttle');
