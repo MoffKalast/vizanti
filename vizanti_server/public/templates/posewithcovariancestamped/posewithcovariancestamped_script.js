@@ -10,6 +10,7 @@ let tf = tfModule.tf;
 let rosbridge = rosbridgeModule.rosbridge;
 let settings = persistentModule.settings;
 let Status = StatusModule.Status;
+let imageToDataURL = utilModule.imageToDataURL;
 
 let topic = getTopic("{uniqueID}");
 let status = new Status(
@@ -17,12 +18,19 @@ let status = new Status(
 	document.getElementById("{uniqueID}_status")
 );
 
+const icon_pose = await imageToDataURL('assets/pose.svg');
+const icon_pose_with_covariance = await imageToDataURL('assets/posewithcovariancestamped.svg');
+
 let typedict = {};
 let listener = undefined;
 let marker_topic = undefined;
 
 let posemsg = undefined;
 let frame = "";
+
+const selectionbox = document.getElementById("{uniqueID}_topic");
+const click_icon = document.getElementById("{uniqueID}_icon");
+const icon = click_icon.getElementsByTagName('object')[0];
 
 const scaleSlider = document.getElementById('{uniqueID}_scale');
 const scaleSliderValue = document.getElementById('{uniqueID}_scale_value');
@@ -36,9 +44,6 @@ colourpicker.addEventListener("input", (event) =>{
 	utilModule.setIconColor(icon, colourpicker.value);
 	saveSettings();
 });
-
-const selectionbox = document.getElementById("{uniqueID}_topic");
-const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('object')[0];
 
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
@@ -207,7 +212,7 @@ function connect(){
 	status.setWarn("No data received.");
 
 	const skip_covariance = typedict[topic] == "geometry_msgs/msg/PoseStamped";
-	icon.data = skip_covariance ? "assets/pose.svg" : "assets/posewithcovariancestamped.svg";
+	icon.data = skip_covariance ? icon_pose : icon_pose_with_covariance;
 	icon.addEventListener('load', function() {
 		utilModule.setIconColor(icon, colourpicker.value);
 	}, true);
@@ -303,7 +308,7 @@ selectionbox.addEventListener("click", (event) => {
 	connect();
 });
 
-icon.addEventListener("click", (event) => {
+click_icon.addEventListener("click", (event) => {
 	loadTopics();
 });
 
