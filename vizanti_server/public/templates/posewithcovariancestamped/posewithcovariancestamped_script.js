@@ -270,17 +270,17 @@ function connect(){
 }
 
 async function loadTopics(){
-	let pose_topics = await rosbridge.get_topics("geometry_msgs/msgs/PoseStamped");
-	let posecov_topics = await rosbridge.get_topics("geometry_msgs/msgs/PoseWithCovarianceStamped");
+	let pose_topics = await rosbridge.get_topics("geometry_msgs/msg/PoseStamped");
+	let posecov_topics = await rosbridge.get_topics("geometry_msgs/msg/PoseWithCovarianceStamped");
 
 	let topiclist = "";
 	pose_topics.forEach(element => {
 		topiclist += "<option value='"+element+"'>"+element+" (PoseStamped)</option>"
-		typedict[element] = "geometry_msgs/msgs/PoseStamped";
+		typedict[element] = "geometry_msgs/msg/PoseStamped";
 	});
 	posecov_topics.forEach(element => {
 		topiclist += "<option value='"+element+"'>"+element+" (PoseWithCovarianceStamped)</option>"
-		typedict[element] = "geometry_msgs/msgs/PoseWithCovarianceStamped";
+		typedict[element] = "geometry_msgs/msg/PoseWithCovarianceStamped";
 	});
 	selectionbox.innerHTML = topiclist
 
