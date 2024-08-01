@@ -28,6 +28,7 @@ const scaleSliderValue = document.getElementById('{uniqueID}_scale_value');
 
 scaleSlider.addEventListener('input', function () {
 	scaleSliderValue.textContent = this.value;
+	drawArrows();
 });
 
 scaleSlider.addEventListener('change', saveSettings);
@@ -36,6 +37,7 @@ const colourpicker = document.getElementById("{uniqueID}_colorpicker");
 colourpicker.addEventListener("input", (event) =>{
 	utilModule.setIconColor(icon, colourpicker.value);
 	saveSettings();
+	drawArrows();
 });
 
 const selectionbox = document.getElementById("{uniqueID}_topic");

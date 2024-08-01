@@ -37,12 +37,15 @@ const scaleSliderValue = document.getElementById('{uniqueID}_scale_value');
 scaleSlider.addEventListener('change', saveSettings);
 scaleSlider.addEventListener('input', function () {
 	scaleSliderValue.textContent = this.value;
+	saveSettings();
+	drawMarkers();
 });
 
 const colourpicker = document.getElementById("{uniqueID}_colorpicker");
 colourpicker.addEventListener("input", (event) =>{
 	utilModule.setIconColor(icon, colourpicker.value);
 	saveSettings();
+	drawMarkers();
 });
 
 const canvas = document.getElementById('{uniqueID}_canvas');
