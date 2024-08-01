@@ -23,7 +23,8 @@ let listener = undefined;
 let data = undefined;
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
-const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('object')[0];
+const click_icon = document.getElementById("{uniqueID}_icon");
+const icon = click_icon.getElementsByTagName('object')[0];
 
 const timestampCheckbox = document.getElementById('{uniqueID}_use_timestamp');
 timestampCheckbox.addEventListener('change', saveSettings);
@@ -234,7 +235,7 @@ selectionbox.addEventListener("change", (event) => {
 });
 
 selectionbox.addEventListener("click", connect);
-icon.addEventListener("click", loadTopics);
+click_icon.addEventListener("click", loadTopics);
 
 loadTopics();
 resizeScreen();
