@@ -18,8 +18,8 @@ let status = new Status(
 	document.getElementById("{uniqueID}_status")
 );
 
-const icon_pose = await imageToDataURL('assets/pose.svg');
-const icon_pose_with_covariance = await imageToDataURL('assets/posewithcovariancestamped.svg');
+const icon_pose = 'assets/pose.svg'//await imageToDataURL('assets/pose.svg');
+const icon_pose_with_covariance = 'assets/posewithcovariancestamped.svg'//await imageToDataURL('assets/posewithcovariancestamped.svg');
 
 let typedict = {};
 let listener = undefined;
@@ -216,9 +216,9 @@ function connect(){
 
 	const skip_covariance = typedict[topic] == "geometry_msgs/msg/PoseStamped";
 	icon.data = skip_covariance ? icon_pose : icon_pose_with_covariance;
-	icon.addEventListener('load', function() {
+	icon.onload = () => {
 		utilModule.setIconColor(icon, colourpicker.value);
-	}, true);
+	};
 	
 	listener = marker_topic.subscribe((msg) => {
 
@@ -337,7 +337,6 @@ window.addEventListener('orientationchange', resizeScreen);
 resizeScreen();
 
 utilModule.setIconColor(icon, colourpicker.value);
-
 
 console.log("Pose Widget Loaded {uniqueID}")
 
