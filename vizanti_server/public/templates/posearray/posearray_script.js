@@ -62,7 +62,10 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	saveSettings();
 }
 
-utilModule.setIconColor(icon, colourpicker.value);
+icon.onload = () => {
+	utilModule.setIconColor(icon, colourpicker.value);
+};
+
 
 function saveSettings(){
 	settings["{uniqueID}"] = {

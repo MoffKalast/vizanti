@@ -40,12 +40,15 @@ colourpicker.addEventListener("input", (event) =>{
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
+
 	colourpicker.value = loaded_data.color ?? "#54db67";
 }else{
 	saveSettings();
 }
 
-utilModule.setIconColor(icon, colourpicker.value);
+icon.onload = () => {
+	utilModule.setIconColor(icon, colourpicker.value);
+};
 
 function saveSettings(){
 	settings["{uniqueID}"] = {

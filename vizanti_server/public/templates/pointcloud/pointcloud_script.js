@@ -73,7 +73,9 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	saveSettings();
 }
 
-utilModule.setIconColor(icon, colourpicker.value);
+icon.onload = () => {
+	utilModule.setIconColor(icon, colourpicker.value);
+};
 
 function saveSettings(){
 	settings["{uniqueID}"] = {
@@ -103,6 +105,8 @@ async function drawCloud() {
 	if(data == undefined){
 		return;
 	}
+
+	console.log(data)
 
 	let delta = parseInt(pixel/2);
 	ctx.beginPath();
