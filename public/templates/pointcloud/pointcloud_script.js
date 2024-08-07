@@ -106,8 +106,6 @@ async function drawCloud() {
 		return;
 	}
 
-	console.log(data)
-
 	let delta = parseInt(pixel/2);
 	ctx.beginPath();
 	for(let i = 0; i < data.points.length; i++){
