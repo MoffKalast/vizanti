@@ -57,7 +57,6 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	topic = loaded_data.topic;
 
 	colourpicker.value = loaded_data.color ?? "#f74127";
-	utilModule.setIconColor(icon, colourpicker.value);
 
 	scaleSlider.value = loaded_data.scale;
 	scaleSliderValue.textContent = scaleSlider.value;
@@ -67,6 +66,10 @@ if(settings.hasOwnProperty("{uniqueID}")){
 }else{
 	saveSettings();
 }
+
+icon.onload = () => {
+	utilModule.setIconColor(icon, colourpicker.value);
+};
 
 function saveSettings(){
 	settings["{uniqueID}"] = {
@@ -214,10 +217,7 @@ function connect(){
 	status.setWarn("No data received.");
 
 	const skip_covariance = typedict[topic] == "geometry_msgs/PoseStamped";
-	icon.data = skip_covariance ? "assets/pose.svg" : "assets/posewithcovariancestamped.svg";
-	icon.addEventListener('load', function() {
-		utilModule.setIconColor(icon, colourpicker.value);
-	};
+	icon.data = skip_covariance ? icon_pose : icon_pose_with_covariance;
 	
 	listener = marker_topic.subscribe((msg) => {
 
@@ -334,8 +334,6 @@ window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);
 
 resizeScreen();
-
-utilModule.setIconColor(icon, colourpicker.value);
 
 console.log("Pose Widget Loaded {uniqueID}")
 
