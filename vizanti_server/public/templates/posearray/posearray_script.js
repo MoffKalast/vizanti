@@ -62,10 +62,13 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	saveSettings();
 }
 
+//update the icon colour when it's loaded or when the image source changes
 icon.onload = () => {
 	utilModule.setIconColor(icon, colourpicker.value);
 };
-
+if (icon.contentDocument) {
+	utilModule.setIconColor(icon, colourpicker.value);
+}
 
 function saveSettings(){
 	settings["{uniqueID}"] = {
