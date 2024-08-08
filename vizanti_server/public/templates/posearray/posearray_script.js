@@ -108,7 +108,7 @@ async function drawArrows(){
 	ctx.clearRect(0, 0, wid, hei);
 	ctx.fillStyle = colourpicker.value;
 
-	if(frame === tf.fixed_frame){
+	if(frame === tf.fixed_frame && poses.length > 0){
 		ctx.beginPath();
 
 		for (let i = 0; i < poses.length; i++) {
@@ -217,7 +217,7 @@ async function loadTopics(){
 
 selectionbox.addEventListener("change", (event) => {
 	topic = selectionbox.value;
-	markers = {};
+	poses = [];
 	connect();
 });
 
