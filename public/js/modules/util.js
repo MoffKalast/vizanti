@@ -138,5 +138,6 @@ export function setIconColor(icon, hexcol){
 		for(let i = 0; i < strokeChange.length; i++){
 			strokeChange[i].style.stroke = hexcol;
 		}
+		icon.dataset.color = hexcol;
 	}
 }
