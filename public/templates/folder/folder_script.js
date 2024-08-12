@@ -47,11 +47,18 @@ function set_icons(){
 	for(let i = 0; i < sources.length && i < 2; i++){
 		subicons[i].style.display = "none";
 		if(!sources[i][1].endsWith("add.svg")){
-			subicons[i].data = sources[i][1];
 			subicons[i].style.display = "block";
-			if(sources[i][0].hasAttribute("data-color")){
-				utilModule.setIconColor(subicons[i], sources[i][0].dataset.color);
+
+			if(subicons[i].data != sources[i][1]){
+				subicons[i].data = sources[i][1];
+				if(sources[i][0].hasAttribute("data-color")){
+					subicons[i].onload = ()=>{
+						utilModule.setIconColor(subicons[i], sources[i][0].dataset.color);
+						console.log(subicons[i].dataset.color)
+					};
+				}
 			}
+
 			const observer = new MutationObserver((mutationsList) => {
 				for(const mutation of mutationsList) {
 					if(mutation.type === 'attributes' && mutation.attributeName === 'data-color') {
