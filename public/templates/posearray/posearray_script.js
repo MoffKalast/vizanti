@@ -28,18 +28,21 @@ const scaleSliderValue = document.getElementById('{uniqueID}_scale_value');
 
 scaleSlider.addEventListener('input', function () {
 	scaleSliderValue.textContent = this.value;
+	drawArrows();
 });
 
 scaleSlider.addEventListener('change', saveSettings);
 
 const colourpicker = document.getElementById("{uniqueID}_colorpicker");
 colourpicker.addEventListener("input", (event) =>{
-	icon.style.filter = utilModule.hexColourToIconFilter(colourpicker.value);
+	utilModule.setIconColor(icon, colourpicker.value);
 	saveSettings();
+	drawArrows();
 });
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
-const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
+const click_icon = document.getElementById("{uniqueID}_icon");
+const icon = click_icon.getElementsByTagName('object')[0];
 
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
@@ -49,7 +52,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
 
-	colourpicker.value = loaded_data.color ?? "#8B0000";
+	colourpicker.value = loaded_data.color ?? "#f74127";
 
 	scaleSlider.value = loaded_data.scale;
 	scaleSliderValue.textContent = scaleSlider.value;
@@ -58,7 +61,13 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	saveSettings();
 }
 
-icon.style.filter = utilModule.hexColourToIconFilter(colourpicker.value);
+//update the icon colour when it's loaded or when the image source changes
+icon.onload = () => {
+	utilModule.setIconColor(icon, colourpicker.value);
+};
+if (icon.contentDocument) {
+	utilModule.setIconColor(icon, colourpicker.value);
+}
 
 function saveSettings(){
 	settings["{uniqueID}"] = {
@@ -98,7 +107,7 @@ async function drawArrows(){
 	ctx.clearRect(0, 0, wid, hei);
 	ctx.fillStyle = colourpicker.value;
 
-	if(frame === tf.fixed_frame){
+	if(frame === tf.fixed_frame && poses.length > 0){
 		ctx.beginPath();
 
 		for (let i = 0; i < poses.length; i++) {
@@ -207,7 +216,7 @@ async function loadTopics(){
 
 selectionbox.addEventListener("change", (event) => {
 	topic = selectionbox.value;
-	markers = {};
+	poses = [];
 	connect();
 });
 
@@ -215,7 +224,7 @@ selectionbox.addEventListener("click", (event) => {
 	connect();
 });
 
-icon.addEventListener("click", (event) => {
+click_icon.addEventListener("click", (event) => {
 	loadTopics();
 });
 

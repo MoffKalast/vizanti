@@ -22,15 +22,53 @@ const subicons = [
 	document.getElementById("{uniqueID}_subicon1")
 ];
 
+const observers = [];
+
 function set_icons(){
-	const icon_list = icon_container.getElementsByTagName('img');
-	for(let i = 0; i < icon_list.length && i < 2; i++){
+
+	for(const observer of observers) {
+		observer.disconnect();
+	}
+	observers.length = 0;
+
+	let sources = [];
+	const icon_list = icon_container.getElementsByClassName('icon');
+	for(let i = 0; i < icon_list.length; i++){
+		const firstChild = icon_list[i].firstElementChild;
+        if (firstChild) {
+            if (firstChild.tagName.toLowerCase() === 'img') {
+                sources.push([firstChild, firstChild.src]);
+            } else if (firstChild.tagName.toLowerCase() === 'object') {
+                sources.push([firstChild, firstChild.data]);
+            }
+        }
+	}
+
+	for(let i = 0; i < sources.length && i < 2; i++){
 		subicons[i].style.display = "none";
-		let entry = icon_list[i];
-		if(!entry.src.endsWith("add.svg")){
-			subicons[i].src = entry.src;
+		if(!sources[i][1].endsWith("add.svg")){
 			subicons[i].style.display = "block";
-			subicons[i].style.filter = entry.style.filter;
+
+			if(subicons[i].data != sources[i][1]){
+				subicons[i].data = sources[i][1];
+				if(sources[i][0].hasAttribute("data-color")){
+					subicons[i].onload = ()=>{
+						utilModule.setIconColor(subicons[i], sources[i][0].dataset.color);
+						console.log(subicons[i].dataset.color)
+					};
+				}
+			}
+
+			const observer = new MutationObserver((mutationsList) => {
+				for(const mutation of mutationsList) {
+					if(mutation.type === 'attributes' && mutation.attributeName === 'data-color') {
+						utilModule.setIconColor(subicons[i], sources[i][0].dataset.color);
+					}
+				}
+			});
+
+			observer.observe(sources[i][0], {attributes: true, attributeFilter: ['data-color']});
+			observers.push(observer);
 		}
 	}
 }

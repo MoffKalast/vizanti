@@ -1,6 +1,6 @@
 <div id="{uniqueID}_modal" class="modal_outer noselect">
 	<div class="modal_inner noselect">
-		<h3>Pose with Covariance (Stamped)</h3>
+		<h3>Pose</h3>
 		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
 		<hr>
 
@@ -11,7 +11,12 @@
 
 		<br>
 
-		<p>Render a single Pose with a covariance ellipse. Experimental, as it may not render covariance data correctly in all cases.</p>
+		<label for="{uniqueID}_colorpicker">Colour:</label>
+		<input type="color" value="#f74127" id="{uniqueID}_colorpicker">
+
+		<br>
+
+		<p>Render a single Pose or PoseWithCovariance. Covariance data might not render correctly in all cases.</p>
 
 		<br>
 

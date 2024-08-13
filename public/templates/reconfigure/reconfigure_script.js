@@ -118,28 +118,30 @@ function createParameterInput(fullname, defaultValue, type) {
 
 	paramBox.insertAdjacentHTML("beforeend", inputElement);
 
-	document.getElementById(id).addEventListener("change", (event) => {
-		let val;
-
-		switch(type){
-			case "string": val = event.target.value; break;
-			case "int": val = parseInt(event.target.value); break;
-			case "float": val = parseFloat(event.target.value); break;
-			case "bool": val = event.target.checked; break;
-		}
-		setNodeParamValue(fullname, type, val);
-
-		const arrowElement = document.getElementById(arrowId);
-		arrowElement.style.visibility = "visible";
-		arrowElement.style.animation = "none";
-		// Force reflow to make the new animation take effect
-		arrowElement.offsetHeight;
-		arrowElement.style.animation = null;
-
-		arrowElement.addEventListener('animationend', () => {
-			arrowElement.style.visibility = "hidden";
-		}, {once: true});
-	});
+	setTimeout(()=>{
+		document.getElementById(id).addEventListener("change", (event) => {
+			let val;
+	
+			switch(type){
+				case "string": val = event.target.value; break;
+				case "int": val = parseInt(event.target.value); break;
+				case "float": val = parseFloat(event.target.value); break;
+				case "bool": val = event.target.checked; break;
+			}
+			setNodeParamValue(fullname, type, val);
+	
+			const arrowElement = document.getElementById(arrowId);
+			arrowElement.style.visibility = "visible";
+			arrowElement.style.animation = "none";
+			// Force reflow to make the new animation take effect
+			arrowElement.offsetHeight;
+			arrowElement.style.animation = null;
+	
+			arrowElement.addEventListener('animationend', () => {
+				arrowElement.style.visibility = "hidden";
+			}, {once: true});
+		});
+	}, 1);
 }
 
 

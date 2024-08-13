@@ -23,13 +23,15 @@ let listener = undefined;
 let data = undefined;
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
-const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
+const click_icon = document.getElementById("{uniqueID}_icon");
+const icon = click_icon.getElementsByTagName('object')[0];
 
 const opacitySlider = document.getElementById('{uniqueID}_opacity');
 const opacityValue = document.getElementById('{uniqueID}_opacity_value');
 opacitySlider.addEventListener('input', () =>  {
 	opacityValue.textContent = opacitySlider.value;
 	saveSettings();
+	drawScan();
 });
 
 const thicknessSlider = document.getElementById('{uniqueID}_thickness');
@@ -37,12 +39,14 @@ const thicknessValue = document.getElementById('{uniqueID}_thickness_value');
 thicknessSlider.addEventListener('input', () =>  {
 	thicknessValue.textContent = thicknessSlider.value;
 	saveSettings();
+	drawScan();
 });
 
 const colourpicker = document.getElementById("{uniqueID}_colorpicker");
 colourpicker.addEventListener("input", (event) =>{
-	icon.style.filter = utilModule.hexColourToIconFilter(colourpicker.value);
+	utilModule.setIconColor(icon, colourpicker.value);
 	saveSettings();
+	drawScan();
 });
 
 const throttle = document.getElementById('{uniqueID}_throttle');
@@ -68,7 +72,14 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	saveSettings();
 }
 
-icon.style.filter = utilModule.hexColourToIconFilter(colourpicker.value);
+//update the icon colour when it's loaded or when the image source changes
+icon.onload = () => {
+	utilModule.setIconColor(icon, colourpicker.value);
+};
+if (icon.contentDocument) {
+	utilModule.setIconColor(icon, colourpicker.value);
+}
+
 
 function saveSettings(){
 	settings["{uniqueID}"] = {
@@ -234,7 +245,7 @@ selectionbox.addEventListener("change", (event) => {
 });
 
 selectionbox.addEventListener("click", connect);
-icon.addEventListener("click", loadTopics);
+click_icon.addEventListener("click", loadTopics);
 
 loadTopics();
 resizeScreen();

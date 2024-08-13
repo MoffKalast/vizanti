@@ -23,27 +23,36 @@ let path_topic = undefined;
 let pose_array = undefined;
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
-const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
+const click_icon = document.getElementById("{uniqueID}_icon");
+const icon = click_icon.getElementsByTagName('object')[0];
 
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
 
 const colourpicker = document.getElementById("{uniqueID}_colorpicker");
 colourpicker.addEventListener("input", (event) =>{
-	icon.style.filter = utilModule.hexColourToIconFilter(colourpicker.value);
+	utilModule.setIconColor(icon, colourpicker.value);
 	saveSettings();
+	drawPath();
 });
 
 //Settings
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
-	colourpicker.value = loaded_data.color ?? "#5ED753";
+
+	colourpicker.value = loaded_data.color ?? "#54db67";
 }else{
 	saveSettings();
 }
 
-icon.style.filter = utilModule.hexColourToIconFilter(colourpicker.value);
+//update the icon colour when it's loaded or when the image source changes
+icon.onload = () => {
+	utilModule.setIconColor(icon, colourpicker.value);
+};
+if (icon.contentDocument) {
+	utilModule.setIconColor(icon, colourpicker.value);
+}
 
 function saveSettings(){
 	settings["{uniqueID}"] = {
@@ -185,7 +194,7 @@ selectionbox.addEventListener("click", (event) => {
 	connect();
 });
 
-icon.addEventListener("click", (event) => {
+click_icon.addEventListener("click", (event) => {
 	loadTopics();
 });
 

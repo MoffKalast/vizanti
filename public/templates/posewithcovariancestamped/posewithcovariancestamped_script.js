@@ -3,12 +3,14 @@ let tfModule = await import(`${base_url}/js/modules/tf.js`);
 let rosbridgeModule = await import(`${base_url}/js/modules/rosbridge.js`);
 let persistentModule = await import(`${base_url}/js/modules/persistent.js`);
 let StatusModule = await import(`${base_url}/js/modules/status.js`);
+let utilModule = await import(`${base_url}/js/modules/util.js`);
 
 let view = viewModule.view;
 let tf = tfModule.tf;
 let rosbridge = rosbridgeModule.rosbridge;
 let settings = persistentModule.settings;
 let Status = StatusModule.Status;
+let imageToDataURL = utilModule.imageToDataURL;
 
 let topic = getTopic("{uniqueID}");
 let status = new Status(
@@ -16,23 +18,35 @@ let status = new Status(
 	document.getElementById("{uniqueID}_status")
 );
 
+const icon_pose = 'assets/pose.svg'//await imageToDataURL('assets/pose.svg');
+const icon_pose_with_covariance = 'assets/posewithcovariancestamped.svg'//await imageToDataURL('assets/posewithcovariancestamped.svg');
+
+let typedict = {};
 let listener = undefined;
 let marker_topic = undefined;
 
 let posemsg = undefined;
 let frame = "";
 
+const selectionbox = document.getElementById("{uniqueID}_topic");
+const click_icon = document.getElementById("{uniqueID}_icon");
+const icon = click_icon.getElementsByTagName('object')[0];
+
 const scaleSlider = document.getElementById('{uniqueID}_scale');
 const scaleSliderValue = document.getElementById('{uniqueID}_scale_value');
-
+scaleSlider.addEventListener('change', saveSettings);
 scaleSlider.addEventListener('input', function () {
 	scaleSliderValue.textContent = this.value;
+	saveSettings();
+	drawMarkers();
 });
 
-scaleSlider.addEventListener('change', saveSettings);
-
-const selectionbox = document.getElementById("{uniqueID}_topic");
-const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
+const colourpicker = document.getElementById("{uniqueID}_colorpicker");
+colourpicker.addEventListener("input", (event) =>{
+	utilModule.setIconColor(icon, colourpicker.value);
+	saveSettings();
+	drawMarkers();
+});
 
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
@@ -42,16 +56,32 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
 
+	colourpicker.value = loaded_data.color ?? "#f74127";
+
 	scaleSlider.value = loaded_data.scale;
 	scaleSliderValue.textContent = scaleSlider.value;
+
+	typedict = loaded_data.typedict ?? {};
+
 }else{
 	saveSettings();
 }
 
+//update the icon colour when it's loaded or when the image source changes
+icon.onload = () => {
+	utilModule.setIconColor(icon, colourpicker.value);
+};
+if (icon.contentDocument) {
+	utilModule.setIconColor(icon, colourpicker.value);
+}
+
+
 function saveSettings(){
 	settings["{uniqueID}"] = {
 		topic: topic,
-		scale: parseFloat(scaleSlider.value)
+		scale: parseFloat(scaleSlider.value),
+		typedict: typedict,
+		color: colourpicker.value
 	}
 	settings.save();
 }
@@ -66,7 +96,7 @@ async function drawMarkers(){
 	}
 
 	function drawArrow(size){
-		ctx.fillStyle = "rgba(139, 0, 0, 0.9)";
+		ctx.fillStyle = colourpicker.value;
 		const height = parseInt(size*2.0);
 		const width = parseInt(size*0.1*0.6)+1;
 		const tip = parseInt(size*0.24)+1;
@@ -94,6 +124,9 @@ async function drawMarkers(){
 	}
 	
 	function drawTranslationalCovariance(covariance, size) {
+		
+		if(covariance === undefined)
+			return;
 
 		const varianceX = Math.sqrt(covariance[0]);
 		const varianceY = Math.sqrt(covariance[7]);
@@ -117,6 +150,9 @@ async function drawMarkers(){
 	}
 
 	function drawAngularCovariance(covariance, size) {
+
+		if(covariance === undefined)
+			return;
 
 		// Calculate the 2-sigma standard deviation 
 		let angleUncertainty = 2 * Math.sqrt(covariance[35]);
@@ -180,10 +216,13 @@ function connect(){
 	marker_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : 'geometry_msgs/PoseWithCovarianceStamped'
+		messageType : typedict[topic]
 	});
 
 	status.setWarn("No data received.");
+
+	const skip_covariance = typedict[topic] == "geometry_msgs/PoseStamped";
+	icon.data = skip_covariance ? icon_pose : icon_pose_with_covariance;
 	
 	listener = marker_topic.subscribe((msg) => {
 
@@ -201,7 +240,9 @@ function connect(){
 
 		frame = tf.fixed_frame;
 
-		let q = msg.pose.pose.orientation;
+		let pose = skip_covariance ? msg.pose : msg.pose.pose;
+
+		let q = pose.orientation;
 		const rotation_invalid = q.x == 0 && q.y == 0 && q.z == 0 && q.w == 0
 
 		if(rotation_invalid){
@@ -212,7 +253,7 @@ function connect(){
 		const transformed = tf.transformPose(
 			msg.header.frame_id, 
 			tf.fixed_frame, 
-			msg.pose.pose.position, 
+			pose.position, 
 			q
 		);
 
@@ -222,7 +263,7 @@ function connect(){
 			y: transformed.translation.y,
 			yaw: transformed.rotation.toEuler().h,
 			rotation_invalid: rotation_invalid,
-			covariance: msg.pose.covariance
+			covariance: skip_covariance ? undefined : msg.pose.covariance
 		};
 	
 		drawMarkers();
@@ -236,18 +277,24 @@ function connect(){
 }
 
 async function loadTopics(){
-	let result = await rosbridge.get_topics("geometry_msgs/PoseWithCovarianceStamped");
+	let pose_topics = await rosbridge.get_topics("geometry_msgs/PoseStamped");
+	let posecov_topics = await rosbridge.get_topics("geometry_msgs/PoseWithCovarianceStamped");
 
 	let topiclist = "";
-	result.forEach(element => {
-		topiclist += "<option value='"+element+"'>"+element+"</option>"
+	pose_topics.forEach(element => {
+		topiclist += "<option value='"+element+"'>"+element+" (PoseStamped)</option>"
+		typedict[element] = "geometry_msgs/PoseStamped";
+	});
+	posecov_topics.forEach(element => {
+		topiclist += "<option value='"+element+"'>"+element+" (PoseWithCovarianceStamped)</option>"
+		typedict[element] = "geometry_msgs/PoseWithCovarianceStamped";
 	});
 	selectionbox.innerHTML = topiclist
 
 	if(topic == "")
 		topic = selectionbox.value;
 	else{
-		if(result.includes(topic)){
+		if(pose_topics.includes(topic) || posecov_topics.includes(topic)){
 			selectionbox.value = topic;
 		}else{
 			topiclist += "<option value='"+topic+"'>"+topic+"</option>"
@@ -268,7 +315,7 @@ selectionbox.addEventListener("click", (event) => {
 	connect();
 });
 
-icon.addEventListener("click", (event) => {
+click_icon.addEventListener("click", (event) => {
 	loadTopics();
 });
 
@@ -293,5 +340,5 @@ window.addEventListener('orientationchange', resizeScreen);
 
 resizeScreen();
 
-console.log("MarkerArray Widget Loaded {uniqueID}")
+console.log("Pose Widget Loaded {uniqueID}")
 

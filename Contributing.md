@@ -40,7 +40,7 @@ Upon client load, the server collects all widget templates in [public/templates]
 
 To add the widget to the taskbar, it has to be defined in the `add_types_container` list in the [add_modal.html](public/templates/add/add_modal.html). The `data-topic` value is used for creating widgets from a specific topic.
 
-Any required assets should be put into [public/assets](public/assets).
+Any required assets should be put into [public/assets](public/assets). Any SVG icons that need to display a colour change using utilModule.setIconColor need to have specific elements tagged as id="fillColor" or id="strokeColor" depending on which part needs coloring.
 
 ### {uniqueID}
 

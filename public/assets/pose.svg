@@ -9,7 +9,7 @@
    viewBox="0 0 512 512"
    style="enable-background:new 0 0 512 512;"
    xml:space="preserve"
-   sodipodi:docname="posewithcovariancestamped.svg"
+   sodipodi:docname="pose.svg"
    inkscape:version="1.3.2 (1:1.3.2+202311252150+091e20ef0f)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -27,9 +27,9 @@
    inkscape:pagecheckerboard="1"
    inkscape:deskcolor="#505050"
    showgrid="false"
-   inkscape:zoom="1.5488282"
-   inkscape:cx="210.80454"
-   inkscape:cy="218.87515"
+   inkscape:zoom="0.77441408"
+   inkscape:cx="41.967212"
+   inkscape:cy="148.49937"
    inkscape:window-width="1920"
    inkscape:window-height="1107"
    inkscape:window-x="0"
@@ -42,14 +42,9 @@
 	.st0{fill:#333333;}
 </style>
 
-<circle
-   style="fill:#8b8b24;fill-opacity:0.57627118;stroke-width:10;stroke-linecap:round;stroke-linejoin:round;paint-order:markers fill stroke"
-   id="path340"
-   cx="256"
-   cy="256"
-   r="211.83598" /><path
-   d="m 380.9212,161.6392 -156.95524,152.59785 31.71064,33.50729 -124.5978,29.57634 35.66223,-123.5508 31.71063,33.50729 156.95523,-152.59785 12.75717,13.47995 z"
+<path
+   d="m 420.16174,130.53054 -198.71978,193.20293 40.14859,42.42331 -157.75229,37.44637 45.15167,-156.42669 40.14857,42.42332 198.71978,-193.20293 16.15175,17.06686 z"
    fill="#112244"
    id="fillColor"
-   style="fill:#f74127;fill-opacity:1;stroke:none;stroke-width:0.53027"
+   style="fill:#f74127;fill-opacity:1;stroke:none;stroke-width:0.671371"
    sodipodi:nodetypes="ccccccccc" /></svg>
