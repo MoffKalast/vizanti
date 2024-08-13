@@ -26,7 +26,7 @@ class RandomGridCellsPublisher(Node):
             # Generate random cells
             cells = GridCells()
             cells.header.stamp = self.get_clock().now().to_msg()
-            cells.header.frame_id = 'test_link'
+            cells.header.frame_id = 'world'
             cells.cell_width = resolution_x
             cells.cell_height = resolution_y
 
@@ -42,7 +42,7 @@ class RandomGridCellsPublisher(Node):
             # Publish an empty GridCells message
             empty_cells = GridCells()
             empty_cells.header.stamp = self.get_clock().now().to_msg()
-            empty_cells.header.frame_id = 'test_link'
+            empty_cells.header.frame_id = 'world'
             empty_cells.cell_width = 1.0
             empty_cells.cell_height = 1.0
             self.publisher_.publish(empty_cells)
