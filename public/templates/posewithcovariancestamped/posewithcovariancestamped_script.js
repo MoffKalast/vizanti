@@ -282,11 +282,11 @@ async function loadTopics(){
 
 	let topiclist = "";
 	pose_topics.forEach(element => {
-		topiclist += "<option value='"+element+"'>"+element+" (PoseStamped)</option>"
+		topiclist += "<option value='"+element+"'>"+element+" (PoseStamped)</option>";
 		typedict[element] = "geometry_msgs/PoseStamped";
 	});
 	posecov_topics.forEach(element => {
-		topiclist += "<option value='"+element+"'>"+element+" (PoseWithCovarianceStamped)</option>"
+		topiclist += "<option value='"+element+"'>"+element+" (PoseWithCovarianceStamped)</option>";
 		typedict[element] = "geometry_msgs/PoseWithCovarianceStamped";
 	});
 	selectionbox.innerHTML = topiclist
