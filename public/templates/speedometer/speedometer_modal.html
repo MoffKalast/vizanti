@@ -1,0 +1,41 @@
+<div id="{uniqueID}_modal" class="modal_outer noselect">
+	<div class="modal_inner noselect">
+		<h3>Speedometer</h3>
+		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
+		<hr>
+
+		<label for="{uniqueID}_frame">Measure speed of TF link</label>
+		<select id="{uniqueID}_frame" name="topic">
+			<option value='base_link'>base_link</option>
+		</select>
+
+		<label for="{uniqueID}_fixed_frame">relative to</label>
+		<select id="{uniqueID}_fixed_frame" name="topic">
+			<option value='map'>map</option>
+		</select>
+
+		<br>
+
+		<label for="{uniqueID}_units">Units:</label>
+		<select id="{uniqueID}_units" name="topic">
+			<option value='m/s'>Meter per second (m/s)</option>
+			<option value='km/h'>Kilometers per hour (km/h)</option>
+			<option value='kts'>Knots / NM per hour (kts)</option>
+			<option value='mph'>Miles per hour (mph)</option>
+			<option value='ft/s'>Feet per second (ft/s)</option>
+			<option value='b/s'>Bananas per second (b/s)</option>
+		</select>
+
+		<hr>
+
+		<p id="{uniqueID}_spd">Speed: ?</p>
+		<p id="{uniqueID}_spd_max">Max Speed: ?</p> 
+		<p id="{uniqueID}_spd_min">Min Speed: ?</p>
+		<button id="{uniqueID}_reset">Reset Tracking</button>
+
+		<hr>
+
+		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
+
+	</div>
+</div>

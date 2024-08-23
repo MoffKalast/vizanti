@@ -43,6 +43,33 @@ object {
     transform: translate(-50%, -50%);
 	font-weight: bold;
     font-size: 0.8em;
+	pointer-events: none;
+}
+
+.icon-text-dial {
+    position: absolute;
+    top: 45%;
+    left: 50%;
+    margin: 0;
+	width: 100%;
+    transform: translate(-68%, 35%);
+	font-weight: bold;
+    font-size: 0.7em;
+	color: black; 
+	text-align: right;
+}
+
+.icon-text-dial-unit {
+    position: absolute;
+    top: 45%;
+    left: 50%;
+    margin: 0;
+	width: 100%;
+    transform: translate(-50%, -100%);
+	font-weight: bold;
+    font-size: 0.5em;
+	color: black; 
+	text-align: center;
 }
 
 .icon-img {
