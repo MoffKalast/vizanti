@@ -74,6 +74,7 @@ export class TF {
 		//this.absoluteTransformsHistory = new TimeStampedData(20);
 		this.frame_list = new Set();
 		this.frame_timestamps = {};
+		this.frame_headerstamps = {};
 
 		this.tf_topic = new ROSLIB.Topic({
 			ros: rosbridge.ros,
@@ -89,6 +90,7 @@ export class TF {
 			msg.transforms.forEach((pose) => {
 				this.frame_timestamps[pose.child_frame_id] = time_stamp;
 				this.frame_timestamps[pose.header.frame_id] = time_stamp;
+				this.frame_headerstamps[pose.child_frame_id] = pose.header.stamp;
 			})
 
 			this.updateTransforms(msg.transforms, false);
@@ -123,6 +125,7 @@ export class TF {
 					delete this.frame_list[frame_id];
 					delete this.transforms[frame_id];
 					delete this.absoluteTransforms[frame_id];
+					delete this.frame_headerstamps[frame_id];
 					deleted_anything = true;
 				}
 			}
@@ -336,6 +339,10 @@ export class TF {
 			translation: outputVector,
 			rotation: outputQuat
 		};
+	}
+
+	getTimeStampDelta(timestamp1, timestamp2) {
+		return timestamp2.secs - timestamp1.secs + ((timestamp2.nsecs - timestamp1.nsecs) / 1e9);
 	}
 }
 
