@@ -193,12 +193,23 @@ async function drawTiles(){
 		// Convert the corners from pixels to meters, transform them to map_fix frame and convert to latitude, longitude
 		const cornerCoords = corners.map((corner) => {
 			const meters = view.screenToFixed(corner);
-			const transformed = tf.transformPose(
-				tf.fixed_frame,
-				map_fix.header.frame_id,
-				meters,
-				new Quaternion()
-			);
+
+			let transformed;
+			if(ignoreRotationCheckbox.checked){
+				transformed = {
+					translation: {
+						x: -tf.absoluteTransforms[map_fix.header.frame_id].translation.x + meters.x,
+						y: -tf.absoluteTransforms[map_fix.header.frame_id].translation.y + meters.y
+					}
+				}
+			}else{
+				transformed = tf.transformPose(
+					tf.fixed_frame,
+					map_fix.header.frame_id,
+					meters,
+					new Quaternion()
+				);
+			}
 			return {
 				latitude: map_fix.latitude + (transformed.translation.y * fix_data.degreesPerMeter.latitude),
 				longitude: map_fix.longitude + (transformed.translation.x * fix_data.degreesPerMeter.longitude)
