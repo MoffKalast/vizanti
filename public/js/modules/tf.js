@@ -120,7 +120,7 @@ export class TF {
 			const now = new Date()
 			let deleted_anything = false;
 			for (const [frame_id, time_stamp] of Object.entries(this.frame_timestamps)) {
-				if(now - time_stamp > 1000 * 10){
+				if(now - time_stamp > 1000 * 100){
 					delete this.tf_tree[frame_id];
 					delete this.frame_list[frame_id];
 					delete this.transforms[frame_id];

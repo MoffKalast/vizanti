@@ -105,7 +105,7 @@ function writeText(speed_ms, minspeed_ms, maxspeed_ms){
 
 function calculateSpeed() {
 
-    if (!tf.absoluteTransforms[base_link_frame]) {
+    if (!tf.absoluteTransforms[base_link_frame] || !tf.frame_headerstamps[base_link_frame]) {
         status.setError("Required transform frame \"" + base_link_frame + "\" not found.");
         return;
     }

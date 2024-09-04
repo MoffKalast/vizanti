@@ -4,9 +4,16 @@ let persistentModule = await import(`${base_url}/js/modules/persistent.js`);
 let rosbridge = rosbridgeModule.rosbridge;
 let settings = persistentModule.settings;
 
+const savePathBox = document.getElementById("{uniqueID}_savepath");
+const selectAllButton = document.getElementById('{uniqueID}_selectall');
+const selectNoneButton = document.getElementById('{uniqueID}_selectnone');
+const startButton = document.getElementById('{uniqueID}_toggle');
+
+const selectionbox = document.getElementById("{uniqueID}_topic");
+const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
+
 let path = "~/recording.bag";
 let topic_list = new Set();
-
 let active = await getRecordingStatus();
 
 if(settings.hasOwnProperty("{uniqueID}")){
@@ -16,6 +23,8 @@ if(settings.hasOwnProperty("{uniqueID}")){
 }else{
 	saveSettings();
 }
+
+savePathBox.value = path;
 
 function saveSettings(){
 	settings["{uniqueID}"] = {
@@ -78,14 +87,6 @@ async function recordRosbag(topics, start, path) {
 	});
 }
 
-const savePathBox = document.getElementById("{uniqueID}_savepath");
-const selectAllButton = document.getElementById('{uniqueID}_selectall');
-const selectNoneButton = document.getElementById('{uniqueID}_selectnone');
-const startButton = document.getElementById('{uniqueID}_toggle');
-
-const selectionbox = document.getElementById("{uniqueID}_topic");
-const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
-
 function setState(state){
 
 	if(state){
@@ -127,6 +128,7 @@ startButton.addEventListener('click', async () => {
 	}else{
 		startRecording();
 	}
+	saveSettings();
 });
 
 selectAllButton.addEventListener('click', async () => {
@@ -137,11 +139,13 @@ selectAllButton.addEventListener('click', async () => {
 	});
 	
 	updateTopics();
+	saveSettings();
 });
 
 selectNoneButton.addEventListener('click', async () => {
 	topic_list = new Set();	
 	updateTopics();
+	saveSettings();
 });
 
 savePathBox.addEventListener('input', async () => {
