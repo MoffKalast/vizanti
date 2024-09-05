@@ -378,6 +378,37 @@ window.addEventListener("view_changed", drawTiles);
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);
 
+document.getElementById("{uniqueID}_export_DB").addEventListener("click", async (event) =>{
+
+	let filename = await prompt("Enter file name for tile DB export (.json will be appended automatically):", "navsat_tile_db");
+	if (filename != null) {
+		navsatModule.exportDatabase(filename+'.json');
+	}
+});
+
+document.getElementById("{uniqueID}_import_DB").addEventListener("click", (event) =>{
+
+	const input = document.createElement('input');
+	input.type = 'file';
+	input.accept = '.json';
+
+	input.onchange = (event) => {
+		const file = event.target.files[0];
+		const reader = new FileReader();
+		reader.onload = () => {
+			try {
+				navsatModule.importDatabase(reader.result);
+			} catch (error) {
+				console.error('Error importing DB file:', error);
+			}
+		};
+
+		reader.readAsText(file);
+	};
+
+	input.click();
+});
+
 resizeScreen();
 
 console.log("Satelite Widget Loaded {uniqueID}")

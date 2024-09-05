@@ -38,7 +38,15 @@
 
 		<p>All fetched tiles will be stored permanently in the indexedDB, so they can be loaded quickly and used offline if needed. </p>
 
-		<p>Keep in mind that browser-cached data is tied to a specific site URL, so if your robot's IP address changes when transitioning from a local network to offline AP mode, the tiles won't be accessible. One way to get tiles loaded is to first load up the site offline, switch to mobile data to fetch the tiles without refreshing, and then disable it again so rosbridge can reconnect.</p>
+		<p>Keep in mind that browser-cached data is tied to a specific site URL, so if your robot's IP address changes when transitioning from a local network to offline AP mode, the tiles won't be accessible. To get around that, you can first fetch the tiles when internet is available, and then export the tile database and reimport it in offline mode or on other machines.</p>
+
+		<br>
+
+		<button id="{uniqueID}_export_DB" class="export_button">Export tiles to File</button>
+
+		<br>
+
+		<button id="{uniqueID}_import_DB" class="import_button">Import tiles from File</button>
 
 		<hr>
 
