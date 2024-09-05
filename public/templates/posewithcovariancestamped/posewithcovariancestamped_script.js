@@ -89,7 +89,7 @@ function saveSettings(){
 async function drawMarkers(){
 
 	function drawCircle(size){
-		ctx.fillStyle = "rgba(139, 0, 0, 0.9)";
+		ctx.fillStyle = colourpicker.value;
 		ctx.beginPath();
 		ctx.arc(0, 0, size/2, 0, 2 * Math.PI, false);
 		ctx.fill();
