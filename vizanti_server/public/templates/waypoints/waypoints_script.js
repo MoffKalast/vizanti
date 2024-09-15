@@ -106,7 +106,6 @@ function getStamp(){
 function getPoseStamped(index, timeStamp, x, y, quat){
 	return new ROSLIB.Message({
 		header: {
-			seq: index,
 			stamp: timeStamp,
 			frame_id: fixed_frame
 		},
@@ -135,7 +134,7 @@ function getPose(x, y, quat){
 function sendMessage(pointlist){
 	let timeStamp = getStamp();
 	let poseList = [];
-	let stamped = typedict[topic] == "nav_msgs/Path";
+	let stamped = typedict[topic] == "nav_msgs/msg/Path";
 
 	if(pointlist.length > 0)
 	{
@@ -186,6 +185,7 @@ function sendMessage(pointlist){
 	
 	publisher.publish(pathMessage);
 	status.setOK();
+
 }
 
 const canvas = document.getElementById('{uniqueID}_canvas');
