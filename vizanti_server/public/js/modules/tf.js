@@ -324,7 +324,7 @@ export class TF {
 	}
 
 	getTimeStampDelta(timestamp1, timestamp2) {
-		return timestamp2.secs - timestamp1.secs + ((timestamp2.nsecs - timestamp1.nsecs) / 1e9);
+		return timestamp2.sec - timestamp1.sec + ((timestamp2.nanosec - timestamp1.nanosec) / 1e9);
 	}
 }
 
