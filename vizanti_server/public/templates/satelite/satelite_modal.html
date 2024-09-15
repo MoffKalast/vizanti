@@ -13,6 +13,8 @@
 		<label for="{uniqueID}_tileserver">Tile server URL:</label>
 		<input id="{uniqueID}_tileserver" type="text" value="https://tile.openstreetmap.org/{z}/{x}/{y}.png">
 
+		<p style="color:#b4b4b4;">The tile server can be changed to anything that uses 265x256 sized tiles, the Web Mercator projection, and follows the same {x},{y},{z} convention. </p>
+
 		<br>
 
 		<label for="{uniqueID}_opacity">Opacity:</label>
@@ -29,16 +31,19 @@
 
 		<p style="color:#b4b4b4;">Displaying the map with 0 yaw rotation can make viewing raw NavSatFix data from receivers more stable, but don't expect the robot to be facing the right way.</p>
 
+		<br>
+
+		<h4>Tile Management</h4>
+
+		<p>All fetched tiles are stored in IndexedDB for quick loading and offline use. However, browser-cached data is tied to the site's URL, so if your robot's IP changes (e.g. switching from a local network to offline AP mode), the tiles won't be accessible. To solve this, fetch and export the database while online, and reimport it in offline mode or on other machines.</p>
 
 		<br>
 
-		<h4>Notes</h4>
+		<button id="{uniqueID}_export_DB" class="export_button">Export tiles to File</button>
 
-		<p>The tile server can be changed to anything that uses 265x256 sized tiles, the Web Mercator projection, and follows the same {x},{y},{z} convention. </p>
+		<br>
 
-		<p>All fetched tiles will be stored permanently in the indexedDB, so they can be loaded quickly and used offline if needed. </p>
-
-		<p>Keep in mind that browser-cached data is tied to a specific site URL, so if your robot's IP address changes when transitioning from a local network to offline AP mode, the tiles won't be accessible. One way to get tiles loaded is to first load up the site offline, switch to mobile data to fetch the tiles without refreshing, and then disable it again so rosbridge can reconnect.</p>
+		<button id="{uniqueID}_import_DB" class="import_button">Import tiles from File</button>
 
 		<hr>
 

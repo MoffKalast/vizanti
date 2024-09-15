@@ -13,6 +13,44 @@ async function dataToImage(data){
 	})
 }
 
+export async function exportDatabase(filename) {
+    const allData = [];
+    
+    async function dumpData() {
+        const keylist = await db.getAllKeys();
+        await Promise.all(keylist.map(async (url) => {
+            const value = await db.getObject(url);
+            allData.push({
+                key: url,
+                value: value
+            });
+        }));
+    }
+    
+    await dumpData();
+  
+    const dataBlob = new Blob([JSON.stringify(allData)], {type: 'application/json'});
+    
+    const url = URL.createObjectURL(dataBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    
+    URL.revokeObjectURL(url);
+}
+
+export async function importDatabase(file) {
+	const data = JSON.parse(file);
+	try {
+		await Promise.all(data.map(item => db.setObject(item.key, item.value)));
+		alert("Tiles imported successfully! (it might take a bit for them to save to disk and become available, be patient)");
+	} catch (error) {
+		console.error(error);
+		alert("An error occurred during import. Please check the console for details.");
+	}
+}
+  
 export class Navsat {
 
 	constructor (){

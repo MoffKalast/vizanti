@@ -68,12 +68,12 @@ export class TF {
 	constructor() {
 		this.fixed_frame = '';
 
-		this.tf_tree = {};
 		this.transforms = {};
 		this.absoluteTransforms = {};
 		//this.absoluteTransformsHistory = new TimeStampedData(20);
 		this.frame_list = new Set();
 		this.frame_timestamps = {};
+		this.frame_headerstamps = {};
 
 		this.tf_topic = new ROSLIB.Topic({
 			ros: rosbridge.ros,
@@ -89,6 +89,7 @@ export class TF {
 			msg.transforms.forEach((pose) => {
 				this.frame_timestamps[pose.child_frame_id] = time_stamp;
 				this.frame_timestamps[pose.header.frame_id] = time_stamp;
+				this.updateFrameTimestamp(pose.child_frame_id,pose.header.stamp)
 			})
 
 			this.updateTransforms(msg.transforms, false);
@@ -118,11 +119,11 @@ export class TF {
 			const now = new Date()
 			let deleted_anything = false;
 			for (const [frame_id, time_stamp] of Object.entries(this.frame_timestamps)) {
-				if(now - time_stamp > 1000 * 10){
-					delete this.tf_tree[frame_id];
+				if(now - time_stamp > 1000 * 100){
 					delete this.frame_list[frame_id];
 					delete this.transforms[frame_id];
 					delete this.absoluteTransforms[frame_id];
+					delete this.frame_headerstamps[frame_id];
 					deleted_anything = true;
 				}
 			}
@@ -132,6 +133,19 @@ export class TF {
 			}
 		},5000)
 	}
+
+	updateFrameTimestamp(frame_id, stamp){
+		this.frame_headerstamps[frame_id] = stamp;
+
+		//update all child frames that were moved as well
+		for (const frame in this.transforms) {
+			if (this.transforms[frame].parent === frame_id) {
+				this.frame_headerstamps[frame] = stamp; //we assume that the frame we just got is newer than what we already have
+				this.updateFrameTimestamp(frame, stamp);
+			}
+		}
+	}
+
 
 	/* interpolateTransforms() {
 		if (this.lastReceivedTransforms !== null && this.previousTransforms !== null && performance.now() - this.lastReceivedTime > 15) {
@@ -193,34 +207,6 @@ export class TF {
 		}
 	}
 
-	addToTree(parentFrameId, childFrameId) {
-
-		if (this.tf_tree.hasOwnProperty(childFrameId)) {
-			delete this.tf_tree[childFrameId];
-		}
-	
-		if (this.tf_tree.hasOwnProperty(parentFrameId)) {
-			this.tf_tree[parentFrameId][childFrameId] = {};
-		} else {
-			const foundParent = (node) => {
-				for (const key in node) {
-					if (key === parentFrameId) {
-						node[key][childFrameId] = {};
-						return true;
-					} else {
-						if (foundParent(node[key])) {
-							return true;
-						}
-					}
-				}
-				return false;
-			};
-			if (!foundParent(this.tf_tree)) {
-				this.tf_tree[parentFrameId] = { [childFrameId]: {} };
-			}
-		}
-	}
-
 	getPathToRoot(frame) {
 		const currentFrame = this.transforms[frame];
 		if (!currentFrame) {
@@ -264,7 +250,6 @@ export class TF {
 				),
 				parent: parentFrameId
 			};
-			this.addToTree(parentFrameId, childFrameId);
 		});
 
 		this.recalculateAbsoluteTransforms();
@@ -336,6 +321,10 @@ export class TF {
 			translation: outputVector,
 			rotation: outputQuat
 		};
+	}
+
+	getTimeStampDelta(timestamp1, timestamp2) {
+		return timestamp2.sec - timestamp1.sec + ((timestamp2.nanosec - timestamp1.nanosec) / 1e9);
 	}
 }
 

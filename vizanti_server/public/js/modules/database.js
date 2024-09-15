@@ -42,6 +42,12 @@ export class IndexedDatabase {
 		});
 	}
 
+	async getAllKeys(){
+		return await this._performTransaction('readonly', (store) => {
+			return store.getAllKeys();
+		});
+	}
+
 	async _performTransaction(mode, operation) {
 		return new Promise((resolve, reject) => {
 			if (!this.db) {
