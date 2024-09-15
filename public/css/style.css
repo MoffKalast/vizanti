@@ -12,6 +12,7 @@ html, body {
 	text-rendering: optimizeLegibility;
 
 	overflow: hidden;
+	overscroll-behavior:none;
 	touch-action: none; /* Safari zooming chaos prevention */
 }
 
