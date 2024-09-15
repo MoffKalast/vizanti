@@ -89,7 +89,7 @@ function saveSettings(){
 async function drawMarkers(){
 
 	function drawCircle(size){
-		ctx.fillStyle = "rgba(139, 0, 0, 0.9)";
+		ctx.fillStyle = colourpicker.value;
 		ctx.beginPath();
 		ctx.arc(0, 0, size/2, 0, 2 * Math.PI, false);
 		ctx.fill();
@@ -282,11 +282,11 @@ async function loadTopics(){
 
 	let topiclist = "";
 	pose_topics.forEach(element => {
-		topiclist += "<option value='"+element+"'>"+element+" (PoseStamped)</option>"
+		topiclist += "<option value='"+element+"'>"+element+" (PoseStamped)</option>";
 		typedict[element] = "geometry_msgs/PoseStamped";
 	});
 	posecov_topics.forEach(element => {
-		topiclist += "<option value='"+element+"'>"+element+" (PoseWithCovarianceStamped)</option>"
+		topiclist += "<option value='"+element+"'>"+element+" (PoseWithCovarianceStamped)</option>";
 		typedict[element] = "geometry_msgs/PoseWithCovarianceStamped";
 	});
 	selectionbox.innerHTML = topiclist

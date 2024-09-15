@@ -24,17 +24,6 @@ const colourpicker = document.getElementById("{uniqueID}_colorpicker");
 const linethickness = document.getElementById("{uniqueID}_thickness");
 const gridstep = document.getElementById("{uniqueID}_step");
 
-linethickness.value = grid_thickness;
-colourpicker.value = grid_colour;
-gridstep.value = grid_size;
-
-colourpicker.addEventListener("input", (event) =>{
-	grid_colour = colourpicker.value;
-	utilModule.setIconColor(icon, grid_colour);
-	drawGrid();
-	saveSettings();
-});
-
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	grid_size = loaded_data.size;
@@ -43,6 +32,10 @@ if(settings.hasOwnProperty("{uniqueID}")){
 }else{
 	saveSettings();
 }
+
+linethickness.value = grid_thickness;
+colourpicker.value = grid_colour;
+gridstep.value = grid_size;
 
 //update the icon colour when it's loaded or when the image source changes
 icon.onload = () => {
@@ -161,6 +154,13 @@ gridstep.addEventListener("input", (event) =>{
 	else
 		grid_size = parseFloat(gridstep.value);	
 
+	drawGrid();
+	saveSettings();
+});
+
+colourpicker.addEventListener("input", (event) =>{
+	grid_colour = colourpicker.value;
+	utilModule.setIconColor(icon, grid_colour);
 	drawGrid();
 	saveSettings();
 });

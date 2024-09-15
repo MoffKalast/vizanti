@@ -193,12 +193,23 @@ async function drawTiles(){
 		// Convert the corners from pixels to meters, transform them to map_fix frame and convert to latitude, longitude
 		const cornerCoords = corners.map((corner) => {
 			const meters = view.screenToFixed(corner);
-			const transformed = tf.transformPose(
-				tf.fixed_frame,
-				map_fix.header.frame_id,
-				meters,
-				new Quaternion()
-			);
+
+			let transformed;
+			if(ignoreRotationCheckbox.checked){
+				transformed = {
+					translation: {
+						x: -tf.absoluteTransforms[map_fix.header.frame_id].translation.x + meters.x,
+						y: -tf.absoluteTransforms[map_fix.header.frame_id].translation.y + meters.y
+					}
+				}
+			}else{
+				transformed = tf.transformPose(
+					tf.fixed_frame,
+					map_fix.header.frame_id,
+					meters,
+					new Quaternion()
+				);
+			}
 			return {
 				latitude: map_fix.latitude + (transformed.translation.y * fix_data.degreesPerMeter.latitude),
 				longitude: map_fix.longitude + (transformed.translation.x * fix_data.degreesPerMeter.longitude)
@@ -366,6 +377,37 @@ window.addEventListener("tf_changed", ()=>{
 window.addEventListener("view_changed", drawTiles);
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);
+
+document.getElementById("{uniqueID}_export_DB").addEventListener("click", async (event) =>{
+
+	let filename = await prompt("Enter file name for tile DB export (.json will be appended automatically):", "navsat_tile_db");
+	if (filename != null) {
+		navsatModule.exportDatabase(filename+'.json');
+	}
+});
+
+document.getElementById("{uniqueID}_import_DB").addEventListener("click", (event) =>{
+
+	const input = document.createElement('input');
+	input.type = 'file';
+	input.accept = '.json';
+
+	input.onchange = (event) => {
+		const file = event.target.files[0];
+		const reader = new FileReader();
+		reader.onload = () => {
+			try {
+				navsatModule.importDatabase(reader.result);
+			} catch (error) {
+				console.error('Error importing DB file:', error);
+			}
+		};
+
+		reader.readAsText(file);
+	};
+
+	input.click();
+});
 
 resizeScreen();
 

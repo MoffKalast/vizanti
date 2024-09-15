@@ -16,6 +16,7 @@ let status = new Status(
 	document.getElementById("{uniqueID}_status")
 );
 
+let typedict = {};
 let fixed_frame = "";
 let base_link_frame = "";
 let seq = 0;
@@ -29,7 +30,6 @@ const startButton = document.getElementById("{uniqueID}_start");
 const stopButton = document.getElementById("{uniqueID}_stop");
 
 startButton.addEventListener('click', ()=>{
-	console.log("Points:",points.slice(getStartIndex()))
 	if(startCheckbox.checked)
 		sendMessage(points.slice(getStartIndex()))
 	else
@@ -104,31 +104,49 @@ function getStamp(){
 	}
 }
 
+function getPoseStamped(index, timeStamp, x, y, quat){
+	return new ROSLIB.Message({
+		header: {
+			seq: index,
+			stamp: timeStamp,
+			frame_id: fixed_frame
+		},
+		pose: {
+			position: {
+				x: x,
+				y: y,
+				z: 0.0
+			},
+			orientation: quat
+		}
+	});
+}
+
+function getPose(x, y, quat){
+	return new ROSLIB.Message({
+		position: {
+			x: x,
+			y: y,
+			z: 0.0
+		},
+		orientation: quat
+	});
+}
+
 function sendMessage(pointlist){
 	let timeStamp = getStamp();
 	let poseList = [];
+	let stamped = typedict[topic] == "nav_msgs/Path";
 
 	if(pointlist.length > 0)
 	{
 		if(pointlist.length  == 1){
-			poseList.push(new ROSLIB.Message({
-				header: {
-					seq: 0,
-					stamp: timeStamp,
-					frame_id: fixed_frame
-				},
-				pose: {
-					position: {
-						x: pointlist[0].x,
-						y: pointlist[0].y,
-						z: 0.0
-					},
-					orientation: new Quaternion()
-				}
-			}));
-		}
-		else
-		{
+			if(stamped){
+				poseList.push(getPoseStamped(0, timeStamp, pointlist[0].x, pointlist[0].y, new Quaternion()));
+			}else{
+				poseList.push(getPose(pointlist[0].x, pointlist[0].y, new Quaternion()));
+			}
+		}else{
 			pointlist.forEach((point, index) => {
 				let p0;
 				let p1;
@@ -141,21 +159,13 @@ function sendMessage(pointlist){
 					p1 = point;
 				}
 
-				poseList.push(new ROSLIB.Message({
-					header: {
-						seq: index,
-						stamp: timeStamp,
-						frame_id: fixed_frame
-					},
-					pose: {
-						position: {
-							x: point.x,
-							y: point.y,
-							z: 0.0
-						},
-						orientation: Quaternion.fromEuler(Math.atan2(p0.y - p1.y, -(p0.x - p1.x)), 0, 0, 'ZXY')
-					}
-				}));
+				const rotation = Quaternion.fromEuler(Math.atan2(p0.y - p1.y, -(p0.x - p1.x)), 0, 0, 'ZXY');
+
+				if(stamped){
+					poseList.push(getPoseStamped(index, timeStamp, point.x, point.y, rotation));
+				}else{
+					poseList.push(getPose(point.x, point.y, rotation));
+				}
 			});
 		}
 	}
@@ -163,7 +173,7 @@ function sendMessage(pointlist){
 	const publisher = new ROSLIB.Topic({
 		ros: rosbridge.ros,
 		name: topic,
-		messageType: 'nav_msgs/Path',
+		messageType: stamped ? 'nav_msgs/Path' : 'geometry_msgs/PoseArray',
 		latched: true
 	});
 
@@ -175,8 +185,8 @@ function sendMessage(pointlist){
 		},
 		poses: poseList
 	});
+	
 	publisher.publish(pathMessage);
-
 	status.setOK();
 }
 
@@ -535,7 +545,7 @@ const baseLinkFrameBox = document.getElementById("{uniqueID}_base_link_frame");
 selectionbox.addEventListener("change", (event) => {
 	topic = selectionbox.value;
 	saveSettings();
-	status.setOK();baseLinkFrameBox
+	status.setOK();
 });
 
 fixedFrameBox.addEventListener("change", (event) => {
@@ -549,18 +559,24 @@ baseLinkFrameBox.addEventListener("change", (event) => {
 });
 
 async function loadTopics(){
-	let result = await rosbridge.get_topics("nav_msgs/Path");
+	const result_path = await rosbridge.get_topics("nav_msgs/Path");
+	const result_array = await rosbridge.get_topics("geometry_msgs/PoseArray");
 
 	let topiclist = "";
-	result.forEach(element => {
-		topiclist += "<option value='"+element+"'>"+element+"</option>"
+	result_path.forEach(element => {
+		topiclist += "<option value='"+element+"'>"+element+" (Path)</option>";
+		typedict[element] = "nav_msgs/Path";
+	});
+	result_array.forEach(element => {
+		topiclist += "<option value='"+element+"'>"+element+" (PoseArray)</option>";
+		typedict[element] = "geometry_msgs/PoseArray";
 	});
 	selectionbox.innerHTML = topiclist
 
 	if(topic == "")
 		topic = selectionbox.value;
 	else{
-		if(result.includes(topic)){
+		if(result_path.includes(topic) || result_array.includes(topic)){
 			selectionbox.value = topic;
 		}else{
 			topiclist += "<option value='"+topic+"'>"+topic+"</option>"
