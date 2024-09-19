@@ -36,17 +36,17 @@ With rosbridge being a Tornado python based package and rclpy being overly CPU h
 
 ```bash
 cd ~/colcon_ws/src
-git clone -b humble https://github.com/v-kiniv/rws.git
+git clone -b $ROS_DISTRO https://github.com/v-kiniv/rws.git
 
 cd ..
-rosdep install -i --from-path src/vizanti --rosdistro humble -y
+rosdep install -i --from-path src/rws -y 
 colcon build
 ```
 
 If using FastDDS:
 
 ```bash
-sudo apt install ros-humble-rmw-fastrtps-dynamic-cpp
+sudo apt install ros-$ROS_DISTRO-rmw-fastrtps-dynamic-cpp
 export RMW_IMPLEMENTATION=rmw_fastrtps_dynamic_cpp
 ```
 
