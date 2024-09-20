@@ -20,14 +20,14 @@ catkin_make
 
 Or if rosdep fails for some reason, these are the main two deps:
 ```
-sudo apt install ros-noetic-rosbridge-suite python3-flask
+sudo apt install ros-noetic-rosbridge-suite ros-noetic-move-base-msgs python3-flask
 ```
 
 Flask and Jinja2 are used for templating, rosbridge is required for socket communication.
 
 ### Docker
 
-To launch Vizanti hosted in a container, first you need to build the container. Assume you have docker installed, if not, navigat here [Docker](https://docs.docker.com/engine/install/ubuntu/).
+To launch Vizanti hosted in a container, first you need to build the container. This assumes you have docker installed, if not, navigate here [Docker](https://docs.docker.com/engine/install/ubuntu/).
 
 ```bash
 git clone https://github.com/MoffKalast/vizanti.git
