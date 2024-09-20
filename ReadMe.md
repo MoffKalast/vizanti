@@ -44,7 +44,7 @@ roslaunch vizanti server.launch
 
 ### Docker  
 ```bash
-docker run -dit --net=host vizanti:1.0
+docker run -dit --net=host --name vizanti-noetic vizanti:1.0
 ```  
 
 The web app can be accessed at `http://<host_ip>:5000`. Client settings are automatically saved in localStorage. The satelite imagery renderer also uses the indexedDB to store tiles for offline use (note that this is IP specific). By default the rosbridge instance also occupies port 5001.
