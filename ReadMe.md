@@ -27,7 +27,7 @@ Flask and Jinja2 are used for templating, rosbridge is required for socket commu
 
 ### Docker
 
-To launch Vizanti hosted in a container, first you need to build the container. This assumes you have docker installed, if not, navigate here [Docker](https://docs.docker.com/engine/install/ubuntu/).
+Alternativelly, you can also containerize Vizanti. For that you need to [install Docker](https://docs.docker.com/engine/install/ubuntu/) and build the container:
 
 ```bash
 git clone https://github.com/MoffKalast/vizanti.git
@@ -36,13 +36,11 @@ docker build -f docker/Dockerfile -t vizanti:1.0 .
 ```
 
 ## Run
-
-### Directly  
+  
 ```bash
 roslaunch vizanti server.launch
 ```  
-
-### Docker  
+Or with Docker:
 ```bash
 docker run -dit --net=host --name vizanti-noetic vizanti:1.0
 ```  
