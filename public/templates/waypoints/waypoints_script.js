@@ -333,7 +333,7 @@ function drawWaypoints() {
 		} else {
 			ctx.lineTo(pos.x, pos.y);
 		}
-	});
+	};
 	ctx.stroke();
 
 	function drawCircles(){
@@ -539,6 +539,12 @@ function drag(event){
 
 	if(mode == "Z" && drag_point >= 0){	
 		points[drag_point].z = drag_point_z + linearToLogScale(delta.y); 
+
+		if (Math.abs(points[drag_point].z) >= 100)
+			points[drag_point].z = parseInt(points[drag_point].z);
+		else
+			points[drag_point].z = parseInt(points[drag_point].z*10)/10;
+
 		drawWaypoints();
 	}
 }
