@@ -288,6 +288,7 @@ object {
 	align-content: start;
 }
 
+
 /* Media query for non-touch devices (usually desktop) */
 @media (pointer: fine) {
 	.modal_inner {
