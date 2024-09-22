@@ -20,12 +20,13 @@ let typedict = {};
 let fixed_frame = "";
 let base_link_frame = "";
 let seq = 0;
-let active = false;
+let mode = "IDLE";
 let points = [];
 let shift_pressed = false;
 
 const icon = document.getElementById("{uniqueID}_icon");
-
+const buttontext = document.getElementById("{uniqueID}_buttontext");
+const margin = document.getElementById("{uniqueID}_margin");
 const startButton = document.getElementById("{uniqueID}_start");
 const stopButton = document.getElementById("{uniqueID}_stop");
 
@@ -69,7 +70,14 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	fixed_frame = loaded_data.fixed_frame;
 	base_link_frame = loaded_data.base_link_frame ?? "base_link";
 
+	margin.value = loaded_data.margin ?? 1.0;
 	startCheckbox.checked = loaded_data.start_closest;
+
+	for (let i = 0; i < points.length - 1; i++) {
+		if (points[i].z == null || points[i].z == undefined)
+			points[i].z = 0;
+	}
+
 }else{
 	saveSettings();
 }
@@ -86,7 +94,8 @@ function saveSettings(){
 		fixed_frame: fixed_frame,
 		base_link_frame: base_link_frame,
 		points: points,
-		start_closest: startCheckbox.checked
+		start_closest: startCheckbox.checked,
+		margin: margin.value
 	}
 	settings.save();
 }
@@ -104,7 +113,7 @@ function getStamp(){
 	}
 }
 
-function getPoseStamped(index, timeStamp, x, y, quat){
+function getPoseStamped(index, timeStamp, x, y, z, quat){
 	return new ROSLIB.Message({
 		header: {
 			seq: index,
@@ -115,19 +124,19 @@ function getPoseStamped(index, timeStamp, x, y, quat){
 			position: {
 				x: x,
 				y: y,
-				z: 0.0
+				z: z
 			},
 			orientation: quat
 		}
 	});
 }
 
-function getPose(x, y, quat){
+function getPose(x, y, z, quat){
 	return new ROSLIB.Message({
 		position: {
 			x: x,
 			y: y,
-			z: 0.0
+			z: z
 		},
 		orientation: quat
 	});
@@ -142,9 +151,9 @@ function sendMessage(pointlist){
 	{
 		if(pointlist.length  == 1){
 			if(stamped){
-				poseList.push(getPoseStamped(0, timeStamp, pointlist[0].x, pointlist[0].y, new Quaternion()));
+				poseList.push(getPoseStamped(0, timeStamp, pointlist[0].x, pointlist[0].y, pointlist[0].z, new Quaternion()));
 			}else{
-				poseList.push(getPose(pointlist[0].x, pointlist[0].y, new Quaternion()));
+				poseList.push(getPose(pointlist[0].x, pointlist[0].y, pointlist[0].z, new Quaternion()));
 			}
 		}else{
 			pointlist.forEach((point, index) => {
@@ -162,9 +171,9 @@ function sendMessage(pointlist){
 				const rotation = Quaternion.fromEuler(Math.atan2(p0.y - p1.y, -(p0.x - p1.x)), 0, 0, 'ZXY');
 
 				if(stamped){
-					poseList.push(getPoseStamped(index, timeStamp, point.x, point.y, rotation));
+					poseList.push(getPoseStamped(index, timeStamp, point.x, point.y, point.z, rotation));
 				}else{
-					poseList.push(getPose(point.x, point.y, rotation));
+					poseList.push(getPose(point.x, point.y, point.z, rotation));
 				}
 			});
 		}
@@ -188,6 +197,9 @@ function sendMessage(pointlist){
 	
 	publisher.publish(pathMessage);
 	status.setOK();
+
+	setMode("IDLE");
+	closeModal("{uniqueID}_modal");
 }
 
 const canvas = document.getElementById('{uniqueID}_canvas');
@@ -242,24 +254,37 @@ function pointToScreen(point){
 }
 
 function screenToPoint(click){
-	let transformed = view.screenToFixed(click);
 	return tf.transformPose(
 		tf.fixed_frame, 
 		fixed_frame, 
-		transformed, 
+		view.screenToFixed(click), 
 		new Quaternion()
 	).translation;
 }
 
+function drawOffsetPath(viewPoints, offset, ctx) {
+	ctx.lineWidth = offset;
+	ctx.strokeStyle = "rgba(20,20,20,0.35)";
+	ctx.lineCap = "round";
+
+	ctx.beginPath();
+	for (let i = 0; i < viewPoints.length - 1; i++) {
+        const p1 = viewPoints[i];
+        const p2 = viewPoints[i + 1];
+
+		ctx.moveTo(p1.x, p1.y);
+		ctx.lineTo(p2.x, p2.y);
+	}
+
+	ctx.stroke();
+}
+
 function drawWaypoints() {
 
+	const active = mode != "IDLE";
     const wid = canvas.width;
     const hei = canvas.height;
-
     ctx.clearRect(0, 0, wid, hei);
-	ctx.lineWidth = 3;
-	ctx.strokeStyle = "#EBCE00"; 
-	ctx.fillStyle = active ? "white" : "#EBCE00";
 
 	const frame = tf.absoluteTransforms[fixed_frame];
 
@@ -268,27 +293,42 @@ function drawWaypoints() {
 		return;
 	}
 
+	const color = mode != "Z" ? "#EBCE00" : "#abcbff";
+	const OUTLINE_PX = mode != "Z" ? 13 : 18;
+	const INNER_PX = mode != "Z" ? 10 : 15;
+
 	const startIndex = getStartIndex();
 	const viewPoints = points.map((point) =>
 		pointToScreen(point)
 	);
 
+	drawOffsetPath(viewPoints, margin.value * view.getMapUnitsInPixels(1.0), ctx);
+
+	ctx.lineWidth = 3;
+	ctx.fillStyle = active ? "white" : color
 	if(startCheckbox.checked)
 		ctx.strokeStyle = "#4a4a4a";
 	else
-		ctx.strokeStyle = "#EBCE00";
+		ctx.strokeStyle = color;
+
+	//TODO draw gradients based on Z
+	//let grad = ctx.createLinearGradient(viewPoints[0].x, viewPoints[0].y, viewPoints[viewPoints.length - 1].x, viewPoints[viewPoints.length - 1].y)
+	//let perc = i/(viewPoints.length-2);
+	//grad.addColorStop(perc, "rgba("+perc*255+","+perc*255+","+perc*255+",0.3)");
+	//ctx.strokeStyle = grad;
 
 	ctx.beginPath();
-	viewPoints.forEach((pos, index) => {
+	for (let i = 0; i < viewPoints.length; i++) {
+		const pos = viewPoints[i];
 
-		if(index == startIndex && startCheckbox.checked){
+		if(i == startIndex && startCheckbox.checked){
 			ctx.lineTo(pos.x, pos.y);
 			ctx.stroke();
-			ctx.strokeStyle = "#EBCE00"; 
+			ctx.strokeStyle = color; 
 			ctx.beginPath();
 		}
 
-		if (index === 0) {
+		if (i === 0) {
 			ctx.moveTo(pos.x, pos.y);
 		} else {
 			ctx.lineTo(pos.x, pos.y);
@@ -296,34 +336,107 @@ function drawWaypoints() {
 	});
 	ctx.stroke();
 
-	viewPoints.forEach((pos, index) => {		
-		ctx.save();
-		ctx.translate(pos.x, pos.y);
-
+	function drawCircles(){
+		//circle outlines
 		ctx.fillStyle = "#292929";
 		ctx.beginPath();
-		ctx.arc(0, 0, 12, 0, 2 * Math.PI, false);
+		for (let i = 0; i < viewPoints.length; i++) {
+			const pos = viewPoints[i];
+			ctx.moveTo(pos.x+OUTLINE_PX, pos.y);
+			ctx.arc(pos.x, pos.y, OUTLINE_PX, 0, 2 * Math.PI, false);
+		};
 		ctx.fill();
 
-		if(index < startIndex && startCheckbox.checked){
+		//circle middle
+		if(startCheckbox.checked)
+		{
 			ctx.fillStyle = active ? "white" : "#827c52";
-		}else{
-			ctx.fillStyle = active ? "white" : "#EBCE00";
+			ctx.beginPath();
+			for (let i = 0; i < startIndex; i++) {
+				const pos = viewPoints[i];
+				ctx.moveTo(pos.x+INNER_PX, pos.y);
+				ctx.arc(pos.x, pos.y, INNER_PX, 0, 2 * Math.PI, false);
+			}
+			ctx.fill();
+
+			ctx.fillStyle = active ? "white" : color;
+			ctx.beginPath();
+			for (let i = startIndex; i < viewPoints.length; i++) {
+				const pos = viewPoints[i];
+				ctx.moveTo(pos.x+INNER_PX, pos.y);
+				ctx.arc(pos.x, pos.y, INNER_PX, 0, 2 * Math.PI, false);
+			}
+			ctx.fill();
+		}
+		else
+		{
+			ctx.fillStyle = active ? "white" : color;
+			ctx.beginPath();
+			for (let i = 0; i < viewPoints.length; i++) {
+				const pos = viewPoints[i];
+				ctx.moveTo(pos.x+INNER_PX, pos.y);
+				ctx.arc(pos.x, pos.y, INNER_PX, 0, 2 * Math.PI, false);
+			}
+			ctx.fill();
+		}
+	}
+
+	function drawRectangles(){
+
+		function traceRect(pos, width, height){
+			const x = pos.x - width/2;
+			const y = pos.y - height/2;
+			ctx.moveTo(x, y);
+			ctx.lineTo(x + width, y);
+			ctx.lineTo(x + width, y + height);
+			ctx.lineTo(x, y + height);
+			ctx.lineTo(x, y);
 		}
 
+		const BORDER_PX = (OUTLINE_PX - INNER_PX) * 2;
+
+		//rect outlines
+		ctx.fillStyle = "#292929";
 		ctx.beginPath();
-		ctx.arc(0, 0, 9, 0, 2 * Math.PI, false);
+		for (let i = 0; i < viewPoints.length; i++) {
+			traceRect(viewPoints[i], INNER_PX*3.5+BORDER_PX, INNER_PX*1.3+BORDER_PX);
+		}
 		ctx.fill();
 
-		ctx.restore();
-	});
+		//rect middle
+		ctx.fillStyle = active ? "white" : color;
+		ctx.beginPath();
+		for (let i = 0; i < viewPoints.length; i++) {
+			traceRect(viewPoints[i], INNER_PX*3.5, INNER_PX*1.3);
+		}
+		ctx.fill();
+	}
 
-	ctx.font = "bold 13px Monospace";
+	if(mode == "Z")
+		drawRectangles();
+	else
+		drawCircles();
+
+	ctx.font = "bold 12px Monospace";
 	ctx.textAlign = "center";
-	ctx.fillStyle = "#212E4A";
+	ctx.fillStyle = "#21252b";
 
+	function formatZ(num) {
+		if(num > 0){
+			if (num >= 10000) return "9999";
+			if (num >= 100) return Math.floor(num).toString();
+			return num.toFixed(1);
+		}
+		const absnum = Math.abs(num);
+		if (absnum >= 10000) return "-9999";
+		if (absnum >= 100) return Math.floor(num).toString();
+		return num.toFixed(1);
+	}
 	viewPoints.forEach((pos, index) => {
-		ctx.fillText(index, pos.x, pos.y+5);
+		if(mode == "Z")
+			ctx.fillText(formatZ(points[index].z)+"m", pos.x, pos.y+5);
+		else
+			ctx.fillText(index, pos.x, pos.y+5);
 	});
 
 	status.setOK();
@@ -333,6 +446,7 @@ let start_stamp = undefined;
 let start_point = undefined;
 let delta = undefined;
 let drag_point = -1;
+let drag_point_z = 0;
 
 function findPoint(newpoint){
 	let i = -1;
@@ -342,11 +456,40 @@ function findPoint(newpoint){
 			screenpoint.x - newpoint.x,
 			screenpoint.y - newpoint.y,
 		)
-		if(dist < 15){
+		if(mode == "XY" && dist < 15){
+			i = index;
+		}else if(mode == "Z" && dist < 20){
 			i = index;
 		}
 	});
 	return i;
+}
+
+function linearToLogScale(value) {
+	value /= 15; //calibrated scale
+
+    // Handle zero as a special case
+    if (value === 0) return 0;
+
+    // Handle sign separately
+    let sign = Math.sign(value);
+    let absValue = Math.abs(value);
+
+    // Special handling for values between 0 and 1
+    if (absValue < 1) {
+        // Map 0-1 to 0-1 in log space
+        return sign * (Math.pow(10, absValue) - 1) / 9;
+    }
+
+    // For values >= 1, proceed with the original logic
+    let linearBlock = Math.floor(absValue / 10);
+    let relativePosition = (absValue % 10) / 10;
+    
+    // Convert to the corresponding logarithmic scale
+    let logValue = Math.pow(10, linearBlock + relativePosition);
+    
+    // Apply the sign back
+    return sign * logValue;
 }
 
 function startDrag(event){
@@ -359,6 +502,7 @@ function startDrag(event){
 	drag_point = findPoint(start_point);
 	if(drag_point >= 0){
 		view.setInputMovementEnabled(false);
+		drag_point_z = points[drag_point].z;
 	}
 
 	start_stamp = new Date();
@@ -372,13 +516,18 @@ function drag(event){
 		clientY = Math.round(clientY/20) * 20;
 	}
 
-	if(drag_point >= 0){
-		points[drag_point] = screenToPoint({
-			x: clientX,
-			y: clientY
-		})
-		drawWaypoints();
-	}
+	if(mode == "XY"){
+		if(drag_point >= 0){
+			const newpos = screenToPoint({
+				x: clientX,
+				y: clientY
+			})
+	
+			points[drag_point].x = newpos.x;
+			points[drag_point].y = newpos.y;
+			drawWaypoints();
+		}
+	} 
 
 	if (start_point === undefined) 
 		return;
@@ -387,6 +536,11 @@ function drag(event){
 		x: start_point.x - clientX,
 		y: start_point.y - clientY,
 	};
+
+	if(mode == "Z" && drag_point >= 0){	
+		points[drag_point].z = drag_point_z + linearToLogScale(delta.y); 
+		drawWaypoints();
+	}
 }
 
 function distancePointToLineSegment(px, py, x1, y1, x2, y2) {
@@ -418,7 +572,7 @@ function endDrag(event){
 		moveDist = Math.hypot(delta.x,delta.y);
 	}
 
-	if(moveDist < 10 && new Date() - start_stamp  < 500){
+	if(moveDist < 10 && new Date() - start_stamp  < 500 && mode == "XY"){
 
 		let { clientX, clientY } = event.touches ? event.touches[0] : event;
 
@@ -434,10 +588,9 @@ function endDrag(event){
 
 		let index = findPoint(newpoint);
 
-		if(index >= 0)
+		if(index >= 0){ // remove point
 			points.splice(index, 1);
-		else
-		{
+		}else{
 			let after = -1;
 			for (let i = 0; i < points.length - 1; i++) {
 				const p0 = pointToScreen(points[i]);
@@ -455,9 +608,9 @@ function endDrag(event){
 				}
 			}
 		
-			if(after > 0){
+			if(after > 0){ // insert new point between two others
 				points.splice(after, 0, screenToPoint(newpoint));
-			}else{
+			}else{ // add point to the end
 				points.push(screenToPoint(newpoint));
 			}
 		}
@@ -507,18 +660,30 @@ function removeListeners(){
 	view_container.removeEventListener('touchend', endDrag);	
 }
 
-function setActive(value){
-	active = value;
+function setMode(newmode){
+	mode = newmode;
 
-	if(active){
-		addListeners();
-		icon.style.backgroundColor = "rgba(255, 255, 255, 1.0)";
-		view_container.style.cursor = "pointer";
-	}else{
-		removeListeners()
-		icon.style.backgroundColor = "rgba(124, 124, 124, 0.3)";
-		view_container.style.cursor = "";
+	switch(mode){
+		case "IDLE":
+			removeListeners()
+			icon.style.backgroundColor = "rgba(124, 124, 124, 0.3)";
+			view_container.style.cursor = "";
+			buttontext.innerText = "";
+			break;
+
+		case "XY":
+			addListeners();
+			icon.style.backgroundColor = "rgba(255, 255, 255, 1.0)";
+			view_container.style.cursor = "pointer";
+			buttontext.innerText = "X,Y";
+			break;
+
+		case "Z":
+			buttontext.innerText = "Z";
+			break;
 	}
+
+	drawWaypoints();
 }
 
 // Shift clamp to axis
@@ -555,6 +720,11 @@ fixedFrameBox.addEventListener("change", (event) => {
 
 baseLinkFrameBox.addEventListener("change", (event) => {
 	base_link_frame = baseLinkFrameBox.value;
+	saveSettings();
+});
+
+margin.addEventListener("input", (event) =>{
+	drawWaypoints();
 	saveSettings();
 });
 
@@ -629,17 +799,19 @@ async function loadTopics(){
 loadTopics();
 
 // Long press modal open stuff
-
 let longPressTimer;
 let isLongPress = false;
 
 icon.addEventListener("click", (event) =>{
 	if(!isLongPress)
-		setActive(!active);
+		if(mode == "IDLE")
+			setMode("XY");
+		else if(mode == "XY")
+			setMode("Z");
+		else
+			setMode("IDLE");
 	else
 		isLongPress = false;
-
-	drawWaypoints();
 });
 
 icon.addEventListener("mousedown", startLongPress);
@@ -670,3 +842,4 @@ function cancelLongPress(event) {
 resizeScreen();
 
 console.log("Waypoints Widget Loaded {uniqueID}")
+
