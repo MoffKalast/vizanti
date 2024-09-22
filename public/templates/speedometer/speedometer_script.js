@@ -95,7 +95,7 @@ function writeText(speed_ms, minspeed_ms, maxspeed_ms){
 		if (num >= 100) return num.toFixed(2);
 		if (num >= 10) return num.toFixed(2);
 		return num.toFixed(3);
-	  }
+	}
 
 	text_spd.innerText = "Speed: " + (speed_ms * mult).toFixed(2) + " " + units;
     text_spd_min.innerText = "Min Speed: " + (minspeed_ms * mult).toFixed(2) + " " + units;
