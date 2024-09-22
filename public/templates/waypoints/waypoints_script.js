@@ -597,7 +597,7 @@ function endDrag(event){
 		if(index >= 0){ // remove point
 			points.splice(index, 1);
 		}else{
-			let after = -1;
+			let before = -1;
 			for (let i = 0; i < points.length - 1; i++) {
 				const p0 = pointToScreen(points[i]);
 				const p1 = pointToScreen(points[i+1]);
@@ -609,15 +609,27 @@ function endDrag(event){
 				);
 
 				if (distance <= 10) {
-					after = i+1;
+					before = i+1;
 					break;
 				}
 			}
 		
-			if(after > 0){ // insert new point between two others
-				points.splice(after, 0, screenToPoint(newpoint));
-			}else{ // add point to the end
-				points.push(screenToPoint(newpoint));
+			if(before > 0){
+				// insert new point between two others
+				const p = screenToPoint(newpoint);
+				const p0 = points[before-1];
+				const p1 = points[before];
+
+				// Calculate the weight as the ratio of distances
+				const distP0P1 = Math.hypot(p1.x - p0.x, p1.y - p0.y);
+				const distP0P = Math.hypot(p.x - p0.x, p.y - p0.y);
+				p.z = p0.z + distP0P / distP0P1 * (p1.z - p0.z);
+				points.splice(before, 0, p);
+			}else{
+				// add point to the end
+				const p = screenToPoint(newpoint);
+				p.z = points[points.length-1].z;
+				points.push(p);
 			}
 		}
 		saveSettings();
