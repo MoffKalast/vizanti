@@ -21,7 +21,7 @@ colcon build
 
 ### Docker
 
-To launch Vizanti hosted in a container, first you need to build the container. This assumes you have docker installed, if not, navigate here [Docker](https://docs.docker.com/engine/install/ubuntu/).
+Alternativelly, you can also containerize Vizanti. For that you need to [install Docker](https://docs.docker.com/engine/install/ubuntu/) and build the container:
 
 Replace `<ros2-verision>` with the version of ROS2 you desire. Tested with jazzy.  
 
@@ -34,7 +34,12 @@ docker build -f docker/Dockerfile -t vizanti:2.0 . --build-arg ROS_VERSION=<ros2
 ## Run
 ```bash
 ros2 launch vizanti_server vizanti_server.launch.py
-```
+```  
+Or with Docker (tested in Linux, not tested on Windows/Mac.):
+```bash
+docker run --rm -it --net=host --name vizanti-ros2 -v /dev/shm:/dev/shm vizanti:2.0
+```  
+
 The web app can be accessed at `http://<host_ip>:5000`. Client settings are automatically saved in localStorage. The satelite imagery renderer also uses the indexedDB to store tiles for offline use (note that this is IP specific). By default the rosbridge instance also occupies port 5001.
 
 If you're using a mobile device connected to a robot's hotspot that doesn't have internet access and can't load the page, turn off mobile data. This will prevent the browser from sending packets to the wrong gateway.
