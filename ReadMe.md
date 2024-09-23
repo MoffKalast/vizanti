@@ -19,6 +19,17 @@ rosdep install -i --from-path src/vizanti -y
 colcon build
 ```
 
+### Docker
+
+To launch Vizanti hosted in a container, first you need to build the container. This assumes you have docker installed, if not, navigate here [Docker](https://docs.docker.com/engine/install/ubuntu/).
+
+Replace `<ros2-verision>` with the version of ROS2 you desire. Tested with jazzy.  
+
+```bash
+git clone -b ros2 https://github.com/MoffKalast/vizanti.git
+cd vizanti
+docker build -f docker/Dockerfile -t vizanti:2.0 . --build-arg ROS_VERSION=<ros2-verision>
+```
 
 ## Run
 ```bash
