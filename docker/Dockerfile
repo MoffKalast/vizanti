@@ -22,8 +22,15 @@ USER $user
 RUN mkdir -p /home/$user/colcon_ws/src
 COPY . /home/$user/colcon_ws/src/vizanti/.
 
-# Note: The binary release of rosbridge does not work correctly. The fixes are in the regular version of software so we need to clone and build it.
-RUN cd /home/$user/colcon_ws/src/ && git clone -b ros2 https://github.com/RobotWebTools/rosbridge_suite.git
+# Note: There are breaking changes in the rosbridge suite for ROS versions. We need to switch based on version.
+RUN if [ "${ROS_DISTRO}" == "humble" ] ; then \
+      cd /home/$user/colcon_ws/src/ \
+      && git clone -b humble https://github.com/RobotWebTools/rosbridge_suite.git ; \
+    else \
+      cd /home/$user/colcon_ws/src/ \
+      && git clone -b ros2 https://github.com/RobotWebTools/rosbridge_suite.git ; \
+    fi
+
 RUN rosdep update
 
 USER root

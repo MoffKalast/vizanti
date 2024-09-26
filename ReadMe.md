@@ -23,12 +23,12 @@ colcon build
 
 Alternativelly, you can also containerize Vizanti. For that you need to [install Docker](https://docs.docker.com/engine/install/ubuntu/) and build the container:
 
-Replace `<ros2-verision>` with the version of ROS2 you desire. Tested with jazzy.  
+Replace `<ros2-version>` with the version of ROS2 you desire. Tested with jazzy.  
 
 ```bash
 git clone -b ros2 https://github.com/MoffKalast/vizanti.git
 cd vizanti
-docker build -f docker/Dockerfile -t vizanti:2.0 . --build-arg ROS_VERSION=<ros2-verision>
+docker build -f docker/Dockerfile -t vizanti:2.0 . --build-arg ROS_VERSION=<ros2-version>
 ```
 
 ## Run
