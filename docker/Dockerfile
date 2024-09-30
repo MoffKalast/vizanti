@@ -2,8 +2,6 @@ ARG ROS_VERSION=jazzy
 
 FROM osrf/ros:${ROS_VERSION}-desktop
 
-ARG USE_RWS=
-
 SHELL ["/bin/bash", "-c"]
 
 # Username
@@ -14,6 +12,8 @@ RUN apt-get update
 
 # Need openssh-client for git to work properly, can be removed when rosbridge has binaries properly updated.
 RUN apt-get install openssh-client -y
+RUN apt-get install ros-$ROS_DISTRO-rmw-fastrtps-dynamic-cpp -y
+RUN apt-get install ros-$ROS_DISTRO-rmw-cyclonedds-cpp -y
 
 # Only add our user if does not exist.
 RUN id -u $user &>/dev/null || useradd -ms /bin/bash $user
@@ -33,29 +33,23 @@ RUN if [ "${ROS_DISTRO}" == "humble" ] ; then \
       && git clone -b ros2 https://github.com/RobotWebTools/rosbridge_suite.git ; \
     fi
 
-RUN echo ${RMW_IMPLEMENTATION}
+# Install the RWS implementation alternative to ROSbridge.
+RUN cd /home/$user/colcon_ws/src/ \
+    && git clone -b $ROS_DISTRO https://github.com/v-kiniv/rws.git ;
 
 RUN rosdep update
 
-RUN if [ "${USE_RWS}" == "true" ] ; then \
-      cd /home/$user/colcon_ws/src/ \
-      && git clone -b $ROS_DISTRO https://github.com/v-kiniv/rws.git ; \
-    fi
-
 USER root
 RUN apt-get update
-RUN cd /home/$user/colcon_ws && rosdep install -i --from-path src/vizanti -y && rosdep install -i --from-path src/rws -y ;
+RUN cd /home/$user/colcon_ws && rosdep install -i --from-path src -y ;
 USER $user
 
 RUN source /opt/ros/${ROS_DISTRO}/setup.bash && cd /home/$user/colcon_ws && colcon build
 
-ENV USE_RWS=$USE_RWS
-#ENV RMW_IMPLEMENTATION=rmw_fastrtps_dynamic_cpp
-
 # Launch the Vizanti with RWS or ROSBridge
 CMD source /home/$user/colcon_ws/install/setup.bash \
     && \
-    if [ "${USE_RWS}" == "true" ] ; then \
+    if [ "${RMW_IMPLEMENTATION}" != "" ] ; then \
       ros2 launch vizanti_server vizanti_rws.launch.py ; \
     else \
       ros2 launch vizanti_server vizanti_server.launch.py ; \
