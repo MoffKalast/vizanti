@@ -72,6 +72,11 @@ Then run the RWS launch instead:
 ros2 launch vizanti_server vizanti_rws.launch.py
 ```
 
+With Docker (tested in Linux, not tested on Windows/Mac.):
+```bash
+docker run --rm -dit --net=host --name vizanti-ros2 -e RMW_IMPLEMENTATION='rmw_fastrtps_dynamic_cpp' -v /dev/shm:/dev/shm vizanti:2.0
+```
+
 ----
 
 ## Contributing
