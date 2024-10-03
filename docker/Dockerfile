@@ -49,7 +49,7 @@ RUN source /opt/ros/${ROS_DISTRO}/setup.bash && cd /home/$user/colcon_ws && colc
 # Launch the Vizanti with RWS or ROSBridge
 CMD source /home/$user/colcon_ws/install/setup.bash \
     && \
-    if [ "${RMW_IMPLEMENTATION}" != "" ] ; then \
+    if [ "${USE_RWS}" == "true" ] ; then \
       ros2 launch vizanti_server vizanti_rws.launch.py ; \
     else \
       ros2 launch vizanti_server vizanti_server.launch.py ; \

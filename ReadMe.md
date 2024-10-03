@@ -40,6 +40,11 @@ Or with Docker (tested in Linux, not tested on Windows/Mac.):
 docker run --rm -it --net=host --name vizanti-ros2 -v /dev/shm:/dev/shm vizanti:2.0
 ```  
 
+If you need the `ROS_DOMAIN_ID`, simply pass it in as below replacing <value>:  
+```bash
+docker run --rm -it --net=host --name vizanti-ros2 -e ROS_DOMAIN_ID=<value> -v /dev/shm:/dev/shm vizanti:2.0
+```  
+
 The web app can be accessed at `http://<host_ip>:5000`. Client settings are automatically saved in localStorage. The satelite imagery renderer also uses the indexedDB to store tiles for offline use (note that this is IP specific). By default the rosbridge instance also occupies port 5001.
 
 If you're using a mobile device connected to a robot's hotspot that doesn't have internet access and can't load the page, turn off mobile data. This will prevent the browser from sending packets to the wrong gateway.
@@ -74,7 +79,7 @@ ros2 launch vizanti_server vizanti_rws.launch.py
 
 With Docker (tested in Linux, not tested on Windows/Mac.):
 ```bash
-docker run --rm -dit --net=host --name vizanti-ros2 -e RMW_IMPLEMENTATION='rmw_fastrtps_dynamic_cpp' -v /dev/shm:/dev/shm vizanti:2.0
+docker run --rm -dit --net=host --name vizanti-ros2 -e RMW_IMPLEMENTATION=rmw_fastrtps_dynamic_cpp -e USE_RWS=true -v /dev/shm:/dev/shm vizanti:2.0
 ```
 
 ----
