@@ -18,16 +18,9 @@ rosdep install -i --from-path src/vizanti -y
 catkin_make
 ```
 
-Or if rosdep fails for some reason, these are the main two deps:
-```
-sudo apt install ros-noetic-rosbridge-suite ros-noetic-move-base-msgs python3-flask
-```
-
-Flask and Jinja2 are used for templating, rosbridge is required for socket communication.
-
 ### Docker
 
-Alternativelly, you can also containerize Vizanti. For that you need to [install Docker](https://docs.docker.com/engine/install/ubuntu/) and build the container:
+Alternatively, you can also containerize Vizanti. For that you need to [install Docker](https://docs.docker.com/engine/install/ubuntu/) and build the container:
 
 ```bash
 git clone https://github.com/MoffKalast/vizanti.git
