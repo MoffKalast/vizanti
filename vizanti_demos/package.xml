@@ -16,6 +16,7 @@
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
   <depend>tf2_msgs</depend>
+  <depend>python3-scipy</depend>
   <depend>geometry_msgs</depend>
   <depend>vizanti_msgs</depend>
   <depend>nav_msgs</depend>
