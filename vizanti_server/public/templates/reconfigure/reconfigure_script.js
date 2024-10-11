@@ -2,6 +2,28 @@ let rosbridgeModule = await import(`${base_url}/js/modules/rosbridge.js`);
 
 let rosbridge = rosbridgeModule.rosbridge;
 
+const PARAM_TYPES = [
+	"NOT_SET",		//0
+	"BOOL",			//1
+	"INTEGER",		//2
+	"DOUBLE",		//3
+	"STRING",		//4
+	"BYTE_ARRAY",	//5
+	"BOOL_ARRAY",	//6
+	"INTEGER_ARRAY",//7
+	"DOUBLE_ARRAY",	//8
+	"STRING_ARRAY"	//9
+]
+
+const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
+const nodeSelector = document.getElementById("{uniqueID}_node");
+const loaderSpinner = document.getElementById("{uniqueID}_loader");
+const paramBox = document.getElementById("{uniqueID}_params");
+const refreshButton = document.getElementById("{uniqueID}_refresh");
+
+let nodeName = "";
+let cached_params = {};
+
 async function getNodeParameters(node) {
 	const getNodeParametersService = new ROSLIB.Service({
 		ros: rosbridge.ros,
@@ -28,15 +50,14 @@ async function setNodeParameter(node, param, newValue) {
 
 	return new Promise((resolve, reject) => {
 		const request = new ROSLIB.ServiceRequest({
-			 node: nodeName+"",
+			 node: node+"",
 			 param: param.toLocaleString('en-US'),
 			 value: newValue.toLocaleString('en-US')
 		});
 		setParamClient.callService(request, (response) => {
-			console.log(`Parameter ${paramName} set to:`, newValue);
 			resolve(response);
 		}, (error) => {
-			console.error(`Failed to call set_parameters service for ${nodeName}:`, error);
+			console.error(`Failed to call set_parameters service for ${node}:`, error);
 			reject(error);
 		});
 	});
@@ -44,31 +65,31 @@ async function setNodeParameter(node, param, newValue) {
 
 
 function createParameterInput(fullname, defaultValue, type, element) {
-	const name = fullname.replace(nodeName+"/","").replaceAll("_","_<wbr>");
+	const name = fullname.split(".").at(-1);
 	const id = "${uniqueID}_"+fullname;
 	const arrowId = `${id}_arrow`;
 	let inputElement;
 
 	switch (type) {
-		case "string":
+		case "STRING":
 			inputElement = `
 				<label for="${id}"><i>string </i> ${name}:</label>
 				<span><input id="${id}" type="text" value="${defaultValue}"><span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span></span>
 				<br>`;
 			break;
-		case "int":
+		case "INTEGER":
 			inputElement = `
 				<label for="${id}"><i>int </i> ${name}:</label>
 				<span><input type="number" value="${defaultValue}" step="1" id="${id}"><span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span></span>
 				<br>`;
 			break;
-		case "float":
+		case "DOUBLE":
 			inputElement = `
 				<label for="${id}"><i>float </i>${name}:</label>
 				<span><input type="number" value="${defaultValue}" step="0.001" id="${id}"><span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span></span>
 				<br>`;
 			break;
-		case "bool":
+		case "BOOL":
 			inputElement = `
 				<label for="${id}"><i>bool </i>${name}:</label>
 				<span><input type="checkbox" id="${id}" ${defaultValue ? "checked" : ""}><span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span></span>
@@ -86,10 +107,10 @@ function createParameterInput(fullname, defaultValue, type, element) {
 			let val;
 
 			switch(type){
-				case "string": val = event.target.value; break;
-				case "int": val = parseInt(event.target.value); break;
-				case "float": val = parseFloat(event.target.value); break;
-				case "bool": val = event.target.checked; break;
+				case "STRING": val = event.target.value; break;
+				case "INTEGER": val = parseInt(event.target.value); break;
+				case "DOUBLE": val = parseFloat(event.target.value); break;
+				case "BOOL": val = event.target.checked; break;
 			}
 			setNodeParameter(nodeName, fullname, val);
 
@@ -107,49 +128,50 @@ function createParameterInput(fullname, defaultValue, type, element) {
 	}, 1);
 }
 
-function detectValueType(value) {
-	if (typeof value == "boolean") {
-		return "bool";
-	}
-
-	//this is incorrectly detecting floats as integers, shelfed for now
-	//if (Number.isInteger(value)) {
-		//return "int";
-	//}
-
-	if (isNaN(value)) {
-		return "string";
-	}
-
-	return "float";
-}
-
-const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
-const nodeSelector = document.getElementById("{uniqueID}_node");
-const loaderSpinner = document.getElementById("{uniqueID}_loader");
-const paramBox = document.getElementById("{uniqueID}_params");
-const refreshButton = document.getElementById("{uniqueID}_refresh");
-
-let nodeName = "";
-let cached_params = {};
-
-function addParams(map, element){
-	for (const [key,value] of Object.entries(map)) {
-		if (typeof value == "object") {
+function addParams(list, element){
+	for (const name of Object.keys(list)) {
+		const entry = list[name];
+		if (Array.isArray(entry)) {
+			const [fullname, value, type_ord] = entry;
+			createParameterInput(fullname, value, PARAM_TYPES[type_ord], element);
+		}else{ 
 			const detailsElement = document.createElement('details');
-			detailsElement.innerHTML = "<summary>"+key+"</summary>";
+			detailsElement.innerHTML = "<summary>"+name+"</summary>";
 			element.appendChild(detailsElement);
-			addParams(value, detailsElement);
-		}else{
-			createParameterInput(key,value,detectValueType(value), element);
+			addParams(entry, detailsElement);
 		}
 	}
 }
 
 async function listParameters(){
+
+	function buildRecursiveDict(list) {
+		const result = {};
+	
+		list.forEach(([name, value, type_ordinal]) => {
+			const parts = name.split('.'); // Split the name by dot as per apparent convention
+			let current = result;
+	
+			for (let i = 0; i < parts.length; i++) {
+				const part = parts[i];
+				if (i === parts.length - 1) {
+					current[part] = [name, value, type_ordinal];
+				} else {
+					if (!current[part]) {
+						current[part] = {};
+					}
+					current = current[part];
+				}
+			}
+		});
+	
+		return result;
+	}
+
 	if(nodeName == ""){
 		return;
 	}
+
 	loaderSpinner.style.display = "block";
 	paramBox.innerHTML = "";
 
@@ -158,9 +180,10 @@ async function listParameters(){
 	}
 	
 	const data = await getNodeParameters(nodeName);
+	const grouped_data = buildRecursiveDict(data);
 	paramBox.innerHTML = "";
-	addParams(data.ros__parameters, paramBox);
-	cached_params[nodeName] = data.ros__parameters;
+	addParams(grouped_data, paramBox);
+	cached_params[nodeName] = grouped_data;
 
 	loaderSpinner.style.display = "none";
 }
