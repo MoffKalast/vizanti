@@ -13,7 +13,6 @@
     <depend>std_msgs</depend>
     <depend>nav_msgs</depend>
     <depend>geometry_msgs</depend>
-    <depend>actionlib_msgs</depend>
 
     <buildtool_depend>ament_cmake</buildtool_depend>
     <buildtool_depend>rosidl_default_generators</buildtool_depend>

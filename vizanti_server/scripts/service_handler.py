@@ -5,7 +5,6 @@ import os
 import fcntl
 import sys
 import rclpy
-import yaml
 import json
 import time
 
@@ -13,6 +12,9 @@ from rclpy.node import Node
 
 from rclpy.executors import  MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
+
+from rqt_reconfigure.param_api import create_param_client
+from rclpy.parameter import Parameter
 
 from std_srvs.srv import Trigger
 from vizanti_msgs.srv import GetNodeParameters, SetNodeParameter
@@ -22,7 +24,7 @@ from vizanti_msgs.srv import ManageNode, ListPackages, ListExecutables
 
 class ServiceHandler(Node):
     def __init__(self, group):
-        super().__init__("vizanti_topic_handler")
+        super().__init__("vizanti_service_handler")
 
         self.proc = None
         self.packages = self.get_packages()
@@ -34,7 +36,6 @@ class ServiceHandler(Node):
         self.save_map_service = self.create_service(SaveMap, 'vizanti/save_map', self.save_map, callback_group=group)
 
         self.record_setup_service = self.create_service(RecordRosbag, 'vizanti/bag/setup', self.recording_setup, callback_group=group)
-
 
         self.kill_service = self.create_service(ManageNode, 'vizanti/node/kill', self.node_kill, callback_group=group)
         self.start_service = self.create_service(ManageNode, 'vizanti/node/start', self.node_start, callback_group=group)
@@ -238,30 +239,59 @@ class ServiceHandler(Node):
 
     def get_node_parameters(self, req, res):
         try:
-            proc = subprocess.Popen("ros2 param dump "+req.node, stdout=subprocess.PIPE, stderr=subprocess. STDOUT, shell=True)
-            node_params = proc.communicate(timeout=5)[0].decode('utf-8')
+            param_client = create_param_client(self, req.node)
+            param_names = param_client.list_parameters()
+            descriptors = param_client.describe_parameters(param_names)
+            #Parameter.Type Enum
+            #  <Type.NOT_SET: 0>,
+            #  <Type.BOOL: 1>,
+            #  <Type.INTEGER: 2>,
+            #  <Type.DOUBLE: 3>,
+            #  <Type.STRING: 4>,
+            #  <Type.BYTE_ARRAY: 5>,
+            #  <Type.BOOL_ARRAY: 6>,
+            #  <Type.INTEGER_ARRAY: 7>,
+            #  <Type.DOUBLE_ARRAY: 8>,
+            #  <Type.STRING_ARRAY: 9>
 
-            if node_params.startswith("failed"):
-                raise Exception
-
-            parsed = yaml.safe_load(node_params)
-            res.parameters = json.dumps(parsed[list(parsed.keys())[0]])
-        except:
-            res.parameters = "{}"
+            parameters = param_client.get_parameters(param_names)
+            param_list = []
+            for param, descriptor in zip(parameters, descriptors):
+                if descriptor.type > 0 and descriptor.type < 5: #TODO add support for the rest if anyone actually uses them
+                    param_list.append([param.name, param.value, descriptor.type])
+            res.parameters = json.dumps(param_list)            
+        except Exception as e:
+            res.parameters = "[]"
+            print(f"Failed to fetch parameters from node: {e}")
         return res
     
     def set_node_parameter(self, req, res):
         try:
-            proc = subprocess.Popen("ros2 param set "+req.node+" "+req.param+" "+req.value, stdout=subprocess.PIPE, stderr=subprocess. STDOUT, shell=True)
-            node_params = proc.communicate(timeout=5)[0].decode('utf-8')
+            param_client = create_param_client(self, req.node)
+            descriptors = param_client.describe_parameters([req.param])
+            param_type = Parameter.Type(descriptors[0].type)
 
-            if node_params.startswith("failed"):
-                raise Exception
+            value = req.value
+            if param_type == Parameter.Type.BOOL:
+                value = bool(value)
+            elif param_type == Parameter.Type.INTEGER:
+                value = int(value)
+            elif param_type == Parameter.Type.DOUBLE:
+                value = float(value)
+            """elif param_type == Parameter.Type.BYTE_ARRAY:
+                value = int(value)
+            elif param_type == Parameter.Type.BOOL_ARRAY:
+                value = int(value)
+            elif param_type == Parameter.Type.DOUBLE_ARRAY:
+                value = int(value)
+            elif param_type == Parameter.Type.STRING_ARRAY:
+                value = int(value)"""
 
+            parameter = Parameter(name=req.param, type_=param_type, value=value)
+            param_client.set_parameters([parameter])
             res.status = "Ok."
-        except:
+        except Exception as e:
             res.status = "Error, could not set param."
-
         return res
 
     def recording_status(self, req, res):
