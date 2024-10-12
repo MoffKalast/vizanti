@@ -16,7 +16,6 @@
     <depend>geometry_msgs</depend>
     <depend>std_msgs</depend>
     <depend>vizanti_msgs</depend>
-    <depend>rqt_reconfigure</depend>
     <depend>python3-flask</depend>
     <depend>rosbridge_suite</depend>
 

@@ -13,7 +13,7 @@ from rclpy.node import Node
 from rclpy.executors import  MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
 
-from rqt_reconfigure.param_api import create_param_client
+from rqt_reconfigure_param_api import create_param_client
 from rclpy.parameter import Parameter
 
 from std_srvs.srv import Trigger
