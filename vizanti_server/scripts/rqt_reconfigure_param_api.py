@@ -40,7 +40,6 @@ from rcl_interfaces.srv import SetParameters
 from rclpy.parameter import Parameter
 from rclpy.qos import qos_profile_parameter_events
 
-
 class AsyncServiceCallFailed(Exception):
 
     def __init__(self, message='asynchronous service call failed', hint=''):
