@@ -11,8 +11,10 @@
 
     <depend>rclpy</depend>
     <depend>rclcpp</depend>
+    <depend>ros2pkg</depend>
     <depend>std_srvs</depend>
     <depend>tf2_msgs</depend>
+    <depend>rcl_interfaces</depend>
     <depend>geometry_msgs</depend>
     <depend>std_msgs</depend>
     <depend>vizanti_msgs</depend>

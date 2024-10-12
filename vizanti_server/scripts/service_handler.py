@@ -14,6 +14,7 @@ from rclpy.node import Node
 from rclpy.executors import  MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
 
+from ros2pkg.api import get_package_names, get_prefix_path
 from rqt_reconfigure_param_api import create_param_client
 from rclpy.parameter import Parameter
 
@@ -28,7 +29,7 @@ class ServiceHandler(Node):
         super().__init__("vizanti_topic_handler")
 
         self.proc = None
-        self.packages = self.get_packages()
+        self.packages = sorted(list(get_package_names()))
 
         self.get_node_parameters_service = self.create_service(GetNodeParameters, 'vizanti/get_node_parameters', self.get_node_parameters, callback_group=group)
         self.set_node_parameter_service = self.create_service(SetNodeParameter, 'vizanti/set_node_parameter', self.set_node_parameter, callback_group=group)
@@ -49,14 +50,6 @@ class ServiceHandler(Node):
         self.list_executables_service = self.create_service(ListExecutables, 'vizanti/list_executables', self.list_executables_callback, callback_group=group)
 
         self.get_logger().info("Service handler ready.")
-    
-    def get_packages(self):
-        # Use aros2pkg to get list of packages
-        process = subprocess.Popen(['ros2', 'pkg', 'list'], stdout=subprocess.PIPE)
-        output, error = process.communicate()
-        # Process output
-        lines = output.decode('utf-8').split('\n')
-        return lines
 
     def list_packages_callback(self, req, res):
         res.packages = self.packages
@@ -77,32 +70,21 @@ class ServiceHandler(Node):
             res.executables = []
             return res
         
-        process = subprocess.Popen(['ros2', 'pkg', 'prefix', req.package], stdout=subprocess.PIPE)
-        output, error = process.communicate()
-        path = output.decode('utf-8').strip()
+        path = get_prefix_path(req.package)
 
-        self.get_logger().info(f"Executables Package: {req.package}")
-        self.get_logger().info(f"Path: {path}")
-
-        libpath = path+"/share/"+req.package
-        launchpath = path+"/lib/"+req.package
         #TODO add path to apt installed packages, I'm not sure where exactly those executables are yet
-        self.get_logger().info(f"libpath: {libpath}")
+        #self.get_logger().info(f"libpath: {libpath}")
 
-        cmd_exec = ["find", libpath] # get list of executables
+        cmd_exec = ["find", path+"/share/"+req.package] # get list of executables
         cmd_exec = cmd_exec + ["-type", "f", "-o", "-type", "l"] # files or symlinks
 
-        cmd_launch = ["find", launchpath]
+        cmd_launch = ["find", path+"/lib/"+req.package]
         cmd_launch = cmd_launch + ["-type", "f", "-o", "-type", "l"]
-        
-        self.get_logger().info(f"cmd_exec: {cmd_exec}")
-        self.get_logger().info(f"cmd_python_and_launch: {cmd_launch}")
-
         process_exec = subprocess.Popen(cmd_exec, stdout=subprocess.PIPE)
         process_launch = subprocess.Popen(cmd_launch, stdout=subprocess.PIPE)
 
-        output_exec, error_exec = process_exec.communicate()
-        output_launch, error_launch = process_launch.communicate()
+        output_exec, _ = process_exec.communicate()
+        output_launch, _ = process_launch.communicate()
 
         # Process output
         lines_exec = self.get_filenames(output_exec.decode('utf-8').split('\n'))
