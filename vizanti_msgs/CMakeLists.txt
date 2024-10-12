@@ -8,7 +8,6 @@ find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
-find_package(actionlib_msgs REQUIRED)
 
 # List of service files
 set(srv_files
@@ -25,7 +24,7 @@ set(srv_files
 # Generate messages / actions /  services
 rosidl_generate_interfaces(${PROJECT_NAME}
   ${srv_files}
-  DEPENDENCIES std_msgs nav_msgs actionlib_msgs geometry_msgs
+  DEPENDENCIES std_msgs nav_msgs geometry_msgs
 )
 
 ament_export_dependencies(rosidl_default_runtime)
