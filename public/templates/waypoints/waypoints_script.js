@@ -42,12 +42,23 @@ stopButton.addEventListener('click', ()=>{
 });
 
 const flipButton = document.getElementById("{uniqueID}_flip");
+const zSetButton = document.getElementById("{uniqueID}_z_set");
 const deleteButton = document.getElementById("{uniqueID}_delete");
 
 flipButton.addEventListener('click', ()=>{
 	points.reverse();
 	drawWaypoints();
 	saveSettings();
+});
+
+zSetButton.addEventListener('click', async ()=>{
+	let zval = await prompt("Set the height of all points to this value:", "0");
+	if (zval != null) {
+		const newz = parseFloat(zval);
+		for (let i = 0; i < points.length; i++) {
+			points[i].z = newz;
+		}
+	}
 });
 
 deleteButton.addEventListener('click', async ()=>{
@@ -73,12 +84,10 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	margin.value = loaded_data.margin ?? 1.0;
 	startCheckbox.checked = loaded_data.start_closest;
 
-	for (let i = 0; i < points.length - 1; i++) {
+	for (let i = 0; i < points.length; i++) {
 		if (points[i].z == null || points[i].z == undefined)
 			points[i].z = 0;
 	}
-
-	console.log(points)
 
 }else{
 	saveSettings();
@@ -902,4 +911,3 @@ function cancelLongPress(event) {
 resizeScreen();
 
 console.log("Waypoints Widget Loaded {uniqueID}")
-

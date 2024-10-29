@@ -23,10 +23,24 @@
 			<option value="base_link">base_link</option>
 		</select>
 
-		<p>Defines a sequence of poses and publishes them as a nav_msgs/Path.</p>
+		<p style="color: #b4b4b4;">Defines a sequence of poses and publishes them as a nav_msgs/Path or geometry_msgs/PoseArray.</p>
 
-		<p style="color:#b4b4b4;">Click the icon once to enable, click on the view area to add points, tap on a point again to delete it, press and drag a point to move it. Long press the icon to open this menu. Hold shift when dragging to snap to pixel grid.</p>
-
+		<p><strong>X/Y Axis:</strong> Click the icon once to edit horizontal positions.</p>
+		<ul>
+			<li><strong style="color:rgb(167, 255, 196)">Add Points:</strong> Click on the view area.</li>
+			<li><strong style="color:rgb(255, 185, 158)">Delete Points:</strong> Tap an existing point.</li>
+			<li><strong style="color:rgb(255, 254, 188)">Move Points:</strong> Drag an existing point to reposition it.</li>
+			<li><strong style="color: white">Snap to Grid:</strong> Hold the Shift key while dragging to snap to the pixel grid.</li>
+		</ul>
+		
+		<p><strong>Z Axis:</strong> Click the icon again to switch to vertical mode.</p>
+		<ul>
+			<li><strong  style="color:rgb(255, 254, 188)">Set Height:</strong> Click and drag a point to set a rough Z value.</li>
+			<li><strong  style="color:rgb(255, 254, 188)">Fine Adjust:</strong> Release and drag a point a second time to fine adjust its height.</li>
+		</ul>
+		
+		<p style="color: #b4b4b4;">Long-press the icon to open this menu.</p>
+		
 		<br>
 
 		<label for="{uniqueID}_margin">Safety margin visual indicator (meters):</label>
@@ -34,28 +48,32 @@
 
 		<br>
 
-		<h4>Edit Path</h4>
-
-		<button id="{uniqueID}_flip" >Flip waypoint order</button>
-
-		<br>
-
-		<button id="{uniqueID}_delete" style="background-color: rgb(104, 78, 31);">Clear path data</button>
-
-		<br>
-
-		<h4>Publish Path</h4>
-
 		<label>Start from closest waypoint:</label>
 		<input type="checkbox" checked id="{uniqueID}_startclosest">
 
 		<br>
 
-		<button id="{uniqueID}_start" >Send it!</button>
+		<h4>Publish Path</h4>
+
+		<br>
+
+		<button id="{uniqueID}_start" style="background-color: rgb(60, 94, 71)">&nbsp;&nbsp;➡&nbsp; Send it! &nbsp;➡&nbsp;&nbsp;</button>
 
 		<br>
 
 		<button id="{uniqueID}_stop" style="background-color: rgb(104, 78, 31);">Stop (publish empty)</button>
+
+		<br>
+
+		<h4>Edit Path</h4>
+
+		<button id="{uniqueID}_flip" >Flip waypoint order</button>
+
+		<button id="{uniqueID}_z_set" >Set all Z values</button>
+
+		<br>
+
+		<button id="{uniqueID}_delete" style="background-color: rgb(104, 78, 31);">Clear path data</button>
 
 		<br>
 
