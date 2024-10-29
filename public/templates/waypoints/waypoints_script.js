@@ -78,6 +78,8 @@ if(settings.hasOwnProperty("{uniqueID}")){
 			points[i].z = 0;
 	}
 
+	console.log(points)
+
 }else{
 	saveSettings();
 }
@@ -287,7 +289,6 @@ function drawWaypoints() {
     ctx.clearRect(0, 0, wid, hei);
 
 	const frame = tf.absoluteTransforms[fixed_frame];
-
 	if(!frame){
 		status.setError("Fixed transform frame not selected or the TF data is missing.");
 		return;
@@ -311,30 +312,68 @@ function drawWaypoints() {
 	else
 		ctx.strokeStyle = color;
 
-	//TODO draw gradients based on Z
-	//let grad = ctx.createLinearGradient(viewPoints[0].x, viewPoints[0].y, viewPoints[viewPoints.length - 1].x, viewPoints[viewPoints.length - 1].y)
-	//let perc = i/(viewPoints.length-2);
-	//grad.addColorStop(perc, "rgba("+perc*255+","+perc*255+","+perc*255+",0.3)");
-	//ctx.strokeStyle = grad;
+	const minZ = Math.min(...points.map(p => p.z));
+	const maxZ = Math.max(...points.map(p => p.z));
 
-	ctx.beginPath();
-	for (let i = 0; i < viewPoints.length; i++) {
-		const pos = viewPoints[i];
+	if(minZ != maxZ)
+	{
+		function scale_color(r,g,b, scale){
+			scale = scale * 0.7 + 0.3;
+			return "rgba("+scale*r+","+scale*g+","+scale*b+",1.0)"
+		}
 
-		if(i == startIndex && startCheckbox.checked){
-			ctx.lineTo(pos.x, pos.y);
-			ctx.stroke();
-			ctx.strokeStyle = color; 
+		for (let i = 0; i < viewPoints.length-1; i++) {
+			const pos = viewPoints[i];
+			const next = viewPoints[i+1];
+
+			const grad = ctx.createLinearGradient(pos.x, pos.y, next.x, next.y)
+			const start_scale = (points[i].z - minZ) / (maxZ - minZ);
+			const end_scale = (points[i+1].z - minZ) / (maxZ - minZ);
+
+			if(mode != "Z"){//yellow		
+				grad.addColorStop(0, scale_color(235, 206, 0, start_scale));
+				grad.addColorStop(1, scale_color(235, 206, 0, end_scale));
+			}else{//blue
+				grad.addColorStop(0, scale_color(171, 203, 255, start_scale));
+				grad.addColorStop(1, scale_color(171, 203, 255, end_scale));
+			}
+
+			if(startCheckbox.checked && i < startIndex){
+				ctx.strokeStyle = "#4a4a4a";
+			}else{
+				ctx.strokeStyle = grad;
+			}
+				
 			ctx.beginPath();
-		}
-
-		if (i === 0) {
 			ctx.moveTo(pos.x, pos.y);
-		} else {
-			ctx.lineTo(pos.x, pos.y);
+			ctx.lineTo(next.x, next.y);
+			ctx.stroke();
 		}
-	};
-	ctx.stroke();
+		
+	}
+	else
+	{
+		ctx.beginPath();
+		for (let i = 0; i < viewPoints.length; i++) {
+			const pos = viewPoints[i];
+	
+			if(i == startIndex && startCheckbox.checked){
+				ctx.lineTo(pos.x, pos.y);
+				ctx.stroke();
+				ctx.strokeStyle = color; 
+				ctx.beginPath();
+			}
+	
+			if (i === 0) {
+				ctx.moveTo(pos.x, pos.y);
+			} else {
+				ctx.lineTo(pos.x, pos.y);
+			}
+		};
+		ctx.stroke();
+	}
+
+
 
 	function drawCircles(){
 		//circle outlines
@@ -628,7 +667,10 @@ function endDrag(event){
 			}else{
 				// add point to the end
 				const p = screenToPoint(newpoint);
-				p.z = points[points.length-1].z;
+
+				if (points.length > 0)
+					p.z = points[points.length-1].z;
+
 				points.push(p);
 			}
 		}
