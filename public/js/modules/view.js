@@ -264,6 +264,12 @@ export class View {
 			this.handleDragEnd(event);
 		});
 
+		view.addEventListener("mouseleave", (event) => {
+			this.touch1 = null;
+			this.touch2 = null;
+			this.handleDragEnd(event);
+		});
+
 		view.addEventListener('wheel', this.handleZoom.bind(this));
 	}
 

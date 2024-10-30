@@ -24,6 +24,7 @@ let mode = "IDLE";
 let points = [];
 let shift_pressed = false;
 
+const icon_bar = document.getElementById("icon_bar");
 const icon = document.getElementById("{uniqueID}_icon");
 const buttontext = document.getElementById("{uniqueID}_buttontext");
 const margin = document.getElementById("{uniqueID}_margin");
@@ -339,6 +340,7 @@ function drawWaypoints() {
 	const minZ = Math.min(...points.map(p => p.z));
 	const maxZ = Math.max(...points.map(p => p.z));
 
+	//draw path gradients
 	if(minZ != maxZ)
 	{
 		function scale_color(x, y, z, scale){
@@ -393,7 +395,7 @@ function drawWaypoints() {
 		}
 		
 	}
-	else
+	else //draw monocolour path
 	{
 		ctx.beginPath();
 		for (let i = 0; i < viewPoints.length; i++) {
@@ -414,8 +416,6 @@ function drawWaypoints() {
 		};
 		ctx.stroke();
 	}
-
-
 
 	function drawCircles(){
 		//circle outlines
@@ -477,6 +477,7 @@ function drawWaypoints() {
 		const BORDER_PX = (OUTLINE_PX - INNER_PX) * 2;
 
 		//rect outlines
+		ctx.lineWidth = 1;
 		ctx.fillStyle = "#292929";
 		ctx.beginPath();
 		for (let i = 0; i < viewPoints.length; i++) {
@@ -491,6 +492,61 @@ function drawWaypoints() {
 			traceRect(viewPoints[i], INNER_PX*3.5, INNER_PX*1.3);
 		}
 		ctx.fill();
+
+		//draw depth scale
+		if(drag_point >= 0){
+			const p = viewPoints[drag_point];
+
+			const grad = ctx.createLinearGradient(p.x-60, p.y, p.x, p.y)
+			grad.addColorStop(0.0, "rgba(0, 0, 0, 0.589)");
+			grad.addColorStop(1.0, "transparent");
+			ctx.fillStyle = grad;
+			ctx.fillRect(p.x-60, icon_bar.offsetHeight, 60, window.innerHeight-icon_bar.offsetHeight)
+
+			ctx.lineWidth = 2;
+			ctx.strokeStyle = "white";
+			ctx.beginPath();
+			for(let i = -200; i < 200; i++){
+				const scaled = linearToLogScale(i*2);
+				const y_pos = p.y+scaled;
+				if(i%5 == 0 && y_pos > icon_bar.offsetHeight){
+					ctx.moveTo(p.x-60, y_pos);
+					ctx.lineTo(p.x-10, y_pos);
+				}
+			}
+			ctx.stroke();
+
+			ctx.lineWidth = 1;
+			ctx.strokeStyle = "lightgray";
+			ctx.beginPath();
+			for(let i = -200; i < 200; i++){
+				const scaled = linearToLogScale(i*2);
+				const y_pos = p.y+scaled;
+				if(i%5 != 0 && y_pos > icon_bar.offsetHeight){
+					ctx.moveTo(p.x-60, y_pos);
+					ctx.lineTo(p.x-30, y_pos);
+				}
+			}
+			ctx.stroke();
+
+			ctx.lineWidth = 5;
+			ctx.strokeStyle = "#446294";
+			ctx.beginPath();
+			ctx.moveTo(p.x-60, icon_bar.offsetHeight);
+			ctx.lineTo(p.x-60, window.innerHeight);
+
+			//up arrow
+			ctx.moveTo(p.x-65, icon_bar.offsetHeight+10);
+			ctx.lineTo(p.x-60, icon_bar.offsetHeight);
+			ctx.lineTo(p.x-55, icon_bar.offsetHeight+10);
+
+			//down arrow
+			ctx.moveTo(p.x-65, window.innerHeight-10);
+			ctx.lineTo(p.x-60, window.innerHeight);
+			ctx.lineTo(p.x-55, window.innerHeight-10);
+			ctx.stroke();
+		}
+		
 	}
 
 	if(mode == "Z")
@@ -568,8 +624,7 @@ function linearToLogScale(value) {
     
     // Convert to the corresponding logarithmic scale
     let logValue = Math.pow(10, linearBlock + relativePosition);
-    
-    // Apply the sign back
+
     return sign * logValue;
 }
 
@@ -619,7 +674,12 @@ function drag(event){
 	};
 
 	if(mode == "Z" && drag_point >= 0){	
-		points[drag_point].z = drag_point_z + linearToLogScale(delta.y); 
+		points[drag_point].z = drag_point_z + linearToLogScale(delta.y * 1.25); 
+
+		if(points[drag_point].z > 9999.99)
+			points[drag_point].z = 9999;
+		else if(points[drag_point].z < -9999.99)
+			points[drag_point].z = -9999;
 
 		if (Math.abs(points[drag_point].z) >= 100)
 			points[drag_point].z = parseInt(points[drag_point].z);

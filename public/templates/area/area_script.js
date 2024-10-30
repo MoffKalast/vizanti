@@ -153,6 +153,13 @@ function resizeScreen(){
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);
 
+view_container.addEventListener("mouseleave", (event) => {
+	start_point = undefined;
+	end_point = undefined;
+	drawBox();
+	setActive(false);
+});
+
 function addListeners(){
 	view_container.addEventListener('mousedown', startDrag);
 	view_container.addEventListener('mousemove', drag);
