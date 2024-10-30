@@ -27,6 +27,7 @@ let shift_pressed = false;
 const icon = document.getElementById("{uniqueID}_icon");
 const buttontext = document.getElementById("{uniqueID}_buttontext");
 const margin = document.getElementById("{uniqueID}_margin");
+const startCheckbox = document.getElementById('{uniqueID}_startclosest');
 const startButton = document.getElementById("{uniqueID}_start");
 const stopButton = document.getElementById("{uniqueID}_stop");
 
@@ -69,8 +70,10 @@ deleteButton.addEventListener('click', async ()=>{
 	}
 });
 
-const startCheckbox = document.getElementById('{uniqueID}_startclosest');
-startCheckbox.addEventListener('change', saveSettings);
+startCheckbox.addEventListener('change', ()=>{
+	drawWaypoints();
+	saveSettings();
+});
 
 // Settings
 
@@ -81,7 +84,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	fixed_frame = loaded_data.fixed_frame;
 	base_link_frame = loaded_data.base_link_frame ?? "base_link";
 
-	margin.value = loaded_data.margin ?? 1.0;
+	margin.value = loaded_data.margin ?? 1.5;
 	startCheckbox.checked = loaded_data.start_closest;
 
 	for (let i = 0; i < points.length; i++) {
@@ -273,13 +276,17 @@ function screenToPoint(click){
 	).translation;
 }
 
-function drawOffsetPath(viewPoints, offset, ctx) {
+function drawOffsetPath(viewPoints, offset, ctx, startIndex) {
 	ctx.lineWidth = offset;
 	ctx.strokeStyle = "rgba(20,20,20,0.35)";
 	ctx.lineCap = "round";
 
 	ctx.beginPath();
 	for (let i = 0; i < viewPoints.length - 1; i++) {
+
+		if(startCheckbox.checked && i < startIndex)
+			continue;
+
         const p1 = viewPoints[i];
         const p2 = viewPoints[i + 1];
 
@@ -290,12 +297,12 @@ function drawOffsetPath(viewPoints, offset, ctx) {
 	ctx.stroke();
 }
 
-const LIGHT_YELLOW = [255, 244, 163];
+const LIGHT_YELLOW = [255, 248, 199];
 const PURE_YELLOW =  [235, 206, 0];
 const DARK_YELLOW = [54, 47, 0];
 
-const LIGHT_BLUE = [217, 231, 255];
-const PURE_BLUE = [120, 171, 255];
+const LIGHT_BLUE = [181, 209, 255];
+const PURE_BLUE = [105, 162, 255];
 const DARK_BLUE = [0, 25, 69];
 
 function drawWaypoints() {
@@ -320,7 +327,7 @@ function drawWaypoints() {
 		pointToScreen(point)
 	);
 
-	drawOffsetPath(viewPoints, margin.value * view.getMapUnitsInPixels(1.0), ctx);
+	drawOffsetPath(viewPoints, margin.value * view.getMapUnitsInPixels(1.0), ctx, startIndex);
 
 	ctx.lineWidth = 3;
 	ctx.fillStyle = active ? "white" : color
@@ -348,8 +355,8 @@ function drawWaypoints() {
 				scale = (scale-0.5)*2;
 				const scaleinv = 1.0 - scale;
 				r = scale*z[0] + scaleinv*r;
-				g = scale*z[0] + scaleinv*g;
-				b = scale*z[0]+ scaleinv*b;
+				g = scale*z[1] + scaleinv*g;
+				b = scale*z[2]+ scaleinv*b;
 			}
 			return `rgba(${r},${g},${b},1.0)`;
 		}
@@ -363,8 +370,6 @@ function drawWaypoints() {
 			const end_scale = (points[i+1].z - minZ) / (maxZ - minZ);
 			const mid_scale = (start_scale + end_scale) * 0.5;
 
-			//console.log(i, "scale", start_scale.toFixed(3), mid_scale.toFixed(3), end_scale.toFixed(3), "pointz", points[i].z, points[i+1].z)
-
 			if(mode != "Z"){
 				grad.addColorStop(0.0, scale_color(DARK_YELLOW, PURE_YELLOW, LIGHT_YELLOW, start_scale));
 				grad.addColorStop(0.5, scale_color(DARK_YELLOW, PURE_YELLOW, LIGHT_YELLOW, mid_scale));
@@ -376,7 +381,7 @@ function drawWaypoints() {
 			}
 
 			if(startCheckbox.checked && i < startIndex){
-				ctx.strokeStyle = "#4a4a4a";
+				ctx.strokeStyle = "#545454";
 			}else{
 				ctx.strokeStyle = grad;
 			}
@@ -735,6 +740,10 @@ window.addEventListener("tf_changed", ()=>{
 	if(fixed_frame != tf.fixed_frame){
 		drawWaypoints();
 	}
+});
+
+view_container.addEventListener("mouseleave", (event) => {
+	endDrag(event);
 });
 
 function addListeners(){
