@@ -290,6 +290,14 @@ function drawOffsetPath(viewPoints, offset, ctx) {
 	ctx.stroke();
 }
 
+const LIGHT_YELLOW = [255, 244, 163];
+const PURE_YELLOW =  [235, 206, 0];
+const DARK_YELLOW = [54, 47, 0];
+
+const LIGHT_BLUE = [217, 231, 255];
+const PURE_BLUE = [120, 171, 255];
+const DARK_BLUE = [0, 25, 69];
+
 function drawWaypoints() {
 
 	const active = mode != "IDLE";
@@ -326,9 +334,24 @@ function drawWaypoints() {
 
 	if(minZ != maxZ)
 	{
-		function scale_color(r,g,b, scale){
-			scale = scale * 0.7 + 0.3;
-			return "rgba("+scale*r+","+scale*g+","+scale*b+",1.0)"
+		function scale_color(x, y, z, scale){
+			let r = y[0];
+			let g = y[1];
+			let b = y[2];
+			if(scale < 0.5){
+				scale = scale*2;
+				const scaleinv = 1.0 - scale;
+				r = scaleinv*x[0] + scale*r;
+				g = scaleinv*x[1] + scale*g;
+				b = scaleinv*x[2] + scale*b;
+			}else if(scale > 0.5){
+				scale = (scale-0.5)*2;
+				const scaleinv = 1.0 - scale;
+				r = scale*z[0] + scaleinv*r;
+				g = scale*z[0] + scaleinv*g;
+				b = scale*z[0]+ scaleinv*b;
+			}
+			return `rgba(${r},${g},${b},1.0)`;
 		}
 
 		for (let i = 0; i < viewPoints.length-1; i++) {
@@ -338,13 +361,18 @@ function drawWaypoints() {
 			const grad = ctx.createLinearGradient(pos.x, pos.y, next.x, next.y)
 			const start_scale = (points[i].z - minZ) / (maxZ - minZ);
 			const end_scale = (points[i+1].z - minZ) / (maxZ - minZ);
+			const mid_scale = (start_scale + end_scale) * 0.5;
 
-			if(mode != "Z"){//yellow		
-				grad.addColorStop(0, scale_color(235, 206, 0, start_scale));
-				grad.addColorStop(1, scale_color(235, 206, 0, end_scale));
+			//console.log(i, "scale", start_scale.toFixed(3), mid_scale.toFixed(3), end_scale.toFixed(3), "pointz", points[i].z, points[i+1].z)
+
+			if(mode != "Z"){
+				grad.addColorStop(0.0, scale_color(DARK_YELLOW, PURE_YELLOW, LIGHT_YELLOW, start_scale));
+				grad.addColorStop(0.5, scale_color(DARK_YELLOW, PURE_YELLOW, LIGHT_YELLOW, mid_scale));
+				grad.addColorStop(1.0, scale_color(DARK_YELLOW, PURE_YELLOW, LIGHT_YELLOW, end_scale));
 			}else{//blue
-				grad.addColorStop(0, scale_color(171, 203, 255, start_scale));
-				grad.addColorStop(1, scale_color(171, 203, 255, end_scale));
+				grad.addColorStop(0.0, scale_color(DARK_BLUE, PURE_BLUE, LIGHT_BLUE, start_scale));
+				grad.addColorStop(0.5, scale_color(DARK_BLUE, PURE_BLUE, LIGHT_BLUE, mid_scale));
+				grad.addColorStop(1.0, scale_color(DARK_BLUE, PURE_BLUE, LIGHT_BLUE, end_scale));
 			}
 
 			if(startCheckbox.checked && i < startIndex){
