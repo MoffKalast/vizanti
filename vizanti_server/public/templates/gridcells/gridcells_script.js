@@ -181,7 +181,7 @@ function connect(){
 	listener = range_topic.subscribe((msg) => {	
 
 		if(msg.cells === undefined || msg.cells.length == 0){
-			status.setWarn("Received empty grid.");
+			status.setWarn("Received empty grid. Oh no! Anyway...");
 			return;
 		}
 

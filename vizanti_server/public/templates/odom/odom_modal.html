@@ -1,0 +1,49 @@
+<div id="{uniqueID}_modal" class="modal_outer noselect">
+	<div class="modal_inner noselect">
+		<h3>Pose Tracker</h3>
+		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
+		<hr>
+
+		<label for="{uniqueID}_topic">Target:</label>
+		<select id="{uniqueID}_topic" name="topic">
+			<!-- add topics here-->
+		</select>
+
+		<br>
+
+		<label for="{uniqueID}_colorpicker">Colour:</label>
+		<input type="color" value="#c43b00" id="{uniqueID}_colorpicker">
+
+		<br>
+
+		<label for="{uniqueID}_history">History (N):</label>
+		<input type="number" value="200" step="1" min="2" max="10000" id="{uniqueID}_history">
+
+		<br>
+
+		<label for="{uniqueID}_throttle">Sample delay (ms):</label>
+		<input type="number" value="500" step="1" min="0" max="10000" id="{uniqueID}_throttle">
+
+		<br>
+		<hr>
+		<br>
+
+		<label>Draw path:</label>
+		<input type="checkbox" checked id="{uniqueID}_draw_path">
+
+		<br>
+
+		<label>Draw arrows:</label>
+		<input type="checkbox" checked id="{uniqueID}_draw_arrows">
+
+		<br>
+
+		<p>Track a TF link or nav_msgs/Odometry data.</p>
+
+		<hr>
+
+		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
+
+		
+	</div>
+</div>
