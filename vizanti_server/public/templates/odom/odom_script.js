@@ -109,9 +109,9 @@ async function drawHistory(){
 
 	function drawArrow(height, tipwidth) {
 		const half = height/2;
-		ctx.moveTo(-half, -tipwidth);          // Left of the triangle's base
-		ctx.lineTo(half, 0);             // Tip of the arrow, pointing down
-		ctx.lineTo(-half, tipwidth);           // Right of the triangle's base
+		ctx.moveTo(-half, -tipwidth); 
+		ctx.lineTo(half, 0);
+		ctx.lineTo(-half, tipwidth);
 	}
 
 	const wid = canvas.width;
@@ -348,5 +348,5 @@ window.addEventListener('orientationchange', resizeScreen);
 
 resizeScreen();
 
-console.log("MarkerArray Widget Loaded {uniqueID}")
+console.log("Odom Pose Tracker Widget Loaded {uniqueID}")
 
