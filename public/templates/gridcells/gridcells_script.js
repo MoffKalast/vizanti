@@ -180,8 +180,9 @@ function connect(){
 	
 	listener = range_topic.subscribe((msg) => {	
 
-		if(msg.cells.length == 0){
-			status.setWarn("Received empty grid.");
+		if(msg.cells === undefined || msg.cells.length == 0){
+			status.setWarn("Received empty grid. Oh no! Anyway...");
+			return;
 		}
 
 		if(msg.cell_width == 0 | msg.cell_height == 0){

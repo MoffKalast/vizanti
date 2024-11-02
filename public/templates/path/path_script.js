@@ -36,12 +36,20 @@ colourpicker.addEventListener("input", (event) =>{
 	drawPath();
 });
 
+const throttle = document.getElementById('{uniqueID}_throttle');
+throttle.addEventListener("input", (event) =>{
+	saveSettings();
+	connect();
+});
+
+
 //Settings
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
 
 	colourpicker.value = loaded_data.color ?? "#54db67";
+	throttle.value = loaded_data.throttle ?? 100;
 }else{
 	saveSettings();
 }
@@ -58,6 +66,7 @@ function saveSettings(){
 	settings["{uniqueID}"] = {
 		topic: topic,
 		color: colourpicker.value,
+		throttle: throttle.value	
 	}
 	settings.save();
 }
@@ -110,8 +119,14 @@ function connect(){
 	path_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
+<<<<<<< HEAD:public/templates/path/path_script.js
 		messageType : 'nav_msgs/Path',
 		compression: "cbor"		
+=======
+		messageType : 'nav_msgs/msg/Path',
+		throttle_rate: parseInt(throttle.value),
+		compression: rosbridge.compression
+>>>>>>> 63d57e0... added odometry/tracking widget, fixed path throttle:vizanti_server/public/templates/path/path_script.js
 	});
 
 	status.setWarn("No data received.");
