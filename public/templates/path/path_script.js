@@ -119,14 +119,9 @@ function connect(){
 	path_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-<<<<<<< HEAD:public/templates/path/path_script.js
 		messageType : 'nav_msgs/Path',
-		compression: "cbor"		
-=======
-		messageType : 'nav_msgs/msg/Path',
-		throttle_rate: parseInt(throttle.value),
-		compression: rosbridge.compression
->>>>>>> 63d57e0... added odometry/tracking widget, fixed path throttle:vizanti_server/public/templates/path/path_script.js
+		compression: "cbor",
+		throttle_rate: parseInt(throttle.value)
 	});
 
 	status.setWarn("No data received.");
