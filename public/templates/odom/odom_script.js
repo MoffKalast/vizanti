@@ -11,7 +11,11 @@ let rosbridge = rosbridgeModule.rosbridge;
 let settings = persistentModule.settings;
 let Status = StatusModule.Status;
 
-let topic = getTopic("{uniqueID}") + " (Odometry)";
+let topic = getTopic("{uniqueID}");
+
+if(topic != "")
+	topic += " (Odometry)";
+
 let status = new Status(
 	document.getElementById("{uniqueID}_icon"),
 	document.getElementById("{uniqueID}_status")
@@ -66,6 +70,11 @@ historypicker.addEventListener("input", (event) =>{
 	}
 
 	drawHistory();
+});
+
+const clearHistoryButton = document.getElementById("{uniqueID}_clearhistory");
+clearHistoryButton.addEventListener('click', ()=>{
+	sample_array = [];
 });
 
 //Settings
