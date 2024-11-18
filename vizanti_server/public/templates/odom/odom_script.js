@@ -337,7 +337,14 @@ window.addEventListener("tf_changed", ()=>{
 	if(mode == "tf"){
 		const now = Date.now();
 		if(now - tf_throttle_stamp >= parseInt(throttle.value)){
-			if(appendPose(tf.absoluteTransforms[raw_target])){
+			const frame = tf.absoluteTransforms[raw_target];
+
+			if(!frame){
+				status.setError("Required transform frame \""+raw_target+"\" not found.");
+				return;
+			}
+
+			if(appendPose(frame)){
 				drawHistory();
 				status.setOK();
 				tf_throttle_stamp = now;
