@@ -21,6 +21,59 @@ async function runRosWTF() {
 	});
 }
 
+//https://docs.ros2.org/foxy/api/lifecycle_msgs/msg/State.html
+const LIFECYCLES = {
+	0: "Unknown",
+	1: "Unconfigured",
+	2: "Inactive",
+	3: "Active",
+	4: "Finalized",
+	10: "Configuring",
+	11: "Cleaning Up",
+	12: "Shutting Down",
+	13: "Activating",
+	14: "Deactivating",
+	15: "Error Processing"
+};
+
+const LIFECYCLE_COLORS = {
+	0: "lightgray", //Unknown
+	1: "#c296d6", //Unconfigured
+	2: "#9995c9", //Inactive
+	3: "#5fd980", //Active
+	4: "#5997ba", //Finalized
+	10: "#f8ff30", //Configuring
+	11: "#ffcf30", //Cleaningup
+	12: "#ffa530", //Shutting Down
+	13: "#7be1e3", //Activating
+	14: "#e67f5a", //Deactivating
+	15: "#cc4747" //Error Processing
+};
+
+let lifecycles = {};
+
+async function getLifecycles() {
+	const getExecutablesService = new ROSLIB.Service({
+		ros: rosbridge.ros,
+		name: "/vizanti/list_lifecycle_nodes",
+		serviceType: "vizanti_msgs/srv/ListLifecycles",
+	});
+
+	return new Promise((resolve, reject) => {
+		getExecutablesService.callService(new ROSLIB.ServiceRequest(), (result) => {
+			const map = {};
+			for(let i = 0; i < result.nodes.length; i++){
+				const name = result.nodes[i];
+				const state = result.states[i];
+				map[name] = state;
+			}
+			resolve(map);
+		}, (error) => {
+			reject(error);
+		});
+	});
+}
+
 async function getExecutables(pkg_name) {
 	const getExecutablesService = new ROSLIB.Service({
 		ros: rosbridge.ros,
@@ -109,6 +162,7 @@ const nodeDiv = document.getElementById('{uniqueID}_nodelist');
 const contextTitle = document.getElementById('{uniqueID}_context_title');
 const killButton = document.getElementById('{uniqueID}_nodekill');
 const infoText = document.getElementById('{uniqueID}_rosnode_info');
+const lifecycleText = document.getElementById('{uniqueID}_rosnode_lifecycle');
 
 let currentNode = "";
 
@@ -122,6 +176,14 @@ killButton.addEventListener('click', async () => {
 });
 
 async function updateNodeList(){
+
+	function renderLifeCycle(element, node){
+		const state = lifecycles[node];
+		element.textContent = "("+LIFECYCLES[state]+")";
+		element.style.color = LIFECYCLE_COLORS[state];
+		element.parentElement.style.borderLeft = "6px solid "+LIFECYCLE_COLORS[state];
+	}
+
 	let result = await rosbridge.get_all_nodes();
 
 	nodeDiv.innerHTML = '';
@@ -135,8 +197,23 @@ async function updateNodeList(){
 	
 		const nodeName = document.createElement('span');
 		nodeName.textContent = node;
+
+		const nodeStatus = document.createElement('span');
+		nodeStatus.style.marginLeft = "15px";
+		nodeStatus.style.marginRight = "15px";
+		nodeStatus.id = "{uniqueID}_nodestatus_"+node;
 	
 		nodeBox.addEventListener('click', async () => {
+
+			if(node in lifecycles){
+				const state = lifecycles[node];
+				lifecycleText.innerText = "Lifecycle status: "+LIFECYCLES[state];
+				lifecycleText.style.color = LIFECYCLE_COLORS[state];
+			}else{
+				lifecycleText.innerText = "Lifecycle status: Not a lifecycle node.";
+				lifecycleText.style.color = "lightgray";
+			}
+
 			infoText.innerText = "Waiting for rosnode info...";
 
 			currentNode = node;
@@ -147,8 +224,19 @@ async function updateNodeList(){
 		});
 	
 		nodeBox.appendChild(nodeName);
+		nodeBox.appendChild(nodeStatus);
 		nodeDiv.appendChild(nodeBox);
+
+		if(node in lifecycles)
+			renderLifeCycle(nodeStatus, node);
+
 	});
+
+	lifecycles = await getLifecycles();
+	for (const [name, state] of Object.entries(lifecycles)) {
+		const element = document.getElementById("{uniqueID}_nodestatus_"+name);
+		renderLifeCycle(element, name);
+	}
 }
 
 // roswtf

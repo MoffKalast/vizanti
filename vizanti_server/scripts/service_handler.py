@@ -13,6 +13,7 @@ from rclpy.node import Node
 from rclpy.executors import  MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
 
+from ros2lifecycle.api import get_node_names
 from ros2pkg.api import get_package_names, get_prefix_path
 from rqt_reconfigure_param_api import create_param_client
 from rclpy.parameter import Parameter
@@ -21,7 +22,10 @@ from std_srvs.srv import Trigger
 from vizanti_msgs.srv import GetNodeParameters, SetNodeParameter
 from vizanti_msgs.srv import LoadMap, SaveMap
 from vizanti_msgs.srv import RecordRosbag
-from vizanti_msgs.srv import ManageNode, ListPackages, ListExecutables
+from vizanti_msgs.srv import ManageNode, ListPackages, ListExecutables, ListLifecycles
+
+from lifecycle_msgs.srv import GetState
+from lifecycle_msgs.msg import State
 
 class ServiceHandler(Node):
     def __init__(self, group):
@@ -41,13 +45,31 @@ class ServiceHandler(Node):
         self.kill_service = self.create_service(ManageNode, 'vizanti/node/kill', self.node_kill, callback_group=group)
         self.start_service = self.create_service(ManageNode, 'vizanti/node/start', self.node_start, callback_group=group)
         self.info_service = self.create_service(ManageNode, 'vizanti/node/info', self.node_info, callback_group=group)
-        self.info_service = self.create_service(Trigger, 'vizanti/roswtf', self.roswtf, callback_group=group)
+        self.wtf_service = self.create_service(Trigger, 'vizanti/roswtf', self.roswtf, callback_group=group)
         self.record_status_service = self.create_service(Trigger, 'vizanti/bag/status', self.recording_status, callback_group=group)
+        self.list_lifecycle_service = self.create_service(ListLifecycles, 'vizanti/list_lifecycle_nodes', self.list_lifecycle_nodes_status, callback_group=group)
 
         self.list_packages_service = self.create_service(ListPackages, 'vizanti/list_packages', self.list_packages_callback, callback_group=group)
         self.list_executables_service = self.create_service(ListExecutables, 'vizanti/list_executables', self.list_executables_callback, callback_group=group)
 
         self.get_logger().info("Service handler ready.")
+
+    def list_lifecycle_nodes_status(self, req, res):
+        node_names = get_node_names(node=self, include_hidden_nodes=True)
+        fullnames = [n.full_name for n in node_names]
+        state_ids = [0] * len(fullnames)
+
+        for i in range(len(fullnames)):
+            try:
+                client = self.create_client(GetState,f'{fullnames[i]}/get_state')
+                response = client.call(GetState.Request())
+                state_ids[i] = response.current_state.id
+            except:
+                pass
+
+        res.nodes = fullnames
+        res.states = state_ids
+        return res
 
     def list_packages_callback(self, req, res):
         res.packages = self.packages

@@ -725,7 +725,12 @@ button:hover{
 
 .node-box {
 	background-color: #282828;
-	border-radius: 15px;
+	border-left: 6px solid gray;
+	border-top-right-radius: 15px;
+	border-bottom-right-radius: 15px;
+	border-top-left-radius: 6px;
+	border-bottom-left-radius: 6px;
+	white-space: nowrap;
 	margin-bottom: 10px;
 	padding-left: 15px;
 	height: 40px;

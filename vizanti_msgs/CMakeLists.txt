@@ -19,6 +19,7 @@ set(srv_files
     "srv/ManageNode.srv"
     "srv/ListPackages.srv"
     "srv/ListExecutables.srv"
+    "srv/ListLifecycles.srv"
 )
 
 # Generate messages / actions /  services
