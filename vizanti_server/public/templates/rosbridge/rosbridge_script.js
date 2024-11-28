@@ -15,6 +15,11 @@ let url = document.getElementById("{uniqueID}_url");
 let compression = document.getElementById("{uniqueID}_compression");
 let icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
 
+let button_reload = document.getElementById("{uniqueID}_reload");
+button_reload.addEventListener("click", (event) => {
+	location.reload(false);
+});
+
 // can't show images about reconnecting without preloading them before we lose connection
 let img_reconnect = await imageToDataURL('assets/rosbridge_reconnect.svg');
 let img_connect = await imageToDataURL('assets/rosbridge_connected.svg');
