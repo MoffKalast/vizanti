@@ -132,7 +132,9 @@ selectAllButton.addEventListener('click', async () => {
 	let result = await rosbridge.get_all_topics();
 
 	result.topics.forEach((topic) => {
-		topic_list.add(topic);
+		if(!topic.includes("/vizanti/tf_consolidated")){
+			topic_list.add(topic);
+		}
 	});
 	
 	updateTopics();
