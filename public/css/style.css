@@ -675,10 +675,8 @@ button:hover{
 	overflow-x: auto;
 	scrollbar-color: #4242426a #99999978;
 	scrollbar-width: thin;
-
-	max-width: 50vw;
-	width: 50vw;
-	min-width: 50vw;
+	white-space: nowrap;
+	width: 100%;
 }
 
 .collapsible:hover{
@@ -687,6 +685,7 @@ button:hover{
 
 .collapsible:after {
 	content: '-';
+	white-space: nowrap;
 	color: #ffffff;
 	font-weight: bold;
 	float: right;
@@ -705,6 +704,8 @@ button:hover{
 	overflow-x: auto;
 	scrollbar-color: #4242426a #99999978;
 	scrollbar-width: thin;
+	padding-top: 15px;
+    margin-top: -5px;
 }
 
 /* Node manager*/
