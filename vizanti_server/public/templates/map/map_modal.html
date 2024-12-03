@@ -12,10 +12,6 @@
 		<p>Display a nav_msgs/OccupancyGrid message that typically represents a 2D map or navigational costmap.</p>
 		<br>
 
-		<label for="{uniqueID}_opacity">Opacity:</label>
-		<span id="{uniqueID}_opacity_value">0.7</span>
-		<input type="range" value="0.7" step="0.05" min="0.1" max="1.0" id="{uniqueID}_opacity">
-
 		<label for="{uniqueID}_colour_scheme">Colour scheme:</label>
 		<select id="{uniqueID}_colour_scheme">
 		  <option value="map">Map</option>
@@ -25,15 +21,27 @@
 
 		<br>
 
-		<label>Use Timestamp:</label>
-		<input type="checkbox" id="{uniqueID}_use_timestamp">	
+		<label for="{uniqueID}_opacity">Opacity:</label>
+		<span id="{uniqueID}_opacity_value">0.7</span>
+		<input type="range" value="0.7" step="0.05" min="0.1" max="1.0" id="{uniqueID}_opacity">
 
-		<p style="color:#b4b4b4;">Rendering maps at their published timestamp has them lag behind when focusing on frames other than the map frame. Rviz uses this trick to compensate. Enable for techincally correct rendering.</p>
+		<br>
 
 		<label for="{uniqueID}_throttle">Socket throttle (ms):</label>
 		<input type="number" value="1000" step="0" min="0" max="10000" id="{uniqueID}_throttle">
 
+		<br>
+
+		<label>Use Timestamp:</label>
+		<input type="checkbox" id="{uniqueID}_use_timestamp">	
+
+		<p class="comment">Rendering maps at their published timestamp causes them to lag behind when focusing on frames other than the map frame. Rviz uses the latest timestamp instead, which this emulates. Enable for techincally correct rendering.</p>
+
+		<br>
+
 		<h4>Management</h4>
+
+		<p class="comment">Relay services for calling map loading and saving nodes.</p>
 
 		<i>💾 map_saver</i>
 		<br>

@@ -143,12 +143,9 @@ function drawTile(screenSize, i, j, tempMeterSize, tempZoomLevel, maxtile){
 
 	const yaw = transformed.rotation.toEuler().h;
 
-	ctx.save();
-	ctx.translate(pos.x, pos.y);
-	ctx.scale(1.0, 1.0);
+	ctx.setTransform(1, 0, 0, 1, pos.x, pos.y);
 	ctx.rotate(-yaw);
 	ctx.drawImage(tileImage, 0, 0, screenSize, screenSize);
-	ctx.restore();
 }
 
 function clamp(val, from, to){
@@ -255,6 +252,9 @@ async function drawTiles(){
 			x += dx;
 			y += dy;
 		}
+
+		//transform reset
+		ctx.setTransform(1, 0, 0, 1, 0, 0);
 
 		ctx.globalAlpha = 0.6;
 		ctx.fillStyle = "#171717";

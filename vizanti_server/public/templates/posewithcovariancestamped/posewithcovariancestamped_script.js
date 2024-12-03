@@ -132,12 +132,10 @@ async function drawMarkers(){
 		const theta = Math.atan2(eigenvalues.eigenvector1[1], eigenvalues.eigenvector1[0]);
 
 		ctx.fillStyle = 'rgba(204, 51, 204, 0.4)';
-		ctx.save();
 		ctx.rotate(theta);
 		ctx.beginPath();
 		ctx.ellipse(0, 0, radiusX, radiusY, 0, 0, 2 * Math.PI);
 		ctx.fill();
-		ctx.restore();
 	}
 
 	function drawAngularCovariance(covariance, size) {
@@ -162,6 +160,7 @@ async function drawMarkers(){
 	const wid = canvas.width;
     const hei = canvas.height;
 
+	ctx.setTransform(1,0,0,1,0,0);
 	ctx.clearRect(0, 0, wid, hei);
 
 	if(!posemsg)
@@ -172,11 +171,10 @@ async function drawMarkers(){
 		const screenpos = view.fixedToScreen(posemsg);
 		const scale = unit*parseFloat(scaleSlider.value);
 
-		ctx.save();
-		ctx.translate(screenpos.x, screenpos.y);
-		ctx.scale(1, -1);
-
+		ctx.setTransform(1,0,0,-1,screenpos.x, screenpos.y); //sx,0,0,sy,px,py
+		
 		drawTranslationalCovariance(posemsg.eigenvalues, unit);
+		ctx.setTransform(1,0,0,-1,screenpos.x, screenpos.y);
 
 		if(!posemsg.rotation_invalid)
 			ctx.rotate(posemsg.yaw);
@@ -187,9 +185,6 @@ async function drawMarkers(){
 		}else{
 			drawCircle(scale*0.4);
 		}
-
-		ctx.restore();
-
 	}
 }
 

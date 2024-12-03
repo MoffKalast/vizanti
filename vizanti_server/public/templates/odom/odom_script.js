@@ -125,6 +125,7 @@ async function drawHistory(){
 
 	const wid = canvas.width;
     const hei = canvas.height;
+	ctx.setTransform(1,0,0,1,0,0); 
 	ctx.clearRect(0, 0, wid, hei);
 
 	if(!drawarrows.checked && !drawpath.checked)
@@ -164,12 +165,9 @@ async function drawHistory(){
 		for (let i = 0; i < view_points.length; i++) {
 			const p = view_points[i];
 			if(i == 0 || Math.hypot(p.x - prev_p.x, p.y - prev_p.y) > 20){
-				ctx.save();
-				ctx.translate(p.x, p.y);
-				ctx.scale(1, -1);
+				ctx.setTransform(1,0,0,-1,p.x, p.y); //sx,0,0,sy,px,py
 				ctx.rotate(p.yaw);
 				drawArrow(15, 5);
-				ctx.restore();				
 				prev_p = p;
 			}
 		}
