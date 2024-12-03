@@ -1,3 +1,12 @@
+@font-face {
+    font-family: 'Ubuntu Mono';
+    src: url('./assets/font/ubuntu.mono.woff2') format('woff2'),
+         url('./assets/font/ubuntu.mono.woff') format('woff'),
+         url('./assets/font/ubuntu.mono.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 html, body {
 	min-height: 100%;
 	margin: 0;
@@ -6,7 +15,7 @@ html, body {
 	color: white;
 	background-color: #273444;
 
-	font-family: Monospace;
+	font-family: 'Ubuntu Mono', Monospace;
 
 	font-size: 1.0rem;
 	text-rendering: optimizeLegibility;
@@ -391,7 +400,7 @@ input[type=color] {
 	outline: 0;
 	color: white;
 	background-color: #424242;
-	font-family: Monospace;
+	font-family: 'Ubuntu Mono', Monospace;
 }
 
 input[type=number] {
@@ -402,7 +411,7 @@ input[type=number] {
 	outline: 0;
 	color: white;
 	background-color: #424242;
-	font-family: Monospace;
+	font-family: 'Ubuntu Mono', Monospace;
 }
 
 input[type=text] {
@@ -411,7 +420,7 @@ input[type=text] {
 	outline: 0;
 	color: white;
 	background-color: #424242;
-	font-family: Monospace;
+	font-family: 'Ubuntu Mono', Monospace;
 }
 
 br {
@@ -525,7 +534,7 @@ select, .datalist_input {
 	outline: 0;
 	color: white;
 	background-color: #424242;
-	font-family: Monospace;
+	font-family: 'Ubuntu Mono', Monospace;
 	margin-top: 5px;
 	margin-bottom: 5px;
 }
@@ -578,7 +587,7 @@ button {
 	border-radius: 6px;
 	border: 3px solid #757575; 
 	border-radius: 2px;
-	font-family: Monospace;
+	font-family: 'Ubuntu Mono', Monospace;
 
 	color: white;
 	background-color: #484848;
