@@ -105,6 +105,8 @@ async function drawLines(origin, relative, absolute){
 
 async function drawText(origin, relative, absolute){
 
+	ctx.lineJoin = 'round';
+	ctx.miterLimit = 2;
 	ctx.font = (12*parseFloat(scaleSlider.value))+"px Monospace";
 	ctx.textAlign = "center";
 	ctx.fillStyle = "white";
