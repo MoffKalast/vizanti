@@ -160,11 +160,13 @@ async function updateTopics(){
 	// Group topics by type
 	let topicsByType = new Map();
 	result.topics.forEach((topic, index) => {
-		const type = result.types[index];
-		if (topicsByType.has(type)) {
-			topicsByType.get(type).push(topic);
-		} else {
-			topicsByType.set(type, [topic]);
+		if(!topic.includes("/vizanti/tf_consolidated")){
+			const type = result.types[index];
+			if (topicsByType.has(type)) {
+				topicsByType.get(type).push(topic);
+			} else {
+				topicsByType.set(type, [topic]);
+			}
 		}
 	});
 
@@ -198,10 +200,13 @@ async function updateTopics(){
 			const label = document.createElement('label');
 			label.textContent = ` ${topic}`;
 
-			const br = document.createElement('br');
+			const span = document.createElement('span');
+			span.style.whiteSpace = "nowrap";
+			span.appendChild(checkbox);
+			span.appendChild(label);
+			div.appendChild(span);
 
-			div.appendChild(checkbox);
-			div.appendChild(label);
+			const br = document.createElement('br');
 			div.appendChild(br);
 
 			if(checkbox.checked)
