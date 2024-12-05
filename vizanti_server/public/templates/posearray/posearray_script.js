@@ -105,6 +105,7 @@ async function drawArrows(){
 	const arrow_tip = parseInt(scale*0.07)+1;
 	const arrow_tipwidth = parseInt(scale*0.07)+1;
 
+	ctx.setTransform(1,0,0,1,0,0);
 	ctx.clearRect(0, 0, wid, hei);
 	ctx.fillStyle = colourpicker.value;
 
@@ -115,14 +116,10 @@ async function drawArrows(){
 			const p = poses[i];
 			const screenpos = view.fixedToScreen(p);
 
-			ctx.save();
-			ctx.translate(screenpos.x, screenpos.y);
-			ctx.scale(1, -1);
+			ctx.setTransform(1,0,0,-1,screenpos.x, screenpos.y); //sx,0,0,sy,px,py
 			ctx.rotate(p.yaw);
 
 			drawArrow(arrow_height, arrow_width, arrow_tip, arrow_tipwidth);
-
-			ctx.restore();
 		}
 
 		ctx.fill();
