@@ -91,15 +91,13 @@ const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
 
 async function drawCells() {
 
+	ctx.setTransform(1,0,0,1,0,0);
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 
 	if(!data){
 		return;
 	}
 
-	const unit = view.getMapUnitsInPixels(1.0);
-
-	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	ctx.globalAlpha = opacitySlider.value;
 	ctx.fillStyle = colourpicker.value;
 
@@ -116,11 +114,10 @@ async function drawCells() {
 
 	const yaw = tf_pose.rotation.toEuler().h;
 
-	ctx.save();
-	ctx.translate(pos.x, pos.y);
-	ctx.scale(1.0, -1.0);
+	ctx.setTransform(1,0,0,-1,pos.x, pos.y); //sx,0,0,sy,px,py
 	ctx.rotate(yaw);
 
+	const unit = view.getMapUnitsInPixels(1.0);
 	const wid = Math.abs(data.msg.cell_width) * unit;
 	const hei = Math.abs(data.msg.cell_height) * unit;
 
@@ -135,7 +132,6 @@ async function drawCells() {
 		ctx.lineTo(x, y);
 	}
 	ctx.fill();
-	ctx.restore();
 }
 
 function resizeScreen(){
@@ -182,11 +178,15 @@ function connect(){
 
 		if(msg.cells === undefined || msg.cells.length == 0){
 			status.setWarn("Received empty grid. Oh no! Anyway...");
+			data = undefined;
+			drawCells();
 			return;
 		}
 
 		if(msg.cell_width == 0 | msg.cell_height == 0){
 			status.setError("Grid cell size must be nonzero, received width="+msg.cell_width+" height="+msg.cell_height+".");
+			data = undefined;
+			drawCells();
 			return;
 		}
 
@@ -201,6 +201,8 @@ function connect(){
 
 		if(!pose){
 			status.setError("Required transform frame \""+msg.header.frame_id+"\" not found.");
+			data = undefined;
+			drawCells();
 			return;
 		}
 

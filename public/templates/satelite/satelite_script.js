@@ -44,8 +44,15 @@ const text_cov = document.getElementById("{uniqueID}_covariance");
 const placeholder = new Image();
 placeholder.src = "assets/tile_loading.png";
 
+function setOpacityText(val){
+	if(val == 0.0)
+		opacityValue.textContent = "0.0 (Tile rendering disabled)";
+	else
+		opacityValue.textContent = val;
+}
+
 opacitySlider.addEventListener('input', function () {
-	opacityValue.textContent = this.value;
+	setOpacityText(this.value);
 	saveSettings();
 });
 
@@ -81,7 +88,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	ignoreRotationCheckbox.checked = loaded_data.ignore_rotation ?? false;
 
 	opacitySlider.value = loaded_data.opacity;
-	opacityValue.innerText = loaded_data.opacity;
+	setOpacityText(loaded_data.opacity);
 }else{
 	saveSettings();
 }
@@ -166,7 +173,7 @@ async function drawTiles(){
 	ctx.globalAlpha = opacitySlider.value;
 	ctx.imageSmoothingEnabled = smoothingCheckbox.checked;
 
-	if(!map_fix){
+	if(!map_fix || opacitySlider.value == 0.0){
 		return;
 	}
 
