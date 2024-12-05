@@ -26,10 +26,26 @@ const selectionbox = document.getElementById("{uniqueID}_topic");
 const click_icon = document.getElementById("{uniqueID}_icon");
 const icon = click_icon.getElementsByTagName('object')[0];
 
+const text_angle = document.getElementById("{uniqueID}_angle_text");
+const text_frame = document.getElementById("{uniqueID}_frame_text");
+const text_angleinc = document.getElementById("{uniqueID}_angleinc_text");
+const text_pointscount = document.getElementById("{uniqueID}_points_text");
+const text_scantime = document.getElementById("{uniqueID}_scan_time_text");
+const text_min = document.getElementById("{uniqueID}_rangemin_text");
+const text_max = document.getElementById("{uniqueID}_rangemax_text");
+
 const opacitySlider = document.getElementById('{uniqueID}_opacity');
 const opacityValue = document.getElementById('{uniqueID}_opacity_value');
+
+function setOpacityText(val){
+	if(val == 0.0)
+		opacityValue.textContent = "0.0 (Scan rendering disabled)";
+	else
+		opacityValue.textContent = val;
+}
+
 opacitySlider.addEventListener('input', () =>  {
-	opacityValue.textContent = opacitySlider.value;
+	setOpacityText(opacitySlider.value);
 	saveSettings();
 	drawScan();
 });
@@ -61,7 +77,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	topic = loaded_data.topic;
 
 	opacitySlider.value = loaded_data.opacity;
-	opacityValue.innerText = loaded_data.opacity;
+	setOpacityText(loaded_data.opacity);
 
 	thicknessSlider.value = loaded_data.thickness;
 	thicknessValue.innerText = loaded_data.thickness;
@@ -97,29 +113,27 @@ const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
 
 async function drawScan() {
 
-	const unit = view.getMapUnitsInPixels(1.0);
-	const pixel = view.getMapUnitsInPixels(thicknessSlider.value);
-
 	const wid = canvas.width;
 	const hei = canvas.height;
 
+	ctx.setTransform(1,0,0,1,0,0);
 	ctx.clearRect(0, 0, wid, hei);
 	ctx.globalAlpha = opacitySlider.value;
 	ctx.fillStyle = colourpicker.value;
 
-	if(data == undefined){
+	if(data == undefined || opacitySlider.value == 0.0){
 		return;
 	}
+
+	const unit = view.getMapUnitsInPixels(1.0);
+	const pixel = view.getMapUnitsInPixels(thicknessSlider.value);
 
 	let pos = view.fixedToScreen({
 		x: data.pose.translation.x,
 		y: data.pose.translation.y,
 	});
 
-	ctx.save();
-	ctx.translate(pos.x, pos.y);
-	ctx.scale(1.0, -1.0);
-
+	ctx.setTransform(1,0,0,-1,pos.x, pos.y); //sx,0,0,sy,px,py
 	const delta = parseInt(pixel/2);
 
 	ctx.beginPath();
@@ -133,8 +147,6 @@ async function drawScan() {
 		ctx.lineTo(x, y);
 	}
 	ctx.fill();
-	
-	ctx.restore();
 }
 
 function resizeScreen(){
@@ -149,6 +161,10 @@ window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);
 
 //Topic
+
+function radToDeg(val){
+	return (val * (180/Math.PI)).toFixed(2)
+}
 
 function connect(){
 
@@ -170,7 +186,14 @@ function connect(){
 	});
 
 	status.setWarn("No data received.");
-	
+	text_angle.innerText = "Angle: ?";
+	text_frame.innerText = "TF Frame: ?";
+	text_angleinc.innerText = "Angle increment: ?";
+	text_pointscount.innerText = "Points: ?";
+	text_scantime.innerText = "Scan time: ?";
+	text_min.innerText = "Min: ?";
+	text_max.innerText = "Max: ?";
+
 	listener = range_topic.subscribe((msg) => {	
 
 		let error = false;
@@ -186,6 +209,14 @@ function connect(){
 			status.setError("Required transform frame \""+msg.header.frame_id+"\" not found.");
 			return;
 		}
+
+		text_angle.innerText = "Angle: "+radToDeg(msg.angle_min)+"°"+" to "+radToDeg(msg.angle_max)+"°";
+		text_angleinc.innerText = "Angle increment: "+radToDeg(msg.angle_increment)+"°";
+		text_frame.innerText = "TF frame: "+msg.header.frame_id;
+		text_pointscount.innerText = "Points: "+msg.ranges.length;
+		text_scantime.innerText = "Scan time: "+msg.scan_time.toFixed(5)+" s";
+		text_min.innerText = "Min: "+msg.range_min.toFixed(2)+" m";
+		text_max.innerText = "Max: "+msg.range_max.toFixed(2)+" m";
 
 		let rotatedPointCloud = [];
 		msg.ranges.forEach(function (item, index) {

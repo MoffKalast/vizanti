@@ -46,8 +46,10 @@ const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('im
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const frameSelector = document.getElementById("{uniqueID}_frame");
 const modeSelector = document.getElementById("{uniqueID}_mode");
-const text_altitude = document.getElementById("{uniqueID}_altitude");
 const stepBox = document.getElementById("{uniqueID}_step");
+
+const text_altitude = document.getElementById("{uniqueID}_altitude_text");
+const text_target = document.getElementById("{uniqueID}_target_text");
 
 const imgpreview = document.getElementById('{uniqueID}_imgpreview');
 
@@ -111,7 +113,6 @@ function connect(){
 	listener = float_topic.subscribe((msg) => {
 		const mode = MODES[modeSelector.value];
 		target = Math.abs(msg.data);
-
 		if(msg.data > 0){
 			if(mode.dir == "depth" && mode.invert)
 				target = NaN;
@@ -126,6 +127,11 @@ function connect(){
 			if(mode.dir == "altitude" && !mode.invert)
 				target = NaN;
 		}
+
+		if(isNaN(target))
+			text_target.innerText = "Target: N/A";
+		else
+			text_target.innerText = "Target: "+target.toFixed(3)+" m";
 		
 		drawWidget();
 	});
@@ -309,6 +315,7 @@ function drawAltitude(){
 	if(!isNaN(target)){
 		const pos = pixelOffset + ((target / step) * -100);
 		drawTarget(flip_offset, flip_mult, pos);
+
 	}
 }
 
@@ -385,6 +392,7 @@ function setFrameList(){
 
 modeSelector.addEventListener("change", (event) => {
 	target = NaN;
+	text_target.innerText = "Target: N/A";
 	saveSettings();
 	refreshStyleSetup();
 	drawWidget();
