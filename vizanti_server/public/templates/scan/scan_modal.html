@@ -11,15 +11,30 @@
 
 		<br>
 
+		<div class="live_data_display">
+			<p id="{uniqueID}_frame_text">TF Frame: ?</p>
+			<p id="{uniqueID}_angle_text">Angle: ?</p>
+			<p id="{uniqueID}_angleinc_text">Angle increment: ?</p>
+			<p id="{uniqueID}_points_text">Points: ?</p>
+			<p id="{uniqueID}_scan_time_text">Scan time: ?</p>
+			<p id="{uniqueID}_rangemin_text">Min: ?</p>
+			<p id="{uniqueID}_rangemax_text">Max: ?</p>
+		</div>
+
+
+		Renders lidar scan points based on sensor_msgs/LaserScan data.
+
+		<br>
+
 		<label for="{uniqueID}_opacity">Opacity:</label>
 		<span id="{uniqueID}_opacity_value">1.0</span>
-		<input type="range" value="1.0" step="0.05" min="0.1" max="1.0" id="{uniqueID}_opacity">
+		<input type="range" value="1.0" step="0.05" min="0.0" max="1.0" id="{uniqueID}_opacity">
 
 		<br>
 
 		<label for="{uniqueID}_thickness">Thickness (m):</label>
 		<span id="{uniqueID}_thickness_value">0.02</span>
-		<input type="range" value="0.02" step="0.01" min="0.01" max="0.2" id="{uniqueID}_thickness">
+		<input type="range" value="0.02" step="0.01" min="0.01" max="0.5" id="{uniqueID}_thickness">
 
 		<br>
 
@@ -33,7 +48,7 @@
 
 		<br>
 
-		<p>Laser scans are typically high bandwidth topics, and as such can easily cause TCP congestion. Lower the socket throttle rate to get faster data updates, but note that other visualizers may stutter.</p>
+		<p class="comment">Laser scans are typically high bandwidth topics, and as such can easily cause TCP congestion. Lower the socket throttle rate to get faster data updates, but note that other visualizers may stutter.</p>
 
 
 		<hr>

@@ -50,6 +50,10 @@ h3 {
 	margin-bottom: 5px;
 }
 
+h4 {
+	margin-top: 1.5em;
+}
+
 /* Icon bar */
 
 object {
@@ -394,6 +398,25 @@ object {
 	height: 3px;
 }
 
+.live_data_display {
+    background: #12181f;
+    color: #ffffff; 
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    font-size: 15px;
+    line-height: 1.6; 
+	border-left: 3px solid gray;
+	margin-bottom: 1rem;
+}
+
+.live_data_display p {
+    margin-left: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
 /* Input box */
 
 input[type=color] {
@@ -402,6 +425,7 @@ input[type=color] {
 	font-size: 1.0rem;
 	border-radius: 4px;
 	outline: 0;
+	height: 24px;
 	color: white;
 	background-color: #424242;
 	font-family: 'Ubuntu Mono', Monospace;
@@ -412,6 +436,7 @@ input[type=number] {
 	min-width: 100px;
 	font-size: 1.0rem;
 	border-radius: 4px;
+	height: 22px;
 	outline: 0;
 	color: white;
 	background-color: #424242;
@@ -421,6 +446,7 @@ input[type=number] {
 input[type=text] {
 	width: 80%;
 	font-size: 1.0rem;
+	height: 22px;
 	outline: 0;
 	color: white;
 	background-color: #424242;
@@ -536,6 +562,7 @@ select, .datalist_input {
 	font-size: 1.0rem;
 	border-radius: 4px;
 	outline: 0;
+	height: 24px;
 	color: white;
 	background-color: #424242;
 	font-family: 'Ubuntu Mono', Monospace;

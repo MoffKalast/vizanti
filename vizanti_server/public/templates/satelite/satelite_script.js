@@ -315,13 +315,13 @@ function connect(){
 		const covariance_meters = Math.hypot(Math.sqrt(cov_mat[0]), Math.sqrt(cov_mat[4]))
 
 		if(msg.latitude != null)
-			text_lat.innerText = "Latitude: " + msg.latitude.toFixed(8);
+			text_lat.innerText = "Latitude: " + msg.latitude.toFixed(8)+"°";
 
 		if(msg.longitude != null)
-			text_lon.innerText = "Longitude: " + msg.longitude.toFixed(8);
+			text_lon.innerText = "Longitude: " + msg.longitude.toFixed(8)+"°";
 
 		if(msg.altitude != null)
-			text_alt.innerText = "Altitude: " + msg.altitude.toFixed(2);
+			text_alt.innerText = "Altitude: " + msg.altitude.toFixed(2)+" m";
 
 		text_cov.innerText = "Ground Covariance: " + covariance_meters.toFixed(2)+ " m " + COVARIANCE_TYPE[msg.position_covariance_type];
 
