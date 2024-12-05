@@ -15,28 +15,30 @@
 		<input type="color" value="#273444" id="{uniqueID}_colorpicker">
 
 
+		<br>
 		<hr>
 
 		<br>
 
-		<button id="{uniqueID}_export_persistent" class="export_button">Export Layout to File</button>
+		<h4>Manage settings</h4>
 
-		<br>
-
-		<button id="{uniqueID}_import_persistent" class="import_button">Import Layout from File</button>
-
-		<br>
-
-		<hr>
+		<span><button id="{uniqueID}_export_persistent" class="export_button">⇑ Export</button><button id="{uniqueID}_import_persistent" class="export_button">⇓ Import</button></span>
+		<p class="comment">
+			Exporting the current configuration will save the current widget layout, settings, camera pose, and other info, so it can be imported later, 
+			or so it can be <a href="https://github.com/MoffKalast/vizanti/wiki/Advanced-Configuration#adding-a-default-config" class="highlight-link">set as a default config</a>.
+		</p>
 
 		<br>
 
 		<button id="{uniqueID}_reset_view">Reset Camera View</button>
+		<p class="comment">Reset only the camera to its default pose (zero relative to the fixed frame link).</p>
 
 		<br>
 
-		<button id="{uniqueID}_delete_persistent" class="delete_button" style="float: left;" >Reset Layout to default</button>
+		<button id="{uniqueID}_delete_persistent" style="border: 3px solid #784b4b; background-color: #4d2626;" style="float: left;" >Reset Layout to default</button>
+		<p class="comment">Clear layout and import server defaults.</p>
 
+		<br>
 		
 	</div>
 </div>

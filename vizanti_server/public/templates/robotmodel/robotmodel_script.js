@@ -68,6 +68,7 @@ async function drawRobot() {
     const wid = canvas.width;
     const hei = canvas.height;
 
+	ctx.setTransform(1,0,0,1,0,0);
     ctx.clearRect(0, 0, wid, hei);
 
 	const robotframe = tf.absoluteTransforms[frame];
@@ -82,13 +83,9 @@ async function drawRobot() {
 		let yaw = robotframe.rotation.toEuler().h;
 
 		let ratio = modelimg.naturalHeight/modelimg.naturalWidth;
-
-		ctx.save();
-		ctx.translate(pos.x, pos.y);
-		ctx.scale(1.0, 1.0);
+		ctx.setTransform(1,0,0,1,pos.x, pos.y); //sx,0,0,sy,px,py
 		ctx.rotate(Math.PI-yaw);
 		ctx.drawImage(modelimg, -unit/2, -(unit*ratio)/2, unit, unit*ratio);
-		ctx.restore();
 		status.setOK();
 	}else{
 		status.setError("Required transform frame \""+frame+"\" not found.");

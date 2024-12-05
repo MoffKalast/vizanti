@@ -151,11 +151,9 @@ async function drawMarkers(){
 		ctx.strokeStyle = "#161B21";
 		ctx.lineWidth = 0.3*size;
 
-		ctx.save();
 		ctx.translate(0, marker.scale.z*size*2.0);
 		ctx.strokeText(marker.text, 0, 0);
 		ctx.fillText(marker.text, 0, 0);
-		ctx.restore();
 	}
 
 	const unit = view.getMapUnitsInPixels(1.0);
@@ -163,6 +161,7 @@ async function drawMarkers(){
 	const wid = canvas.width;
     const hei = canvas.height;
 
+	ctx.setTransform(1,0,0,1,0,0);
 	ctx.clearRect(0, 0, wid, hei);
 
 	let current_time = new Date();
@@ -186,9 +185,7 @@ async function drawMarkers(){
 
 		const yaw = marker.transformed.rotation.toEuler().h;
 
-		ctx.save();
-		ctx.translate(pos.x, pos.y);
-		ctx.scale(1.0, -1.0);
+		ctx.setTransform(1,0,0,-1, pos.x, pos.y); //sx,0,0,sy,px,py
 
 		if(marker.type != 9)
 			ctx.rotate(yaw);
@@ -208,7 +205,6 @@ async function drawMarkers(){
 			case 10: status.setWarn("MESH_RESOURCE markers are not supported yet."); break; //MESH_RESOURCE=10
 			case 11: status.setWarn("TRIANGLE_LIST markers are not supported yet."); break; //TRIANGLE_LIST=11
 		}
-		ctx.restore();
 	}
 }
 

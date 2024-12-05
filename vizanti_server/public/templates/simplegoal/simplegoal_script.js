@@ -101,17 +101,14 @@ function drawArrow() {
     const wid = canvas.width;
     const hei = canvas.height;
 
+	ctx.setTransform(1,0,0,1,0,0);
     ctx.clearRect(0, 0, wid, hei);
 
 	if(delta){
 		let ratio = sprite.naturalHeight/sprite.naturalWidth;
-
-		ctx.save();
-		ctx.translate(start_point.x, start_point.y);
-		ctx.scale(1.0, 1.0);
+		ctx.setTransform(1,0,0,1,start_point.x, start_point.y); //sx,0,0,sy,px,py
 		ctx.rotate(Math.atan2(-delta.y, -delta.x));
 		ctx.drawImage(sprite, -80, -80*ratio, 160, 160*ratio);
-		ctx.restore();
 	}
 }
 

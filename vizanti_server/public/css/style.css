@@ -1,8 +1,8 @@
 @font-face {
     font-family: 'Ubuntu Mono';
-    src: url('./assets/font/ubuntu.mono.woff2') format('woff2'),
-         url('./assets/font/ubuntu.mono.woff') format('woff'),
-         url('./assets/font/ubuntu.mono.ttf') format('truetype');
+    src: url('./font/ubuntu.mono.woff2') format('woff2'),
+         url('./font/ubuntu.mono.woff') format('woff'),
+         url('./font/ubuntu.mono.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
 }
@@ -36,10 +36,14 @@ h1, h2, h3, b, p {
 }
 
 .comment {
-	font-size: 14px;
+	font-size: 15px;
 	margin-top: 0.5em;
 	margin-bottom: 2.0em;
 	color:#b4b4b4;
+}
+
+a {
+	color:rgb(0, 186, 243)
 }
 
 h3 {
@@ -613,6 +617,10 @@ button {
 	color: white;
 	background-color: #484848;
 	margin-bottom: 5px;
+}
+
+.export_button {
+	margin-right: 10px;
 }
 
 .tablinks{
