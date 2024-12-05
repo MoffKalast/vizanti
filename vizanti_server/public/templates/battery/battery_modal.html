@@ -7,18 +7,23 @@
 		<select id="{uniqueID}_topic" name="topic">
 			<!-- add topics here-->
 		</select>
-		<hr>
 
-		<p id="{uniqueID}_pecentage">Percentage: ?</p>
-		<p id="{uniqueID}_voltage">Voltage: ?</p>
-		<p id="{uniqueID}_cell_voltage">Cell Voltages: ?</p>
+		<div class="live_data_display">
+			<p id="{uniqueID}_pecentage">Percentage: ?</p>
+			<p id="{uniqueID}_voltage">Voltage: ?</p>
+			<p id="{uniqueID}_cell_voltage">Cell Voltages: ?</p>
+	
+			<p id="{uniqueID}_current">Current draw: ?</p>
+			<p id="{uniqueID}_charge">Charge: ?</p>
+	
+			<p id="{uniqueID}_status" style="color: lightgray;">Status: ?</p>
+			<p id="{uniqueID}_health" style="color: lightgray;">Health: ?</p>
+			<p id="{uniqueID}_chemistry" style="color: lightgray;">Type: ?</p>
+		</div>
 
-		<p id="{uniqueID}_current">Current draw: ?</p>
-		<p id="{uniqueID}_charge">Charge: ?</p>
+		<p>Read and display battery data from sensor_msgs/BatteryState messages.</p>
 
-		<p id="{uniqueID}_status" style="color: lightgray;">Status: ?</p>
-		<p id="{uniqueID}_health" style="color: lightgray;">Health: ?</p>
-		<p id="{uniqueID}_chemistry" style="color: lightgray;">Type: ?</p>
+		<br>
 
 		<hr>
 
