@@ -19,6 +19,7 @@ find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(tf2_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(opencv2 REQUIRED)
 find_package(vizanti_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
@@ -31,6 +32,7 @@ install(DIRECTORY
 install(PROGRAMS
   scripts/particle_cloud_to_pose_array.py
   scripts/path_to_nav2poses.py
+  scripts/test_occupancy_grid.py
   scripts/test_grid_cells.py
   scripts/test_marker_array.py
   scripts/test_tf.py

@@ -67,6 +67,7 @@ let icons = {};
 icons["map"] = await imageToDataURL("assets/map.svg");
 icons["costmap"] = await imageToDataURL("assets/costmap.svg");
 icons["raw"] = await imageToDataURL("assets/rawmap.svg");
+icons["raw_transparent"] = await imageToDataURL("assets/rawmap_transparent.svg");
 
 let listener = undefined;
 let map_topic = undefined;
@@ -91,6 +92,20 @@ const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('im
 
 const opacitySlider = document.getElementById('{uniqueID}_opacity');
 const opacityValue = document.getElementById('{uniqueID}_opacity_value');
+
+function setOpacityText(val){
+	if(val == 0.0)
+		opacityValue.textContent = "0.0 (Map rendering disabled)";
+	else
+		opacityValue.textContent = val;
+}
+
+opacitySlider.addEventListener('input', () =>  {
+	setOpacityText(opacitySlider.value)
+	saveSettings();
+	drawMap();
+});
+
 
 const loadPathBox = document.getElementById("{uniqueID}_loadpath");
 const loadTopicBox = document.getElementById("{uniqueID}_loadtopic");
@@ -150,11 +165,6 @@ saveButton.addEventListener('click', async () => {
 	}
 });
 
-opacitySlider.addEventListener('input', () =>  {
-	opacityValue.textContent = opacitySlider.value;
-	saveSettings();
-});
-
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
 
@@ -163,7 +173,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	topic = loaded_data.topic;
 
 	opacitySlider.value = loaded_data.opacity;
-	opacityValue.innerText = loaded_data.opacity;
+	setOpacityText(loaded_data.opacity);
 
 	if(loaded_data.costmap_mode !== undefined){
 		colourSchemeBox.selectedIndex = loaded_data.costmap_mode ? 1 : 0;
@@ -197,6 +207,12 @@ async function drawMap(){
 	if(!map_data)
 		return;
 
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	ctx.imageSmoothingEnabled = false;
+
+	if(opacitySlider.value == 0.0)
+		return;
+
 	const map_width = view.getMapUnitsInPixels(
 		temp_canvas.width * map_data.info.resolution
 	);
@@ -222,9 +238,6 @@ async function drawMap(){
 	});
 
 	const yaw = tf_pose.rotation.toEuler().h;
-
-	ctx.clearRect(0, 0, canvas.width, canvas.height);
-	ctx.imageSmoothingEnabled = false;
 
 	ctx.save();
 	ctx.globalAlpha = opacitySlider.value;
