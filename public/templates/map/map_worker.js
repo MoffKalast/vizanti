@@ -74,6 +74,20 @@ self.addEventListener('message', function(event) {
             map_img.data[i * 4 + 3] = color[3]; // A
         }
     }
+    else if(colour_scheme == "raw_transparent")
+    {
+        for (let i = 0; i < data.length; i++) {
+            let val = data[i];
+
+            if(val < 0)
+                val += 256;
+
+            map_img.data[i * 4] = val; // R
+            map_img.data[i * 4 + 1] = val; // G
+            map_img.data[i * 4 + 2] = val; // B
+            map_img.data[i * 4 + 3] = 255-val; // A
+        }
+    }
     else
     {
         for (let i = 0; i < data.length; i++) {
