@@ -27,6 +27,9 @@ self.addEventListener('message', function(event) {
         // Iterate through the data array and set the canvas pixel colors
         for (let i = 0; i < data.length; i++) {
             let occupancyValue = data[i];
+            if(occupancyValue < 0)
+                occupancyValue += 256;
+
             let color = [0, 255, 0, 0]; // Green for illegal positive values
         
             if (occupancyValue === 0) {
@@ -52,6 +55,9 @@ self.addEventListener('message', function(event) {
     {
         for (let i = 0; i < data.length; i++) {
             let occupancyValue = data[i];
+            if(occupancyValue < 0)
+                occupancyValue += 256;
+            
             let color = [255, 255, 255, 255]; // White for clear
             if (occupancyValue >= 0 && occupancyValue <= 100) {
                 let v = 255 - (255 * occupancyValue) / 100;
@@ -74,7 +80,7 @@ self.addEventListener('message', function(event) {
             let val = data[i];
 
             if(val < 0)
-                val = 255;
+                val += 256;
 
             map_img.data[i * 4] = val; // R
             map_img.data[i * 4 + 1] = val; // G
