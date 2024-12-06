@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 
+import os
 import rclpy
-from rclpy.node import Node
 import cv2
 import numpy as np
 
+from rclpy.node import Node
 from nav_msgs.msg import OccupancyGrid
 from std_msgs.msg import Header
 from geometry_msgs.msg import Pose
 from rclpy.qos import QoSProfile, QoSDurabilityPolicy
+
+from ament_index_python.packages import get_package_share_directory
 
 class ImageToOccupancyGrid(Node):
     def __init__(self):
@@ -18,7 +21,7 @@ class ImageToOccupancyGrid(Node):
         self.declare_parameter('image_path', 'assets/test_heightmap.png')
         self.declare_parameter('frame_id', 'world')
         self.declare_parameter('topic_name', '/heightmap')
-        self.declare_parameter('scale', 0.5)
+        self.declare_parameter('scale', 0.1)
 
         image_path = self.get_parameter('image_path').get_parameter_value().string_value
         frame_id = self.get_parameter('frame_id').get_parameter_value().string_value
@@ -26,7 +29,11 @@ class ImageToOccupancyGrid(Node):
         scale = self.get_parameter('scale').get_parameter_value().double_value
 
         self.get_logger().info("Loading image...")
-        image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+
+        absolute_path = os.path.join(get_package_share_directory('vizanti_demos'), image_path)
+
+        print(absolute_path)
+        image = cv2.imread(absolute_path, cv2.IMREAD_GRAYSCALE)
 
         # Flatten the image and convert to occupancy grid data
         data = []
@@ -49,7 +56,7 @@ class ImageToOccupancyGrid(Node):
         grid.data = np.array(data, dtype=np.int8).tolist()
 
         qos_profile = QoSProfile(depth=1)
-        qos_profile.durability = QoSDurabilityPolicy.RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL
+        qos_profile.durability = QoSDurabilityPolicy.TRANSIENT_LOCAL
 
         # Publish the grid
         self.publisher = self.create_publisher(OccupancyGrid, topic_name, qos_profile)
