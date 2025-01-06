@@ -83,13 +83,20 @@ function saveSettings(){
 
 async function drawArrows(){
 
-	function drawArrow(height, width, tip, tipwidth){
+	function drawTriangle(height, width){
 		ctx.moveTo(0, -width);
-		ctx.lineTo(height - tip, -width);
-		ctx.lineTo(height - tip, -tipwidth);
 		ctx.lineTo(height, 0);
-		ctx.lineTo(height - tip, tipwidth);
-		ctx.lineTo(height - tip, width);
+		ctx.lineTo(0, width);
+		ctx.lineTo(0, -width);
+	}
+
+	function drawArrow(height, width, height_to_tip, tipwidth){
+		ctx.moveTo(0, -width);
+		ctx.lineTo(height_to_tip, -width);
+		ctx.lineTo(height_to_tip, -tipwidth);
+		ctx.lineTo(height, 0);
+		ctx.lineTo(height_to_tip, tipwidth);
+		ctx.lineTo(height_to_tip, width);
 		ctx.lineTo(0, width);
 		ctx.lineTo(0, -width);
 	}
@@ -104,6 +111,10 @@ async function drawArrows(){
 	const arrow_width = parseInt(scale*0.01)+1;
 	const arrow_tip = parseInt(scale*0.07)+1;
 	const arrow_tipwidth = parseInt(scale*0.07)+1;
+	const arrow_height_to_tip = arrow_height - arrow_tip;
+
+	const triangle_width = parseInt(scale*0.06)+1;
+	const triangle_height = parseInt(scale*0.3)+1;
 
 	ctx.setTransform(1,0,0,1,0,0);
 	ctx.clearRect(0, 0, wid, hei);
@@ -112,15 +123,29 @@ async function drawArrows(){
 	if(frame === tf.fixed_frame && poses.length > 0){
 		ctx.beginPath();
 
-		for (let i = 0; i < poses.length; i++) {
-			const p = poses[i];
-			const screenpos = view.fixedToScreen(p);
-
-			ctx.setTransform(1,0,0,-1,screenpos.x, screenpos.y); //sx,0,0,sy,px,py
-			ctx.rotate(p.yaw);
-
-			drawArrow(arrow_height, arrow_width, arrow_tip, arrow_tipwidth);
+		if(poses.length < 100){
+			for (let i = 0; i < poses.length; i++) {
+				const p = poses[i];
+				const screenpos = view.fixedToScreen(p);
+	
+				ctx.setTransform(1,0,0,-1,screenpos.x, screenpos.y); //sx,0,0,sy,px,py
+				ctx.rotate(p.yaw);
+	
+				drawArrow(arrow_height, arrow_width, arrow_height_to_tip, arrow_tipwidth);
+			}
+		}else{
+			for (let i = 0; i < poses.length; i++) {
+				const p = poses[i];
+				const screenpos = view.fixedToScreen(p);
+	
+				ctx.setTransform(1,0,0,-1,screenpos.x, screenpos.y); //sx,0,0,sy,px,py
+				ctx.rotate(p.yaw);
+	
+				drawTriangle(triangle_height, triangle_width);
+			}
 		}
+
+
 
 		ctx.fill();
 	}
