@@ -70,7 +70,7 @@ function saveSettings(){
 	settings.save();
 }
 
-function CalculateScale(value) {
+function calculateScale(value) {
     let magnitude = Math.floor(Math.log10(value));
     value /= Math.pow(10, magnitude);
 
@@ -178,7 +178,7 @@ async function drawGrid() {
 	const max_lines = 15;
 
 	if(grid_autoscale)
-		grid_size = CalculateScale(Math.min(width_meters, height_meters)/max_lines);
+		grid_size = calculateScale(Math.min(width_meters, height_meters)/max_lines);
 		
 	const minX = topLeft.x - (topLeft.x % grid_size) - grid_size;
 	const maxX = bottomRight.x + (grid_size - (bottomRight.x % grid_size));
