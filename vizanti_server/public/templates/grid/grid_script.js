@@ -21,7 +21,7 @@ let grid_thickness = 1;
 let grid_colour = "#3e556a";
 let grid_colour_sub = "#294056";
 let grid_autoscale = true;
-let grid_subdivisions = 2;
+let grid_subdivisions = 1;
 
 const colourpicker = document.getElementById("{uniqueID}_colorpicker");
 const colourpicker_sub = document.getElementById("{uniqueID}_colorpicker_sub");
@@ -30,14 +30,15 @@ const linethickness = document.getElementById("{uniqueID}_thickness");
 const subdivisions = document.getElementById("{uniqueID}_subdivisions");
 const gridstep = document.getElementById("{uniqueID}_step");
 
+
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	grid_size = loaded_data.size;
 	grid_thickness = loaded_data.thickness;
 	grid_colour = loaded_data.colour;
-	grid_colour_sub = loaded_data.colour_sub;
-	grid_autoscale = loaded_data.autoscale;
-	grid_subdivisions = loaded_data.subdivisions;
+	grid_colour_sub = loaded_data.colour_sub ?? "#294056"; //for legacy config compatibility
+	grid_autoscale = loaded_data.autoscale ?? false; 
+	grid_subdivisions = loaded_data.subdivisions ?? 0;
 }else{
 	saveSettings();
 }
@@ -117,7 +118,10 @@ function drawScreenLine(start_x, start_y, end_x, end_y, color, line_width) {
 function drawGridLines(minX, minY, maxX, maxY, grid_size, subdivisions) {
 	let subdivision_size = grid_size/subdivisions;
 
-	// Draw vertical subdivision lines
+	//render subdivisions at half opacity for more visual consistency over a range of backgrounds
+	ctx.globalAlpha = 0.5;
+
+	// Draw subdivision lines
     for (let x = minX; x <= maxX; x += grid_size) {
 		for (let sub_x = 1; sub_x < subdivisions; sub_x += 1) {
 			let cur_sub_x = sub_x*subdivision_size + x;
@@ -125,40 +129,46 @@ function drawGridLines(minX, minY, maxX, maxY, grid_size, subdivisions) {
 		}
     }
 
-    // Draw horizontal lines
     for (let y = minY; y <= maxY; y += grid_size) {
-		drawFixedLine(minX, y, maxX, y, grid_colour, grid_thickness);
-
-		// draw subdivisions
 		for (let sub_y = 1; sub_y < subdivisions; sub_y += 1) {
 			let cur_sub_y = sub_y*subdivision_size + y;
 			drawFixedLine(minX, cur_sub_y, maxX, cur_sub_y, grid_colour_sub, 1);
 		}
     }
 
-	// Draw main vertical lines so they are above subdivisions
+	ctx.globalAlpha = 1.0;
+
+	// Draw main lines so they are above subdivisions
 	for (let x = minX; x <= maxX; x += grid_size) {
 		drawFixedLine(x, minY, x, maxY, grid_colour, grid_thickness);
+	}
+
+	for (let y = minY; y <= maxY; y += grid_size) {
+		drawFixedLine(minX, y, maxX, y, grid_colour, grid_thickness);
 	}
 }
 
 function drawGridScale(grid_size, wid, hei) {
-	// Draw scale info in bottom right corner
-	let scale_to = view.screenToFixed({ x: wid-100, y: hei-40 });
-	let xscale_start = view.fixedToScreen({x: scale_to.x-grid_size, y: 0}).x;
-	drawScreenLine(xscale_start, parseInt(hei-40), parseInt(wid-100), parseInt(hei-40), "#7990A6", 2);
-	drawScreenLine(xscale_start, parseInt(hei-35), xscale_start, parseInt(hei-45), "#7990A6", 2);
-	drawScreenLine(parseInt(wid-100), parseInt(hei-35), parseInt(wid-100), parseInt(hei-45), "#7990A6", 2);
 
-	let line_length = parseInt(wid-100) - xscale_start;
+	const xoffset = canvas.width < canvas.height? 40 : 100; //compact on vertical/mobile
+	const yoffset = 40;
+
+	// Draw scale info in bottom right corner
+	let scale_to = view.screenToFixed({ x: wid-xoffset, y: hei-yoffset });
+	let xscale_start = view.fixedToScreen({x: scale_to.x-grid_size, y: 0}).x;
+	drawScreenLine(xscale_start, parseInt(hei-yoffset), parseInt(wid-xoffset), parseInt(hei-yoffset), grid_colour, 2);
+	drawScreenLine(xscale_start, parseInt(hei-yoffset-5), xscale_start, parseInt(hei-yoffset+5), grid_colour, 2);
+	drawScreenLine(parseInt(wid-xoffset), parseInt(hei-yoffset-5), parseInt(wid-xoffset), parseInt(hei-yoffset+5), grid_colour, 2);
+
+	let line_length = parseInt(wid-xoffset) - xscale_start;
 
 	let scale_text = String(grid_size) + ' m';
 	if(grid_size > 1000)
 		scale_text = String(grid_size/1000) + ' km';
 
-	ctx.font = "16px Sans-serif";
+	ctx.font = "16px Monospace";
 	ctx.textAlign = "center";
-	ctx.fillStyle = "#698096";
+	ctx.fillStyle = grid_colour;
 	ctx.fillText(scale_text, parseInt(xscale_start + line_length/2), parseInt(hei-23));
 }
 
@@ -189,8 +199,8 @@ async function drawGrid() {
 	ctx.clearRect(0, 0, wid, hei);
 
 	if(!grid_autoscale) {
-		const linesX = (maxX-minX)/(grid_size/grid_subdivisions);
-		const linesY = (maxY-minY)/(grid_size/grid_subdivisions);
+		const linesX = (maxX-minX)/(grid_size/(grid_subdivisions+1));
+		const linesY = (maxY-minY)/(grid_size/(grid_subdivisions+1));
 	
 		if(linesX > 200 || linesY > 200){
 			ctx.clearRect(0, 0, wid, hei);
@@ -199,7 +209,7 @@ async function drawGrid() {
 		}
 	}
 
-    drawGridLines(minX, minY, maxX, maxY, grid_size, grid_subdivisions);
+    drawGridLines(minX, minY, maxX, maxY, grid_size, grid_subdivisions+1);
 
 	if(grid_autoscale) {
 		drawGridScale(grid_size, wid, hei);
@@ -269,13 +279,14 @@ autoscale.addEventListener("input", (event) =>{
 	else if(isNaN(gridstep.value))
 		grid_size = 1.0;
 	else
-		grid_size = parseFloat(gridstep.value);	
+		grid_size = parseFloat(gridstep.value);
+	
 	drawGrid();
 	saveSettings();
 });
 
 subdivisions.addEventListener("input", (event) =>{
-	grid_subdivisions = subdivisions.value;
+	grid_subdivisions = parseInt(subdivisions.value);
 	drawGrid();
 	saveSettings();
 });
