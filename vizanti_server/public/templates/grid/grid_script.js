@@ -89,7 +89,7 @@ function calculateScale(value) {
     return value;
 }
 
-function drawFixedLine(start_x, start_y, end_x, end_y, color, line_width) {
+/* function drawFixedLine(start_x, start_y, end_x, end_y, color, line_width) {
 	ctx.beginPath();
 	ctx.strokeStyle = color;
 	ctx.lineWidth = line_width;
@@ -101,7 +101,7 @@ function drawFixedLine(start_x, start_y, end_x, end_y, color, line_width) {
     ctx.lineTo(parseInt(to.x), parseInt(to.y));
 
 	ctx.stroke();
-}
+} */
 
 function drawScreenLine(start_x, start_y, end_x, end_y, color, line_width) {
 	ctx.beginPath();
@@ -115,36 +115,90 @@ function drawScreenLine(start_x, start_y, end_x, end_y, color, line_width) {
 }
 
 function drawGridLines(minX, minY, maxX, maxY, grid_size, subdivisions) {
-	const subdivision_size = grid_size/subdivisions;
-
-	//render subdivisions at half opacity for more visual consistency over a range of backgrounds
-	ctx.globalAlpha = 0.65;
-
-	// Draw subdivision lines
+    const subdivision_size = grid_size/subdivisions;
+    
+    // First, calculate screen positions of all grid intersections we'll need
+    // This avoids recalculating the same points multiple times, fixedToScreen is kinda expensive
+    const xPositions = new Map();
+    const yPositions = new Map();
+    
+    // Calculate main grid positions
     for (let x = minX; x <= maxX; x += grid_size) {
-		for (let sub_x = 1; sub_x < subdivisions; sub_x += 1) {
-			let cur_sub_x = sub_x*subdivision_size + x;
-			drawFixedLine(cur_sub_x, minY, cur_sub_x, maxY, grid_colour_sub, 1);
-		}
+        const screenPos = view.fixedToScreen({x: x, y: 0}).x;
+        xPositions.set(x, parseInt(screenPos));
     }
-
+    
     for (let y = minY; y <= maxY; y += grid_size) {
-		for (let sub_y = 1; sub_y < subdivisions; sub_y += 1) {
-			let cur_sub_y = sub_y*subdivision_size + y;
-			drawFixedLine(minX, cur_sub_y, maxX, cur_sub_y, grid_colour_sub, 1);
-		}
+        const screenPos = view.fixedToScreen({x: 0, y: y}).y;
+        yPositions.set(y, parseInt(screenPos));
+    }
+    
+    // Calculate subdivision positions
+    for (let x = minX; x <= maxX; x += grid_size) {
+        for (let sub_x = 1; sub_x < subdivisions; sub_x++) {
+            const cur_sub_x = x + sub_x * subdivision_size;
+            const screenPos = view.fixedToScreen({x: cur_sub_x, y: 0}).x;
+            xPositions.set(cur_sub_x, parseInt(screenPos));
+        }
+    }
+    
+    for (let y = minY; y <= maxY; y += grid_size) {
+        for (let sub_y = 1; sub_y < subdivisions; sub_y++) {
+            const cur_sub_y = y + sub_y * subdivision_size;
+            const screenPos = view.fixedToScreen({x: 0, y: cur_sub_y}).y;
+            yPositions.set(cur_sub_y, parseInt(screenPos));
+        }
+    }
+    
+    // Draw subdivision lines
+    ctx.beginPath();
+    ctx.globalAlpha = 0.65;
+    ctx.strokeStyle = grid_colour_sub;
+    ctx.lineWidth = 1;
+
+    // Vertical subdivisions
+    for (let x = minX; x <= maxX; x += grid_size) {
+        for (let sub_x = 1; sub_x < subdivisions; sub_x++) {
+            const cur_sub_x = x + sub_x * subdivision_size;
+            const screenX = xPositions.get(cur_sub_x);
+            ctx.moveTo(screenX, 0);
+            ctx.lineTo(screenX, canvas.height);
+        }
     }
 
-	ctx.globalAlpha = 1.0;
+    // Horizontal subdivisions
+    for (let y = minY; y <= maxY; y += grid_size) {
+        for (let sub_y = 1; sub_y < subdivisions; sub_y++) {
+            const cur_sub_y = y + sub_y * subdivision_size;
+            const screenY = yPositions.get(cur_sub_y);
+            ctx.moveTo(0, screenY);
+            ctx.lineTo(canvas.width, screenY);
+        }
+    }
+    
+    ctx.stroke();
 
-	// Draw main lines so they are above subdivisions
-	for (let x = minX; x <= maxX; x += grid_size) {
-		drawFixedLine(x, minY, x, maxY, grid_colour, grid_thickness);
-	}
+    // Draw main grid lines
+    ctx.beginPath();
+    ctx.globalAlpha = 1.0;
+    ctx.strokeStyle = grid_colour;
+    ctx.lineWidth = grid_thickness;
 
-	for (let y = minY; y <= maxY; y += grid_size) {
-		drawFixedLine(minX, y, maxX, y, grid_colour, grid_thickness);
-	}
+    // Vertical main lines
+    for (let x = minX; x <= maxX; x += grid_size) {
+        const screenX = xPositions.get(x);
+        ctx.moveTo(screenX, 0);
+        ctx.lineTo(screenX, canvas.height);
+    }
+
+    // Horizontal main lines
+    for (let y = minY; y <= maxY; y += grid_size) {
+        const screenY = yPositions.get(y);
+        ctx.moveTo(0, screenY);
+        ctx.lineTo(canvas.width, screenY);
+    }
+
+    ctx.stroke();
 }
 
 function drawGridScale(grid_size, wid, hei) {
@@ -199,18 +253,28 @@ async function drawGrid() {
 	
 	ctx.clearRect(0, 0, wid, hei);
 
-	if(!grid_autoscale) {
-		const linesX = (maxX-minX)/(grid_size/(grid_subdivisions+1));
-		const linesY = (maxY-minY)/(grid_size/(grid_subdivisions+1));
+	let temp_subdivisions = grid_subdivisions;
+
+	if (!grid_autoscale) {
+		let linesX = (maxX - minX) / (grid_size / (temp_subdivisions + 1));
+		let linesY = (maxY - minY) / (grid_size / (temp_subdivisions + 1));
+		
+		// While we have too many lines and can still reduce subdivisions
+		while ((linesX > 300 || linesY > 300) && temp_subdivisions > 0) {
+			temp_subdivisions--;
+			linesX = (maxX - minX) / (grid_size / (temp_subdivisions + 1));
+			linesY = (maxY - minY) / (grid_size / (temp_subdivisions + 1));
+		}
 	
-		if(linesX > 200 || linesY > 200){
+		// If we still have too many lines even with no subdivisions
+		if (linesX > 300 || linesY > 300) {
 			ctx.clearRect(0, 0, wid, hei);
-			status.setWarn("Too many lines to render, increase step size.");
+			status.setWarn("Too many lines to render, increase step size");
 			return;
 		}
 	}
 
-    drawGridLines(minX, minY, maxX, maxY, grid_size, grid_subdivisions+1);
+    drawGridLines(minX, minY, maxX, maxY, grid_size, temp_subdivisions+1);
 
 	if(grid_autoscale) {
 		drawGridScale(grid_size, wid, hei);
