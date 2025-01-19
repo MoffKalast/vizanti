@@ -72,17 +72,17 @@ function saveSettings(){
 }
 
 function calculateScale(value) {
-    let magnitude = Math.floor(Math.log10(value));
+    const magnitude = Math.floor(Math.log10(value));
     value /= Math.pow(10, magnitude);
 
     if (value < 1.5) {
-        value = 1.0;
-    } else if (value < 3.5) {
         value = 2.0;
-    } else if (value < 7.5) {
+    } else if (value < 3.5) {
         value = 5.0;
-    } else {
+    } else if (value < 7.5) {
         value = 10.0;
+    } else {
+        value = 20.0;
     }
 
     value *= Math.pow(10, magnitude);
@@ -114,12 +114,11 @@ function drawScreenLine(start_x, start_y, end_x, end_y, color, line_width) {
 	ctx.stroke();
 }
 
-
 function drawGridLines(minX, minY, maxX, maxY, grid_size, subdivisions) {
-	let subdivision_size = grid_size/subdivisions;
+	const subdivision_size = grid_size/subdivisions;
 
 	//render subdivisions at half opacity for more visual consistency over a range of backgrounds
-	ctx.globalAlpha = 0.5;
+	ctx.globalAlpha = 0.65;
 
 	// Draw subdivision lines
     for (let x = minX; x <= maxX; x += grid_size) {
@@ -154,17 +153,19 @@ function drawGridScale(grid_size, wid, hei) {
 	const yoffset = 40;
 
 	// Draw scale info in bottom right corner
-	let scale_to = view.screenToFixed({ x: wid-xoffset, y: hei-yoffset });
-	let xscale_start = view.fixedToScreen({x: scale_to.x-grid_size, y: 0}).x;
+	const scale_to = view.screenToFixed({ x: wid-xoffset, y: hei-yoffset });
+	const xscale_start = view.fixedToScreen({x: scale_to.x-grid_size, y: 0}).x;
 	drawScreenLine(xscale_start, parseInt(hei-yoffset), parseInt(wid-xoffset), parseInt(hei-yoffset), grid_colour, 2);
 	drawScreenLine(xscale_start, parseInt(hei-yoffset-5), xscale_start, parseInt(hei-yoffset+5), grid_colour, 2);
 	drawScreenLine(parseInt(wid-xoffset), parseInt(hei-yoffset-5), parseInt(wid-xoffset), parseInt(hei-yoffset+5), grid_colour, 2);
 
-	let line_length = parseInt(wid-xoffset) - xscale_start;
+	const line_length = parseInt(wid-xoffset) - xscale_start;
 
 	let scale_text = String(grid_size) + ' m';
-	if(grid_size > 1000)
+	if(grid_size >= 1000)
 		scale_text = String(grid_size/1000) + ' km';
+	else if(grid_size < 1)
+		scale_text = String(grid_size*100) + ' cm';
 
 	ctx.font = "16px Monospace";
 	ctx.textAlign = "center";
