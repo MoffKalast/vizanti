@@ -20,7 +20,7 @@ let grid_size = 1.0;
 let grid_thickness = 1;
 let grid_colour = "#3e556a";
 let grid_colour_sub = "#294056";
-let grid_autoscale = 'Off';
+let grid_autoscale = 'Coarse';
 let grid_subdivisions = 1;
 
 const colourpicker = document.getElementById("{uniqueID}_colorpicker");
@@ -240,15 +240,15 @@ async function drawGrid() {
 	const width_meters = Math.abs(bottomRight.x - topLeft.x);
 	const height_meters = Math.abs(bottomRight.y - topLeft.y);
 
-	if(grid_autoscale != 'Off'){
-		if(grid_autoscale === 'Fine')
-			grid_size = calculateScale(Math.min(width_meters, height_meters)/21);
-		else if(grid_autoscale === 'Medium')
-			grid_size = calculateScale(Math.min(width_meters, height_meters)/14);
-		else //Coarse or invalid
-			grid_size = calculateScale(Math.min(width_meters, height_meters)/7);
-	}
-		
+	if(grid_autoscale === 'Very Fine')
+		grid_size = calculateScale(Math.min(width_meters, height_meters)/21);
+	else if(grid_autoscale === 'Fine')
+		grid_size = calculateScale(Math.min(width_meters, height_meters)/14);
+	else if(grid_autoscale === 'Coarse')
+		grid_size = calculateScale(Math.min(width_meters, height_meters)/7);
+	else if(grid_autoscale === 'Rough')
+		grid_size = calculateScale(Math.min(width_meters, height_meters)/3);
+	
 	const minX = topLeft.x - (topLeft.x % grid_size) - grid_size;
 	const maxX = bottomRight.x + (grid_size - (bottomRight.x % grid_size));
 	
@@ -278,7 +278,7 @@ async function drawGrid() {
 		}
 	}
 
-    drawGridLines(minX, minY, maxX, maxY, grid_size, temp_subdivisions);
+    drawGridLines(minX, minY, maxX, maxY, grid_size, temp_subdivisions+1);
 
 	if(grid_autoscale != 'Off'){
 		drawGridScale(grid_size, wid, hei);
