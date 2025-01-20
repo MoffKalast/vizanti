@@ -38,7 +38,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	grid_colour = loaded_data.colour;
 	grid_colour_sub = loaded_data.colour_sub ?? "#294056"; //for legacy config compatibility
 	grid_autoscale = loaded_data.autoscale ?? 'Off'; 
-	grid_subdivisions = loaded_data.subdivisions ?? 0;
+	grid_subdivisions = loaded_data.subdivisions ?? 1;
 }else{
 	saveSettings();
 }
@@ -278,7 +278,7 @@ async function drawGrid() {
 		}
 	}
 
-    drawGridLines(minX, minY, maxX, maxY, grid_size, temp_subdivisions+1);
+    drawGridLines(minX, minY, maxX, maxY, grid_size, temp_subdivisions);
 
 	if(grid_autoscale != 'Off'){
 		drawGridScale(grid_size, wid, hei);
