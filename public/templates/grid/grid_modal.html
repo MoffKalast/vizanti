@@ -4,10 +4,25 @@
 		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
 		<hr>
 
-		<label for="{uniqueID}_colorpicker">Colour:</label>
-		<input type="color" value="#3e556a" id="{uniqueID}_colorpicker">
-
 		<br>
+
+		<label for="{uniqueID}_autoscale">Autoscale</label>
+		<!-- <input type="checkbox" checked id="{uniqueID}_autoscale"> -->
+		<select id="{uniqueID}_autoscale">
+			<option value="Off" selected>Off</option>
+			<option value="Rough">Rough</option>
+			<option value="Coarse">Coarse</option>
+			<option value="Fine">Fine</option>
+			<option value="Very Fine">Very Fine</option>
+		</select>
+
+		<p class="comment">If autoscale is off, the fixed size grid will stop rendering when the line density gets too high (to prevent lag).</p>
+
+		<hr class="dark_hr"/>
+
+		<h4>Style and Size</h4>
+
+		<p class="comment">Renders a grid relative to the fixed frame.</p>
 
 		<label for="{uniqueID}_step">Step (meter):</label>
 		<input type="number" value="1.0" step="0.01" min="0.01" max="10000" id="{uniqueID}_step">
@@ -19,7 +34,26 @@
 
 		<br>
 
-		<p class="comment">Note: Grids will stop rendering when the line density gets too high (to prevent lag). Create more grids with larger steps if you need a large range of scale.</p>
+		<label for="{uniqueID}_colorpicker">Color:</label>
+		<input type="color" value="#3e556a" id="{uniqueID}_colorpicker">
+
+		<br>
+
+		<hr class="dark_hr"/>
+
+		<h4>Subdivison Style</h4>
+
+		<p class="comment">Each step can be divided further.</p>
+
+		<label for="{uniqueID}_subdivisions">Number of subcells per cell:</label>
+		<input type="number" value="2" step="1" min="1" max="20" id="{uniqueID}_subdivisions">
+
+		<br>
+
+		<label for="{uniqueID}_colorpicker">Color:</label>
+		<input type="color" value="#3e556a" id="{uniqueID}_colorpicker_sub">
+
+		<br>
 
 		<hr>
 
