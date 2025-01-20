@@ -20,7 +20,7 @@ let grid_size = 1.0;
 let grid_thickness = 1;
 let grid_colour = "#3e556a";
 let grid_colour_sub = "#294056";
-let grid_autoscale = true;
+let grid_autoscale = 'Off';
 let grid_subdivisions = 1;
 
 const colourpicker = document.getElementById("{uniqueID}_colorpicker");
@@ -37,7 +37,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	grid_thickness = loaded_data.thickness;
 	grid_colour = loaded_data.colour;
 	grid_colour_sub = loaded_data.colour_sub ?? "#294056"; //for legacy config compatibility
-	grid_autoscale = loaded_data.autoscale ?? false; 
+	grid_autoscale = loaded_data.autoscale ?? 'Off'; 
 	grid_subdivisions = loaded_data.subdivisions ?? 0;
 }else{
 	saveSettings();
@@ -45,7 +45,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 
 linethickness.value = grid_thickness;
 colourpicker.value = grid_colour;
-autoscale.checked = grid_autoscale;
+autoscale.value = grid_autoscale;
 colourpicker_sub.value = grid_colour_sub;
 gridstep.value = grid_size;
 subdivisions.value = grid_subdivisions;
@@ -76,13 +76,13 @@ function calculateScale(value) {
     value /= Math.pow(10, magnitude);
 
     if (value < 1.5) {
-        value = 2.0;
+        value = 1.0;
     } else if (value < 3.5) {
-        value = 5.0;
+        value = 2.0;
     } else if (value < 7.5) {
-        value = 10.0;
+        value = 5.0;
     } else {
-        value = 20.0;
+        value = 10.0;
     }
 
     value *= Math.pow(10, magnitude);
@@ -240,10 +240,14 @@ async function drawGrid() {
 	const width_meters = Math.abs(bottomRight.x - topLeft.x);
 	const height_meters = Math.abs(bottomRight.y - topLeft.y);
 
-	const max_lines = 15;
-
-	if(grid_autoscale)
-		grid_size = calculateScale(Math.min(width_meters, height_meters)/max_lines);
+	if(grid_autoscale != 'Off'){
+		if(grid_autoscale === 'Fine')
+			grid_size = calculateScale(Math.min(width_meters, height_meters)/21);
+		else if(grid_autoscale === 'Medium')
+			grid_size = calculateScale(Math.min(width_meters, height_meters)/14);
+		else //Coarse or invalid
+			grid_size = calculateScale(Math.min(width_meters, height_meters)/7);
+	}
 		
 	const minX = topLeft.x - (topLeft.x % grid_size) - grid_size;
 	const maxX = bottomRight.x + (grid_size - (bottomRight.x % grid_size));
@@ -255,7 +259,7 @@ async function drawGrid() {
 
 	let temp_subdivisions = grid_subdivisions;
 
-	if (!grid_autoscale) {
+	if (grid_autoscale == 'Off') {
 		let linesX = (maxX - minX) / (grid_size / (temp_subdivisions + 1));
 		let linesY = (maxY - minY) / (grid_size / (temp_subdivisions + 1));
 		
@@ -276,7 +280,7 @@ async function drawGrid() {
 
     drawGridLines(minX, minY, maxX, maxY, grid_size, temp_subdivisions+1);
 
-	if(grid_autoscale) {
+	if(grid_autoscale != 'Off'){
 		drawGridScale(grid_size, wid, hei);
 	}
 	
@@ -336,7 +340,7 @@ colourpicker_sub.addEventListener("input", (event) =>{
 });
 
 autoscale.addEventListener("input", (event) =>{
-	grid_autoscale = autoscale.checked;
+	grid_autoscale = autoscale.value;
 	if(gridstep.value > 1000000)
 		grid_size = 1000000;	
 	else if(gridstep.value < 0.01)

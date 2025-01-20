@@ -7,7 +7,13 @@
 		<br>
 
 		<label for="{uniqueID}_autoscale">Autoscale</label>
-		<input type="checkbox" checked id="{uniqueID}_autoscale">
+		<!-- <input type="checkbox" checked id="{uniqueID}_autoscale"> -->
+		<select id="{uniqueID}_autoscale">
+			<option value="Off" selected>Off</option>
+			<option value="Coarse">Coarse</option>
+			<option value="Medium">Medium</option>
+			<option value="Fine">Fine</option>
+		</select>
 
 		<p class="comment">If autoscale is off, the fixed size grid will stop rendering when the line density gets too high (to prevent lag).</p>
 
@@ -39,7 +45,7 @@
 		<p class="comment">Each step can be divided further.</p>
 
 		<label for="{uniqueID}_subdivisions">Number of subdivisions:</label>
-		<input type="number" value="1" step="1" min="0" max="10" id="{uniqueID}_subdivisions">
+		<input type="number" value="1" step="1" min="1" max="10" id="{uniqueID}_subdivisions">
 
 		<br>
 
