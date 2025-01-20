@@ -21,7 +21,7 @@ let grid_thickness = 1;
 let grid_colour = "#3e556a";
 let grid_colour_sub = "#294056";
 let grid_autoscale = 'Coarse';
-let grid_subdivisions = 1;
+let grid_subdivisions = 2;
 
 const colourpicker = document.getElementById("{uniqueID}_colorpicker");
 const colourpicker_sub = document.getElementById("{uniqueID}_colorpicker_sub");
@@ -132,23 +132,26 @@ function drawGridLines(minX, minY, maxX, maxY, grid_size, subdivisions) {
         const screenPos = view.fixedToScreen({x: 0, y: y}).y;
         yPositions.set(y, parseInt(screenPos));
     }
-    
-    // Calculate subdivision positions
-    for (let x = minX; x <= maxX; x += grid_size) {
-        for (let sub_x = 1; sub_x < subdivisions; sub_x++) {
-            const cur_sub_x = x + sub_x * subdivision_size;
-            const screenPos = view.fixedToScreen({x: cur_sub_x, y: 0}).x;
-            xPositions.set(cur_sub_x, parseInt(screenPos));
-        }
-    }
-    
-    for (let y = minY; y <= maxY; y += grid_size) {
-        for (let sub_y = 1; sub_y < subdivisions; sub_y++) {
-            const cur_sub_y = y + sub_y * subdivision_size;
-            const screenPos = view.fixedToScreen({x: 0, y: cur_sub_y}).y;
-            yPositions.set(cur_sub_y, parseInt(screenPos));
-        }
-    }
+
+	if(subdivisions > 1)
+	{
+		// Calculate subdivision positions
+		for (let x = minX; x <= maxX; x += grid_size) {
+			for (let sub_x = 1; sub_x < subdivisions; sub_x++) {
+				const cur_sub_x = x + sub_x * subdivision_size;
+				const screenPos = view.fixedToScreen({x: cur_sub_x, y: 0}).x;
+				xPositions.set(cur_sub_x, parseInt(screenPos));
+			}
+		}
+		
+		for (let y = minY; y <= maxY; y += grid_size) {
+			for (let sub_y = 1; sub_y < subdivisions; sub_y++) {
+				const cur_sub_y = y + sub_y * subdivision_size;
+				const screenPos = view.fixedToScreen({x: 0, y: cur_sub_y}).y;
+				yPositions.set(cur_sub_y, parseInt(screenPos));
+			}
+		}
+	}
     
     // Draw subdivision lines
     ctx.beginPath();
@@ -278,7 +281,7 @@ async function drawGrid() {
 		}
 	}
 
-    drawGridLines(minX, minY, maxX, maxY, grid_size, temp_subdivisions+1);
+    drawGridLines(minX, minY, maxX, maxY, grid_size, temp_subdivisions);
 
 	if(grid_autoscale != 'Off'){
 		drawGridScale(grid_size, wid, hei);
