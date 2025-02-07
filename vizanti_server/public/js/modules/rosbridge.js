@@ -67,6 +67,19 @@ class Rosbridge {
 			serviceType : 'rosapi_msgs/srv/Nodes',
 		});
 
+		this.publishers_client = new ROSLIB.Service({
+			ros : this.ros,
+			name : '/rosapi/publishers',
+			serviceType : 'rosapi/Publishers',
+		});
+
+		this.subscribers_client = new ROSLIB.Service({
+			ros : this.ros,
+			name : '/rosapi/subscribers',
+			serviceType : 'rosapi/Subscribers',
+		});
+
+
 		window.dispatchEvent(new Event('rosbridge_change'));
 	}
 
@@ -103,6 +116,27 @@ class Rosbridge {
 				resolve(matching);
 			});
 		});
+	}
+
+	async get_topic_publishers_and_subscribers(topic) {
+		const publishersRequest = new ROSLIB.ServiceRequest({ topic: topic });
+		const subscribersRequest = new ROSLIB.ServiceRequest({ topic: topic });
+
+		const publishersPromise = new Promise((resolve) => {
+			this.publishers_client.callService(publishersRequest, (result) => {
+				resolve(result.publishers);
+			});
+		});
+
+		const subscribersPromise = new Promise((resolve) => {
+			this.subscribers_client.callService(subscribersRequest, (result) => {
+				resolve(result.subscribers);
+			});
+		});
+
+		const [publishers, subscribers] = await Promise.all([publishersPromise, subscribersPromise]);
+
+		return { publishers, subscribers };
 	}
 }
 
