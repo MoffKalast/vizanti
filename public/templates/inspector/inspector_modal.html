@@ -1,0 +1,41 @@
+<div id="{uniqueID}_modal" class="modal_outer noselect">
+	<div class="modal_inner noselect">
+		<h3>Topic Inspector</h3>
+		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
+
+		<hr>
+
+		<label for="{uniqueID}_topic">Topic:</label>
+		<select id="{uniqueID}_topic" name="topic">
+			<!-- add topics here -->
+		</select>
+
+		<br>
+
+		<label for="{uniqueID}_throttle">Socket throttle (ms):</label>
+		<input type="number" value="500" step="0" min="0" max="10000" id="{uniqueID}_throttle">
+
+		<h4>Info</h4>
+
+		<p class="comment">Information about publishers and subscribers.</p>
+
+		<div id="{uniqueID}_info_display" class="live_data_display">
+			<!-- add sub/pub info here -->
+		</div>
+
+		<h4>Echo</h4>
+
+		<p class="comment">View raw messages as text for debugging.</p>
+
+		<div id="{uniqueID}_live_data_display" class="live_data_display">
+			<!-- add params here -->
+		</div>
+
+		<br>
+
+		<hr>
+
+		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
+
+	</div>
+</div>
