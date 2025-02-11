@@ -29,8 +29,10 @@ install(DIRECTORY
 )
 
 install(PROGRAMS
+  scripts/__init__.py
   scripts/server.py
   scripts/service_handler.py
+  scripts/rqt_reconfigure_param_api.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
