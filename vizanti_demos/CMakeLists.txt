@@ -36,6 +36,7 @@ install(PROGRAMS
   scripts/test_grid_cells.py
   scripts/test_marker_array.py
   scripts/test_tf.py
+  scripts/waypoints_to_simple_goals.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
