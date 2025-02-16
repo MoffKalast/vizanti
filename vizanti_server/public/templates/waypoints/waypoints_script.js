@@ -157,7 +157,7 @@ function sendMessage(pointlist){
 					p1 = point;
 				}
 
-				const rotation = Quaternion.fromEuler(Math.atan2(p0.y - p1.y, -(p0.x - p1.x)), 0, 0, 'ZXY');
+				const rotation = Quaternion.fromEuler(Math.atan2(p1.y - p0.y, p1.x - p0.x), 0, 0, 'ZXY');
 
 				if(stamped){
 					poseList.push(getPoseStamped(index, timeStamp, point.x, point.y, rotation));
