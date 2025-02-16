@@ -48,7 +48,14 @@ class WaypointsToSimpleGoals:
 		rospy.loginfo("Waypoints node started.")
 
 	def waypoints_callback(self, msg):
-		self.waypoints = list(msg.poses)
+		poses = list(msg.poses)
+
+		if len(poses) == 0:
+			#Empty array was sent as a preempt, we should just abort current execution
+			self.estop_callback(None)
+			return
+
+		self.waypoints = poses
 		self.waypoints_header = msg.header
 		self.current_goal = None
 		rospy.loginfo("New path received!")
