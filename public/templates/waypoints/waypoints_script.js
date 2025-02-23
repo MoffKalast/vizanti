@@ -498,27 +498,43 @@ function drawWaypoints() {
 			ctx.lineWidth = 2;
 			ctx.strokeStyle = "white";
 			ctx.beginPath();
-			for(let i = -200; i < 200; i++){
-				const scaled = linearToLogScale(i*2);
-				const y_pos = p.y+scaled;
-				if(i%5 == 0 && y_pos > icon_bar.offsetHeight){
-					ctx.moveTo(p.x-60, y_pos);
-					ctx.lineTo(p.x-10, y_pos);
-				}
+
+			//0
+			ctx.moveTo(p.x-60, p.y);
+			ctx.lineTo(p.x-30, p.y);
+
+			const steps = [0.999, 10, 100, 1000, 10000]
+			for(const i of steps){
+				const scaled = logToLinearScale(i) / 1.25;
+				ctx.moveTo(p.x-60, p.y+scaled);
+				ctx.lineTo(p.x-10, p.y+scaled);
+
+				ctx.moveTo(p.x-60, p.y-scaled);
+				ctx.lineTo(p.x-10, p.y-scaled);
 			}
+
 			ctx.stroke();
 
 			ctx.lineWidth = 1;
 			ctx.strokeStyle = "lightgray";
 			ctx.beginPath();
-			for(let i = -200; i < 200; i++){
-				const scaled = linearToLogScale(i*2);
-				const y_pos = p.y+scaled;
-				if(i%5 != 0 && y_pos > icon_bar.offsetHeight){
-					ctx.moveTo(p.x-60, y_pos);
-					ctx.lineTo(p.x-30, y_pos);
-				}
+			const micro_steps = [
+				0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,
+				2, 3, 4, 5, 6, 7, 8, 9,
+				20, 30, 40, 50, 60, 70, 80, 90, 
+				200, 300, 400, 600, 700, 800, 900,
+				2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000
+			]
+
+			for(const i of micro_steps){
+				const scaled = logToLinearScale(i) / 1.25;
+				ctx.moveTo(p.x-60, p.y+scaled);
+				ctx.lineTo(p.x-30, p.y+scaled);
+
+				ctx.moveTo(p.x-60, p.y-scaled);
+				ctx.lineTo(p.x-30, p.y-scaled);
 			}
+
 			ctx.stroke();
 
 			ctx.lineWidth = 5;
@@ -619,6 +635,35 @@ function linearToLogScale(value) {
 
     return sign * logValue;
 }
+
+function logToLinearScale(value) {
+    // Handle zero as a special case
+    if (value === 0) return 0;
+
+    // Handle sign separately
+    let sign = Math.sign(value);
+    let absValue = Math.abs(value);
+
+    let result;
+
+    // Correct handling for values between -1 and 1
+    if (absValue < 1) {
+        result = Math.log10(9 * absValue + 1);
+    } else {
+        // Reverse the transformation for values >= 1
+        let logValue = Math.log10(absValue);
+        let linearBlock = Math.floor(logValue);
+        let relativePosition = logValue - linearBlock;
+
+        // Convert back to linear scale
+        result = linearBlock * 10 + relativePosition * 10;
+    }
+
+    // Reapply sign and rescale
+    return sign * result * 15;
+}
+
+
 
 function startDrag(event){
 	const { clientX, clientY } = event.touches ? event.touches[0] : event;
