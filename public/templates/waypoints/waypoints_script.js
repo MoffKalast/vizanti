@@ -266,7 +266,7 @@ function screenToPoint(click){
 	).translation;
 }
 
-function drawOffsetPath(viewPoints, offset, ctx, startIndex) {
+function drawOffsetPath(viewPoints, offset, startIndex) {
 	ctx.lineWidth = offset;
 	ctx.strokeStyle = "rgba(20,20,20,0.35)";
 	ctx.lineCap = "round";
@@ -300,8 +300,8 @@ function drawWaypoints() {
 	const active = mode != "IDLE";
     const wid = canvas.width;
     const hei = canvas.height;
+
     ctx.clearRect(0, 0, wid, hei);
-	ctx.imageSmoothingEnabled = true;
 
 	const frame = tf.absoluteTransforms[fixed_frame];
 	if(!frame){
@@ -318,7 +318,9 @@ function drawWaypoints() {
 		pointToScreen(point)
 	);
 
-	drawOffsetPath(viewPoints, margin.value * view.getMapUnitsInPixels(1.0), ctx, startIndex);
+	if(margin.value > 0){
+		drawOffsetPath(viewPoints, margin.value * view.getMapUnitsInPixels(1.0), startIndex);
+	}
 
 	ctx.lineWidth = 3;
 	ctx.fillStyle = active ? "white" : color
