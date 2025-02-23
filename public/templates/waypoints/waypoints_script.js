@@ -26,22 +26,11 @@ let shift_pressed = false;
 
 const icon_bar = document.getElementById("icon_bar");
 const icon = document.getElementById("{uniqueID}_icon");
+const dropdown = document.getElementById("{uniqueID}_dropdown");
+
 const buttontext = document.getElementById("{uniqueID}_buttontext");
 const margin = document.getElementById("{uniqueID}_margin");
 const startCheckbox = document.getElementById('{uniqueID}_startclosest');
-const startButton = document.getElementById("{uniqueID}_start");
-const stopButton = document.getElementById("{uniqueID}_stop");
-
-startButton.addEventListener('click', ()=>{
-	if(startCheckbox.checked)
-		sendMessage(points.slice(getStartIndex()))
-	else
-		sendMessage(points)
-});
-
-stopButton.addEventListener('click', ()=>{
-	sendMessage([])
-});
 
 const flipButton = document.getElementById("{uniqueID}_flip");
 const zSetButton = document.getElementById("{uniqueID}_z_set");
@@ -82,10 +71,10 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
 	points = loaded_data.points;
-	fixed_frame = loaded_data.fixed_frame;
+	fixed_frame = loaded_data.fixed_frame ?? tf.fixed_frame;
 	base_link_frame = loaded_data.base_link_frame ?? "base_link";
 
-	margin.value = loaded_data.margin ?? 1.5;
+	margin.value = loaded_data.margin ?? 0.8;
 	startCheckbox.checked = loaded_data.start_closest;
 
 	for (let i = 0; i < points.length; i++) {
@@ -312,6 +301,7 @@ function drawWaypoints() {
     const wid = canvas.width;
     const hei = canvas.height;
     ctx.clearRect(0, 0, wid, hei);
+	ctx.imageSmoothingEnabled = true;
 
 	const frame = tf.absoluteTransforms[fixed_frame];
 	if(!frame){
@@ -845,6 +835,9 @@ function setMode(newmode){
 			break;
 
 		case "Z":
+			addListeners();
+			icon.style.backgroundColor = "rgba(255, 255, 255, 1.0)";
+			view_container.style.cursor = "pointer";
 			buttontext.innerText = "Z";
 			break;
 	}
@@ -964,46 +957,85 @@ async function loadTopics(){
 
 loadTopics();
 
-// Long press modal open stuff
-let longPressTimer;
-let isLongPress = false;
+//dropdown stuff
 
-icon.addEventListener("click", (event) =>{
-	if(!isLongPress)
-		if(mode == "IDLE")
-			setMode("XY");
-		else if(mode == "XY")
-			setMode("Z");
-		else
-			setMode("IDLE");
+function dropdown_visibility(open){
+	if(open)
+		dropdown.style.display = "block";
 	else
-		isLongPress = false;
-});
-
-icon.addEventListener("mousedown", startLongPress);
-icon.addEventListener("touchstart", startLongPress);
-
-icon.addEventListener("mouseup", cancelLongPress);
-icon.addEventListener("mouseleave", cancelLongPress);
-icon.addEventListener("touchend", cancelLongPress);
-icon.addEventListener("touchcancel", cancelLongPress);
-
-icon.addEventListener("contextmenu", (event) => {
-	event.preventDefault();
-});
-
-function startLongPress(event) {
-	isLongPress = false;
-	longPressTimer = setTimeout(() => {
-		isLongPress = true;
-		loadTopics();
-		openModal("{uniqueID}_modal");
-	}, 500);
+		dropdown.style.display = "none";
 }
 
-function cancelLongPress(event) {
-	clearTimeout(longPressTimer);
-}
+// Toggle dropdown on click
+icon.addEventListener("click", (event) => {
+	event.stopPropagation();
+
+	if(mode != "IDLE"){
+		setMode("IDLE");
+	}else{
+		const rect = icon.getBoundingClientRect();
+		const dropdownWidth = 90;
+		let top = rect.bottom + 5; // Default: below the icon
+		let left = rect.left;
+
+		if (left + dropdownWidth > window.innerWidth) {
+			left = window.innerWidth - dropdownWidth - 5;
+		}
+
+		if (left < 5) {
+			left = 5;
+		}
+
+		dropdown.style.top = `${top}px`;
+		dropdown.style.left = `${left}px`;
+	
+		dropdown_visibility(dropdown.style.display == "none")
+	}
+});
+
+// Close dropdown when clicking outside
+document.addEventListener("click", (event) => {
+	if (!dropdown.contains(event.target) && !icon.contains(event.target)) {
+		dropdown_visibility(false);
+	}
+});
+
+const drop_start = document.getElementById("{uniqueID}_sendAction");
+const drop_stop = document.getElementById("{uniqueID}_stopAction");
+const drop_xy = document.getElementById("{uniqueID}_editXY");
+const drop_z = document.getElementById("{uniqueID}_editZ");
+const drop_config = document.getElementById("{uniqueID}_config");
+
+const startButton = document.getElementById("{uniqueID}_start");
+const stopButton = document.getElementById("{uniqueID}_stop");
+
+drop_start.addEventListener("click", (event) => {
+	if(startCheckbox.checked)
+		sendMessage(points.slice(getStartIndex()))
+	else
+		sendMessage(points)
+	dropdown_visibility(false);
+});
+
+drop_stop.addEventListener("click", (event) => {
+	sendMessage([]);
+	dropdown_visibility(false);
+});
+
+drop_xy.addEventListener("click", (event) => {
+	setMode("XY");
+	dropdown_visibility(false);
+});
+
+drop_z.addEventListener("click", (event) => {
+	setMode("Z");
+	dropdown_visibility(false);
+});
+
+drop_config.addEventListener("click", (event) => {
+	openModal("{uniqueID}_modal");
+	dropdown_visibility(false);
+});
 
 resizeScreen();
 
