@@ -17,8 +17,8 @@ let status = new Status(
 );
 
 let typedict = {};
-let fixed_frame = "";
-let base_link_frame = "";
+let fixed_frame = tf.fixed_frame;
+let base_link_frame = find_base_frame();
 let seq = 0;
 let mode = "IDLE";
 let points = [];
@@ -886,6 +886,32 @@ margin.addEventListener("input", (event) =>{
 	drawWaypoints();
 	saveSettings();
 });
+
+function find_base_frame(){
+	//try base_link first
+	for (const key of tf.frame_list.values()) {
+		if (key.includes("base_link")) {
+			return key
+		}
+	}
+
+	//maybe footprint?
+	for (const key of tf.frame_list.values()) {
+		if (key.includes("base_footprint")) {
+			return key
+		}
+	}
+
+	//ok just base then...?
+	for (const key of tf.frame_list.values()) {
+		if (key.includes("base")) {
+			return key
+		}
+	}
+
+	//eh screw it
+	return "base_link";
+}
 
 async function loadTopics(){
 	const result_path = await rosbridge.get_topics("nav_msgs/Path");
