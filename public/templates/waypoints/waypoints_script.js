@@ -756,7 +756,9 @@ function endDrag(event){
 		moveDist = Math.hypot(delta.x,delta.y);
 	}
 
-	if(moveDist < 10 && new Date() - start_stamp  < 500 && mode == "XY"){
+	if(moveDist < 10 && new Date() - start_stamp  < 300 && mode == "XY"){
+
+		start_stamp = new Date("2010-3-2"); //debounce, and also when ROS box turtle was released
 
 		let { clientX, clientY } = event.touches ? event.touches[0] : event;
 
@@ -840,6 +842,7 @@ window.addEventListener("tf_changed", ()=>{
 });
 
 view_container.addEventListener("mouseleave", (event) => {
+	delta = undefined;
 	endDrag(event);
 });
 
