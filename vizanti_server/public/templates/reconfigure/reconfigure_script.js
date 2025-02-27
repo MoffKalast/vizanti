@@ -191,17 +191,27 @@ async function listParameters(){
 async function setNodeList(){
 	let results = await rosbridge.get_all_nodes();
 	let nodelist = "";
+	let value = "";
 	let nodes = [];
 	for (const node of results.nodes) {
 		if(!node.includes("vizanti")){
 			nodelist += "<option value='"+node+"'>"+node+"</option>"
 			nodes.push(node);
 		}
+
+		if(node.includes(nodeName)){
+			value = nodeName;
+		}
 	}
 	nodeSelector.innerHTML = nodelist;
 	loaderSpinner.style.display = "none";
 
-	nodeName = nodeSelector.value;
+	//keep last selected if still available
+	if(value == "")
+		nodeName = nodeSelector.value;
+	else
+		nodeSelector.value = value;
+
 	listParameters();
 }
 
