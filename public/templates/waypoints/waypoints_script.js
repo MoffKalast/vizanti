@@ -489,11 +489,11 @@ function drawWaypoints() {
 		if(drag_point >= 0){
 			const p = viewPoints[drag_point];
 
-			const grad = ctx.createLinearGradient(p.x-60, p.y, p.x, p.y)
-			grad.addColorStop(0.0, "rgba(0, 0, 0, 0.589)");
+			const grad = ctx.createLinearGradient(p.x-60, p.y, p.x+25, p.y)
+			grad.addColorStop(0.0, "rgba(0, 0, 0, 0.75)");
 			grad.addColorStop(1.0, "transparent");
 			ctx.fillStyle = grad;
-			ctx.fillRect(p.x-60, icon_bar.offsetHeight, 60, window.innerHeight-icon_bar.offsetHeight)
+			ctx.fillRect(p.x-60, icon_bar.offsetHeight, 85, window.innerHeight-icon_bar.offsetHeight)
 
 			ctx.lineWidth = 2;
 			ctx.strokeStyle = "white";
@@ -503,31 +503,46 @@ function drawWaypoints() {
 			ctx.moveTo(p.x-60, p.y);
 			ctx.lineTo(p.x-30, p.y);
 
-			const steps = [0.999, 10, 100, 1000, 10000]
+			const steps = [1, 10, 100, 1000, 10000]
 			for(const i of steps){
-				const scaled = logToLinearScale(i) / 1.25;
+				const scaled = stepToLinearScale(i) / 1.25;
 				ctx.moveTo(p.x-60, p.y+scaled);
-				ctx.lineTo(p.x-10, p.y+scaled);
+				ctx.lineTo(p.x, p.y+scaled);
 
 				ctx.moveTo(p.x-60, p.y-scaled);
-				ctx.lineTo(p.x-10, p.y-scaled);
+				ctx.lineTo(p.x, p.y-scaled);
 			}
-
 			ctx.stroke();
+
+			ctx.lineJoin = 'round';
+			ctx.miterLimit = 2;
+			ctx.font = (12)+"px Monospace";
+			ctx.textAlign = "left";
+			ctx.fillStyle = "white";
+
+			for(const i of steps){
+				const scaled = stepToLinearScale(i) / 1.25;
+
+				const text = Math.round(drag_point_z+i).toFixed(0);
+				const text_neg = Math.round(drag_point_z-i).toFixed(0);
+
+				ctx.fillText(text_neg, p.x-25, p.y+scaled-5);
+				ctx.fillText(text, p.x-25, p.y-scaled-5);
+			}
 
 			ctx.lineWidth = 1;
 			ctx.strokeStyle = "lightgray";
 			ctx.beginPath();
 			const micro_steps = [
-				0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,
-				2, 3, 4, 5, 6, 7, 8, 9,
-				20, 30, 40, 50, 60, 70, 80, 90, 
-				200, 300, 400, 600, 700, 800, 900,
-				2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000
+				0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,
+				1, 2, 3, 4, 5, 6, 7, 8, 9,
+				10, 20, 30, 40, 50, 60, 70, 80, 90, 
+				100, 200, 300, 400, 500, 600, 700, 800, 900,
+				1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000
 			]
 
 			for(const i of micro_steps){
-				const scaled = logToLinearScale(i) / 1.25;
+				const scaled = stepToLinearScale(i) / 1.25;
 				ctx.moveTo(p.x-60, p.y+scaled);
 				ctx.lineTo(p.x-30, p.y+scaled);
 
@@ -610,60 +625,46 @@ function findPoint(newpoint){
 	return i;
 }
 
-function linearToLogScale(value) {
-	value /= 15; //calibrated scale
+const Z_SCALE_MULT = 170;
 
-    // Handle zero as a special case
-    if (value === 0) return 0;
-
-    // Handle sign separately
-    let sign = Math.sign(value);
-    let absValue = Math.abs(value);
-
-    // Special handling for values between 0 and 1
-    if (absValue < 1) {
-        // Map 0-1 to 0-1 in log space
-        return sign * (Math.pow(10, absValue) - 1) / 9;
-    }
-
-    // For values >= 1, proceed with the original logic
-    let linearBlock = Math.floor(absValue / 10);
-    let relativePosition = (absValue % 10) / 10;
-    
-    // Convert to the corresponding logarithmic scale
-    let logValue = Math.pow(10, linearBlock + relativePosition);
-
-    return sign * logValue;
-}
-
-function logToLinearScale(value) {
-    // Handle zero as a special case
-    if (value === 0) return 0;
-
-    // Handle sign separately
-    let sign = Math.sign(value);
-    let absValue = Math.abs(value);
-
+function stepToLinearScale(x) {
+    const absX = Math.abs(x);
     let result;
-
-    // Correct handling for values between -1 and 1
-    if (absValue < 1) {
-        result = Math.log10(9 * absValue + 1);
+    if (absX <= 1) {
+        result = absX;
+    } else if (absX <= 10) {
+        result = 1 + (absX - 1) / 9;
+    } else if (absX <= 100) {
+        result = 2 + (absX - 10) / 90;
+    } else if (absX <= 1000) {
+        result = 3 + (absX - 100) / 900;
+    } else if (absX <= 10000) {
+        result = 4 + (absX - 1000) / 9000;
     } else {
-        // Reverse the transformation for values >= 1
-        let logValue = Math.log10(absValue);
-        let linearBlock = Math.floor(logValue);
-        let relativePosition = logValue - linearBlock;
-
-        // Convert back to linear scale
-        result = linearBlock * 10 + relativePosition * 10;
+        result = 5;
     }
-
-    // Reapply sign and rescale
-    return sign * result * 15;
+    return result * Math.sign(x) * Z_SCALE_MULT;
 }
 
-
+function linearToStepScale(y) {
+	y/=Z_SCALE_MULT;
+    const absY = Math.abs(y);
+    let result;
+    if (absY <= 1) {
+        result = absY;
+    } else if (absY <= 2) {
+        result = 1 + (absY - 1) * 9;
+    } else if (absY <= 3) {
+        result = 10 + (absY - 2) * 90;
+    } else if (absY <= 4) {
+        result = 100 + (absY - 3) * 900;
+	} else if (absY <= 5) {
+        result = 1000 + (absY - 4) * 9000;
+	}else{
+		result = 10000;
+	}
+    return result * Math.sign(y);
+}
 
 function startDrag(event){
 	const { clientX, clientY } = event.touches ? event.touches[0] : event;
@@ -711,7 +712,7 @@ function drag(event){
 	};
 
 	if(mode == "Z" && drag_point >= 0){	
-		points[drag_point].z = drag_point_z + linearToLogScale(delta.y * 1.25); 
+		points[drag_point].z = drag_point_z + linearToStepScale(delta.y * 1.25); 
 
 		if(points[drag_point].z > 9999.99)
 			points[drag_point].z = 9999;
@@ -872,6 +873,7 @@ function setMode(newmode){
 			icon.style.backgroundColor = "rgba(124, 124, 124, 0.3)";
 			view_container.style.cursor = "";
 			buttontext.innerText = "";
+			canvas.style.zIndex = "2";
 			break;
 
 		case "XY":
@@ -879,6 +881,7 @@ function setMode(newmode){
 			icon.style.backgroundColor = "rgba(255, 255, 255, 1.0)";
 			view_container.style.cursor = "pointer";
 			buttontext.innerText = "X,Y";
+			canvas.style.zIndex = "999";
 			break;
 
 		case "Z":
@@ -886,6 +889,7 @@ function setMode(newmode){
 			icon.style.backgroundColor = "rgba(255, 255, 255, 1.0)";
 			view_container.style.cursor = "pointer";
 			buttontext.innerText = "Z";
+			canvas.style.zIndex = "999";
 			break;
 	}
 
