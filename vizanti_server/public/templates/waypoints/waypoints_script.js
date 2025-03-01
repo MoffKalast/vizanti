@@ -17,35 +17,38 @@ let status = new Status(
 );
 
 let typedict = {};
-let fixed_frame = "";
-let base_link_frame = "";
-let active = false;
+let fixed_frame = tf.fixed_frame;
+let base_link_frame = find_base_frame();
+let mode = "IDLE";
 let points = [];
 let shift_pressed = false;
 
+const icon_bar = document.getElementById("icon_bar");
 const icon = document.getElementById("{uniqueID}_icon");
+const dropdown = document.getElementById("{uniqueID}_dropdown");
 
-const startButton = document.getElementById("{uniqueID}_start");
-const stopButton = document.getElementById("{uniqueID}_stop");
-
-startButton.addEventListener('click', ()=>{
-	if(startCheckbox.checked)
-		sendMessage(points.slice(getStartIndex()))
-	else
-		sendMessage(points)
-});
-
-stopButton.addEventListener('click', ()=>{
-	sendMessage([])
-});
+const buttontext = document.getElementById("{uniqueID}_buttontext");
+const margin = document.getElementById("{uniqueID}_margin");
+const startCheckbox = document.getElementById('{uniqueID}_startclosest');
 
 const flipButton = document.getElementById("{uniqueID}_flip");
+const zSetButton = document.getElementById("{uniqueID}_z_set");
 const deleteButton = document.getElementById("{uniqueID}_delete");
 
 flipButton.addEventListener('click', ()=>{
 	points.reverse();
 	drawWaypoints();
 	saveSettings();
+});
+
+zSetButton.addEventListener('click', async ()=>{
+	let zval = await prompt("Set the height of all points to this value:", "0");
+	if (zval != null) {
+		const newz = parseFloat(zval);
+		for (let i = 0; i < points.length; i++) {
+			points[i].z = newz;
+		}
+	}
 });
 
 deleteButton.addEventListener('click', async ()=>{
@@ -56,8 +59,10 @@ deleteButton.addEventListener('click', async ()=>{
 	}
 });
 
-const startCheckbox = document.getElementById('{uniqueID}_startclosest');
-startCheckbox.addEventListener('change', saveSettings);
+startCheckbox.addEventListener('change', ()=>{
+	drawWaypoints();
+	saveSettings();
+});
 
 // Settings
 
@@ -65,10 +70,17 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
 	points = loaded_data.points;
-	fixed_frame = loaded_data.fixed_frame;
+	fixed_frame = loaded_data.fixed_frame ?? tf.fixed_frame;
 	base_link_frame = loaded_data.base_link_frame ?? "base_link";
 
+	margin.value = loaded_data.margin ?? 0.8;
 	startCheckbox.checked = loaded_data.start_closest;
+
+	for (let i = 0; i < points.length; i++) {
+		if (points[i].z == null || points[i].z == undefined)
+			points[i].z = 0;
+	}
+
 }else{
 	saveSettings();
 }
@@ -85,7 +97,8 @@ function saveSettings(){
 		fixed_frame: fixed_frame,
 		base_link_frame: base_link_frame,
 		points: points,
-		start_closest: startCheckbox.checked
+		start_closest: startCheckbox.checked,
+		margin: margin.value
 	}
 	settings.save();
 }
@@ -103,7 +116,7 @@ function getStamp(){
 	}
 }
 
-function getPoseStamped(index, timeStamp, x, y, quat){
+function getPoseStamped(index, timeStamp, x, y, z, quat){
 	return new ROSLIB.Message({
 		header: {
 			stamp: timeStamp,
@@ -113,19 +126,19 @@ function getPoseStamped(index, timeStamp, x, y, quat){
 			position: {
 				x: x,
 				y: y,
-				z: 0.0
+				z: z
 			},
 			orientation: quat
 		}
 	});
 }
 
-function getPose(x, y, quat){
+function getPose(x, y, z, quat){
 	return new ROSLIB.Message({
 		position: {
 			x: x,
 			y: y,
-			z: 0.0
+			z: z
 		},
 		orientation: quat
 	});
@@ -140,9 +153,9 @@ function sendMessage(pointlist){
 	{
 		if(pointlist.length  == 1){
 			if(stamped){
-				poseList.push(getPoseStamped(0, timeStamp, pointlist[0].x, pointlist[0].y, new Quaternion()));
+				poseList.push(getPoseStamped(0, timeStamp, pointlist[0].x, pointlist[0].y, pointlist[0].z, new Quaternion()));
 			}else{
-				poseList.push(getPose(pointlist[0].x, pointlist[0].y, new Quaternion()));
+				poseList.push(getPose(pointlist[0].x, pointlist[0].y, pointlist[0].z, new Quaternion()));
 			}
 		}else{
 			pointlist.forEach((point, index) => {
@@ -160,9 +173,9 @@ function sendMessage(pointlist){
 				const rotation = Quaternion.fromEuler(Math.atan2(p1.y - p0.y, p1.x - p0.x), 0, 0, 'ZXY');
 
 				if(stamped){
-					poseList.push(getPoseStamped(index, timeStamp, point.x, point.y, rotation));
+					poseList.push(getPoseStamped(index, timeStamp, point.x, point.y, point.z, rotation));
 				}else{
-					poseList.push(getPose(point.x, point.y, rotation));
+					poseList.push(getPose(point.x, point.y, point.z, rotation));
 				}
 			});
 		}
@@ -186,6 +199,8 @@ function sendMessage(pointlist){
 	publisher.publish(pathMessage);
 	status.setOK();
 
+	setMode("IDLE");
+	closeModal("{uniqueID}_modal");
 }
 
 const canvas = document.getElementById('{uniqueID}_canvas');
@@ -240,88 +255,345 @@ function pointToScreen(point){
 }
 
 function screenToPoint(click){
-	let transformed = view.screenToFixed(click);
 	return tf.transformPose(
 		tf.fixed_frame, 
 		fixed_frame, 
-		transformed, 
+		view.screenToFixed(click), 
 		new Quaternion()
 	).translation;
 }
 
+function drawOffsetPath(viewPoints, offset, startIndex) {
+	ctx.lineWidth = offset;
+	ctx.strokeStyle = "rgba(20,20,20,0.35)";
+	ctx.lineCap = "round";
+
+	ctx.beginPath();
+	for (let i = 0; i < viewPoints.length - 1; i++) {
+
+		if(startCheckbox.checked && i < startIndex)
+			continue;
+
+        const p1 = viewPoints[i];
+        const p2 = viewPoints[i + 1];
+
+		ctx.moveTo(p1.x, p1.y);
+		ctx.lineTo(p2.x, p2.y);
+	}
+
+	ctx.stroke();
+}
+
+const LIGHT_YELLOW = [255, 248, 199];
+const PURE_YELLOW =  [235, 206, 0];
+const DARK_YELLOW = [54, 47, 0];
+
+const LIGHT_BLUE = [181, 209, 255];
+const PURE_BLUE = [105, 162, 255];
+const DARK_BLUE = [0, 25, 69];
+
 function drawWaypoints() {
 
+	const active = mode != "IDLE";
     const wid = canvas.width;
     const hei = canvas.height;
 
     ctx.clearRect(0, 0, wid, hei);
-	ctx.lineWidth = 3;
-	ctx.strokeStyle = "#EBCE00"; 
-	ctx.fillStyle = active ? "white" : "#EBCE00";
 
 	const frame = tf.absoluteTransforms[fixed_frame];
-
 	if(!frame){
 		status.setError("Fixed transform frame not selected or the TF data is missing.");
 		return;
 	}
+
+	const color = mode != "Z" ? "#EBCE00" : "#abcbff";
+	const OUTLINE_PX = mode != "Z" ? 13 : 18;
+	const INNER_PX = mode != "Z" ? 10 : 15;
 
 	const startIndex = getStartIndex();
 	const viewPoints = points.map((point) =>
 		pointToScreen(point)
 	);
 
+	if(margin.value > 0){
+		drawOffsetPath(viewPoints, margin.value * view.getMapUnitsInPixels(1.0), startIndex);
+	}
+
+	ctx.lineWidth = 3;
+	ctx.fillStyle = active ? "white" : color
 	if(startCheckbox.checked)
 		ctx.strokeStyle = "#4a4a4a";
 	else
-		ctx.strokeStyle = "#EBCE00";
+		ctx.strokeStyle = color;
 
-	ctx.beginPath();
-	viewPoints.forEach((pos, index) => {
+	const minZ = Math.min(...points.map(p => p.z));
+	const maxZ = Math.max(...points.map(p => p.z));
 
-		if(index == startIndex && startCheckbox.checked){
-			ctx.lineTo(pos.x, pos.y);
-			ctx.stroke();
-			ctx.strokeStyle = "#EBCE00"; 
+	//draw path gradients
+	if(minZ != maxZ)
+	{
+		function scale_color(x, y, z, scale){
+			let r = y[0];
+			let g = y[1];
+			let b = y[2];
+			if(scale < 0.5){
+				scale = scale*2;
+				const scaleinv = 1.0 - scale;
+				r = scaleinv*x[0] + scale*r;
+				g = scaleinv*x[1] + scale*g;
+				b = scaleinv*x[2] + scale*b;
+			}else if(scale > 0.5){
+				scale = (scale-0.5)*2;
+				const scaleinv = 1.0 - scale;
+				r = scale*z[0] + scaleinv*r;
+				g = scale*z[1] + scaleinv*g;
+				b = scale*z[2]+ scaleinv*b;
+			}
+			return `rgba(${r},${g},${b},1.0)`;
+		}
+
+		for (let i = 0; i < viewPoints.length-1; i++) {
+			const pos = viewPoints[i];
+			const next = viewPoints[i+1];
+
+			const grad = ctx.createLinearGradient(pos.x, pos.y, next.x, next.y)
+			const start_scale = (points[i].z - minZ) / (maxZ - minZ);
+			const end_scale = (points[i+1].z - minZ) / (maxZ - minZ);
+			const mid_scale = (start_scale + end_scale) * 0.5;
+
+			if(mode != "Z"){
+				grad.addColorStop(0.0, scale_color(DARK_YELLOW, PURE_YELLOW, LIGHT_YELLOW, start_scale));
+				grad.addColorStop(0.5, scale_color(DARK_YELLOW, PURE_YELLOW, LIGHT_YELLOW, mid_scale));
+				grad.addColorStop(1.0, scale_color(DARK_YELLOW, PURE_YELLOW, LIGHT_YELLOW, end_scale));
+			}else{//blue
+				grad.addColorStop(0.0, scale_color(DARK_BLUE, PURE_BLUE, LIGHT_BLUE, start_scale));
+				grad.addColorStop(0.5, scale_color(DARK_BLUE, PURE_BLUE, LIGHT_BLUE, mid_scale));
+				grad.addColorStop(1.0, scale_color(DARK_BLUE, PURE_BLUE, LIGHT_BLUE, end_scale));
+			}
+
+			if(startCheckbox.checked && i < startIndex){
+				ctx.strokeStyle = "#545454";
+			}else{
+				ctx.strokeStyle = grad;
+			}
+				
 			ctx.beginPath();
-		}
-
-		if (index === 0) {
 			ctx.moveTo(pos.x, pos.y);
-		} else {
-			ctx.lineTo(pos.x, pos.y);
+			ctx.lineTo(next.x, next.y);
+			ctx.stroke();
 		}
-	});
-	ctx.stroke();
+		
+	}
+	else //draw monocolour path
+	{
+		ctx.beginPath();
+		for (let i = 0; i < viewPoints.length; i++) {
+			const pos = viewPoints[i];
+	
+			if(i == startIndex && startCheckbox.checked){
+				ctx.lineTo(pos.x, pos.y);
+				ctx.stroke();
+				ctx.strokeStyle = color; 
+				ctx.beginPath();
+			}
+	
+			if (i === 0) {
+				ctx.moveTo(pos.x, pos.y);
+			} else {
+				ctx.lineTo(pos.x, pos.y);
+			}
+		};
+		ctx.stroke();
+	}
 
-	viewPoints.forEach((pos, index) => {		
-		ctx.save();
-		ctx.translate(pos.x, pos.y);
-
+	function drawCircles(){
+		//circle outlines
 		ctx.fillStyle = "#292929";
 		ctx.beginPath();
-		ctx.arc(0, 0, 12, 0, 2 * Math.PI, false);
+		for (let i = 0; i < viewPoints.length; i++) {
+			const pos = viewPoints[i];
+			ctx.moveTo(pos.x+OUTLINE_PX, pos.y);
+			ctx.arc(pos.x, pos.y, OUTLINE_PX, 0, 2 * Math.PI, false);
+		};
 		ctx.fill();
 
-		if(index < startIndex && startCheckbox.checked){
+		//circle middle
+		if(startCheckbox.checked)
+		{
 			ctx.fillStyle = active ? "white" : "#827c52";
-		}else{
-			ctx.fillStyle = active ? "white" : "#EBCE00";
+			ctx.beginPath();
+			for (let i = 0; i < startIndex; i++) {
+				const pos = viewPoints[i];
+				ctx.moveTo(pos.x+INNER_PX, pos.y);
+				ctx.arc(pos.x, pos.y, INNER_PX, 0, 2 * Math.PI, false);
+			}
+			ctx.fill();
+
+			ctx.fillStyle = active ? "white" : color;
+			ctx.beginPath();
+			for (let i = startIndex; i < viewPoints.length; i++) {
+				const pos = viewPoints[i];
+				ctx.moveTo(pos.x+INNER_PX, pos.y);
+				ctx.arc(pos.x, pos.y, INNER_PX, 0, 2 * Math.PI, false);
+			}
+			ctx.fill();
+		}
+		else
+		{
+			ctx.fillStyle = active ? "white" : color;
+			ctx.beginPath();
+			for (let i = 0; i < viewPoints.length; i++) {
+				const pos = viewPoints[i];
+				ctx.moveTo(pos.x+INNER_PX, pos.y);
+				ctx.arc(pos.x, pos.y, INNER_PX, 0, 2 * Math.PI, false);
+			}
+			ctx.fill();
+		}
+	}
+
+	function drawRectangles(){
+
+		function traceRect(pos, width, height){
+			const x = pos.x - width/2;
+			const y = pos.y - height/2;
+			ctx.moveTo(x, y);
+			ctx.lineTo(x + width, y);
+			ctx.lineTo(x + width, y + height);
+			ctx.lineTo(x, y + height);
+			ctx.lineTo(x, y);
 		}
 
+		const BORDER_PX = (OUTLINE_PX - INNER_PX) * 2;
+
+		//rect outlines
+		ctx.lineWidth = 1;
+		ctx.fillStyle = "#292929";
 		ctx.beginPath();
-		ctx.arc(0, 0, 9, 0, 2 * Math.PI, false);
+		for (let i = 0; i < viewPoints.length; i++) {
+			traceRect(viewPoints[i], INNER_PX*3.5+BORDER_PX, INNER_PX*1.3+BORDER_PX);
+		}
 		ctx.fill();
 
-		ctx.restore();
-	});
+		//rect middle
+		ctx.fillStyle = active ? "white" : color;
+		ctx.beginPath();
+		for (let i = 0; i < viewPoints.length; i++) {
+			traceRect(viewPoints[i], INNER_PX*3.5, INNER_PX*1.3);
+		}
+		ctx.fill();
 
-	ctx.font = "bold 13px Monospace";
+		//draw depth scale
+		if(drag_point >= 0){
+			const p = viewPoints[drag_point];
+
+			const grad = ctx.createLinearGradient(p.x-60, p.y, p.x+25, p.y)
+			grad.addColorStop(0.0, "rgba(0, 0, 0, 0.75)");
+			grad.addColorStop(1.0, "transparent");
+			ctx.fillStyle = grad;
+			ctx.fillRect(p.x-60, icon_bar.offsetHeight, 85, window.innerHeight-icon_bar.offsetHeight)
+
+			ctx.lineWidth = 2;
+			ctx.strokeStyle = "white";
+			ctx.beginPath();
+
+			//0
+			ctx.moveTo(p.x-60, p.y);
+			ctx.lineTo(p.x-30, p.y);
+
+			const steps = [1, 10, 100, 1000, 10000]
+			for(const i of steps){
+				const scaled = stepToLinearScale(i) / 1.25;
+				ctx.moveTo(p.x-60, p.y+scaled);
+				ctx.lineTo(p.x, p.y+scaled);
+
+				ctx.moveTo(p.x-60, p.y-scaled);
+				ctx.lineTo(p.x, p.y-scaled);
+			}
+			ctx.stroke();
+
+			ctx.lineJoin = 'round';
+			ctx.miterLimit = 2;
+			ctx.font = (12)+"px Monospace";
+			ctx.textAlign = "left";
+			ctx.fillStyle = "white";
+
+			for(const i of steps){
+				const scaled = stepToLinearScale(i) / 1.25;
+
+				const text = Math.round(drag_point_z+i).toFixed(0);
+				const text_neg = Math.round(drag_point_z-i).toFixed(0);
+
+				ctx.fillText(text_neg, p.x-25, p.y+scaled-5);
+				ctx.fillText(text, p.x-25, p.y-scaled-5);
+			}
+
+			ctx.lineWidth = 1;
+			ctx.strokeStyle = "lightgray";
+			ctx.beginPath();
+			const micro_steps = [
+				0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,
+				1, 2, 3, 4, 5, 6, 7, 8, 9,
+				10, 20, 30, 40, 50, 60, 70, 80, 90, 
+				100, 200, 300, 400, 500, 600, 700, 800, 900,
+				1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000
+			]
+
+			for(const i of micro_steps){
+				const scaled = stepToLinearScale(i) / 1.25;
+				ctx.moveTo(p.x-60, p.y+scaled);
+				ctx.lineTo(p.x-30, p.y+scaled);
+
+				ctx.moveTo(p.x-60, p.y-scaled);
+				ctx.lineTo(p.x-30, p.y-scaled);
+			}
+
+			ctx.stroke();
+
+			ctx.lineWidth = 5;
+			ctx.strokeStyle = "#446294";
+			ctx.beginPath();
+			ctx.moveTo(p.x-60, icon_bar.offsetHeight);
+			ctx.lineTo(p.x-60, window.innerHeight);
+
+			//up arrow
+			ctx.moveTo(p.x-65, icon_bar.offsetHeight+10);
+			ctx.lineTo(p.x-60, icon_bar.offsetHeight);
+			ctx.lineTo(p.x-55, icon_bar.offsetHeight+10);
+
+			//down arrow
+			ctx.moveTo(p.x-65, window.innerHeight-10);
+			ctx.lineTo(p.x-60, window.innerHeight);
+			ctx.lineTo(p.x-55, window.innerHeight-10);
+			ctx.stroke();
+		}
+		
+	}
+
+	if(mode == "Z")
+		drawRectangles();
+	else
+		drawCircles();
+
+	ctx.font = "bold 12px Monospace";
 	ctx.textAlign = "center";
-	ctx.fillStyle = "#212E4A";
+	ctx.fillStyle = "#21252b";
 
+	function formatZ(num) {
+		if(num > 0){
+			if (num >= 10000) return "9999";
+			if (num >= 100) return Math.floor(num).toString();
+			return num.toFixed(1);
+		}
+		const absnum = Math.abs(num);
+		if (absnum >= 10000) return "-9999";
+		if (absnum >= 100) return Math.floor(num).toString();
+		return num.toFixed(1);
+	}
 	viewPoints.forEach((pos, index) => {
-		ctx.fillText(index, pos.x, pos.y+5);
+		if(mode == "Z")
+			ctx.fillText(formatZ(points[index].z)+"m", pos.x, pos.y+5);
+		else
+			ctx.fillText(index, pos.x, pos.y+5);
 	});
 
 	status.setOK();
@@ -331,6 +603,7 @@ let start_stamp = undefined;
 let start_point = undefined;
 let delta = undefined;
 let drag_point = -1;
+let drag_point_z = 0;
 
 function findPoint(newpoint){
 	let i = -1;
@@ -340,11 +613,54 @@ function findPoint(newpoint){
 			screenpoint.x - newpoint.x,
 			screenpoint.y - newpoint.y,
 		)
-		if(dist < 15){
+		if(mode == "XY" && dist < 15){
+			i = index;
+		}else if(mode == "Z" && dist < 20){
 			i = index;
 		}
 	});
 	return i;
+}
+
+const Z_SCALE_MULT = 170;
+
+function stepToLinearScale(x) {
+    const absX = Math.abs(x);
+    let result;
+    if (absX <= 1) {
+        result = absX;
+    } else if (absX <= 10) {
+        result = 1 + (absX - 1) / 9;
+    } else if (absX <= 100) {
+        result = 2 + (absX - 10) / 90;
+    } else if (absX <= 1000) {
+        result = 3 + (absX - 100) / 900;
+    } else if (absX <= 10000) {
+        result = 4 + (absX - 1000) / 9000;
+    } else {
+        result = 5;
+    }
+    return result * Math.sign(x) * Z_SCALE_MULT;
+}
+
+function linearToStepScale(y) {
+	y/=Z_SCALE_MULT;
+    const absY = Math.abs(y);
+    let result;
+    if (absY <= 1) {
+        result = absY;
+    } else if (absY <= 2) {
+        result = 1 + (absY - 1) * 9;
+    } else if (absY <= 3) {
+        result = 10 + (absY - 2) * 90;
+    } else if (absY <= 4) {
+        result = 100 + (absY - 3) * 900;
+	} else if (absY <= 5) {
+        result = 1000 + (absY - 4) * 9000;
+	}else{
+		result = 10000;
+	}
+    return result * Math.sign(y);
 }
 
 function startDrag(event){
@@ -357,6 +673,7 @@ function startDrag(event){
 	drag_point = findPoint(start_point);
 	if(drag_point >= 0){
 		view.setInputMovementEnabled(false);
+		drag_point_z = points[drag_point].z;
 	}
 
 	start_stamp = new Date();
@@ -370,13 +687,18 @@ function drag(event){
 		clientY = Math.round(clientY/20) * 20;
 	}
 
-	if(drag_point >= 0){
-		points[drag_point] = screenToPoint({
-			x: clientX,
-			y: clientY
-		})
-		drawWaypoints();
-	}
+	if(mode == "XY"){
+		if(drag_point >= 0){
+			const newpos = screenToPoint({
+				x: clientX,
+				y: clientY
+			})
+	
+			points[drag_point].x = newpos.x;
+			points[drag_point].y = newpos.y;
+			drawWaypoints();
+		}
+	} 
 
 	if (start_point === undefined) 
 		return;
@@ -385,6 +707,22 @@ function drag(event){
 		x: start_point.x - clientX,
 		y: start_point.y - clientY,
 	};
+
+	if(mode == "Z" && drag_point >= 0){	
+		points[drag_point].z = drag_point_z + linearToStepScale(delta.y * 1.25); 
+
+		if(points[drag_point].z > 9999.99)
+			points[drag_point].z = 9999;
+		else if(points[drag_point].z < -9999.99)
+			points[drag_point].z = -9999;
+
+		if (Math.abs(points[drag_point].z) >= 100)
+			points[drag_point].z = parseInt(points[drag_point].z);
+		else
+			points[drag_point].z = parseInt(points[drag_point].z*10)/10;
+
+		drawWaypoints();
+	}
 }
 
 function distancePointToLineSegment(px, py, x1, y1, x2, y2) {
@@ -416,7 +754,9 @@ function endDrag(event){
 		moveDist = Math.hypot(delta.x,delta.y);
 	}
 
-	if(moveDist < 10 && new Date() - start_stamp  < 500){
+	if(moveDist < 10 && new Date() - start_stamp  < 300 && mode == "XY"){
+
+		start_stamp = new Date("2010-3-2"); //debounce, and also when ROS box turtle was released
 
 		let { clientX, clientY } = event.touches ? event.touches[0] : event;
 
@@ -432,11 +772,10 @@ function endDrag(event){
 
 		let index = findPoint(newpoint);
 
-		if(index >= 0)
+		if(index >= 0){ // remove point
 			points.splice(index, 1);
-		else
-		{
-			let after = -1;
+		}else{
+			let before = -1;
 			for (let i = 0; i < points.length - 1; i++) {
 				const p0 = pointToScreen(points[i]);
 				const p1 = pointToScreen(points[i+1]);
@@ -448,15 +787,30 @@ function endDrag(event){
 				);
 
 				if (distance <= 10) {
-					after = i+1;
+					before = i+1;
 					break;
 				}
 			}
 		
-			if(after > 0){
-				points.splice(after, 0, screenToPoint(newpoint));
+			if(before > 0){
+				// insert new point between two others
+				const p = screenToPoint(newpoint);
+				const p0 = points[before-1];
+				const p1 = points[before];
+
+				// Calculate the weight as the ratio of distances
+				const distP0P1 = Math.hypot(p1.x - p0.x, p1.y - p0.y);
+				const distP0P = Math.hypot(p.x - p0.x, p.y - p0.y);
+				p.z = p0.z + distP0P / distP0P1 * (p1.z - p0.z);
+				points.splice(before, 0, p);
 			}else{
-				points.push(screenToPoint(newpoint));
+				// add point to the end
+				const p = screenToPoint(newpoint);
+
+				if (points.length > 0)
+					p.z = points[points.length-1].z;
+
+				points.push(p);
 			}
 		}
 		saveSettings();
@@ -485,6 +839,11 @@ window.addEventListener("tf_changed", ()=>{
 	}
 });
 
+view_container.addEventListener("mouseleave", (event) => {
+	delta = undefined;
+	endDrag(event);
+});
+
 function addListeners(){
 	view_container.addEventListener('mousedown', startDrag);
 	view_container.addEventListener('mousemove', drag);
@@ -505,18 +864,36 @@ function removeListeners(){
 	view_container.removeEventListener('touchend', endDrag);	
 }
 
-function setActive(value){
-	active = value;
+function setMode(newmode){
+	mode = newmode;
 
-	if(active){
-		addListeners();
-		icon.style.backgroundColor = "rgba(255, 255, 255, 1.0)";
-		view_container.style.cursor = "pointer";
-	}else{
-		removeListeners()
-		icon.style.backgroundColor = "rgba(124, 124, 124, 0.3)";
-		view_container.style.cursor = "";
+	switch(mode){
+		case "IDLE":
+			removeListeners()
+			icon.style.backgroundColor = "rgba(124, 124, 124, 0.3)";
+			view_container.style.cursor = "";
+			buttontext.innerText = "";
+			canvas.style.zIndex = "2";
+			break;
+
+		case "XY":
+			addListeners();
+			icon.style.backgroundColor = "rgba(255, 255, 255, 1.0)";
+			view_container.style.cursor = "pointer";
+			buttontext.innerText = "X,Y";
+			canvas.style.zIndex = "999";
+			break;
+
+		case "Z":
+			addListeners();
+			icon.style.backgroundColor = "rgba(255, 255, 255, 1.0)";
+			view_container.style.cursor = "pointer";
+			buttontext.innerText = "Z";
+			canvas.style.zIndex = "999";
+			break;
 	}
+
+	drawWaypoints();
 }
 
 // Shift clamp to axis
@@ -555,6 +932,37 @@ baseLinkFrameBox.addEventListener("change", (event) => {
 	base_link_frame = baseLinkFrameBox.value;
 	saveSettings();
 });
+
+margin.addEventListener("input", (event) =>{
+	drawWaypoints();
+	saveSettings();
+});
+
+function find_base_frame(){
+	//try base_link first
+	for (const key of tf.frame_list.values()) {
+		if (key.includes("base_link")) {
+			return key
+		}
+	}
+
+	//maybe footprint?
+	for (const key of tf.frame_list.values()) {
+		if (key.includes("base_footprint")) {
+			return key
+		}
+	}
+
+	//ok just base then...?
+	for (const key of tf.frame_list.values()) {
+		if (key.includes("base")) {
+			return key
+		}
+	}
+
+	//eh screw it
+	return "base_link";
+}
 
 async function loadTopics(){
 	const result_path = await rosbridge.get_topics("nav_msgs/msg/Path");
@@ -626,44 +1034,85 @@ async function loadTopics(){
 
 loadTopics();
 
-// Long press modal open stuff
+//dropdown stuff
 
-let longPressTimer;
-let isLongPress = false;
-
-icon.addEventListener("click", (event) =>{
-	if(!isLongPress)
-		setActive(!active);
+function dropdown_visibility(open){
+	if(open)
+		dropdown.style.display = "block";
 	else
-		isLongPress = false;
-
-	drawWaypoints();
-});
-
-icon.addEventListener("mousedown", startLongPress);
-icon.addEventListener("touchstart", startLongPress);
-
-icon.addEventListener("mouseup", cancelLongPress);
-icon.addEventListener("mouseleave", cancelLongPress);
-icon.addEventListener("touchend", cancelLongPress);
-icon.addEventListener("touchcancel", cancelLongPress);
-
-icon.addEventListener("contextmenu", (event) => {
-	event.preventDefault();
-});
-
-function startLongPress(event) {
-	isLongPress = false;
-	longPressTimer = setTimeout(() => {
-		isLongPress = true;
-		loadTopics();
-		openModal("{uniqueID}_modal");
-	}, 500);
+		dropdown.style.display = "none";
 }
 
-function cancelLongPress(event) {
-	clearTimeout(longPressTimer);
-}
+// Toggle dropdown on click
+icon.addEventListener("click", (event) => {
+	event.stopPropagation();
+
+	if(mode != "IDLE"){
+		setMode("IDLE");
+	}else{
+		const rect = icon.getBoundingClientRect();
+		const dropdownWidth = 90;
+		let top = rect.bottom + 5; // Default: below the icon
+		let left = rect.left;
+
+		if (left + dropdownWidth > window.innerWidth) {
+			left = window.innerWidth - dropdownWidth - 5;
+		}
+
+		if (left < 5) {
+			left = 5;
+		}
+
+		dropdown.style.top = `${top}px`;
+		dropdown.style.left = `${left}px`;
+	
+		dropdown_visibility(dropdown.style.display == "none")
+	}
+});
+
+// Close dropdown when clicking outside
+document.addEventListener("click", (event) => {
+	if (!dropdown.contains(event.target) && !icon.contains(event.target)) {
+		dropdown_visibility(false);
+	}
+});
+
+const drop_start = document.getElementById("{uniqueID}_sendAction");
+const drop_stop = document.getElementById("{uniqueID}_stopAction");
+const drop_xy = document.getElementById("{uniqueID}_editXY");
+const drop_z = document.getElementById("{uniqueID}_editZ");
+const drop_config = document.getElementById("{uniqueID}_config");
+
+const startButton = document.getElementById("{uniqueID}_start");
+const stopButton = document.getElementById("{uniqueID}_stop");
+
+drop_start.addEventListener("click", (event) => {
+	if(startCheckbox.checked)
+		sendMessage(points.slice(getStartIndex()))
+	else
+		sendMessage(points)
+	dropdown_visibility(false);
+});
+
+drop_stop.addEventListener("click", (event) => {
+	sendMessage([]);
+	dropdown_visibility(false);
+});
+
+drop_xy.addEventListener("click", (event) => {
+	setMode("XY");
+	dropdown_visibility(false);
+});
+
+drop_z.addEventListener("click", (event) => {
+	setMode("Z");
+	dropdown_visibility(false);
+});
+
+drop_config.addEventListener("click", (event) => {
+	openModal("{uniqueID}_modal");
+	dropdown_visibility(false);
+});
 
 resizeScreen();
 

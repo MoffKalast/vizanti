@@ -316,6 +316,7 @@ object {
 	align-content: start;
 }
 
+
 /* Media query for non-touch devices (usually desktop) */
 @media (pointer: fine) {
 	.modal_inner {
@@ -640,7 +641,6 @@ button {
 	max-width: 100%;
 	font-size: 1.0rem;
 
-	border-radius: 6px;
 	border: 3px solid #757575; 
 	border-radius: 2px;
 	font-family: 'Ubuntu Mono', Monospace;
@@ -668,6 +668,44 @@ button:hover{
 	transform: scale(1.02);
 	text-decoration: none;
 	cursor: pointer;
+}
+
+/* Dropdown */
+
+.dropdown-menu {
+	position: fixed;
+	background: rgba(0, 0, 0, 0.7);
+	border-radius: 15px;
+	width: 90px;
+	z-index: 25;
+}
+
+.dropdown-inner {
+	background: rgba(100, 100, 100, 0.5);
+	border-radius: 15px;
+}
+
+.dropdown-item {
+	border-radius: 15px;
+	display: flex;
+	align-items: center;
+	padding: 8px;
+	padding-top: 15px;
+	padding-bottom: 15px;
+	cursor: pointer;
+	font-size: 14px;
+	color: rgb(255, 255, 255);
+	transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+	background: #706300;
+}
+
+.dropdown-icon {
+	width: 16px;
+	height: 16px;
+	margin-right: 8px;
 }
 
 /* Misc */
@@ -702,6 +740,9 @@ button:hover{
 	-webkit-tap-highlight-color:rgba(0,0,0,0);
 }
 
+li {
+	padding-bottom: 7px;
+}
 
 /* Loader */
 

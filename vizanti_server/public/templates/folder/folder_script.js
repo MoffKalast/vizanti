@@ -54,7 +54,6 @@ function set_icons(){
 				if(sources[i][0].hasAttribute("data-color")){
 					subicons[i].onload = ()=>{
 						utilModule.setIconColor(subicons[i], sources[i][0].dataset.color);
-						console.log(subicons[i].dataset.color)
 					};
 				}
 			}
