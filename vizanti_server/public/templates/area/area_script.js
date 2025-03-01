@@ -31,6 +31,17 @@ function saveSettings(){
 	settings.save();
 }
 
+function getStamp(){
+	const currentTime = new Date();
+	const currentTimeSecs = Math.floor(currentTime.getTime() / 1000);
+	const currentTimeNsecs = (currentTime.getTime() % 1000) * 1e6;
+
+	return {
+		sec: currentTimeSecs,
+		nanosec: currentTimeNsecs
+	}
+}
+
 function sendMessage(start, end){
 	if(!start || !end){
 		status.setError("Could not send message, area invalid.");
@@ -38,7 +49,10 @@ function sendMessage(start, end){
 	}
 
 	let start_pos = view.screenToFixed(start);
+	start_pos.z = 0;
+
 	let end_pos = view.screenToFixed(end);
+	end_pos.z = 0;
 
 	// Compute the other two points of the square.
 	let vector = {
@@ -48,12 +62,14 @@ function sendMessage(start, end){
 
 	let point2 = {
 		x: start_pos.x + vector.x,
-		y: start_pos.y
+		y: start_pos.y,
+		z: 0
 	};
 
 	let point3 = {
 		x: start_pos.x, 
-		y: start_pos.y + vector.y
+		y: start_pos.y + vector.y,
+		z: 0
 	};
 
 	const publisher = new ROSLIB.Topic({
@@ -62,10 +78,9 @@ function sendMessage(start, end){
 		messageType: 'geometry_msgs/msg/PolygonStamped'
 	});
 
-	//console.log("Points",start_pos,end_pos, point2, point3)
-
 	const polygonMsg = new ROSLIB.Message({
-		header:{
+		header: {
+			stamp: getStamp(),
 			frame_id: tf.fixed_frame
 		},
 		polygon: {
