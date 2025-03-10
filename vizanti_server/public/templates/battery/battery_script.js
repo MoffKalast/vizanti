@@ -35,13 +35,18 @@ icons["40%"] = await imageToDataURL("assets/battery_40.svg");
 icons["60%"] = await imageToDataURL("assets/battery_60.svg");
 icons["80%"] = await imageToDataURL("assets/battery_80.svg");
 icons["100%"] = await imageToDataURL("assets/battery_100.svg");
+icons["charging_20%"] = await imageToDataURL("assets/battery_20_charging.svg");
+icons["charging_40%"] = await imageToDataURL("assets/battery_40_charging.svg");
+icons["charging_60%"] = await imageToDataURL("assets/battery_60_charging.svg");
+icons["charging_80%"] = await imageToDataURL("assets/battery_80_charging.svg");
+icons["charging_100%"] = await imageToDataURL("assets/battery_100_charging.svg");
 icons["unknown"] = await imageToDataURL("assets/battery_unknown.svg");
 
 const STATUS = [
 	"UNKNOWN",
 	"CHARGING",
 	"DISCHARGING",
-	"NOT_CHARGING",
+	"NOT CHARGING",
 	"FULL",
 ]
 
@@ -51,10 +56,10 @@ const HEALTH = [
 	"OVERHEAT",
 	"DEAD",
 	"OVERVOLTAGE",
-	"UNSPEC_FAILURE",
+	"UNSPEC FAILURE",
 	"COLD",
-	"WATCHDOG_TIMER_EXPIRE",
-	"SAFETY_TIMER_EXPIRE"
+	"WATCHDOG TIMER EXPIRED",
+	"SAFETY TIMER EXPIRED"
 ]
 
 const CHEMISTRY = [
@@ -76,7 +81,7 @@ const text_cell_voltage = document.getElementById("{uniqueID}_cell_voltage");
 const text_current = document.getElementById("{uniqueID}_current");
 const text_charge = document.getElementById("{uniqueID}_charge");
 
-const text_status = document.getElementById("{uniqueID}_status");
+const text_status = document.getElementById("{uniqueID}_charging_status");
 const text_health = document.getElementById("{uniqueID}_health");
 const text_chemistry = document.getElementById("{uniqueID}_chemistry");
 
@@ -106,20 +111,22 @@ function connect(){
 	
 	listener = batterytopic.subscribe((msg) => {
 
+		let chg_prefix = msg.power_supply_status == 1 ? "charging_": "";
+
 		if(msg.percentage <= 0.2){
-			icon.src = icons["20%"];
+			icon.src = icons[chg_prefix+"20%"];
 		}
 		else if(msg.percentage <= 0.4){
-			icon.src = icons["40%"];
+			icon.src = icons[chg_prefix+"40%"];
 		}
 		else if(msg.percentage <= 0.6){
-			icon.src = icons["60%"];
+			icon.src = icons[chg_prefix+"60%"];
 		}
 		else if(msg.percentage <= 0.8){
-			icon.src = icons["80%"];
+			icon.src = icons[chg_prefix+"80%"];
 		}
 		else{
-			icon.src = icons["100%"];
+			icon.src = icons[chg_prefix+"100%"];
 		}
 
 		text_percent.innerText = "Percentage: "+parseInt(msg.percentage*100)+" %";
