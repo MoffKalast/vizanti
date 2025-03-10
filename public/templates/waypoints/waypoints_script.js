@@ -998,7 +998,7 @@ async function loadTopics(){
 		}
 	}
 
-	//find world frames
+	//find frames
 	let framelist = "";
 	for (const key of tf.frame_list.values()) {
 		framelist += "<option value='"+key+"'>"+key+"</option>"
@@ -1013,28 +1013,13 @@ async function loadTopics(){
 		fixedFrameBox.value = fixed_frame;
 	}
 
-	//find base frames
-	let baselist = "";
-	for (const key of tf.frame_list.values()) {
-		if (key.includes("base")) {
-			baselist += "<option value='"+key+"'>"+key+"</option>"
-		}
-	}
-
-	//if there's no base frame, it may have a nonstandard name so let's put any frame up for selection
-	if(baselist == ""){
-		for (const key of tf.frame_list.values()) {
-			baselist += "<option value='"+key+"'>"+key+"</option>"
-		}
-	}
-
-	baseLinkFrameBox.innerHTML = baselist;
+	baseLinkFrameBox.innerHTML = framelist;
 	
 	if(tf.frame_list.has(base_link_frame)){
 		baseLinkFrameBox.value = base_link_frame;
 	}else{
-		baselist += "<option value='"+fixed_frame+"'>"+fixed_frame+"</option>"
-		baseLinkFrameBox.innerHTML = baselist;
+		framelist += "<option value='"+fixed_frame+"'>"+fixed_frame+"</option>"
+		baseLinkFrameBox.innerHTML = framelist;
 		baseLinkFrameBox.value = base_link_frame;
 	}
 }
@@ -1117,6 +1102,7 @@ drop_z.addEventListener("click", (event) => {
 });
 
 drop_config.addEventListener("click", (event) => {
+	loadTopics();
 	openModal("{uniqueID}_modal");
 	dropdown_visibility(false);
 });
