@@ -77,6 +77,9 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	margin.value = loaded_data.margin ?? 0.8;
 	startCheckbox.checked = loaded_data.start_closest;
 
+	if(loaded_data.topic_type != undefined)
+		typedict[topic] = loaded_data.topic_type;
+
 	for (let i = 0; i < points.length; i++) {
 		if (points[i].z == null || points[i].z == undefined)
 			points[i].z = 0;
@@ -95,6 +98,7 @@ if(topic == ""){
 function saveSettings(){
 	settings["{uniqueID}"] = {
 		topic: topic,
+		topic_type: typedict[topic],
 		fixed_frame: fixed_frame,
 		base_link_frame: base_link_frame,
 		points: points,
