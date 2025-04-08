@@ -89,10 +89,10 @@ export class TF {
 			msg.transforms.forEach((pose) => {
 				this.frame_timestamps[pose.child_frame_id] = time_stamp;
 				this.frame_timestamps[pose.header.frame_id] = time_stamp;
-				this.updateFrameTimestamp(pose.child_frame_id,pose.header.stamp)
+				this.updateFrameTimestamp(pose.child_frame_id,pose.header.stamp);
 			})
 
-			this.updateTransforms(msg.transforms, false);
+			this.updateTransforms(msg.transforms);
 			//this.absoluteTransformsHistory.add(msg.transforms[0].header.stamp, this.absoluteTransforms);
 		});
 
@@ -105,7 +105,7 @@ export class TF {
 		});
 
 		this.tf_static_listener = this.tf_static_topic.subscribe((msg) => {
-			this.updateTransforms(msg.transforms, true);
+			this.updateTransforms(msg.transforms);
 		});
 
 		this.event_timestamp = performance.now();
@@ -120,7 +120,7 @@ export class TF {
 			let deleted_anything = false;
 			for (const [frame_id, time_stamp] of Object.entries(this.frame_timestamps)) {
 				if(now - time_stamp > 1000 * 100){
-					delete this.frame_list[frame_id];
+					this.frame_list.delete(frame_id);
 					delete this.transforms[frame_id];
 					delete this.absoluteTransforms[frame_id];
 					delete this.frame_headerstamps[frame_id];
