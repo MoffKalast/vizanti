@@ -134,8 +134,11 @@ function calculateSpeed() {
     const deltaTimeSec = tf.getTimeStampDelta(prev_stamp, time_now);
 
     // Skip duplicated calls
-    if (deltaTimeSec < 0.01)
+    if (deltaTimeSec < 0.01){
+		prev = transformed;
+    	prev_stamp = time_now;
 		return;
+	}
 
 	const dist = Math.hypot(
         prev.translation.x - transformed.translation.x,
