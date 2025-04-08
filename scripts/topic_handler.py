@@ -17,7 +17,7 @@ class TopicHandler:
 		self.transforms = {}
 
 		self.transform_timeout = {}
-		self.timeout_prescaler = 0 # once per second
+		self.timeout_prescaler = 0
 
 		self.tf_sub = rospy.Subscriber('/tf', TFMessage, self.tf_callback)
 		self.tf_pub = rospy.Publisher('/vizanti/tf_consolidated', TFMessage, queue_size=1, latch=True)
@@ -35,7 +35,7 @@ class TopicHandler:
 					rospy.logwarn("Deleted old TF link: "+str(parent)+" -> "+str(key))
 
 	def publish(self):
-		# once per 5 seconds
+		# 150 /30 hz = once per 5 seconds
 		self.timeout_prescaler = (self.timeout_prescaler + 1) % 150
 		if self.timeout_prescaler == 0:
 			self.clear_old_tfs()
