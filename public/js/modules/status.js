@@ -9,7 +9,7 @@ export class Status {
         this._lastMessage = null;
 
         this._updateInterval = setInterval(() => {
-            if (!this.icon.isConnected || !this.message.isConnected) {
+            if (!this.icon == null || !this.icon.isConnected || this.message == null || !this.message.isConnected) {
                 clearInterval(this._updateInterval);
                 return;
             }
