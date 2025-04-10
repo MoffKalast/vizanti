@@ -48,6 +48,12 @@ colourpicker.addEventListener("input", (event) =>{
 	drawMarkers();
 });
 
+const decay = document.getElementById('{uniqueID}_decay');
+decay.addEventListener("input", (event) =>{
+	saveSettings();
+	connect();
+});
+
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
 
@@ -62,6 +68,8 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	scaleSliderValue.textContent = scaleSlider.value;
 
 	typedict = loaded_data.typedict ?? {};
+
+	decay.value = loaded_data.decay ?? 10000;
 
 }else{
 	saveSettings();
@@ -81,7 +89,8 @@ function saveSettings(){
 		topic: topic,
 		scale: parseFloat(scaleSlider.value),
 		typedict: typedict,
-		color: colourpicker.value
+		color: colourpicker.value,
+		decay: decay.value
 	}
 	settings.save();
 }
@@ -164,6 +173,9 @@ async function drawMarkers(){
 	ctx.clearRect(0, 0, wid, hei);
 
 	if(!posemsg)
+		return;
+
+	if(decay.value > 0 && new Date() - posemsg.stamp > decay.value)
 		return;
 
 	if(frame === tf.fixed_frame){
@@ -290,7 +302,8 @@ function connect(){
 			yaw: transformed.rotation.toEuler().h,
 			rotation_invalid: rotation_invalid,
 			covariance: skip_covariance ? undefined : msg.pose.covariance,
-			eigenvalues: skip_covariance ? undefined : calculateEigen(msg.pose.covariance)
+			eigenvalues: skip_covariance ? undefined : calculateEigen(msg.pose.covariance),
+			stamp: new Date()
 		};
 	
 		drawMarkers();
