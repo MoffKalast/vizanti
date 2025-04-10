@@ -57,18 +57,72 @@ function saveSettings(){
 //Messaging
 
 function sendMessage(){
-	const publisher = new ROSLIB.Topic({
-		ros: rosbridge.ros,
-		name: topic,
-		messageType: typedict[topic],
-	});
 
-	if(typedict[topic] == "std_msgs/Bool"){
-		publisher.publish(new ROSLIB.Message({
-			data: !value,
-		}));
-	}else{
-		publisher.publish(new ROSLIB.Message({}));
+	icondiv.classList.add("button-press-effect");
+
+	setTimeout(() => {
+		icondiv.classList.remove("button-press-effect");
+	}, 200);
+
+	if(typedict[topic] == "std_msgs/Bool" || typedict[topic] == "std_msgs/Empty"){
+		const publisher = new ROSLIB.Topic({
+			ros: rosbridge.ros,
+			name: topic,
+			messageType: typedict[topic],
+		});
+
+		if(typedict[topic] == "std_msgs/Bool"){
+			publisher.publish(new ROSLIB.Message({
+				data: !value,
+			}));
+		}else{
+			publisher.publish(new ROSLIB.Message({}));
+		}
+	}
+	else if(typedict[topic] == "std_srvs/Empty"){
+		const service = new ROSLIB.Service({
+			ros: rosbridge.ros,
+			name: topic,
+			serviceType: "std_srvs/Empty"
+		});
+		const request = new ROSLIB.ServiceRequest({});
+		service.callService(request, (result) => {
+			console.log("Empty service called.");
+		});
+	}
+	else if(typedict[topic] == "std_srvs/Trigger"){
+		const service = new ROSLIB.Service({
+			ros: rosbridge.ros,
+			name: topic,
+			serviceType: "std_srvs/Trigger"
+		});
+		const request = new ROSLIB.ServiceRequest({});
+		service.callService(request, (result) => {
+			if(result.success){
+				status.setOK(result.message);
+			}else{
+				status.setError(result.message);
+			}
+		});
+	}
+	else if(typedict[topic] == "std_srvs/SetBool"){
+		const service = new ROSLIB.Service({
+			ros: rosbridge.ros,
+			name: topic,
+			serviceType: "std_srvs/SetBool"
+		});
+		const request = new ROSLIB.ServiceRequest({
+			data: !value  // toggle the value
+		});
+		service.callService(request, (result) => {
+			if(result.success){
+				value = !value;
+				icon.src = icons[value];
+				status.setOK(result.message);
+			}else{
+				status.setError(result.message);
+			}
+		});
 	}
 }
 
@@ -79,7 +133,7 @@ let booltopic = undefined;
 function connect(){
 
 	if(topic == ""){
-		status.setError("Empty topic.");
+		status.setError("Empty topic/service.");
 		return;
 	}
 
@@ -105,6 +159,9 @@ function connect(){
 
 		icon.src = icons["false"];
 	}
+	else if(typedict[topic] == "std_srvs/SetBool"){
+		icon.src = icons["false"];
+	}	
 	else{
 		icon.src = icons["default"];
 	}	
@@ -114,30 +171,59 @@ function connect(){
 
 async function loadTopics(){
 	let booltopics = await rosbridge.get_topics("std_msgs/Bool");
-	let triggertopics = await rosbridge.get_topics("std_msgs/Empty");
+	let emptypubs = await rosbridge.get_topics("std_msgs/Empty");
+	let emptysrvs = await rosbridge.get_services("std_srvs/Empty");
+	let triggersrvs = await rosbridge.get_services("std_srvs/Trigger");
+	let setboolsrvs = await rosbridge.get_services("std_srvs/SetBool");
+
 	let topiclist = "";
+
 	booltopics.forEach(element => {
-		topiclist += "<option value='"+element+"'>"+element+" (Bool)</option>"
+		topiclist += "<option value='"+element+"'>"+element+" (msgs/Bool)</option>";
 		typedict[element] = "std_msgs/Bool";
 	});
-	triggertopics.forEach(element => {
-		topiclist += "<option value='"+element+"'>"+element+" (Empty)</option>"
+
+	emptypubs.forEach(element => {
+		topiclist += "<option value='"+element+"'>"+element+" (msgs/Empty)</option>";
 		typedict[element] = "std_msgs/Empty";
 	});
-	selectionbox.innerHTML = topiclist
+
+	emptysrvs.forEach(element => {
+		if(!element.includes("/vizanti/")){
+			topiclist += "<option value='"+element+"'>"+element+" (srvs/Empty)</option>";
+			typedict[element] = "std_srvs/Empty";
+		}
+	});
+
+	triggersrvs.forEach(element => {
+		if(!element.includes("/vizanti/")){
+			topiclist += "<option value='"+element+"'>"+element+" (srvs/Trigger)</option>";
+			typedict[element] = "std_srvs/Trigger";
+		}
+	});
+
+	setboolsrvs.forEach(element => {
+		if(!element.includes("/vizanti/")){
+			topiclist += "<option value='"+element+"'>"+element+" (srvs/SetBool)</option>";
+			typedict[element] = "std_srvs/SetBool";
+		}
+	});
+
+	selectionbox.innerHTML = topiclist;
 
 	if(topic == "")
 		topic = selectionbox.value;
 	else{
-		if(booltopics.includes(topic) || triggertopics.includes(topic)){
+		if(typedict.hasOwnProperty(topic)){
 			selectionbox.value = topic;
 		}else{
-			topiclist += "<option value='"+topic+"'>"+topic+"</option>"
-			selectionbox.innerHTML = topiclist
+			topiclist += "<option value='"+topic+"'>"+topic+"</option>";
+			selectionbox.innerHTML = topiclist;
 			selectionbox.value = topic;
 		}
 	}
 }
+
 
 selectionbox.addEventListener("change", (event) => {
 	topic = selectionbox.value;
