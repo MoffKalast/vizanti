@@ -670,6 +670,26 @@ button:hover{
 	cursor: pointer;
 }
 
+@keyframes buttonPressFlash {
+	0% {
+		border-color: #3a9cff;
+		transform: scale(1.15);
+		font-size: 1.17em;
+		color: #4d9aff;
+	}
+	100% {
+		border-color: transparent;
+		transform: scale(1);
+		font-size: 1em;
+		color: white;
+	}
+}
+
+.button-press-effect {
+	animation: buttonPressFlash 0.25s ease-out;
+}
+
+
 /* Dropdown */
 
 .dropdown-menu {

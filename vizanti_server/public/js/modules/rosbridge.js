@@ -79,6 +79,17 @@ class Rosbridge {
 			serviceType : 'rosapi/Subscribers',
 		});
 
+		this.services_client = new ROSLIB.Service({
+			ros : this.ros,
+			name : '/rosapi/services',
+			serviceType : 'rosapi/Services',
+		});
+		
+		this.services_for_type_client = new ROSLIB.Service({
+			ros : this.ros,
+			name : '/rosapi/services_for_type',
+			serviceType : 'rosapi/ServicesForType',
+		});
 
 		window.dispatchEvent(new Event('rosbridge_change'));
 	}
@@ -114,6 +125,19 @@ class Rosbridge {
 				}
 
 				resolve(matching);
+			});
+		});
+	}
+
+	async get_services(requested_type) {
+		return new Promise((resolve, reject) => {
+			const request = new ROSLIB.ServiceRequest({ type: requested_type });
+	
+			this.services_for_type_client.callService(request, (result) => {
+				resolve(result.services);
+			}, (err) => {
+				console.error(`Failed to fetch services for type ${requested_type}:`, err);
+				resolve([]);
 			});
 		});
 	}

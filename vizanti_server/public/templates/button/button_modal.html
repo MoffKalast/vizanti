@@ -15,9 +15,17 @@
 		</select>
 		<hr>
 
-		<p>Multifunctional button for displaying and toggling the state from a std_msgs/Bool topic and publishing to a std_msgs/Empty topic, depending on which topic type is selected.</p>
+		<p>Multifunctional button. Behavior depends on the selected topic/service type:</p>
+		<ul>
+			<li><b  style="color:rgb(204, 204, 204)">std_msgs/Empty</b>: Sends an Empty message on click.</li>
+			<li><b  style="color:rgb(204, 204, 204)">std_srvs/Trigger</b>: Calls a Trigger service.</li>
+			<li><b  style="color:rgb(204, 204, 204)">std_srvs/Empty</b>: Calls a Empty service.</li>
 
-		<p style="color:#b4b4b4;">Click the icon once to toggle the bool value or call the empty service. Long press the icon to open this menu.</p>
+			<li><b style="color:rgb(203, 255, 201)">std_msgs/Bool</b>: Displays topic state and sends a negated value on click.</li>
+			<li><b style="color:rgb(203, 255, 201)">std_srvs/SetBool</b>: Negates internal boolean with each call, displays state.</li>
+		</ul>
+
+		<p style="color:#b4b4b4;">Click the icon to trigger. Long press to reopen this menu.</p>
 		
 		<hr>
 
