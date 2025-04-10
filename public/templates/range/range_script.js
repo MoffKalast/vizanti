@@ -108,7 +108,7 @@ async function drawRanges() {
 	for (const [key, sample] of Object.entries(data)) {
 
 		//skip old messages
-		if(new Date() - sample.stamp > decay.value)
+		if(decay.value > 0 && new Date() - sample.stamp > decay.value)
 			continue;
 
 		if(sample.max_range == 0)
