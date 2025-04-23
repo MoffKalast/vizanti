@@ -7,7 +7,7 @@ import logging
 import json
 
 from flask import Flask, render_template, send_from_directory, make_response
-from werkzeug.serving import make_server, WSGIRequestHandler
+from waitress.server import create_server
 
 rospy.init_node('vizanti_flask_node')
 
@@ -100,14 +100,11 @@ def get_default_widget_config():
 def serve_static(path):
 	return send_from_directory(app.static_folder, path)
 
-class RequestHandler(WSGIRequestHandler):
-	def log(self, type, message, *args):
-		self.server.log(type, message, *args)
-
 class ServerThread(threading.Thread):
 	
 	def __init__(self, app, host='0.0.0.0', port=5000):
 		threading.Thread.__init__(self)
+		self.daemon = True
 		
 		self.log = logging.getLogger('werkzeug')
 		self.log.setLevel(logging.INFO)
@@ -117,17 +114,28 @@ class ServerThread(threading.Thread):
 			'[in %(pathname)s:%(lineno)d]'
 		))
 		self.log.addHandler(handler)
-
-		self.srv = make_server(host, port, app, request_handler=RequestHandler)
+		
+		self.app = app
+		self.host = host
+		self.port = port
 		self.ctx = app.app_context()
 		self.ctx.push()
 		
+		self._server = None
+		self._stop_event = threading.Event()
+		
 	def run(self):
-		self.srv.serve_forever()
-
+		self._server = create_server(self.app, host=self.host, port=self.port)
+		try:
+			self._server.run()
+		except KeyboardInterrupt:
+			self.shutdown()
+		
 	def shutdown(self):
-		self.srv.shutdown()
-
+		if self._server:
+			self._server.close()  # This triggers waitress to stop accepting new connections
+			self._stop_event.set()  # Signal that we're stopping
+			rospy.loginfo("Waitress server shutting down...")
 
 server = ServerThread(app, param_host, param_port)
 server.start()
