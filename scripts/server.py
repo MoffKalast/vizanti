@@ -106,12 +106,11 @@ class ServerThread(threading.Thread):
 		threading.Thread.__init__(self)
 		self.daemon = True
 		
-		self.log = logging.getLogger('werkzeug')
+		self.log = logging.getLogger('waitress')
 		self.log.setLevel(logging.INFO)
 		handler = logging.StreamHandler()
 		handler.setFormatter(logging.Formatter(
-			'%(asctime)s %(levelname)s: %(message)s '
-			'[in %(pathname)s:%(lineno)d]'
+			'[%(levelname)s] [%(asctime)s] [waitress]: %(message)s '
 		))
 		self.log.addHandler(handler)
 		
