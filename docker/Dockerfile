@@ -7,8 +7,9 @@ RUN apt-get update
 RUN useradd -ms /bin/bash vizanti
 RUN mkdir -p /home/vizanti/catkin_ws/src
 COPY . /home/vizanti/catkin_ws/src/vizanti/.
-RUN apt install ros-noetic-rosbridge-suite ros-noetic-move-base-msgs python3-flask -y
-RUN source /opt/ros/noetic/setup.bash && cd /home/vizanti/catkin_ws && catkin_make
+WORKDIR "/home/vizanti/catkin_ws"
+RUN source /opt/ros/noetic/setup.bash && rosdep update && rosdep install -i --from-path src/vizanti -y
+RUN source /opt/ros/noetic/setup.bash && catkin_make
 
 USER vizanti
 # Launch Vizanti
