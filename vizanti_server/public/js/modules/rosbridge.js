@@ -105,29 +105,32 @@ class Rosbridge {
 	async get_all_topics() {
 		return new Promise(async (resolve) => {
 			this.topics_client.callService(new ROSLIB.ServiceRequest({}), function (result) {
+				result.topics.sort();
 				resolve(result);
 			});
 		});
 	}
-
+	
 	async get_topics(requested_type) {
 		return new Promise(async (resolve) => {
 			this.topics_client.callService(new ROSLIB.ServiceRequest({}), function (result) {
-
+	
 				let topics = result.topics;
 				let types = result.types;
-
-				let matching = [];				
-				for(let i = 0; i < topics.length; i++){
-					if(types[i] == requested_type){
+	
+				let matching = [];
+				for (let i = 0; i < topics.length; i++) {
+					if (types[i] == requested_type) {
 						matching.push(topics[i]);
 					}
 				}
-
+	
+				matching.sort();
 				resolve(matching);
 			});
 		});
 	}
+	
 
 	async get_services(requested_type) {
 		return new Promise((resolve, reject) => {
