@@ -103,9 +103,12 @@ class Rosbridge {
 	}
 
 	async get_all_topics() {
-		return new Promise(async (resolve) => {
-			this.topics_client.callService(new ROSLIB.ServiceRequest({}), function (result) {
-				result.topics.sort();
+		return new Promise((resolve) => {
+			this.topics_client.callService(new ROSLIB.ServiceRequest({}), (result) => {
+				const combined = result.topics.map((t, i) => [t, result.types[i]]);
+				combined.sort((a, b) => a[0].localeCompare(b[0]));
+				result.topics = combined.map(([t]) => t);
+				result.types = combined.map(([, ty]) => ty);
 				resolve(result);
 			});
 		});
@@ -124,7 +127,7 @@ class Rosbridge {
 						matching.push(topics[i]);
 					}
 				}
-	
+					
 				matching.sort();
 				resolve(matching);
 			});
