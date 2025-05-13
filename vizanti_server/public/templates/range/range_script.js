@@ -44,6 +44,12 @@ decay.addEventListener("input", (event) =>{
 	connect();
 });
 
+const throttle = document.getElementById('{uniqueID}_throttle');
+throttle.addEventListener("input", (event) =>{
+	saveSettings();
+	connect();
+});
+
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
@@ -52,6 +58,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	opacityValue.innerText = loaded_data.opacity;
 
 	decay.value = loaded_data.decay ?? 2000;
+	throttle.value = loaded_data.throttle ?? 100;
 }else{
 	saveSettings();
 }
@@ -60,7 +67,8 @@ function saveSettings(){
 	settings["{uniqueID}"] = {
 		topic: topic,
 		opacity: opacitySlider.value,
-		decay: decay.value
+		decay: decay.value,
+		throttle: throttle.value
 	}
 	settings.save();
 }
@@ -190,16 +198,11 @@ function connect(){
 		ros : rosbridge.ros,
 		name : topic,
 		messageType : 'sensor_msgs/msg/Range',
-		compression: rosbridge.compression
+		compression: rosbridge.compression,
+		throttle_rate: parseInt(throttle.value)
 	});
 
-	status.setWarn("No data received.");
-	text_range.innerText = "Range: ?";
-	text_min.innerText = "Min: ?";
-	text_max.innerText = "Max: ?";
-	text_fov.innerText = "Field of view: ?";
-	text_type.innerText = "Type: ?";
-	
+	status.setWarn("No data received.");	
 	listener = range_topic.subscribe((msg) => {
 
 		let error = false;
@@ -283,6 +286,12 @@ async function loadTopics(){
 }
 
 selectionbox.addEventListener("change", (event) => {
+	text_range.innerText = "Range: ?";
+	text_min.innerText = "Min: ?";
+	text_max.innerText = "Max: ?";
+	text_fov.innerText = "Field of view: ?";
+	text_type.innerText = "Type: ?";
+
 	topic = selectionbox.value;
 	connect();
 });

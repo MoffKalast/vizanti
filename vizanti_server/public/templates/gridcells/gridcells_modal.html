@@ -2,7 +2,7 @@
 	<div class="modal_inner noselect">
 		<h3>Grid Cells</h3>
 		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
-		<hr>
+		<hr class="dark_hr"/>
 
 		<label for="{uniqueID}_topic">Topic:</label>
 		<select id="{uniqueID}_topic" name="topic">
@@ -11,34 +11,32 @@
 
 		<p>Display a nav_msgs/GridCells message that typically represents sparse navigational obstacles.</p>
 
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_opacity">Opacity:</label>
 		<span id="{uniqueID}_opacity_value">1.0</span>
 		<input type="range" value="1.0" step="0.05" min="0.1" max="1.0" id="{uniqueID}_opacity">
 
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_colorpicker">Colour:</label>
 		<input type="color" value="#74ce6c" id="{uniqueID}_colorpicker">
 
-		<br>
+		<div class="spacer"></div>
+
+		<label for="{uniqueID}_throttle">Socket throttle (ms):</label>
+		<input type="number" value="500" step="0" min="0" max="10000" id="{uniqueID}_throttle">
+
+		<div class="spacer"></div>
 
 		<label>Use Timestamp:</label>
 		<input type="checkbox" id="{uniqueID}_use_timestamp">	
 
 		<p class="comment">Rendering fixed objects at their published timestamp causes them to lag behind when focusing on frames other than the map frame. Rviz uses the latest timestamp instead, which this emulates. Enable for techincally correct rendering.</p>
 
-		<br>
+		<hr class="dark_hr"/>
 
-		<label for="{uniqueID}_throttle">Socket throttle (ms):</label>
-		<input type="number" value="500" step="0" min="0" max="10000" id="{uniqueID}_throttle">
-
-		<br>
-
-		<hr>
-
-		<br>
+		<div class="spacer"></div>
 
 		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
 

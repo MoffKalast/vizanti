@@ -277,8 +277,8 @@ export class TF {
 
 	transformPose(sourceFrame, targetFrame, inputVector, inputQuat) {
 
-		let outputVector =  Object.assign({}, inputVector);
-		let outputQuat =  new Quaternion(inputQuat);
+		let outputVector = Object.assign({}, inputVector);
+		let outputQuat = new Quaternion(inputQuat);
 
 		if(sourceFrame == targetFrame){
 			return {

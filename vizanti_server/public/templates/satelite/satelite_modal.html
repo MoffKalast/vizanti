@@ -2,7 +2,7 @@
 	<div class="modal_inner noselect">
 		<h3>Satelite Tiles</h3>
 		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
-		<hr>
+		<hr class="dark_hr"/>
 
 		<label for="{uniqueID}_topic">Topic:</label>
 		<select id="{uniqueID}_topic" name="topic">
@@ -16,52 +16,53 @@
 			<p id="{uniqueID}_covariance">Ground Covariance: ?</p>
 		</div>
 
+
 		Renders a tile map based on sensor_msgs/NavSatFix positional data. Use with a local origin for best results.
 
-		<br>
+		<div class="spacer"></div>
+		<hr class="dark_hr"/>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_tileserver">Tile server URL:</label>
 		<input style="margin-top: 0.3em; margin-bottom: 0.3em; width: 95%"id="{uniqueID}_tileserver" type="text" value="https://tile.openstreetmap.org/{z}/{x}/{y}.png">
 
 		<p class="comment">The tile server can be changed to anything that uses 265x256 sized tiles, the Web Mercator projection, and follows the same {x},{y},{z} convention. </p>
 
-		<br>
-
-		<br>
+		<div class="spacer"></div>
 
 		<label>Texture smoothing:</label>
 		<input type="checkbox" checked id="{uniqueID}_smoothing">
 
 		<p class="comment">Max tile zoom doesn't provide much detail up close, so you get to chose between pixelated or blurry.</p>
 
-		<br>
+		<div class="spacer"></div>
 
 		<label>Ignore tf rotations:</label>
 		<input type="checkbox" checked id="{uniqueID}_ignore_rotation">
 
 		<p class="comment">Displaying the map with 0 yaw rotation can make viewing raw NavSatFix data from receivers more stable, but don't expect the robot to be facing the right way.</p>
 
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_opacity">Opacity:</label>
 		<span id="{uniqueID}_opacity_value">0.7</span>
 		<input type="range" value="0.7" step="0.05" min="0.0" max="1.0" id="{uniqueID}_opacity">
 
-		<br>
+		<div class="spacer"></div>
 
 		<h4>Tile Management</h4>
 
 		<p>Import and export downloaded tiles to a file.</p>
 
-		<br>
+		<div class="spacer"></div>
 
 		<span><button id="{uniqueID}_export_DB" class="export_button">⇑ Export</button><button id="{uniqueID}_import_DB" class="export_button">⇓ Import</button></span>
 
-		<br>
+		<div class="spacer"></div>
 
 		<p class="comment">All fetched tiles are stored in IndexedDB for quick loading and offline use. However, browser-cached data is tied to the site's URL, so if your robot's IP changes (e.g. switching from a local network to offline AP mode), the tiles won't be accessible. To solve this, fetch and export the database while online, and reimport it in offline mode or on other machines.</p>
 
-		<hr>
+		<hr class="dark_hr"/>
 
 		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
 

@@ -2,39 +2,60 @@
 	<div class="modal_inner noselect">
 		<h3>Pose</h3>
 		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
-		<hr>
+		<hr class="dark_hr"/>
 
 		<label for="{uniqueID}_topic">Topic:</label>
 		<select id="{uniqueID}_topic" name="topic">
 			<!-- add topics here-->
 		</select>
 
-		<br>
+		<div class="live_data_display">
+			<p id="{uniqueID}_live_x">X: ?</p>
+			<p id="{uniqueID}_live_y">Y: ?</p> 
+			<p id="{uniqueID}_live_z">Z: ?</p>
+			<p id="{uniqueID}_live_dist">Distance: ?</p>
+			<p id="{uniqueID}_live_roll">Roll: ?</p>
+			<p id="{uniqueID}_live_pitch">Pitch: ?</p>
+			<p id="{uniqueID}_live_yaw">Yaw: ?</p>
+		</div>
 
-		<label for="{uniqueID}_colorpicker">Colour:</label>
-		<input type="color" value="#f74127" id="{uniqueID}_colorpicker">
+		<p>Render a single PoseStamped or PoseWithCovarianceStamped.</p>
 
-		<br>
+		<p class="comment">Note: Covariance rendering assumes a 2D pose for simplicity. Side effects may include inaccuracy in high roll/pitch orientations, ask your PhD if 2D covariance rendering is right for you.</p>
 
-		<p>Render a single Pose or PoseWithCovariance.</p>
-			
+		<hr class="dark_hr"/>
 
-		<br>
+		<div class="spacer"></div>
 
-		<label for="{uniqueID}_scale">Arrow scale:</label>
-		<span id="{uniqueID}_scale_value">1.0</span>
-		<input type="range" value="1.0" step="0.01" min="0.1" max="10.0" id="{uniqueID}_scale">
+		<label for="{uniqueID}_rendermode">Render mode:</label>
+		<select id="{uniqueID}_rendermode" name="topic">
+			<option value='long_arrow'>Long Arrow</option>
+			<option value='axes'>Axes</option>
+		</select>
 
-		<br>
+		<div class="spacer"></div>
+
+		<label for="{uniqueID}_throttle">Socket throttle (ms):</label>
+		<input type="number" value="100" step="1" min="0" max="10000" id="{uniqueID}_throttle">
+
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_decay">Decay time (ms):</label>
 		<input type="number" value="10000" step="0" min="-1" max="100000" id="{uniqueID}_decay">
 
+		<div class="spacer"></div>
 
-		<p class="comment">Note: Covariance rendering assumes a 2D pose for simplicity. Side effects may include inaccuracy in high roll/pitch orientations, ask your PhD if 2D covariance rendering is right for you.</p>
+		<label for="{uniqueID}_colorpicker">Colour:</label>
+		<input type="color" value="#f74127" id="{uniqueID}_colorpicker">
 
+		<div class="spacer"></div>
+		<div class="spacer"></div>
 
-		<hr>
+		<label for="{uniqueID}_scale">Render scale:</label>
+		<span id="{uniqueID}_scale_value">1.0</span>
+		<input type="range" value="1.0" step="0.01" min="0.01" max="15.0" id="{uniqueID}_scale">
+
+		<hr class="dark_hr"/>
 
 		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
 

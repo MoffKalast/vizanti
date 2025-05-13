@@ -2,14 +2,12 @@
 	<div class="modal_inner noselect">
 		<h3>Laser Scan</h3>
 		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
-		<hr>
+		<hr class="dark_hr"/>
 
 		<label for="{uniqueID}_topic">Topic:</label>
 		<select id="{uniqueID}_topic" name="topic">
 			<!-- add topics here-->
 		</select>
-
-		<br>
 
 		<div class="live_data_display">
 			<p id="{uniqueID}_frame_text">TF Frame: ?</p>
@@ -24,36 +22,36 @@
 
 		Renders lidar scan points based on sensor_msgs/LaserScan data.
 
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_opacity">Opacity:</label>
 		<span id="{uniqueID}_opacity_value">1.0</span>
 		<input type="range" value="1.0" step="0.05" min="0.0" max="1.0" id="{uniqueID}_opacity">
 
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_thickness">Thickness (m):</label>
 		<span id="{uniqueID}_thickness_value">0.02</span>
 		<input type="range" value="0.02" step="0.01" min="0.01" max="0.5" id="{uniqueID}_thickness">
 
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_colorpicker">Colour:</label>
 		<input type="color" value="#ff0000" id="{uniqueID}_colorpicker">
 
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_throttle">Socket throttle (ms):</label>
 		<input type="number" value="2000" step="1" min="0" max="10000" id="{uniqueID}_throttle">
 
-		<br>
+		<div class="spacer"></div>
 
 		<p class="comment">Laser scans are typically high bandwidth topics, and as such can easily cause TCP congestion. Lower the socket throttle rate to get faster data updates, but note that other visualizers may stutter.</p>
 
 
-		<hr>
+		<hr class="dark_hr"/>
 
-		<br>
+		<div class="spacer"></div>
 
 		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
 

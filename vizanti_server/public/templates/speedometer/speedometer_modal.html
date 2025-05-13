@@ -2,7 +2,7 @@
 	<div class="modal_inner noselect">
 		<h3>Speedometer</h3>
 		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
-		<hr>
+		<hr class="dark_hr"/>
 
 		<label for="{uniqueID}_frame">Measure speed of TF link</label>
 		<select id="{uniqueID}_frame" name="topic">
@@ -14,7 +14,7 @@
 			<option value='map'>map</option>
 		</select>
 
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_units">Units:</label>
 		<select id="{uniqueID}_units" name="topic">
@@ -26,14 +26,15 @@
 			<option value='b/s'>Bananas per second (b/s)</option>
 		</select>
 
-		<hr>
+		<div class="live_data_display">
+			<p id="{uniqueID}_spd">Speed: ?</p>
+			<p id="{uniqueID}_spd_max">Max Speed: ?</p> 
+			<p id="{uniqueID}_spd_min">Min Speed: ?</p>
+		</div>
 
-		<p id="{uniqueID}_spd">Speed: ?</p>
-		<p id="{uniqueID}_spd_max">Max Speed: ?</p> 
-		<p id="{uniqueID}_spd_min">Min Speed: ?</p>
 		<button id="{uniqueID}_reset">Reset Tracking</button>
 
-		<hr>
+		<hr class="dark_hr"/>
 
 		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
 
