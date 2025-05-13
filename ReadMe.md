@@ -12,7 +12,7 @@ As a field tool, Vizanti is designed to operate just as well without internet ac
 
 ```bash
 cd ~/catkin_ws/src
-git clone https://github.com/MoffKalast/vizanti.git
+git clone -b noetic-devel https://github.com/MoffKalast/vizanti.git
 cd ..
 rosdep install -i --from-path src/vizanti -y
 catkin_make
@@ -23,7 +23,7 @@ catkin_make
 Alternatively, you can also containerize Vizanti. For that you need to [install Docker](https://docs.docker.com/engine/install/ubuntu/) and build the container:
 
 ```bash
-git clone https://github.com/MoffKalast/vizanti.git
+git clone -b noetic-devel https://github.com/MoffKalast/vizanti.git
 cd vizanti
 docker build -f docker/Dockerfile -t vizanti:1.0 .
 ```
