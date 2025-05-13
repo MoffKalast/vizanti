@@ -1,8 +1,11 @@
 <div id="{uniqueID}_modal" class="modal_outer noselect">
 	<div class="modal_inner noselect">
 		<h3>Battery Info</h3>
+		
 		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
-		<hr>
+
+		<hr class="dark_hr"/>
+
 		<label for="{uniqueID}_topic">Topic:</label>
 		<select id="{uniqueID}_topic" name="topic">
 			<!-- add topics here-->
@@ -23,9 +26,9 @@
 
 		<p>Read and display battery data from sensor_msgs/BatteryState messages.</p>
 
-		<br>
+		<div class="spacer"></div>
 
-		<hr>
+		<hr class="dark_hr"/>
 
 		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
 

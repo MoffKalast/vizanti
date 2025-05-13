@@ -61,7 +61,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	timestampCheckbox.checked = loaded_data.use_timestamp ?? false;
 
 	colourpicker.value = loaded_data.color;
-	throttle.value = loaded_data.throttle;
+	throttle.value = loaded_data.throttle ?? 100;
 }else{
 	saveSettings();
 }

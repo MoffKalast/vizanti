@@ -3,14 +3,14 @@
 		<h3>Topic Inspector</h3>
 		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
 
-		<hr>
+		<hr class="dark_hr"/>
 
 		<label for="{uniqueID}_topic">Topic:</label>
 		<select id="{uniqueID}_topic" name="topic">
 			<!-- add topics here -->
 		</select>
 
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_throttle">Socket throttle (ms):</label>
 		<input type="number" value="500" step="0" min="0" max="10000" id="{uniqueID}_throttle">
@@ -31,9 +31,9 @@
 			<!-- add params here -->
 		</div>
 
-		<br>
+		<div class="spacer"></div>
 
-		<hr>
+		<hr class="dark_hr"/>
 
 		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
 

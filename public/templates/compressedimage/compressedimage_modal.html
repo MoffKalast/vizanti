@@ -8,14 +8,14 @@
 	<div class="modal_inner noselect">
 		<h3>Compressed Image</h3>
 		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
-		<hr>
+		<hr class="dark_hr"/>
 
 		<label for="{uniqueID}_topic">Topic:</label>
 		<select id="{uniqueID}_topic" name="topic">
 			<!-- add topics here-->
 		</select>
 
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_rotation">Rotation:</label>
 		<select id="{uniqueID}_rotation" name="rotation">
@@ -25,30 +25,30 @@
 			<option value="270">270 degrees</option>
 		</select>
 
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_opacity">Opacity:</label>
 		<span id="{uniqueID}_opacity_value">0.85</span>
 		<input type="range" value="0.85" step="0.05" min="0.1" max="1.0" id="{uniqueID}_opacity">
 
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_width">Width (screen %):</label>
 		<span id="{uniqueID}_width_value">25</span>
 		<input type="range" value="25" step="1" min="5" max="100" id="{uniqueID}_width">
 
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_throttle">Socket throttle (ms):</label>
 		<input type="number" value="500" step="0" min="0" max="10000" id="{uniqueID}_throttle">
 
-		<br>
+		<div class="spacer"></div>
 
 		<p>Sending images through rosbridge may cause TCP congestion. Lower the socket throttle rate to get faster data updates, but note that other visualizers may stutter.</p>
 
-		<hr>
+		<hr class="dark_hr"/>
 
-		<br>
+		<div class="spacer"></div>
 
 		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
 

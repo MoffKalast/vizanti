@@ -2,51 +2,47 @@
 	<div class="modal_inner noselect">
 		<h3>Pose Tracker</h3>
 		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
-		<hr>
+		<hr class="dark_hr"/>
 
 		<label for="{uniqueID}_topic">Target:</label>
 		<select id="{uniqueID}_topic" name="topic">
 			<!-- add topics here-->
 		</select>
 
-		<br>
+		<p>Track a TF link or nav_msgs/Odometry data.</p>
+
+		<hr class="dark_hr"/>
 
 		<label for="{uniqueID}_colorpicker">Colour:</label>
 		<input type="color" value="#c43b00" id="{uniqueID}_colorpicker">
 
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_history">History (N):</label>
 		<input type="number" value="200" step="1" min="2" max="10000" id="{uniqueID}_history">
 
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_throttle">Sample delay (ms):</label>
 		<input type="number" value="500" step="1" min="0" max="10000" id="{uniqueID}_throttle">
 
-		<br>
-		<hr>
-		<br>
+		<div class="spacer"></div>
 
 		<label>Draw path:</label>
 		<input type="checkbox" checked id="{uniqueID}_draw_path">
 
-		<br>
+		<div class="spacer"></div>
 
 		<label>Draw arrows:</label>
 		<input type="checkbox" checked id="{uniqueID}_draw_arrows">
 
-		<br>
-
-		<p>Track a TF link or nav_msgs/Odometry data.</p>
-
-		<br>
+		<div class="spacer"></div>
 
 		<button id="{uniqueID}_clearhistory" style="background-color: rgb(104, 78, 31);">Clear history</button>
 
-		<br>
+		<div class="spacer"></div>
 
-		<hr>
+		<hr class="dark_hr"/>
 
 		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
 

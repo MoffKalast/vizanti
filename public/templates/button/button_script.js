@@ -69,6 +69,7 @@ function sendMessage(){
 			ros: rosbridge.ros,
 			name: topic,
 			messageType: typedict[topic],
+			throttle_rate: 33
 		});
 
 		if(typedict[topic] == "std_msgs/Bool"){
@@ -148,7 +149,8 @@ function connect(){
 		booltopic = new ROSLIB.Topic({
 			ros : rosbridge.ros,
 			name : topic,
-			messageType : "std_msgs/Bool"
+			messageType : "std_msgs/Bool",
+			throttle_rate: 33
 		});	
 		
 		listener = booltopic.subscribe((msg) => {

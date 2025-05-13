@@ -43,7 +43,7 @@ h1, h2, h3, b, p {
 }
 
 .dark_hr{
-	border: 1px solid rgba(128, 128, 128, 0.5);
+	border: 1px solid rgba(160, 160, 160, 0.6);
 }
 
 a {
@@ -458,10 +458,12 @@ input[type=text] {
 	font-family: 'Ubuntu Mono', Monospace;
 }
 
-br {
-	content: "";
+.spacer {
 	display: block;
-	margin-bottom: 1rem;
+	height: 0.8rem;      /* Adjust for desired spacing */
+	line-height: 1;    /* Prevent line-height inflation */
+	margin: 0;         /* Remove default div margin */
+	padding: 0;
 }
 
 input[type="checkbox"] {

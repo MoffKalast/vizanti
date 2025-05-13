@@ -32,6 +32,7 @@ const lowBox = document.getElementById('{uniqueID}_lowtemp');
 
 const text_temperature = document.getElementById("{uniqueID}_temperature");
 const text_variance = document.getElementById("{uniqueID}_variance");
+const text_link = document.getElementById("{uniqueID}_tflink");
 
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
@@ -65,7 +66,8 @@ function connect(){
 	temperature_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : 'sensor_msgs/Temperature'
+		messageType : 'sensor_msgs/Temperature',
+		throttle_rate: 500 // throttle to twice a second max
 	});
 
 	status.setWarn("No data received.");
@@ -84,6 +86,7 @@ function connect(){
 
 		text_temperature.innerText = "Temperature (°C): "+(Math.round(msg.temperature * 100) / 100).toFixed(2);
 		text_variance.innerText = "Variance: "+(Math.round(msg.variance * 100) / 100).toFixed(2);
+		text_link.innerText = "TF Frame: "+msg.header.frame_id;
 
 		status.setOK();
 	});

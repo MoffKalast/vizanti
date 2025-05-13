@@ -305,7 +305,8 @@ function connect(){
 	map_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : 'sensor_msgs/NavSatFix'
+		messageType : 'sensor_msgs/NavSatFix',
+		throttle_rate: 33
 	});
 
 	status.setWarn("No data received.");

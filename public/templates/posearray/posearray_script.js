@@ -40,6 +40,12 @@ colourpicker.addEventListener("input", (event) =>{
 	drawArrows();
 });
 
+const throttle = document.getElementById('{uniqueID}_throttle');
+throttle.addEventListener("input", (event) =>{
+	saveSettings();
+	connect();
+});
+
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const click_icon = document.getElementById("{uniqueID}_icon");
 const icon = click_icon.getElementsByTagName('object')[0];
@@ -56,7 +62,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 
 	scaleSlider.value = loaded_data.scale;
 	scaleSliderValue.textContent = scaleSlider.value;
-
+	throttle.value = loaded_data.throttle ?? 100;
 }else{
 	saveSettings();
 }
@@ -73,7 +79,8 @@ function saveSettings(){
 	settings["{uniqueID}"] = {
 		topic: topic,
 		scale: parseFloat(scaleSlider.value),
-		color: colourpicker.value
+		color: colourpicker.value,
+		throttle: throttle.value
 	}
 	settings.save();
 }
@@ -166,7 +173,7 @@ function connect(){
 		ros : rosbridge.ros,
 		name : topic,
 		messageType : 'geometry_msgs/PoseArray',
-		throttle_rate: 50,
+		throttle_rate: parseInt(throttle.value),
 		compression: "cbor"
 	});
 

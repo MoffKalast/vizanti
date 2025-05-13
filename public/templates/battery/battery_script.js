@@ -150,8 +150,6 @@ function connect(){
 			text_cell_voltage.innerText = cellstr.substring(0, cellstr.length - 2);
 		}
 
-
-
 		text_status.innerText = "Status: "+STATUS[msg.power_supply_status];
 		text_health.innerText = "Health: "+HEALTH[msg.power_supply_health];
 		text_chemistry.innerText = "Type: "+CHEMISTRY[msg.power_supply_technology];

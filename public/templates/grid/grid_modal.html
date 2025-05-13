@@ -2,9 +2,9 @@
 	<div class="modal_inner noselect">
 		<h3>Grid Renderer</h3>
 		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
-		<hr>
+		<hr class="dark_hr"/>
 
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_autoscale">Autoscale</label>
 		<!-- <input type="checkbox" checked id="{uniqueID}_autoscale"> -->
@@ -27,17 +27,17 @@
 		<label for="{uniqueID}_step">Step (meter):</label>
 		<input type="number" value="1.0" step="0.01" min="0.01" max="10000" id="{uniqueID}_step">
 
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_thickness">Line thickness (px):</label>
 		<input type="number" value="1" step="1" min="1" max="20" id="{uniqueID}_thickness">
 
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_colorpicker">Color:</label>
 		<input type="color" value="#3e556a" id="{uniqueID}_colorpicker">
 
-		<br>
+		<div class="spacer"></div>
 
 		<hr class="dark_hr"/>
 
@@ -48,14 +48,14 @@
 		<label for="{uniqueID}_subdivisions">Number of subcells per cell:</label>
 		<input type="number" value="2" step="1" min="1" max="20" id="{uniqueID}_subdivisions">
 
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_colorpicker">Color:</label>
 		<input type="color" value="#3e556a" id="{uniqueID}_colorpicker_sub">
 
-		<br>
+		<div class="spacer"></div>
 
-		<hr>
+		<hr class="dark_hr"/>
 
 		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
 

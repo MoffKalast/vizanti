@@ -2,43 +2,44 @@
 	<div class="modal_inner noselect">
 		<h3>TF Frame Renderer</h3>
 		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
-		<hr>
+		<hr class="dark_hr"/>
 
 		<label>Names:</label>
 		<input type="checkbox" checked id="{uniqueID}_shownames">
 
-		<br>
+		<div class="spacer"></div>
 
 		<label>Axes:</label>
 		<input type="checkbox" checked id="{uniqueID}_showaxes">
 
-		<br>
+		<div class="spacer"></div>
 
 		<label>Lines:</label>
 		<input type="checkbox" checked id="{uniqueID}_showlines">
 
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_scale">Scale:</label>
 		<span id="{uniqueID}_scale_value">1.0</span>
 		<input type="range" value="1.0" step="0.01" min="0.3" max="2.5" id="{uniqueID}_scale">
 
-		<br>
+		<div class="spacer"></div>
 
 		<b>Frames:</b>
-		<br>
+
+		<div class="spacer"></div>
 
 		<button id="{uniqueID}_enable_all" style="background-color: #2f4d26" class="enable_all_button">Enable All</button>
 		<button id="{uniqueID}_standard_only" style="background-color: #5e602c" class="standard_only_button">Standard Only</button>
 		<button id="{uniqueID}_disable_all" style="background-color: #4d2626" class="disable_all_button">Disable All</button>
 
-		<br>
+		<div class="spacer"></div>
 
 		<div id="{uniqueID}_frames">
 			
 		</div>
 
-		<hr>
+		<hr class="dark_hr"/>
 
 		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
 

@@ -2,7 +2,7 @@
 	<div class="modal_inner noselect">
 		<h3>Map</h3>
 		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
-		<hr>
+		<hr class="dark_hr"/>
 
 		<label for="{uniqueID}_topic">Topic:</label>
 		<select id="{uniqueID}_topic" name="topic">
@@ -10,7 +10,7 @@
 		</select>
 
 		<p>Display a nav_msgs/OccupancyGrid message that typically represents a 2D map or navigational costmap.</p>
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_colour_scheme">Colour scheme:</label>
 		<select id="{uniqueID}_colour_scheme">
@@ -20,62 +20,62 @@
 		  <option value="raw_transparent">Raw Transparent</option>
 		</select>
 
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_opacity">Opacity:</label>
 		<span id="{uniqueID}_opacity_value">0.7</span>
 		<input type="range" value="0.7" step="0.05" min="0.0" max="1.0" id="{uniqueID}_opacity">
 
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_throttle">Socket throttle (ms):</label>
 		<input type="number" value="1000" step="0" min="0" max="10000" id="{uniqueID}_throttle">
 
-		<br>
+		<div class="spacer"></div>
 
 		<label>Use Timestamp:</label>
 		<input type="checkbox" id="{uniqueID}_use_timestamp">	
 
 		<p class="comment">Rendering maps at their published timestamp causes them to lag behind when focusing on frames other than the map frame. Rviz uses the latest timestamp instead, which this emulates. Enable for techincally correct rendering.</p>
 
-		<br>
+		<div class="spacer"></div>
 
 		<h4>Management</h4>
 
 		<p class="comment">Relay services for calling map loading and saving nodes.</p>
 
 		<i>💾 map_saver</i>
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_savepath">Save to path:</label>
 		<input id="{uniqueID}_savepath" type="text" value="~/.ros/map">
-		<br>
+		<div class="spacer"></div>
 
 		<button id="{uniqueID}_save">Save</button>
 
-		<br>
+		<div class="spacer"></div>
 
 		<i>🖶 map_server</i>
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_loadpath">Load from path:</label>
 		<input id="{uniqueID}_loadpath" type="text" value="~/.ros/map">
 
-		<br>
+		<div class="spacer"></div>
 
 
 		<label for="{uniqueID}_loadtopic">Publish on topic:</label>
 		<input id="{uniqueID}_loadtopic" type="text" value="/map">
 
-		<br>
+		<div class="spacer"></div>
 
 		<button id="{uniqueID}_load">Load</button>
 
-		<br>
+		<div class="spacer"></div>
 
-		<hr>
+		<hr class="dark_hr"/>
 
-		<br>
+		<div class="spacer"></div>
 
 		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
 

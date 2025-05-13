@@ -148,7 +148,6 @@ function getBasisPoints(basis, translation, rotation){
 async function drawAxes(origin, relative, absolute) {
 
 	const unit = view.getPixelsInMapUnits(30*parseFloat(scaleSlider.value));
-	const width_unit = view.getPixelsInMapUnits(2*parseFloat(scaleSlider.value));
 
 	ctx.lineWidth = 2*parseFloat(scaleSlider.value);
 	ctx.strokeStyle = "#E0000B"; //red
