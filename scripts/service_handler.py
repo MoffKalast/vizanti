@@ -5,13 +5,15 @@ import os
 import fcntl
 import sys
 import rospy
+import json
+import dynamic_reconfigure
 
+from dynamic_reconfigure.client import Client
 from std_srvs.srv import Trigger, TriggerResponse
 from vizanti.srv import GetNodeParameters, GetNodeParametersResponse
 from vizanti.srv import LoadMap, LoadMapResponse, SaveMap, SaveMapResponse
 from vizanti.srv import RecordRosbag, RecordRosbagResponse
 from vizanti.srv import ManageNode, ListPackages, ListExecutables, ListExecutablesResponse, ListPackagesResponse
-
 
 class ServiceHandler:
 
@@ -180,20 +182,32 @@ class ServiceHandler:
 			return SaveMapResponse(success=False, message=str(e))
 
 	def get_dynamic_reconfigure_nodes(self, req):
-		list_nodes_output = subprocess.check_output(["rosrun", "dynamic_reconfigure", "dynparam", "list"]).decode('utf-8')
-		nodes_list = list_nodes_output.strip().split("\n")
-
+		nodes_list = dynamic_reconfigure.find_reconfigure_services()
 		response = TriggerResponse()
 		response.success = True
-		response.message = "\n".join(nodes_list)
-
+		response.message = json.dumps(nodes_list)
 		return response
 
 	def get_node_parameters(self, req):
-		node_params = subprocess.check_output(["rosrun", "dynamic_reconfigure", "dynparam", "get", req.node]).decode('utf-8')
-
 		response = GetNodeParametersResponse()
-		response.parameters = node_params
+
+		try:
+			client = Client(req.node, timeout=2.0)
+			config = client.get_configuration(timeout=2.0)
+
+			param_list = []
+
+			for name, value in config.items():
+				# Filter out internal dynamic_reconfigure keys
+				if name.startswith('__'):
+					continue
+				value_type = type(value).__name__
+				param_list.append([name, value, value_type])
+
+			response.parameters = json.dumps(param_list)
+		except Exception as e:
+			rospy.logerr(f"Failed to fetch parameters from {req.node}: {e}")
+			response.parameters = "[]"
 
 		return response
 

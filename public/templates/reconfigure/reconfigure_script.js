@@ -10,11 +10,13 @@ async function getDynamicReconfigureNodes() {
 	});
 
 	return new Promise((resolve, reject) => {
-		getNodesService.callService(new ROSLIB.ServiceRequest(), (result) => {
-			resolve(result.message.split("\n"));
-		}, (error) => {
+		try {
+			getNodesService.callService(new ROSLIB.ServiceRequest(), (result) => {
+				resolve(JSON.parse(result.message));
+			});
+		} catch (error) {
 			reject(error);
-		});
+		}
 	});
 }
 
@@ -26,14 +28,14 @@ async function getNodeParameters(node) {
 	});
 
 	return new Promise((resolve, reject) => {
-		const request = new ROSLIB.ServiceRequest({ node });
-		getNodeParametersService.callService(request, (result) => {
-			let parsedParams = JSON.parse(convertAlmostJsonToValidJson(result.parameters));
-			delete parsedParams.groups;
-			resolve(parsedParams);
-		}, (error) => {
+		try {
+			const request = new ROSLIB.ServiceRequest({ node });
+			getNodeParametersService.callService(request, (result) => {
+				resolve(JSON.parse(result.parameters));
+			});
+		} catch (error) {
 			reject(error);
-		});
+		}
 	});
 }
 
@@ -65,7 +67,7 @@ async function setNodeParamValue(fullname, type, newValue) {
 		case "int": valueConfig.ints.push({ name: paramName, value: newValue }); break;
 		case "float": valueConfig.doubles.push({ name: paramName, value: newValue }); break;
 		case "bool": valueConfig.bools.push({ name: paramName, value: newValue }); break;
-		default: return Promise.reject(`Invalid parameter value type: ${valueType}`);
+		default: return Promise.reject(`Invalid parameter value type: ${type}`);
 	}
 
 	return new Promise((resolve, reject) => {
@@ -85,7 +87,6 @@ function createParameterInput(fullname, defaultValue, type) {
 	const id = "${uniqueID}_"+fullname;
 	const arrowId = `${id}_arrow`;
 	let inputElement;
-
 	switch (type) {
 		case "string":
 			inputElement = `
@@ -144,44 +145,20 @@ function createParameterInput(fullname, defaultValue, type) {
 	}, 1);
 }
 
-
-
-function detectValueType(value) {
-	if (typeof value == "boolean") {
-		return "bool";
-	}
-
-	//this is incorrectly detecting floats as integers, shelfed for now
-	//if (Number.isInteger(value)) {
-		//return "int";
-	//}
-
-	if (isNaN(value)) {
-		return "string";
-	}
-
-	return "float";
-}
-
-function convertAlmostJsonToValidJson(almostJson) {
-	const validJson = almostJson.replace(/'/g, '"');
-	return validJson.replace(/(True|False)/g, (match) => {
-		return match.toLowerCase();
-	});
-}
-
 let nodeName = "";
-let cached_params = undefined;
+let cached_params = {};
 
 async function listParameters(){
-	if(nodeName == "" || !cached_params[nodeName]){
+	if (nodeName === "" || !cached_params[nodeName]) {
 		return;
 	}
 	loaderSpinner.style.display = "block";
 
 	paramBox.innerHTML = "";
-	for (const [key,value] of Object.entries(cached_params[nodeName])) {
-		createParameterInput(key,value,detectValueType(value));
+	for (const [index, entry] of Object.entries(cached_params[nodeName])) {
+		let [key,value,type] = entry;
+		if(type != "Config")
+			createParameterInput(key,value,type);
 	}
 	loaderSpinner.style.display = "none";
 }
@@ -189,10 +166,14 @@ async function listParameters(){
 async function getAll(results){
 	loaderSpinner.style.display = "block";
 	cached_params = {};
+
+	//get the selected one first
+	cached_params[nodeName] = await getNodeParameters(nodeName);
+	listParameters();
+
 	for (const node of results) {
-		cached_params[node] = await getNodeParameters(node);
-		if(node == nodeName){
-			listParameters();
+		if(node != nodeName){
+			cached_params[node] = await getNodeParameters(node);
 		}
 	}
 	loaderSpinner.style.display = "none";
@@ -212,9 +193,7 @@ async function setNodeList(){
 		nodeSelector.value = nodeName;
 	}
 
-	if(!cached_params){
-		await getAll(results);
-	}
+	await getAll(results);
 }
 
 nodeSelector.addEventListener("change", (event)=>{
