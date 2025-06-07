@@ -25,6 +25,7 @@ class ServiceHandler:
 
 		self.get_nodes_service = rospy.Service('vizanti/get_dynamic_reconfigure_nodes', Trigger,self. get_dynamic_reconfigure_nodes)
 		self.get_node_parameters_service = rospy.Service('vizanti/get_node_parameters', GetNodeParameters, self.get_node_parameters)
+		self.get_node_parameter_info_service = rospy.Service('vizanti/get_node_parameter_info', GetNodeParameters, self.get_node_parameter_info)
 
 		self.load_map_service = rospy.Service('vizanti/load_map', LoadMap, self.load_map)
 		self.save_map_service = rospy.Service('vizanti/save_map', SaveMap, self.save_map)
@@ -188,6 +189,41 @@ class ServiceHandler:
 		response.message = json.dumps(nodes_list)
 		return response
 
+	def get_node_parameter_info(self, req):
+		response = GetNodeParametersResponse()
+
+		try:
+			client = Client(req.node, timeout=2.0)
+			param_desc = client.get_parameter_descriptions(timeout=2.0)
+
+			param_info = {}
+			for p in param_desc:
+				name = p["name"]
+				param_info[name] = {}
+				param_info[name]["type"] = p["type"]
+				param_info[name]["min"] = p["min"]
+				param_info[name]["max"] = p["max"]
+				param_info[name]["description"] = p["description"]
+
+				#is it an enum?
+				if p["edit_method"] != "":
+					parsed = json.loads(p["edit_method"].replace("\'","\""))
+					enum_options = []
+					for e in parsed["enum"]:
+						vals = {}
+						vals["value"] =  e["value"]
+						vals["description"] =  e["description"]
+						enum_options.append(vals)
+
+					param_info[name]["enum"] = enum_options
+
+			response.parameters = json.dumps(param_info)
+		except Exception as e:
+			rospy.logerr(f"Failed to fetch parameter info from {req.node}: {e}")
+			response.parameters = "[]"
+
+		return response
+
 	def get_node_parameters(self, req):
 		response = GetNodeParametersResponse()
 
@@ -196,13 +232,16 @@ class ServiceHandler:
 			config = client.get_configuration(timeout=2.0)
 
 			param_list = []
-
 			for name, value in config.items():
 				# Filter out internal dynamic_reconfigure keys
 				if name.startswith('__'):
 					continue
+
 				value_type = type(value).__name__
-				param_list.append([name, value, value_type])
+				if value_type == "Config":
+					continue
+				
+				param_list.append([name, value])
 
 			response.parameters = json.dumps(param_list)
 		except Exception as e:
