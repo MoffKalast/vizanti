@@ -92,7 +92,7 @@ async function setNodeParamValue(fullname, type, newValue) {
 	return new Promise((resolve, reject) => {
 		const request = new ROSLIB.ServiceRequest({ config: valueConfig });
 		setParamClient.callService(request, (response) => {
-			console.log(`Parameter ${paramName} set to:`, newValue);
+			//console.log(`Parameter ${paramName} set to:`, newValue);
 			resolve(response);
 		}, (error) => {
 			console.error(`Failed to call set_parameters service for ${nodeName}:`, error);
@@ -120,12 +120,14 @@ function createParameterInput(fullname, defaultValue, info) {
 				return `<option value="${enumItem.value}" ${isSelected}>(${enumItem.value}) ${enumItem.description}</option>`;
 			})
 			.join('');
-
 		inputElement = `
 			<label for="${id}"><i>enum </i> ${name}:</label>
-			<select id="${id}">
-				${optionsHtml}
-			</select><span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span>
+			<div class="input-group">
+				<select id="${id}">
+					${optionsHtml}
+				</select>
+				<span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span>
+			</div>
 			<p class="minicomment">${desc}</p>
 			<div class="spacer"></div>`;
 	} else {
@@ -133,14 +135,20 @@ function createParameterInput(fullname, defaultValue, info) {
 			case "str":
 				inputElement = `
 					<label for="${id}"><i>string </i> ${name}:</label>
-					<input style="width: 30%;" id="${id}" type="text" value="${defaultValue}"><span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span>
+					<div class="input-group">
+						<input style="width: 30%;" id="${id}" type="text" value="${defaultValue}">
+						<span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span>
+					</div>
 					<p class="minicomment">${desc}</p>
 					<div class="spacer"></div>`;
 				break;
 			case "int":
 				inputElement = `
 					<label for="${id}"><i>int </i> ${name}:</label>
-					<input type="number" value="${defaultValue}" step="1" min="${min}" max="${max}" id="${id}"><span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span>
+					<div class="input-group">
+						<input type="number" value="${defaultValue}" step="1" min="${min}" max="${max}" id="${id}">
+						<span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span>
+					</div>
 					<p class="minicomment">${desc}</p>
 					<div class="spacer"></div>`;
 				break;
@@ -148,14 +156,20 @@ function createParameterInput(fullname, defaultValue, info) {
 			case "float":
 				inputElement = `
 					<label for="${id}"><i>double </i>${name}:</label>
-					<input type="number" value="${defaultValue}" step="0.001" min="${min}" max="${max}" id="${id}"><span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span>
+					<div class="input-group">
+						<input type="number" value="${defaultValue}" step="0.001" min="${min}" max="${max}" id="${id}">
+						<span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span>
+					</div>
 					<p class="minicomment">${desc}</p>
 					<div class="spacer"></div>`;
 				break;
 			case "bool":
 				inputElement = `
 					<label for="${id}"><i>bool </i>${name}:</label>
-					<input type="checkbox" id="${id}" ${defaultValue ? "checked" : ""}><span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span>
+					<div class="input-group">
+						<input type="checkbox" id="${id}" ${defaultValue ? "checked" : ""}>
+						<span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span>
+					</div>
 					<p class="minicomment">${desc}</p>
 					<div class="spacer"></div>`;
 				break;
@@ -221,17 +235,23 @@ function createParameterInput(fullname, defaultValue, info) {
 let nodeName = "";
 let cached_info = {};
 let cached_params = {};
+let is_loaded = false;
 
 async function listParameters(){
-	if (nodeName === "" || !cached_params[nodeName]) {
+	if (nodeName === "") {
 		return;
 	}
-	loaderSpinner.style.display = "block";
 
+	loaderSpinner.style.display = "block";
 	paramBox.innerHTML = "";
+
+	if(!cached_params[nodeName]){
+		setTimeout(listParameters,1000);
+		return;
+	}
+
 	for (const [index, entry] of Object.entries(cached_params[nodeName])) {
 		let [key,value] = entry;
-		console.log(key, value, cached_info[nodeName])
 		createParameterInput(key,value,cached_info[nodeName][key]);
 	}
 	loaderSpinner.style.display = "none";
@@ -264,7 +284,15 @@ async function getAll(results){
 	loaderSpinner.style.display = "none";
 }
 
+let loading_nodes = false;
+
 async function setNodeList(){
+	if(loading_nodes){
+		return;
+	}
+
+	loading_nodes = true;
+	
 	let results = await getDynamicReconfigureNodes();
 	let nodelist = "";
 	for (const node of results) {
@@ -279,6 +307,7 @@ async function setNodeList(){
 	}
 
 	await getAll(results);
+	loading_nodes = false;
 }
 
 nodeSelector.addEventListener("change", (event)=>{

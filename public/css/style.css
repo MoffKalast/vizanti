@@ -35,6 +35,13 @@ h1, h2, h3, b, p {
 	scrollbar-width: thin;
 }
 
+.input-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap; /* Prevents breaking within the group */
+}
+
 .comment {
 	font-size: 15px;
 	margin-top: 0.5em;
