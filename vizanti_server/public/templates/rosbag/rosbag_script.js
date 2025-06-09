@@ -14,7 +14,7 @@ const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('im
 
 let path = "~/recording.bag";
 let topic_list = new Set();
-let active = await getRecordingStatus();
+let active = false;
 
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
@@ -44,7 +44,8 @@ async function getRecordingStatus(topics, start, path) {
 	return new Promise((resolve, reject) => {
 		const request = new ROSLIB.ServiceRequest({ topics, start, path });
 		recordRosbagService.callService(request, (result) => {
-			resolve(result.success);
+			setState(result.success);
+			resolve(result.success);		
 		}, (error) => {
 			console.log(error);
 			resolve(false);
@@ -87,7 +88,6 @@ async function recordRosbag(topics, start, path) {
 }
 
 function setState(state){
-
 	if(state){
 		startButton.style.backgroundColor = "#e14044ff";
 		startButton.style.color = "black";
@@ -155,6 +155,9 @@ savePathBox.addEventListener('input', async () => {
 const topicsDiv = document.getElementById('{uniqueID}_topics');
 
 async function updateTopics(){
+	//recheck in case another client started a recording
+	await getRecordingStatus();
+
 	let result = await rosbridge.get_all_topics();
 
 	topicsDiv.innerHTML = '';
@@ -174,7 +177,8 @@ async function updateTopics(){
 
 	// Create checkboxes for each group of topics
 	topicsByType.forEach((topics, type) => {
-		const brBefore = document.createElement('br');
+		const brBefore = document.createElement('div');
+		brBefore.className = 'spacer';
 		topicsDiv.appendChild(brBefore);
 
 		const button = document.createElement('button');
@@ -208,7 +212,8 @@ async function updateTopics(){
 			span.appendChild(label);
 			div.appendChild(span);
 
-			const br = document.createElement('br');
+			const br = document.createElement('div');
+			br.className = 'spacer';
 			div.appendChild(br);
 
 			if(checkbox.checked)
@@ -217,9 +222,6 @@ async function updateTopics(){
 
 		topicsDiv.appendChild(button);
 		topicsDiv.appendChild(div);
-
-		const brAfter = document.createElement('br');
-		topicsDiv.appendChild(brAfter);
 	});
 
 	// Add event listener to all collapsible buttons
@@ -241,6 +243,5 @@ async function updateTopics(){
 
 icon.addEventListener("click", updateTopics);
 updateTopics();
-setState(active);
 
 console.log("Rosbag Widget Loaded {uniqueID}")

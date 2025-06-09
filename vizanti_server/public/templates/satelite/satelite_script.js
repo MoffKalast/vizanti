@@ -173,7 +173,12 @@ async function drawTiles(){
 	ctx.globalAlpha = opacitySlider.value;
 	ctx.imageSmoothingEnabled = smoothingCheckbox.checked;
 
-	if(!map_fix || opacitySlider.value == 0.0){
+	if(!map_fix){
+		return;
+	}
+
+	if(opacitySlider.value == 0.0){
+		status.setOK();
 		return;
 	}
 
@@ -300,7 +305,8 @@ function connect(){
 	map_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : 'sensor_msgs/msg/NavSatFix'
+		messageType : 'sensor_msgs/msg/NavSatFix',
+		throttle_rate: 33
 	});
 
 	status.setWarn("No data received.");

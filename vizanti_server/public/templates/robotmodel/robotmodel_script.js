@@ -39,7 +39,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	frame = loaded_data.frame;
 	lengthSelector.value = loaded_data.length;
 
-	sprite = loaded_data.sprite;
+	sprite = loaded_data.sprite ?? "4wd";
 	spriteSelector.value = sprite;
 	previewImg.src = models[sprite].src;
 }else{

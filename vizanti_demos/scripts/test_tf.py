@@ -81,6 +81,7 @@ class OrbitingFramesNode(Node):
 
             # Create transform message
             transform = geometry_msgs.msg.TransformStamped()
+            transform.header.stamp = self.get_clock().now().to_msg()
             transform.header.frame_id = "world"
             transform.child_frame_id = f"spaceship_{i}"
             transform.transform.translation.x = particle.position[0]
@@ -98,8 +99,7 @@ class OrbitingFramesNode(Node):
             if self.get_clock().now() - particle.path_timer > Duration(seconds=0.1):
                 particle.path_timer = self.get_clock().now()
                 pose = geometry_msgs.msg.PoseStamped()
-                pose.header.frame_id = "world"
-                pose.header.stamp = self.get_clock().now().to_msg()
+                pose.header = transform.header
                 pose.pose.position.x = particle.position[0]
                 pose.pose.position.y = particle.position[1]
                 pose.pose.position.z = particle.position[2]

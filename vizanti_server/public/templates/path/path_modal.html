@@ -2,28 +2,28 @@
 	<div class="modal_inner noselect">
 		<h3>Path</h3>
 		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
-		<hr>
+		<hr class="dark_hr"/>
 
 		<label for="{uniqueID}_topic">Topic:</label>
 		<select id="{uniqueID}_topic" name="topic">
 			<!-- add topics here-->
 		</select>
 
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_colorpicker">Colour:</label>
 		<input type="color" value="#54db67" id="{uniqueID}_colorpicker">
 
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_throttle">Socket throttle (ms):</label>
 		<input type="number" value="100" step="1" min="0" max="10000" id="{uniqueID}_throttle">
 
-		<br>
+		<div class="spacer"></div>
 
 		<p>Display a nav_msgs/Path.</p>
 
-		<hr>
+		<hr class="dark_hr"/>
 
 		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
 

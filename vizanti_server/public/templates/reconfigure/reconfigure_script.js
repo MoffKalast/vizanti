@@ -75,25 +75,25 @@ function createParameterInput(fullname, defaultValue, type, element) {
 			inputElement = `
 				<label for="${id}"><i>string </i> ${name}:</label>
 				<span><input id="${id}" type="text" value="${defaultValue}"><span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span></span>
-				<br>`;
+				<div class="spacer"></div>`;
 			break;
 		case "INTEGER":
 			inputElement = `
 				<label for="${id}"><i>int </i> ${name}:</label>
 				<span><input type="number" value="${defaultValue}" step="1" id="${id}"><span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span></span>
-				<br>`;
+				<div class="spacer"></div>`;
 			break;
 		case "DOUBLE":
 			inputElement = `
 				<label for="${id}"><i>float </i>${name}:</label>
 				<span><input type="number" value="${defaultValue}" step="0.001" id="${id}"><span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span></span>
-				<br>`;
+				<div class="spacer"></div>`;
 			break;
 		case "BOOL":
 			inputElement = `
 				<label for="${id}"><i>bool </i>${name}:</label>
 				<span><input type="checkbox" id="${id}" ${defaultValue ? "checked" : ""}><span id="${arrowId}" class="arrow" style="visibility: hidden;">➡</span></span>
-				<br>`;
+				<div class="spacer"></div>`;
 			break;
 		default:
 			console.error("Invalid parameter type:", type);

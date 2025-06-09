@@ -1,25 +1,36 @@
 <div id="{uniqueID}_modal" class="modal_outer noselect">
 	<div class="modal_inner noselect">
 		<h3>Button</h3>
+		
 		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
-		<hr>
+
+		<hr class="dark_hr"/>
 
 		<label for="{uniqueID}_name">Display Text:</label>
 		<input id="{uniqueID}_name" type="text" value="Text">
 
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_topic">Topic:</label>
 		<select id="{uniqueID}_topic" name="topic">
 			<!-- add topics here-->
 		</select>
-		<hr>
 
-		<p>Multifunctional button for displaying and toggling the state from a std_msgs/Bool topic and publishing to a std_msgs/Empty topic, depending on which topic type is selected.</p>
+		<hr class="dark_hr"/>
 
-		<p style="color:#b4b4b4;">Click the icon once to toggle the bool value or call the empty service. Long press the icon to open this menu.</p>
+		<p>Multifunctional button. Behavior depends on the selected topic/service type:</p>
+		<ul>
+			<li><b  style="color:rgb(204, 204, 204)">std_msgs/Empty</b>: Sends an Empty message on click.</li>
+			<li><b  style="color:rgb(204, 204, 204)">std_srvs/Trigger</b>: Calls a Trigger service.</li>
+			<li><b  style="color:rgb(204, 204, 204)">std_srvs/Empty</b>: Calls a Empty service.</li>
+
+			<li><b style="color:rgb(203, 255, 201)">std_msgs/Bool</b>: Displays topic state and sends a negated value on click.</li>
+			<li><b style="color:rgb(203, 255, 201)">std_srvs/SetBool</b>: Negates internal boolean with each call, displays state.</li>
+		</ul>
+
+		<p style="color:#b4b4b4;">Click the icon to trigger. Long press to reopen this menu.</p>
 		
-		<hr>
+		<hr class="dark_hr"/>
 
 		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
 

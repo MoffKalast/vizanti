@@ -27,10 +27,17 @@ const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('im
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
 
+const throttle = document.getElementById('{uniqueID}_throttle');
+throttle.addEventListener("input", (event) =>{
+	saveSettings();
+	connect();
+});
+
 //Settings
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
+	throttle.value = loaded_data.throttle ?? 100;
 }else{
 	saveSettings();
 }
@@ -38,7 +45,8 @@ if(settings.hasOwnProperty("{uniqueID}")){
 
 function saveSettings(){
 	settings["{uniqueID}"] = {
-		topic: topic
+		topic: topic,
+		throttle: throttle.value
 	}
 	settings.save();
 }
@@ -224,7 +232,8 @@ function connect(){
 		ros : rosbridge.ros,
 		name : topic,
 		messageType : 'visualization_msgs/msg/MarkerArray',
-		compression: rosbridge.compression
+		compression: rosbridge.compression,
+		throttle_rate: parseInt(throttle.value)
 	});
 
 	status.setWarn("No data received.");

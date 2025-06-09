@@ -2,21 +2,21 @@
 	<div class="modal_inner noselect">
 		<h3>Waypoint Mission</h3>
 		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
-		<hr>
+		<hr class="dark_hr"/>
 
 		<label for="{uniqueID}_topic">Topic:</label>
 		<select id="{uniqueID}_topic" name="topic">
 			<option value="/waypoints">/waypoints</option>
 		</select>
 
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_fixed_frame">Fixed Frame:</label>
 		<select id="{uniqueID}_fixed_frame" name="topic">
 			<option value="map">map</option>
 		</select>
 
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_base_link_frame">Robot Frame:</label>
 		<select id="{uniqueID}_base_link_frame" name="topic">
@@ -44,29 +44,29 @@
 		
 		<p style="color: #b4b4b4;">When editing X/Y/Z positions, click the icon again to stop editing.</p>
 		
-		<br>
+		<div class="spacer"></div>
 
 		<label for="{uniqueID}_margin">Safety margin visual indicator (meters):</label>
 		<input type="number" value="0.8" step="0.1" min="0" max="1000" id="{uniqueID}_margin">
 
-		<br>
+		<div class="spacer"></div>
 
 		<label>Start from closest waypoint:</label>
 		<input type="checkbox" id="{uniqueID}_startclosest">
 
-		<br>
+		<div class="spacer"></div>
 
 		<h4>Clear Path</h4>
 
 		<button id="{uniqueID}_delete" style="background-color: rgb(104, 78, 31);">Remove all waypoints</button>
 
-		<br>
+		<div class="spacer"></div>
 
 		<p style="color: #b4b4b4;">Tip: If you're using a nav stack that doesn't use Paths or PoseArrays, but will accept simple goals, see the demo node at ros2 run vizanti_demos waypoints_to_simple_goals.py</p>
 
-		<hr>
+		<hr class="dark_hr"/>
 
-		<br>
+		<div class="spacer"></div>
 
 		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
 

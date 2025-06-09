@@ -1,7 +1,7 @@
 <div id="{uniqueID}_modal" class="modal_outer noselect">
 	<div class="modal_inner noselect">
 		<h3>Parameter Reconfigure</h3>
-		<hr>
+		<hr class="dark_hr"/>
 		<label for="{uniqueID}_node">Node name:</label>
 		<select id="{uniqueID}_node" name="node">
 			<!-- add topics here-->
@@ -9,12 +9,14 @@
 
 		<span style="display:flex; align-items: center;"><button id="{uniqueID}_refresh" style="margin-top: 12px; margin-bottom: 6px;">Refresh</button><div id="{uniqueID}_loader" class="loader"></div></span>
 
+		<hr class="dark_hr"/>
+
 		<div id="{uniqueID}_params">
 			<!-- add params here-->
 
 		</div>
 
-		<hr>
+		<hr class="dark_hr"/>
 
 		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
 

@@ -1,8 +1,8 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.20)
 project(vizanti_demos)
 
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -36,6 +36,7 @@ install(PROGRAMS
   scripts/test_grid_cells.py
   scripts/test_marker_array.py
   scripts/test_tf.py
+  scripts/test_button.py
   scripts/waypoints_to_simple_goals.py
   DESTINATION lib/${PROJECT_NAME}
 )

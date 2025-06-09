@@ -7,6 +7,7 @@ let utilModule = await import(`${base_url}/js/modules/util.js`);
 
 let view = viewModule.view;
 let tf = tfModule.tf;
+let applyRotation = tfModule.applyRotation;
 let rosbridge = rosbridgeModule.rosbridge;
 let settings = persistentModule.settings;
 let Status = StatusModule.Status;
@@ -28,6 +29,15 @@ let marker_topic = undefined;
 let posemsg = undefined;
 let frame = "";
 
+const text_x = document.getElementById("{uniqueID}_live_x");
+const text_y = document.getElementById("{uniqueID}_live_y");
+const text_z = document.getElementById("{uniqueID}_live_z");
+const text_dist = document.getElementById("{uniqueID}_live_dist");
+const text_roll = document.getElementById("{uniqueID}_live_roll");
+const text_pitch = document.getElementById("{uniqueID}_live_pitch");
+const text_yaw = document.getElementById("{uniqueID}_live_yaw");
+
+const rendermodebox = document.getElementById("{uniqueID}_rendermode");
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const click_icon = document.getElementById("{uniqueID}_icon");
 const icon = click_icon.getElementsByTagName('object')[0];
@@ -48,6 +58,18 @@ colourpicker.addEventListener("input", (event) =>{
 	drawMarkers();
 });
 
+const decay = document.getElementById('{uniqueID}_decay');
+decay.addEventListener("input", (event) =>{
+	saveSettings();
+	connect();
+});
+
+const throttle = document.getElementById('{uniqueID}_throttle');
+throttle.addEventListener("input", (event) =>{
+	saveSettings();
+	connect();
+});
+
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
 
@@ -62,6 +84,11 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	scaleSliderValue.textContent = scaleSlider.value;
 
 	typedict = loaded_data.typedict ?? {};
+
+	decay.value = loaded_data.decay ?? 10000;
+	throttle.value = loaded_data.throttle ?? 100;
+
+	rendermodebox.value = loaded_data.rendermode ?? "long_arrow";
 
 }else{
 	saveSettings();
@@ -81,12 +108,72 @@ function saveSettings(){
 		topic: topic,
 		scale: parseFloat(scaleSlider.value),
 		typedict: typedict,
-		color: colourpicker.value
+		color: colourpicker.value,
+		decay: decay.value,
+		throttle: throttle.value,
+		rendermode: rendermodebox.value
 	}
 	settings.save();
 }
 
 async function drawMarkers(){
+
+	function drawAxes(size) {
+
+		const length = parseFloat(scaleSlider.value);
+
+		function getBasisPoints(basis, translation, rotation){
+			let basis_x = applyRotation(basis, rotation);
+			return [
+				view.fixedToScreen({
+					x: translation.x,
+					y: translation.y,
+				}), 
+				view.fixedToScreen({
+					x: translation.x + basis_x.x,
+					y: translation.y + basis_x.y,
+				})
+			];
+		}
+	
+		ctx.lineCap = 'round';
+		ctx.lineWidth = size*0.1;
+		ctx.strokeStyle = "#bf0009"; //red
+		ctx.beginPath();
+		let p = getBasisPoints(
+			{x: length, y: 0, z: 0},
+			posemsg.vec,
+			posemsg.quat
+		);
+		ctx.moveTo(parseInt(p[0].x), parseInt(p[0].y));
+		ctx.lineTo(parseInt(p[1].x), parseInt(p[1].y));
+		ctx.stroke();
+	
+		ctx.strokeStyle = "#21cc1f"; //green
+		ctx.beginPath();
+	
+		p = getBasisPoints(
+			{x: 0, y: length, z: 0},
+			posemsg.vec,
+			posemsg.quat
+		);
+		ctx.moveTo(parseInt(p[0].x), parseInt(p[0].y));
+		ctx.lineTo(parseInt(p[1].x), parseInt(p[1].y));
+		ctx.stroke();
+	
+		ctx.strokeStyle = "#0249c4"; //blue
+		ctx.beginPath();
+
+		p = getBasisPoints(
+			{x: 0, y: 0, z: length},
+			posemsg.vec,
+			posemsg.quat
+		);
+		ctx.moveTo(parseInt(p[0].x), parseInt(p[0].y));
+		ctx.lineTo(parseInt(p[1].x), parseInt(p[1].y));
+		ctx.stroke();
+	
+	}
 
 	function drawCircle(size){
 		ctx.fillStyle = colourpicker.value;
@@ -166,6 +253,9 @@ async function drawMarkers(){
 	if(!posemsg)
 		return;
 
+	if(decay.value > 0 && new Date() - posemsg.stamp > decay.value)
+		return;
+
 	if(frame === tf.fixed_frame){
 
 		const screenpos = view.fixedToScreen(posemsg);
@@ -174,14 +264,19 @@ async function drawMarkers(){
 		ctx.setTransform(1,0,0,-1,screenpos.x, screenpos.y); //sx,0,0,sy,px,py
 		
 		drawTranslationalCovariance(posemsg.eigenvalues, unit);
-		ctx.setTransform(1,0,0,-1,screenpos.x, screenpos.y);
-
-		if(!posemsg.rotation_invalid)
-			ctx.rotate(posemsg.yaw);
+		ctx.setTransform(1,0,0,-1,screenpos.x, screenpos.y);			
 
 		if(!posemsg.rotation_invalid){
+			ctx.rotate(posemsg.yaw);
 			drawAngularCovariance(posemsg.covariance, scale);
-			drawArrow(scale);
+
+			if(rendermodebox.value == "long_arrow"){
+				drawArrow(scale);
+			}else{
+				ctx.setTransform(1,0,0,1,0, 0);
+				drawAxes(scale);
+			}
+				
 		}else{
 			drawCircle(scale*0.4);
 		}
@@ -242,7 +337,8 @@ function connect(){
 	marker_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : typedict[topic]
+		messageType : typedict[topic],
+		throttle_rate: parseInt(throttle.value)
 	});
 
 	status.setWarn("No data received.");
@@ -287,11 +383,23 @@ function connect(){
 		posemsg = {
 			x: transformed.translation.x,
 			y: transformed.translation.y,
+			vec: transformed.translation,
+			quat: transformed.rotation,
 			yaw: transformed.rotation.toEuler().h,
 			rotation_invalid: rotation_invalid,
 			covariance: skip_covariance ? undefined : msg.pose.covariance,
-			eigenvalues: skip_covariance ? undefined : calculateEigen(msg.pose.covariance)
+			eigenvalues: skip_covariance ? undefined : calculateEigen(msg.pose.covariance),
+			stamp: new Date()
 		};
+
+		let angles = (new Quaternion(q)).toEuler()
+		text_x.innerText = "X: "+pose.position.x.toFixed(2)+" m";
+		text_y.innerText = "Y: "+pose.position.y.toFixed(2)+" m";
+		text_z.innerText = "Z: "+pose.position.z.toFixed(2)+" m";
+		text_dist.innerText = "Distance: "+Math.hypot(pose.position.x, pose.position.y, pose.position.z).toFixed(2)+" m";
+		text_roll.innerText = "Roll: "+(angles.g * (180/Math.PI)).toFixed(1)+"°";
+		text_pitch.innerText = "Pitch: "+(angles.pitch * (180/Math.PI)).toFixed(1)+"°";
+		text_yaw.innerText = "Yaw: "+(angles.h * (180/Math.PI)).toFixed(1)+"°";
 	
 		drawMarkers();
 		
@@ -333,6 +441,14 @@ async function loadTopics(){
 }
 
 selectionbox.addEventListener("change", (event) => {
+	text_x.innerText = "X: ?";
+	text_y.innerText = "Y: ?";
+	text_z.innerText = "Z: ?";
+	text_dist.innerText = "Distance: ?";
+	text_roll.innerText = "Roll: ?";
+	text_pitch.innerText = "Pitch: ?";
+	text_yaw.innerText = "Yaw: ?";
+
 	topic = selectionbox.value;
 	posemsg = undefined;
 	connect();
@@ -344,6 +460,10 @@ selectionbox.addEventListener("click", (event) => {
 
 click_icon.addEventListener("click", (event) => {
 	loadTopics();
+});
+
+rendermodebox.addEventListener("change", (event) => {
+	saveSettings();
 });
 
 loadTopics();
