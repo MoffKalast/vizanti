@@ -908,9 +908,7 @@ li {
 	font-size: 30px;
 }
 
-/* Add tabs */
-
-/* Style the tab */
+/* Add Menu tabs */
 .tab {
 	border-style: outset;
 	border-radius: 5px;
@@ -921,7 +919,6 @@ li {
 	margin-bottom: 15px;
 }
 
-/* Style the buttons inside the tab */
 .tab button {
 	background-color: inherit;
 	flex-grow: 1;
@@ -934,23 +931,116 @@ li {
 	color: lightgray;
 }
 
-/* Change background color of buttons on hover */
 .tab button:hover {
 	background-color: #39567A;
 	transform: scale(1);
 }
 
-/* Create an active/current tablink class */
-.tab button.active_tab {
+.tab button.active-tab {
 	background-color: #496D99;
 	font-weight: bold;
 	color: white;
 }
 
-/* Style the tab content */
 .tabcontent {
 	display: none;
 	padding: 6px 12px;
 	border: none;
 	border-top: none;
+}
+
+/* Sprite selector tabs */
+
+.sprite-selector {
+    margin: 10px 0;
+}
+
+.sprite-tab-buttons {
+    border-style: outset;
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-around;
+    overflow: hidden;
+    background-color: #273B54;
+    margin-bottom: 15px;
+}
+
+.sprite-tab-btn {
+    background-color: inherit;
+    flex-grow: 1;
+    float: left;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 7px 7px;
+    transition: 0.3s;
+    color: lightgray;
+    font-family: 'Ubuntu Mono', Monospace;
+    font-size: 1.0rem;
+}
+
+.sprite-tab-btn:hover {
+    background-color: #39567A;
+    transform: scale(1);
+}
+
+.thumbnail-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 3px solid #424242;
+    padding: 10px;
+    background-color: #2f2f2f;
+    border-radius: 5px;
+    scrollbar-color: #4242426a #99999978;
+    scrollbar-width: thin;
+}
+
+.thumbnail-gallery::-webkit-scrollbar {
+    width: 6px;
+}
+
+.thumbnail-gallery::-webkit-scrollbar-thumb {
+    background-color: #99999978;
+    border-radius: 3px;
+}
+
+.thumbnail-gallery::-webkit-scrollbar-track {
+    background-color: #4242426a;
+}
+
+.thumbnail-item {
+    text-align: center;
+    cursor: pointer;
+    padding: 5px;
+    border: 2px solid transparent;
+    border-radius: 4px;
+    background-color: rgba(124, 124, 124, 0.3);
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+.thumbnail-item:hover {
+    background-color: rgba(185, 185, 185, 0.3);
+    transform: scale(1.05);
+}
+
+.thumbnail-item.selected {
+    border-color: #ffffff;
+    background-color: rgba(82, 183, 255, 0.2);
+}
+
+.thumbnail-item img {
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+}
+
+.thumb-label {
+    display: block;
+    font-size: 10px;
+    margin-top: 2px;
+    color: white;
+    font-family: 'Ubuntu Mono', Monospace;
 }
