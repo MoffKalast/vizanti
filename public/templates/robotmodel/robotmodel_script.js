@@ -63,6 +63,23 @@ function saveSettings(){
 
 async function drawRobot() {
 
+	function getRotationMatrix(pitchRad, yawRad, rollRad) {
+		const cosPitch = Math.cos(pitchRad);
+		const sinPitch = Math.sin(pitchRad);
+		const cosYaw = Math.cos(yawRad);
+		const sinYaw = Math.sin(yawRad);
+		const cosRoll = Math.cos(rollRad);
+		const sinRoll = Math.sin(rollRad);
+		const sinPitchSinRoll = sinPitch * sinRoll;
+		
+		return [
+			cosYaw * cosPitch,                           // m11
+			cosYaw * sinPitchSinRoll - sinYaw * cosRoll, // m12
+			sinYaw * cosPitch,                           // m21
+			sinYaw * sinPitchSinRoll + cosYaw * cosRoll  // m22
+		];
+	}
+
 	const unit = view.getMapUnitsInPixels(lengthSelector.value);
 
     const wid = canvas.width;
@@ -75,17 +92,27 @@ async function drawRobot() {
 	const modelimg = models[sprite];
 
 	if(robotframe){
-		let pos = view.fixedToScreen({
+		const pos = view.fixedToScreen({
 			x: robotframe.translation.x,
 			y: robotframe.translation.y,
 		});
 	
-		let yaw = robotframe.rotation.toEuler().h;
+		const euler = robotframe.rotation.toEuler();
+
+		const roll = euler.g;
+		const pitch = euler.pitch;
+		const yaw = euler.h;
+
+		const matrix = getRotationMatrix(
+			-pitch, 
+			Math.PI - yaw, 
+			-roll
+		);
 
 		let ratio = modelimg.naturalHeight/modelimg.naturalWidth;
-		ctx.setTransform(1,0,0,1,pos.x, pos.y); //sx,0,0,sy,px,py
-		ctx.rotate(Math.PI-yaw);
+		ctx.setTransform(matrix[0], matrix[2], matrix[1], matrix[3],pos.x, pos.y); //sx,0,0,sy,px,py
 		ctx.drawImage(modelimg, -unit/2, -(unit*ratio)/2, unit, unit*ratio);
+		
 		status.setOK();
 	}else{
 		status.setError("Required transform frame \""+frame+"\" not found.");
