@@ -11,10 +11,27 @@ let Status = StatusModule.Status;
 let paths = pathsModule.default;
 
 let models = {};
-paths.map(file => {
-	const name = file.split('.png')[0].split("_")[1];
-	models[name] = new Image();
-	models[name].src = `${base_url}/assets/robot_model/${file}`;
+let categorizedModels = {};
+let thumbnailCache = {};
+
+// Since paths is now categorized, we need to handle it differently
+Object.keys(paths).forEach(category => {
+	categorizedModels[category] = [];
+
+	paths[category].forEach(file => {
+		const name = file.split('.png')[0].split("_")[1];
+		categorizedModels[category].push(name);
+		
+		if (!models[name]) {
+			models[name] = new Image();
+			models[name].category = category;
+
+			if(category == "misc")
+				models[name].src = `${base_url}/assets/robot_model/${file}`;
+			else
+				models[name].src = `${base_url}/assets/robot_model/${category}/${file}`;
+		}
+	});
 });
 
 let status = new Status(
@@ -27,9 +44,9 @@ const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
 
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
 const frameSelector = document.getElementById("{uniqueID}_frame");
-const spriteSelector = document.getElementById("{uniqueID}_sprite");
 const lengthSelector = document.getElementById("{uniqueID}_length");
-const previewImg = document.getElementById("{uniqueID}_previewimg");
+const galleryTabs = document.getElementById("{uniqueID}_gallery_tabs");
+const gallery = document.getElementById('{uniqueID}_gallery');
 
 let frame = "";
 let sprite = "4wd";
@@ -40,8 +57,6 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	lengthSelector.value = loaded_data.length;
 
 	sprite = loaded_data.sprite ?? "4wd";
-	spriteSelector.value = sprite;
-	previewImg.src = models[sprite].src;
 }else{
 
 	if(frame == ""){
@@ -119,6 +134,97 @@ async function drawRobot() {
 	}
 }
 
+function buildThumbnailGallery() {
+
+	function generateThumbnail(image, size = 64) {
+		const scale = Math.min(size / image.naturalWidth, size / image.naturalHeight);
+		const scaledWidth = image.naturalWidth * scale;
+		const scaledHeight = image.naturalHeight * scale;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = size;
+		canvas.height = size;
+
+		const ctx = canvas.getContext('2d');
+		ctx.clearRect(0, 0, size, size);
+		ctx.drawImage(
+			image, 
+			(size - scaledWidth) / 2, //x
+			(size - scaledHeight) / 2, //y
+			scaledWidth, 
+			scaledHeight
+		);
+		
+		return canvas.toDataURL();
+	}
+
+	function selectSprite(event, modelName) {
+		sprite = modelName;
+
+		gallery.querySelectorAll('.thumbnail-item').forEach(item => {
+			item.classList.remove('selected');
+		});
+
+		gallery.querySelectorAll('.thumbnail-item').forEach(item => {
+			if (item.querySelector('.thumb-label').textContent === modelName) {
+				item.classList.add('selected');
+			}
+		});
+
+		event.currentTarget.classList.add('selected');
+		
+		saveSettings();
+	}
+
+    const activeTab = galleryTabs.querySelector('.active-tab');
+    const category = activeTab.id.replace("{uniqueID}_","");
+    
+    gallery.innerHTML = '';
+    if (categorizedModels[category]) {
+
+        categorizedModels[category].forEach(modelName => {
+            const model = models[modelName];
+            if (!model) return;
+            
+            // Generate or get cached thumbnail
+            if (!thumbnailCache[modelName]) {
+                thumbnailCache[modelName] = generateThumbnail(model);
+            }
+            
+            // Create thumbnail element
+            const thumbDiv = document.createElement('div');
+            thumbDiv.className = 'thumbnail-item';
+
+            if (sprite === modelName)
+				thumbDiv.classList.add('selected');
+            
+            thumbDiv.innerHTML = `
+                <img src="${thumbnailCache[modelName]}" alt="${modelName}">
+                <span class="thumb-label">${modelName}</span>
+            `;
+            
+            thumbDiv.addEventListener('click', (event) => selectSprite(event, modelName));
+            gallery.appendChild(thumbDiv);
+        });
+    }
+}
+
+function setActiveCategory(element){
+	galleryTabs.querySelectorAll('.active-tab').forEach(item => {
+		item.classList.remove('active-tab');
+	});
+
+	element.classList.add('active-tab');
+	buildThumbnailGallery();
+}
+
+galleryTabs.addEventListener('click', (event) => {
+	if(event.target != null && event.target.classList.contains("tablinks")){
+		setActiveCategory(event.target);
+		drawRobot();
+	}	
+});
+
 function resizeScreen(){
 	canvas.height = window.innerHeight;
 	canvas.width = window.innerWidth;
@@ -138,7 +244,6 @@ window.addEventListener('orientationchange', resizeScreen);
 
 // TF frame list
 function setFrameList(){
-
 	let framelist = "";
 	for (const key of tf.frame_list.values()) {
 		framelist += "<option value='"+key+"'>"+key+"</option>"
@@ -153,23 +258,14 @@ function setFrameList(){
 		frameSelector.value = frame;
 	}
 
-	let spritelist = "";
-	for (const [key, value] of Object.entries(models)) {
-		spritelist += "<option value='"+key+"'>"+key+"</option>"
+	if(models[sprite]){
+		const element = document.getElementById("{uniqueID}_"+models[sprite].category);
+		setActiveCategory(element);
 	}
-
-	spriteSelector.innerHTML = spritelist;
-	spriteSelector.value = sprite;
 }
 
 frameSelector.addEventListener("change", (event) => {
 	frame = frameSelector.value;
-	saveSettings();
-});
-
-spriteSelector.addEventListener("change", (event) => {
-	sprite = spriteSelector.value;
-	previewImg.src = models[sprite].src;
 	saveSettings();
 });
 

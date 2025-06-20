@@ -4,21 +4,25 @@
 		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
 		<hr class="dark_hr"/>
 
+		<div class="sprite-selector">
+			<div class="tab" id="{uniqueID}_gallery_tabs">
+				<button class="tablinks active-tab" id="{uniqueID}_ground">Ground</button>
+				<button class="tablinks" id="{uniqueID}_sea">Sea</button>
+				<button class="tablinks" id="{uniqueID}_air">Air</button>
+				<button class="tablinks" id="{uniqueID}_misc">Misc</button>
+			</div>
+			
+			<div class="thumbnail-gallery" id="{uniqueID}_gallery">
+				<!-- Thumbnails will be populated here -->
+			</div>
+		</div>
+
+		<div class="spacer"></div>
+
 		<label for="{uniqueID}_frame">Frame:</label>
 		<select id="{uniqueID}_frame" name="topic">
 			<option value='base_link'>base_link</option>
 		</select>
-
-		<div class="spacer"></div>
-
-		<label for="{uniqueID}_sprite">Robot Sprite:</label>
-		<select id="{uniqueID}_sprite" name="topic">
-			<option value='4wd'>4wd</option>
-		</select>
-
-		<div class="spacer"></div>
-
-		<img src="assets/robot_model/_4wd.png" alt="modelimg" width="80%" id="{uniqueID}_previewimg">
 
 		<div class="spacer"></div>
 

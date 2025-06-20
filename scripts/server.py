@@ -79,18 +79,38 @@ def list_template_files():
 
 @app.route(param_base_url + '/assets/robot_model/paths')
 def list_robot_model_files():
-	return get_paths("assets/robot_model", ['.png'])
+	templates_dir = os.path.join(app.static_folder, "assets/robot_model")
+	categorized_files = {
+		'ground': [],
+		'air': [],
+		'sea': [],
+		'misc': []
+	}
+	
+	for root, dirs, files in os.walk(templates_dir):
+		for file in files:
+			if os.path.splitext(file)[1] == '.png':
+				rel_path = os.path.relpath(root, templates_dir)
+				category = rel_path if rel_path in categorized_files else 'misc'
+				if category == '.':  # files in root directory
+					category = 'misc'
+				categorized_files[category].append(file)
+	
+	js_module = f"const categorizedPaths = {json.dumps(categorized_files)};\nexport default categorizedPaths;"
+	response = make_response(js_module)
+	response.headers['Content-Type'] = 'application/javascript'
+	return response
 
 @app.route(param_base_url + '/ros_launch_params')
 def list_ros_launch_params():
-    params = {
-        "port": param_port,
-        "port_rosbridge": param_port_rosbridge
-    }
-    js_module = f"const params = {json.dumps(params)};\n\nexport default params;"
-    response = make_response(js_module)
-    response.headers['Content-Type'] = 'application/javascript'
-    return response
+	params = {
+		"port": param_port,
+		"port_rosbridge": param_port_rosbridge
+	}
+	js_module = f"const params = {json.dumps(params)};\n\nexport default params;"
+	response = make_response(js_module)
+	response.headers['Content-Type'] = 'application/javascript'
+	return response
 
 @app.route(param_base_url + '/default_widget_config')
 def get_default_widget_config():

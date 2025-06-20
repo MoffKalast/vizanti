@@ -29,8 +29,8 @@ for (let i = 0; i < widgets.length; i++) {
 
 //tabs swapping
 typeButton.addEventListener("click", (event) => {
-	topicButton.classList.remove("active_tab");
-	typeButton.classList.add("active_tab");
+	topicButton.classList.remove("active-tab");
+	typeButton.classList.add("active-tab");
 
 	typeDiv.style.display = "block";
 	topicDiv.style.display = "none";
@@ -38,8 +38,8 @@ typeButton.addEventListener("click", (event) => {
 
 topicButton.addEventListener("click", (event) => {
 	update_topics();
-	typeButton.classList.remove("active_tab");
-	topicButton.classList.add("active_tab");
+	typeButton.classList.remove("active-tab");
+	topicButton.classList.add("active-tab");
 
 	typeDiv.style.display = "none";
 	topicDiv.style.display = "block";
