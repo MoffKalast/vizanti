@@ -79,7 +79,28 @@ def list_template_files():
 	return get_files("templates", ['.html', '.js', '.css'])
 
 def list_robot_model_files():
-	return get_paths("assets/robot_model", ['.png'])
+	templates_dir = os.path.join(app.static_folder, "assets/robot_model")
+	categorized_files = {
+		'ground': [],
+		'air': [],
+		'sea': [],
+		'misc': []
+	}
+	
+	for root, dirs, files in os.walk(templates_dir):
+		for file in files:
+			if os.path.splitext(file)[1] == '.png':
+				rel_path = os.path.relpath(root, templates_dir)
+				category = rel_path if rel_path in categorized_files else 'misc'
+				if category == '.':  # files in root directory
+					category = 'misc'
+				categorized_files[category].append(file)
+	
+	js_module = f"const categorizedPaths = {json.dumps(categorized_files)};\nexport default categorizedPaths;"
+	response = make_response(js_module)
+	response.headers['Content-Type'] = 'application/javascript'
+	return response
+
 
 def get_default_widget_config():
 	return get_file(param_default_widget_config)

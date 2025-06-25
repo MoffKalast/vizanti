@@ -19,7 +19,8 @@ Object.keys(paths).forEach(category => {
 	categorizedModels[category] = [];
 
 	paths[category].forEach(file => {
-		const name = file.split('.png')[0].split("_")[1];
+		const name = file.split('.png')[0].split("_").join(" ");
+		console.log(name)
 		categorizedModels[category].push(name);
 		
 		if (!models[name]) {
@@ -89,8 +90,8 @@ async function drawRobot() {
 	const robotframe = tf.absoluteTransforms[frame];
 	const modelimg = models[sprite];
 
-	if(robotframe){
-		let pos = view.fixedToScreen({
+	if(robotframe && modelimg){
+		const pos = view.fixedToScreen({
 			x: robotframe.translation.x,
 			y: robotframe.translation.y,
 		});
