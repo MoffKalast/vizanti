@@ -207,21 +207,26 @@ async function drawMap(){
 	if(!map_data)
 		return;
 
-	function getRotationMatrix(pitchRad, yawRad, rollRad) {
-		const cosPitch = Math.cos(pitchRad);
-		const sinPitch = Math.sin(pitchRad);
-		const cosYaw = Math.cos(yawRad);
-		const sinYaw = Math.sin(yawRad);
-		const cosRoll = Math.cos(rollRad);
-		const sinRoll = Math.sin(rollRad);
-		const sinPitchSinRoll = sinPitch * sinRoll;
+	function getOrthographicMatrix(quaternion) {
+		let quat = new Quaternion(
+			quaternion.w, 
+			-quaternion.x, 
+			quaternion.y, 
+			-quaternion.z
+		);
+
+		const w = quat.w;
+		const x = quat.x;
+		const y = quat.y;
+		const z = quat.z;
 		
-		return [
-			cosYaw * cosPitch,                           // m11
-			cosYaw * sinPitchSinRoll - sinYaw * cosRoll, // m12
-			sinYaw * cosPitch,                           // m21
-			sinYaw * sinPitchSinRoll + cosYaw * cosRoll  // m22
-		];
+		// Extract 2D orthographic projection matrix
+		const m11 = 1 - 2 * (y * y + z * z);
+		const m21 = 2 * (x * y + w * z);
+		const m12 = 2 * (x * y - w * z);
+		const m22 = 1 - 2 * (x * x + z * z);
+		
+		return [m11, m21, m12, m22];
 	}
 
 	ctx.setTransform(1,0,0,1,0,0);
@@ -255,21 +260,11 @@ async function drawMap(){
 		y: tf_pose.translation.y,
 	});
 
-
-	const euler = tf_pose.rotation.toEuler();
-	const roll = euler.g;
-	const pitch = euler.pitch;
-	const yaw = euler.h;
-
-	const matrix = getRotationMatrix(
-		-pitch, 
-		Math.PI - yaw,
-		-roll
-	);
+	const matrix = getOrthographicMatrix(tf_pose.rotation);
 
 	ctx.globalAlpha = opacitySlider.value;
-	ctx.setTransform(matrix[0], matrix[2], matrix[1], matrix[3], pos.x, pos.y); //sx,0,0,sy,px,py
-	ctx.scale(-1.0, 1.0);
+	ctx.setTransform(matrix[0], matrix[1], matrix[2], matrix[3], pos.x, pos.y); //sx,0,0,sy,px,py
+	ctx.scale(1.0, -1.0);
 	ctx.drawImage(temp_canvas, 0, 0, map_width, map_height);
 }
 
