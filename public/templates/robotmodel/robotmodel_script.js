@@ -127,28 +127,6 @@ function find_base_frame(){
 
 async function drawRobot() {
 
-	function getOrthographicMatrix(quaternion) {
-		let quat = new Quaternion(
-			quaternion.w, 
-			-quaternion.x, 
-			quaternion.y, 
-			-quaternion.z
-		);
-
-		const w = quat.w;
-		const x = quat.x;
-		const y = quat.y;
-		const z = quat.z;
-		
-		// Extract 2D orthographic projection matrix
-		const m11 = 1 - 2 * (y * y + z * z);
-		const m21 = 2 * (x * y + w * z);
-		const m12 = 2 * (x * y - w * z);
-		const m22 = 1 - 2 * (x * x + z * z);
-		
-		return [m11, m21, m12, m22];
-	}
-
 	const unit = view.getMapUnitsInPixels(1.0);
 	const length = lengthSelector.value * unit;
 
@@ -168,7 +146,7 @@ async function drawRobot() {
 			y: robotframe.translation.y
 		});
 
-		const matrix = getOrthographicMatrix(robotframe.rotation);
+		const matrix = view.quaterionToProjectionMatrix(robotframe.rotation);
 
 		let ratio = modelimg.naturalHeight/modelimg.naturalWidth;
 		ctx.setTransform(matrix[0], matrix[1], matrix[2], matrix[3], pos.x, pos.y); //sx,0,0,sy,px,py

@@ -205,28 +205,6 @@ async function drawMap(){
 	if(!map_data)
 		return;
 
-	function getOrthographicMatrix(quaternion) {
-		let quat = new Quaternion(
-			quaternion.w, 
-			-quaternion.x, 
-			quaternion.y, 
-			-quaternion.z
-		);
-
-		const w = quat.w;
-		const x = quat.x;
-		const y = quat.y;
-		const z = quat.z;
-		
-		// Extract 2D orthographic projection matrix
-		const m11 = 1 - 2 * (y * y + z * z);
-		const m21 = 2 * (x * y + w * z);
-		const m12 = 2 * (x * y - w * z);
-		const m22 = 1 - 2 * (x * x + z * z);
-		
-		return [m11, m21, m12, m22];
-	}
-
 	ctx.setTransform(1,0,0,1,0,0);
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	ctx.imageSmoothingEnabled = false;
@@ -258,7 +236,7 @@ async function drawMap(){
 		y: tf_pose.translation.y,
 	});
 
-	const matrix = getOrthographicMatrix(tf_pose.rotation);
+	const matrix = view.quaterionToProjectionMatrix(tf_pose.rotation);
 
 	ctx.globalAlpha = opacitySlider.value;
 	ctx.setTransform(matrix[0], matrix[1], matrix[2], matrix[3], pos.x, pos.y); //sx,0,0,sy,px,py
