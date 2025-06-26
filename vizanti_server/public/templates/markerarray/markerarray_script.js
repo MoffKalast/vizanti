@@ -138,7 +138,7 @@ async function drawMarkers(){
 		ctx.beginPath();
 		marker.points.forEach((point, index) => {
 			const x = point.x * size;
-			const y = point.y * size;
+			const y = -point.y * size;
 			if (index === 0) {
 				ctx.moveTo(x, y);
 			} else {
@@ -150,7 +150,7 @@ async function drawMarkers(){
 	}
 
 	function drawText(marker, size){
-		ctx.scale(0.1, -0.1);
+		ctx.scale(0.1, 0.1);
 
 		ctx.font = (marker.scale.z*10.0*size)+"px Monospace";
 		ctx.textAlign = "center";
@@ -191,12 +191,8 @@ async function drawMarkers(){
 			y: marker.transformed.translation.y
 		});
 
-		const yaw = marker.transformed.rotation.toEuler().h;
-
-		ctx.setTransform(1,0,0,-1, pos.x, pos.y); //sx,0,0,sy,px,py
-
-		if(marker.type != 9)
-			ctx.rotate(yaw);
+		const matrix = view.quaterionToProjectionMatrix(marker.transformed.rotation);
+		ctx.setTransform(matrix[0], matrix[1], matrix[2], matrix[3], pos.x, pos.y); //sx,0,0,sy,px,py
 
 		switch(marker.type)
 		{
