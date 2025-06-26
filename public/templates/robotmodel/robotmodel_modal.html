@@ -17,9 +17,10 @@
 			</div>
 		</div>
 
-		<div class="spacer"></div>
+		<p class="comment">Renders a simple 2D sprite of a fixed size relative to a TF link, for scale. </p>
 
-		<label for="{uniqueID}_frame">Frame:</label>
+
+		<label for="{uniqueID}_frame">TF Frame:</label>
 		<select id="{uniqueID}_frame" name="topic">
 			<option value='base_link'>base_link</option>
 		</select>
@@ -27,13 +28,34 @@
 		<div class="spacer"></div>
 
 		<label for="{uniqueID}_length">Robot Length (m):</label>
-		<input type="number" value="0.5" step="0.01" min="0.01" max="100" id="{uniqueID}_length">
+		<input type="number" value="0.5" step="0.01" min="0.01" id="{uniqueID}_length">
 
 		<div class="spacer"></div>
 
-		
-		<p>Add your custom sprite into </p><input type="text" value="vizanti/public/assets/robot_model/" readonly><div class="spacer"></div><div class="spacer"></div>
-		<p>The files should start with an underscore, must be in .png format and will rotate around the image center.</p>
+		<label for="{uniqueID}_offset_x">X offset (m):</label>
+		<input type="number" value="0.0" step="0.01" id="{uniqueID}_offset_x">
+
+		<div class="spacer"></div>
+
+		<label for="{uniqueID}_offset_y">Y offset (m):</label>
+		<input type="number" value="0.0" step="0.01"  id="{uniqueID}_offset_y">
+
+		<div class="spacer"></div>
+
+		<label for="{uniqueID}_offset_yaw">Yaw offset (deg):</label>
+		<input type="number" value="0.0" step="0.01" min="-180" max="180" id="{uniqueID}_offset_yaw">
+
+		<div class="spacer"></div>
+
+		<label for="{uniqueID}_opacity">Opacity:</label>
+		<span id="{uniqueID}_opacity_value">0.85</span>
+		<input type="range" value="1.0" step="0.05" min="0.1" max="1.0" id="{uniqueID}_opacity">
+
+		<div class="spacer"></div>
+
+		<h4>Adding custom sprites</h4>
+
+		<p class="comment">The sprites are sourced from vizanti/public/assets/robot_model/ and should start with an underscore, must be in .png format and will rotate around the image center.</p>
 
 		<hr class="dark_hr"/>
 
