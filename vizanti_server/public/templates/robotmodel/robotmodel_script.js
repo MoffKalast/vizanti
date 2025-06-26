@@ -19,8 +19,7 @@ Object.keys(paths).forEach(category => {
 	categorizedModels[category] = [];
 
 	paths[category].forEach(file => {
-		const name = file.split('.png')[0].split("_").join(" ");
-		console.log(name)
+		const name = file.split('.png')[0].split("_").join(" ").trim();
 		categorizedModels[category].push(name);
 		
 		if (!models[name]) {
@@ -49,7 +48,18 @@ const lengthSelector = document.getElementById("{uniqueID}_length");
 const galleryTabs = document.getElementById("{uniqueID}_gallery_tabs");
 const gallery = document.getElementById('{uniqueID}_gallery');
 
-let frame = "";
+const offsetXSelector = document.getElementById("{uniqueID}_offset_x");
+const offsetYSelector = document.getElementById("{uniqueID}_offset_y");
+const offsetYawSelector = document.getElementById("{uniqueID}_offset_yaw");
+
+const opacitySlider = document.getElementById('{uniqueID}_opacity');
+const opacityValue = document.getElementById('{uniqueID}_opacity_value');
+opacitySlider.addEventListener('input', () =>  {
+	opacityValue.textContent = opacitySlider.value;
+	saveSettings();
+});
+
+let frame = find_base_frame();
 let sprite = "4wd";
 
 if(settings.hasOwnProperty("{uniqueID}")){
@@ -57,14 +67,16 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	frame = loaded_data.frame;
 	lengthSelector.value = loaded_data.length;
 
-	sprite = loaded_data.sprite ?? "4wd";
+	offsetXSelector.value = loaded_data.offset_x ?? 0.0;
+	offsetYSelector.value = loaded_data.offset_y ?? 0.0;
+	offsetYawSelector.value = loaded_data.offset_yaw ?? 0.0;
+
+	opacitySlider.value = loaded_data.opacity  ?? 1.0;
+	opacityValue.innerText = opacitySlider.value;
+	canvas.style.opacity = opacitySlider.value;
+
+	sprite = loaded_data.sprite.trim() ?? "4wd";
 }else{
-
-	if(frame == ""){
-		frame = "base_link";
-		status.setWarn("No frame found, defaulting to base_link");
-	}
-
 	saveSettings();
 }
 
@@ -72,9 +84,41 @@ function saveSettings(){
 	settings["{uniqueID}"] = {
 		frame: frame,
 		sprite: sprite,
-		length: lengthSelector.value
+		opacity: opacitySlider.value,
+		length: lengthSelector.value,
+		offset_x: offsetXSelector.value,
+		offset_y: offsetYSelector.value,
+		offset_yaw: offsetYawSelector.value,
 	}
 	settings.save();
+
+	canvas.style.opacity = opacitySlider.value;
+}
+
+function find_base_frame(){
+	//try base_link first
+	for (const key of tf.frame_list.values()) {
+		if (key.includes("base_link")) {
+			return key
+		}
+	}
+
+	//maybe footprint?
+	for (const key of tf.frame_list.values()) {
+		if (key.includes("base_footprint")) {
+			return key
+		}
+	}
+
+	//ok just base then...?
+	for (const key of tf.frame_list.values()) {
+		if (key.includes("base")) {
+			return key
+		}
+	}
+
+	//eh screw it
+	return "base_link";
 }
 
 async function drawRobot() {
@@ -91,20 +135,31 @@ async function drawRobot() {
 	const modelimg = models[sprite];
 
 	if(robotframe && modelimg){
+
 		const pos = view.fixedToScreen({
 			x: robotframe.translation.x,
-			y: robotframe.translation.y,
+			y: robotframe.translation.y
 		});
-	
-		let yaw = robotframe.rotation.toEuler().h;
 
 		let ratio = modelimg.naturalHeight/modelimg.naturalWidth;
-		ctx.setTransform(1,0,0,1,pos.x, pos.y); //sx,0,0,sy,px,py
-		ctx.rotate(Math.PI-yaw);
-		ctx.drawImage(modelimg, -unit/2, -(unit*ratio)/2, unit, unit*ratio);
+		ctx.setTransform(matrix[0], matrix[2], matrix[1], matrix[3], pos.x, pos.y); //sx,0,0,sy,px,py
+
+		const offset_x = parseFloat(offsetXSelector.value) * unit;
+		const offset_y = parseFloat(offsetYSelector.value) * unit;
+		const offset_yaw = (parseFloat(offsetYawSelector.value) * (Math.PI / 180.0));
+
+		ctx.transform(1, 0, 0, 1,  offset_x, offset_y);
+		ctx.rotate(offset_yaw)
+
+		ctx.drawImage(modelimg, -length/2, -(length*ratio)/2, length, length*ratio);
+		
 		status.setOK();
 	}else{
-		status.setError("Required transform frame \""+frame+"\" not found.");
+		if(robotframe){
+			status.setError("Required robot sprite not found..?");
+		}else{
+			status.setError("Required transform frame \""+frame+"\" not found.");
+		}
 	}
 }
 
@@ -156,7 +211,7 @@ function buildThumbnailGallery() {
     gallery.innerHTML = '';
     if (categorizedModels[category]) {
 
-        categorizedModels[category].forEach(modelName => {
+        categorizedModels[category].sort().forEach(modelName => {
             const model = models[modelName];
             if (!model) return;
             
