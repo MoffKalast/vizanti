@@ -112,11 +112,6 @@ async function drawCells() {
 		y: tf_pose.translation.y,
 	});
 
-	//const yaw = tf_pose.rotation.toEuler().h;
-
-	//ctx.setTransform(1,0,0,-1,pos.x, pos.y); //sx,0,0,sy,px,py
-	//ctx.rotate(yaw);
-
 	const matrix = view.quaterionToProjectionMatrix(tf_pose.rotation);
 	ctx.setTransform(matrix[0], matrix[1], matrix[2], matrix[3], pos.x, pos.y); //sx,0,0,sy,px,py
 	ctx.scale(1.0, -1.0);
