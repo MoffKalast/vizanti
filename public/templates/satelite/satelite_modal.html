@@ -24,7 +24,15 @@
 		<div class="spacer"></div>
 
 		<label for="{uniqueID}_tileserver">Tile server URL:</label>
-		<input style="margin-top: 0.3em; margin-bottom: 0.3em; width: 95%"id="{uniqueID}_tileserver" type="text" value="https://tile.openstreetmap.org/{z}/{x}/{y}.png">
+		<input list="tileserver" style="margin-top: 0.3em; margin-bottom: 0.3em; width: 95%" id="{uniqueID}_tileserver" type="text" value="https://tile.openstreetmap.org/{z}/{x}/{y}.png">
+
+		<!-- Known usable providers -->
+		<datalist id="tileserver">
+			<option value="https://tile.openstreetmap.org/{z}/{x}/{y}.png">
+			<option value="https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}.png">
+			<option value="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"></option>
+		</datalist> 
+
 
 		<p class="comment">The tile server can be changed to anything that uses 265x256 sized tiles, the Web Mercator projection, and follows the same {x},{y},{z} convention. </p>
 
