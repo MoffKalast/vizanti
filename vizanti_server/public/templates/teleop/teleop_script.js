@@ -41,6 +41,7 @@ const invertVerticalCheckbox = document.getElementById('{uniqueID}_invert_vert')
 const invertHorizontalCheckbox = document.getElementById('{uniqueID}_invert_horiz');
 const specialAckermannCheckbox = document.getElementById('{uniqueID}_special_ackermann_emulation');
 const specialInstantStopCheckbox = document.getElementById('{uniqueID}_special_instant_stop');
+const specialKeyboardCheckbox = document.getElementById('{uniqueID}_special_keyboard');
 
 // Value text
 const velocityVerticalValue = document.getElementById('{uniqueID}_vel_vert_value');
@@ -85,6 +86,15 @@ invertVerticalCheckbox.addEventListener('change', saveSettings);
 invertHorizontalCheckbox.addEventListener('change', saveSettings);
 specialAckermannCheckbox.addEventListener('change', saveSettings);
 specialInstantStopCheckbox.addEventListener('change', saveSettings);
+
+specialKeyboardCheckbox.addEventListener('change', function(){
+	if(this.checked)
+		enableKeyboard();
+	else
+		disableKeyboard();
+
+	saveSettings();
+});
 
 presetSelectorBox.addEventListener('change', function () {
 
@@ -193,6 +203,7 @@ if (settings.hasOwnProperty('{uniqueID}')) {
 		specialAckermannCheckbox.checked = loaded_data.invert_angular;
 		invertVerticalCheckbox.checked = false;
 		invertHorizontalCheckbox.checked = false;
+		specialKeyboardCheckbox.checked = false;
 
 	}else{
 
@@ -209,6 +220,9 @@ if (settings.hasOwnProperty('{uniqueID}')) {
 		invertHorizontalCheckbox.checked = loaded_data.invert_horiz ?? false;
 		specialAckermannCheckbox.checked = loaded_data.ackermann_emulation ?? true;
 		specialInstantStopCheckbox.checked = loaded_data.instant_stop ?? false;
+		specialKeyboardCheckbox.checked = loaded_data.keyboard_control ?? false;
+
+		specialKeyboardCheckbox.dispatchEvent(new Event('input'));
 	}
 
 	velocityVerticalSlider.dispatchEvent(new Event('input'));
@@ -244,6 +258,7 @@ function saveSettings() {
 
 		ackermann_emulation: specialAckermannCheckbox.checked,
 		instant_stop: specialInstantStopCheckbox.checked,
+		keyboard_control: specialKeyboardCheckbox.checked,
 
 		//deprecated legacy stuff
 		//linear_velocity: parseFloat(linearVelSlider.value),
@@ -441,6 +456,51 @@ function mapAndSend(){
 	publishTwist(x, y, z, wx, wy, wz);
 }
 
+function integrateAcceleration(){
+	const cfg = settings['{uniqueID}'];
+	const accel_vert = cfg.accel_vert / 20.0;
+	const accel_horiz = cfg.accel_horiz / 20.0;
+
+	if(cfg.accel_vert == 12.0){
+		vert_vel = vert_target;
+	}else{
+		if(vert_vel != vert_target){
+			if(vert_vel < vert_target){
+				vert_vel += accel_vert;
+	
+				if(vert_vel > vert_target)
+					vert_vel = vert_target;
+			}
+			else if(vert_vel > vert_target){
+				vert_vel -= accel_vert;
+	
+				if(vert_vel < vert_target)
+					vert_vel = vert_target;
+			}
+		}
+	}
+
+
+	if(cfg.accel_horiz == 12.0){
+		horiz_vel = horiz_target;
+	}else{
+		if(horiz_vel != horiz_target){
+			if(horiz_vel < horiz_target){
+				horiz_vel += accel_horiz;
+	
+				if(horiz_vel > horiz_target)
+					horiz_vel = horiz_target;
+			}
+			else if(horiz_vel > horiz_target){
+				horiz_vel -= accel_horiz;
+	
+				if(horiz_vel < horiz_target)
+					horiz_vel = horiz_target;
+			}
+		}
+	}
+}
+
 function joystickStop(){
 	vert_vel = 0;
 	horiz_vel = 0;
@@ -468,48 +528,7 @@ function onJoystickMove(event, data) {
 	if(interval === undefined){
 		interval = setInterval(() => {
 
-			const cfg = settings['{uniqueID}'];
-			const accel_vert = cfg.accel_vert / 20.0;
-			const accel_horiz = cfg.accel_horiz / 20.0;
-
-			if(cfg.accel_vert == 12.0){
-				vert_vel = vert_target;
-			}else{
-				if(vert_vel != vert_target){
-					if(vert_vel < vert_target){
-						vert_vel += accel_vert;
-			
-						if(vert_vel > vert_target)
-							vert_vel = vert_target;
-					}
-					else if(vert_vel > vert_target){
-						vert_vel -= accel_vert;
-			
-						if(vert_vel < vert_target)
-							vert_vel = vert_target;
-					}
-				}
-			}
-		
-
-			if(cfg.accel_horiz == 12.0){
-				horiz_vel = horiz_target;
-			}else{
-				if(horiz_vel != horiz_target){
-					if(horiz_vel < horiz_target){
-						horiz_vel += accel_horiz;
-			
-						if(horiz_vel > horiz_target)
-							horiz_vel = horiz_target;
-					}
-					else if(horiz_vel > horiz_target){
-						horiz_vel -= accel_horiz;
-			
-						if(horiz_vel < horiz_target)
-							horiz_vel = horiz_target;
-					}
-				}
-			}
+			integrateAcceleration();
 
 			if(Math.abs(vert_vel) < 0.005 && Math.abs(horiz_vel) < 0.005){
 				joystickStop();
@@ -583,5 +602,101 @@ function onEnd() {
   
 joypreview.addEventListener('mousedown', onStart);
 joypreview.addEventListener('touchstart', onStart);
+
+
+//experimental keyboard control
+const view_container = document.getElementById("view_container");
+const key_move = {
+    vert: 0.0,
+    horiz: 0.0,
+	up: false,
+	down: false,
+	left: false,
+	right: false
+};
+
+let keyboard_interval = undefined;
+
+function keydown(event){
+	switch(event.code) {
+		case 'KeyW': key_move.vert = 1.0; 		key_move.up = true;	break;
+		case 'KeyS': key_move.vert = -1.0; 		key_move.down = true;	break;
+		case 'KeyA': key_move.horiz = -1.0; 	key_move.left = true;	break;
+		case 'KeyD': key_move.horiz = 1.0;	 	key_move.right = true;	break;
+	}
+
+	if(keyboard_interval === undefined){
+		setKeyboardInterval();
+	}
+}
+
+function keyup(event){
+	switch(event.code) {
+		case 'KeyW': key_move.vert = 0.0;	key_move.up = false;	break;
+		case 'KeyS': key_move.vert = 0.0;	key_move.down = false;	break;
+		case 'KeyA': key_move.horiz = 0.0;	key_move.left = false;	break;
+		case 'KeyD': key_move.horiz = 0.0;	key_move.right = false;break;
+	}
+
+	const pressed = key_move.up || key_move.down || key_move.left || key_move.right;
+
+	if(!pressed && settings['{uniqueID}'].instant_stop){
+		keyboardStop();
+	}
+}
+
+function keyboardStop(){
+	vert_target = 0;
+	horiz_target = 0;
+	horiz_vel = 0;
+	vert_vel = 0;
+	publishTwist(0, 0, 0, 0, 0, 0);
+
+	if(keyboard_interval !== undefined){
+		clearInterval(keyboard_interval);
+		keyboard_interval = undefined;
+	}
+}
+
+function setKeyboardInterval(){
+	keyboard_interval = setInterval(() => {
+		const cfg = settings['{uniqueID}'];
+
+		vert_target = cfg.vel_vert * key_move.vert;
+		horiz_target = -cfg.vel_horiz * key_move.horiz;
+	
+		if (cfg.ackermann_emulation && vert_target < 0) {
+			horiz_target = -horiz_target;
+		}
+
+		integrateAcceleration();
+ 
+		if(Math.abs(vert_vel) < 0.005 && Math.abs(horiz_vel) < 0.005){
+			keyboardStop();
+			return;
+		} 
+	
+		mapAndSend();
+		
+	}, 1000 / 20); //20 hz standard
+}
+
+function enableKeyboard(){
+	document.addEventListener('keydown', keydown);
+	document.addEventListener('keyup', keyup);
+}
+
+function disableKeyboard(){
+	document.removeEventListener('keydown', keydown);
+	document.removeEventListener('keyup', keyup);
+	if(keyboard_interval !== undefined){
+		clearInterval(keyboard_interval);
+		keyboard_interval = undefined;
+	}
+}
+
+if(settings['{uniqueID}'].keyboard_control){
+	enableKeyboard();
+}
 
 console.log("Teleop Widget Loaded {uniqueID}")
