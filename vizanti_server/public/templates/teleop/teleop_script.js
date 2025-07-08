@@ -2,7 +2,9 @@ let rosbridgeModule = await import(`${base_url}/js/modules/rosbridge.js`);
 let persistentModule = await import(`${base_url}/js/modules/persistent.js`);
 let joystickModule = await import(`${base_url}/js/modules/joystick.js`);
 let StatusModule = await import(`${base_url}/js/modules/status.js`);
+let tfModule = await import(`${base_url}/js/modules/tf.js`);
 
+let tf = tfModule.tf;
 let rosbridge = rosbridgeModule.rosbridge;
 let settings = persistentModule.settings;
 let nipplejs = joystickModule.nipplejs;
@@ -14,6 +16,8 @@ let status = new Status(
 	document.getElementById("{uniqueID}_status")
 );
 
+let stamp_seq = 0;
+let typedict = {};
 let joy_offset_x = "50%";
 let joy_offset_y = "85%";
 let cmdVelPublisher = undefined;
@@ -62,6 +66,7 @@ if (settings.hasOwnProperty('{uniqueID}')) {
 	const loaded_data = settings['{uniqueID}'];
 	topic = loaded_data.topic;
 
+	typedict = loaded_data.typedict ?? {};
 	joy_offset_x = loaded_data.joy_offset_x;
 	joy_offset_y = loaded_data.joy_offset_y;
 
@@ -95,6 +100,7 @@ function saveSettings() {
 		accel: parseFloat(accelSlider.value),
 		invert_angular: invertAngularCheckbox.checked,
 		holonomic_swap: holonomicSwapCheckbox.checked,
+		typedict: typedict
 	};
 	settings.save();
 }
@@ -102,17 +108,25 @@ function saveSettings() {
 // Topic and connections
 
 async function loadTopics(){
-	let result = await rosbridge.get_topics("geometry_msgs/msg/Twist");
+	let twist_topics = await rosbridge.get_topics("geometry_msgs/msg/Twist");
+	let stamped_topics = await rosbridge.get_topics("geometry_msgs/msg/TwistStamped");
+
 	let topiclist = "";
-	result.forEach(element => {
-		topiclist += "<option value='"+element+"'>"+element+"</option>"
+	twist_topics.forEach(element => {
+		topiclist += "<option value='"+element+"'>"+element+" (Twist)</option>";
+		typedict[element] = "geometry_msgs/msg/Twist";
 	});
+	stamped_topics.forEach(element => {
+		topiclist += "<option value='"+element+"'>"+element+" (TwistStamped)</option>";
+		typedict[element] = "geometry_msgs/msg/TwistStamped";
+	});
+
 	selectionbox.innerHTML = topiclist;
 
 	if(topic == "")
 		topic = selectionbox.value;
 	else{
-		if(result.includes(topic)){
+		if(twist_topics.includes(topic) || stamped_topics.includes(topic)){
 			selectionbox.value = topic;
 		}else{
 			topiclist += "<option value='"+topic+"'>"+topic+"</option>"
@@ -127,17 +141,57 @@ function connect(){
 	cmdVelPublisher = new ROSLIB.Topic({
 		ros: rosbridge.ros,
 		name: topic,
-		messageType: 'geometry_msgs/msg/Twist',
+		messageType : typedict[topic],
 		queue_size: 1
+	});
+
+	stamp_seq = 0;
+}
+
+function getStamp(){
+	const currentTime = new Date();
+	const currentTimeSecs = Math.floor(currentTime.getTime() / 1000);
+	const currentTimeNsecs = (currentTime.getTime() % 1000) * 1e6;
+
+	return {
+		secs: currentTimeSecs,
+		nsecs: currentTimeNsecs
+	}
+}
+
+function getTwist(x, y, z, wx, wy, wz){
+	return new ROSLIB.Message({
+		linear: {
+			x: x,
+			y: y,
+			z: z
+		},
+		angular: {
+			x: wx,
+			y: wy,
+			z: wz
+		}
+	});
+}
+
+function getTwistStamped(x, y, z, ax, ay, az){
+	stamp_seq++;
+	return new ROSLIB.Message({
+		header: {
+			seq: stamp_seq,
+			stamp: getStamp(),
+			frame_id: tf.fixed_frame
+		},
+		twist: getTwist(x, y, z, ax, ay, az)
 	});
 }
 
 function publishTwist(linearX, linearY, angularZ) {
-	const twist = new ROSLIB.Message({
-		linear: { x: linearX, y: linearY, z: 0 },
-		angular: { x: 0, y: 0, z: angularZ },
-	});
-	cmdVelPublisher.publish(twist);
+	if(typedict[topic] == "geometry_msgs/Twist"){
+		cmdVelPublisher.publish(getTwist(linearX, linearY, 0, 0, 0, angularZ));
+	}else{
+		cmdVelPublisher.publish(getTwistStamped(linearX, linearY, 0, 0, 0, angularZ));
+	}
 }
 
 selectionbox.addEventListener("change", (event) => {
