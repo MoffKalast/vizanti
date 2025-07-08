@@ -448,8 +448,6 @@ function joystickStop(){
 	horiz_target = 0;
 	publishTwist(0, 0, 0, 0, 0, 0);
 
-	console.log("interval",interval)
-
 	if(interval !== undefined){
 		clearInterval(interval);
 		interval = undefined;
@@ -466,8 +464,6 @@ function onJoystickMove(event, data) {
 	if (cfg.ackermann_emulation && vert_target < 0) {
 		horiz_target = -horiz_target;
 	}
-
-	console.log("move!")
 
 	if(interval === undefined){
 		interval = setInterval(() => {
