@@ -1046,6 +1046,23 @@ li {
 	margin-bottom: 10px;
 }
 
+.axis_dropdown_group {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 5px;
+	flex: 1;
+	
+	min-width: 0;
+}
+.axis_dropdown_group label {
+	white-space: nowrap;
+}
+
+.axis_dropdown_group select {
+	min-width: 0; /* Allows it to shrink when really needed */
+}
+
 .axis_icon {
 	width: 80px;
 	height: 80px;
