@@ -25,43 +25,145 @@ let cmdVelPublisher = undefined;
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
 
-// Sliders and checkboxes
+// Axis dropdown
+const presetSelectorBox = document.getElementById("{uniqueID}_preset");
+const axisVerticalBox = document.getElementById("{uniqueID}_axis_vert");
+const axisHorizontalBox = document.getElementById("{uniqueID}_axis_horiz");
 
-const linearVelSlider = document.getElementById('{uniqueID}_linear_velocity');
-const angularVelSlider = document.getElementById('{uniqueID}_angular_velocity');
-const accelSlider = document.getElementById('{uniqueID}_accel');
+// Velocity, accel sliders
+const velocityVerticalSlider = document.getElementById('{uniqueID}_vel_vert');
+const velocityHorizontalSlider = document.getElementById('{uniqueID}_vel_horiz');
 
-const linearVelValue = document.getElementById('{uniqueID}_linear_velocity_value');
-const angularVelValue = document.getElementById('{uniqueID}_angular_velocity_value');
-const accelValue = document.getElementById('{uniqueID}_accel_value');
+const accelVerticalSlider = document.getElementById('{uniqueID}_accel_vert');
+const accelHorizontalSlider = document.getElementById('{uniqueID}_accel_horiz');
 
-const invertAngularCheckbox = document.getElementById('{uniqueID}_invert_angular');
-const holonomicSwapCheckbox = document.getElementById('{uniqueID}_holonomic');
+const invertVerticalCheckbox = document.getElementById('{uniqueID}_invert_vert');
+const invertHorizontalCheckbox = document.getElementById('{uniqueID}_invert_horiz');
+const specialAckermannCheckbox = document.getElementById('{uniqueID}_special_ackermann_emulation');
+const specialInstantStopCheckbox = document.getElementById('{uniqueID}_special_instant_stop');
 
-linearVelSlider.addEventListener('input', function () {
-	linearVelValue.textContent = this.value;
-	saveSettings();
+// Value text
+const velocityVerticalValue = document.getElementById('{uniqueID}_vel_vert_value');
+const velocityHorizontalValue = document.getElementById('{uniqueID}_vel_horiz_value');
+
+const accelVerticalValue = document.getElementById('{uniqueID}_accel_vert_value');
+const accelHorizontalValue = document.getElementById('{uniqueID}_accel_horiz_value');
+
+velocityVerticalSlider.addEventListener('input', function () {
+	velocityVerticalValue.textContent = this.value;
 });
 
-angularVelSlider.addEventListener('input', function () {
-	angularVelValue.textContent = this.value;
-	saveSettings();
+velocityHorizontalSlider.addEventListener('input', function () {
+	velocityHorizontalValue.textContent = this.value;
 });
 
-accelSlider.addEventListener('input', function () {
-	accelValue.textContent = this.value;
-	saveSettings();
+accelVerticalSlider.addEventListener('input', function () {
+	if(parseInt(this.value) == 12)
+		accelVerticalValue.textContent = "Instant"
+	else
+		accelVerticalValue.textContent = this.value;
 });
 
-linearVelSlider.addEventListener('change', saveSettings);
-angularVelSlider.addEventListener('change', saveSettings);
-accelSlider.addEventListener('change', saveSettings);
+accelHorizontalSlider.addEventListener('input', function () {
+	if(parseInt(this.value) == 12)
+		accelHorizontalValue.textContent = "Instant"
+	else
+		accelHorizontalValue.textContent = this.value;
+});
 
-invertAngularCheckbox.addEventListener('change', saveSettings);
-holonomicSwapCheckbox.addEventListener('change', saveSettings);
+//save on release
+axisVerticalBox.addEventListener('change', saveSettings);
+axisHorizontalBox.addEventListener('change', saveSettings);
+
+velocityVerticalSlider.addEventListener('change', saveSettings);
+velocityHorizontalSlider.addEventListener('change', saveSettings);
+
+accelVerticalSlider.addEventListener('change', saveSettings);
+accelHorizontalSlider.addEventListener('change', saveSettings);
+
+invertVerticalCheckbox.addEventListener('change', saveSettings);
+invertHorizontalCheckbox.addEventListener('change', saveSettings);
+specialAckermannCheckbox.addEventListener('change', saveSettings);
+specialInstantStopCheckbox.addEventListener('change', saveSettings);
+
+presetSelectorBox.addEventListener('change', function () {
+
+	if(this.value == "none")
+		return;
+
+	invertVerticalCheckbox.checked = false;
+	invertHorizontalCheckbox.checked = false;
+	specialAckermannCheckbox.checked = false;
+	specialInstantStopCheckbox.checked = false;
+
+	switch (this.value) {
+		case "diffdrive":
+			axisVerticalBox.value = "linear_x";	
+			axisHorizontalBox.value = "angular_z";
+			velocityVerticalSlider.value = 1.0;
+			velocityHorizontalSlider.value = 2.0;
+			accelVerticalSlider.value = 2.0;
+			accelHorizontalSlider.value = 4.0;
+			specialAckermannCheckbox.checked = true;
+			break;
+
+		case "ackermann":
+			axisVerticalBox.value = "linear_x";	
+			axisHorizontalBox.value = "angular_z";
+			velocityVerticalSlider.value = 1.0;
+			velocityHorizontalSlider.value = 0.9; //steering angle, typically about 50 deg max
+			accelVerticalSlider.value = 2.0;
+			accelHorizontalSlider.value = 6.0;
+			break;
+
+		case "altitude":
+			axisVerticalBox.value = "linear_z";	
+			axisHorizontalBox.value = "none";
+			velocityVerticalSlider.value = 2.0;
+			velocityHorizontalSlider.value = 0.05;
+			accelVerticalSlider.value = 2.0;
+			accelHorizontalSlider.value = 0.5;
+			break;
+
+		case "holonomic":
+			axisVerticalBox.value = "linear_x";	
+			axisHorizontalBox.value = "linear_y";
+			velocityVerticalSlider.value = 1.0;
+			velocityHorizontalSlider.value = 1.0;
+			accelVerticalSlider.value = 2.0;
+			accelHorizontalSlider.value = 2.0;
+			break;
+
+		case "pitchroll":			
+			axisVerticalBox.value = "angular_y";	
+			axisHorizontalBox.value = "angular_x";
+			velocityVerticalSlider.value = 2.0;
+			velocityHorizontalSlider.value = 2.0;
+			accelVerticalSlider.value = 4.0;
+			accelHorizontalSlider.value = 4.0;
+			specialInstantStopCheckbox.checked = true;
+			break;
+
+		case "pantilt":			
+			axisVerticalBox.value = "angular_y";
+			axisHorizontalBox.value = "angular_z";
+			velocityVerticalSlider.value = 0.5;
+			velocityHorizontalSlider.value = 0.5;
+			accelVerticalSlider.value = 12.0;
+			accelHorizontalSlider.value = 12.0;
+			specialInstantStopCheckbox.checked = true;
+			break;
+	}
+
+	velocityVerticalSlider.dispatchEvent(new Event('input'));
+	velocityHorizontalSlider.dispatchEvent(new Event('input'));
+	accelVerticalSlider.dispatchEvent(new Event('input'));
+	accelHorizontalSlider.dispatchEvent(new Event('input'));
+
+	saveSettings();
+});
 
 // Settings
-
 if (settings.hasOwnProperty('{uniqueID}')) {
 	const loaded_data = settings['{uniqueID}'];
 	topic = loaded_data.topic;
@@ -70,16 +172,50 @@ if (settings.hasOwnProperty('{uniqueID}')) {
 	joy_offset_x = loaded_data.joy_offset_x;
 	joy_offset_y = loaded_data.joy_offset_y;
 
-	linearVelSlider.value = loaded_data.linear_velocity;
-	angularVelSlider.value = loaded_data.angular_velocity;
-	accelSlider.value = loaded_data.accel;
+	// parse legacy configs
+	if(loaded_data.linear_velocity){
 
-	invertAngularCheckbox.checked = loaded_data.invert_angular;
-	holonomicSwapCheckbox.checked = loaded_data.holonomic_swap;
+		velocityVerticalSlider.value = loaded_data.linear_velocity;
+		velocityHorizontalSlider.value = loaded_data.angular_velocity;
 
-	linearVelValue.textContent = linearVelSlider.value;
-	angularVelValue.textContent = angularVelSlider.value;
-	accelValue.textContent = accelSlider.value;
+		accelVerticalSlider.value = loaded_data.accel * 20 ?? 2.0; //unit fix for old 20 hz speedup
+		accelHorizontalSlider.value = loaded_data.accel * 20 ?? 2.0;
+
+		if(loaded_data.holonomic_swap){
+			axisHorizontalBox.value = "linear_y";
+			axisVerticalBox.value = "linear_x";
+		}else{
+			axisHorizontalBox.value = "angular_z";
+			axisVerticalBox.value = "linear_x";
+		}
+
+		specialInstantStopCheckbox.checked = false;
+		specialAckermannCheckbox.checked = loaded_data.invert_angular;
+		invertVerticalCheckbox.checked = false;
+		invertHorizontalCheckbox.checked = false;
+
+	}else{
+
+		axisHorizontalBox.value = loaded_data.axis_horiz ?? "angular_z";
+		axisVerticalBox.value = loaded_data.axis_vert ?? "linear_x";
+
+		velocityVerticalSlider.value = loaded_data.vel_vert ?? 1.0;
+		velocityHorizontalSlider.value = loaded_data.vel_horiz ?? 2.0;
+
+		accelVerticalSlider.value = loaded_data.accel_vert ?? 2.0;
+		accelHorizontalSlider.value = loaded_data.accel_horiz ?? 4.0;
+
+		invertVerticalCheckbox.checked = loaded_data.invert_vert ?? false;
+		invertHorizontalCheckbox.checked = loaded_data.invert_horiz ?? false;
+		specialAckermannCheckbox.checked = loaded_data.ackermann_emulation ?? true;
+		specialInstantStopCheckbox.checked = loaded_data.instant_stop ?? false;
+	}
+
+	velocityVerticalSlider.dispatchEvent(new Event('input'));
+	velocityHorizontalSlider.dispatchEvent(new Event('input'));
+	accelVerticalSlider.dispatchEvent(new Event('input'));
+	accelHorizontalSlider.dispatchEvent(new Event('input'));
+
 }else{
 	saveSettings();
 }
@@ -93,13 +229,32 @@ if(topic == ""){
 function saveSettings() {
 	settings['{uniqueID}'] = {
 		topic: topic,
-		linear_velocity: parseFloat(linearVelSlider.value),
-		angular_velocity: parseFloat(angularVelSlider.value),
+
+		axis_horiz: axisHorizontalBox.value,
+		axis_vert: axisVerticalBox.value,
+
+		vel_vert: parseFloat(velocityVerticalSlider.value),
+		vel_horiz: parseFloat(velocityHorizontalSlider.value),
+
+		accel_vert: parseFloat(accelVerticalSlider.value),
+		accel_horiz: parseFloat(accelHorizontalSlider.value),
+
+		invert_vert: invertVerticalCheckbox.checked,
+		invert_horiz: invertHorizontalCheckbox.checked,
+
+		ackermann_emulation: specialAckermannCheckbox.checked,
+		instant_stop: specialInstantStopCheckbox.checked,
+
+		//deprecated legacy stuff
+		//linear_velocity: parseFloat(linearVelSlider.value),
+		//angular_velocity: parseFloat(angularVelSlider.value),
+		//accel: parseFloat(accelSlider.value),
+		//invert_angular: invertAngularCheckbox.checked,
+		//holonomic_swap: holonomicSwapCheckbox.checked,
+
 		joy_offset_x: joy_offset_x,
 		joy_offset_y: joy_offset_y,
-		accel: parseFloat(accelSlider.value),
-		invert_angular: invertAngularCheckbox.checked,
-		holonomic_swap: holonomicSwapCheckbox.checked,
+
 		typedict: typedict
 	};
 	settings.save();
@@ -148,49 +303,51 @@ function connect(){
 	stamp_seq = 0;
 }
 
-function getStamp(){
-	const currentTime = new Date();
-	const currentTimeSecs = Math.floor(currentTime.getTime() / 1000);
-	const currentTimeNsecs = (currentTime.getTime() % 1000) * 1e6;
 
-	return {
-		secs: currentTimeSecs,
-		nsecs: currentTimeNsecs
-	}
-}
+function publishTwist(x, y, z, wx, wy, wz) {
 
-function getTwist(x, y, z, wx, wy, wz){
-	return new ROSLIB.Message({
-		linear: {
-			x: x,
-			y: y,
-			z: z
-		},
-		angular: {
-			x: wx,
-			y: wy,
-			z: wz
+	function getStamp(){
+		const currentTime = new Date();
+		const currentTimeSecs = Math.floor(currentTime.getTime() / 1000);
+		const currentTimeNsecs = (currentTime.getTime() % 1000) * 1e6;
+
+		return {
+			secs: currentTimeSecs,
+			nsecs: currentTimeNsecs
 		}
-	});
-}
+	}
 
-function getTwistStamped(x, y, z, ax, ay, az){
-	stamp_seq++;
-	return new ROSLIB.Message({
-		header: {
-			seq: stamp_seq,
-			stamp: getStamp(),
-			frame_id: tf.fixed_frame
-		},
-		twist: getTwist(x, y, z, ax, ay, az)
-	});
-}
+	function getTwist(x, y, z, wx, wy, wz){
+		return new ROSLIB.Message({
+			linear: {
+				x: x,
+				y: y,
+				z: z
+			},
+			angular: {
+				x: wx,
+				y: wy,
+				z: wz
+			}
+		});
+	}
 
-function publishTwist(linearX, linearY, angularZ) {
+	function getTwistStamped(x, y, z, wx, wy, wz){
+		stamp_seq++;
+		return new ROSLIB.Message({
+			header: {
+				seq: stamp_seq,
+				stamp: getStamp(),
+				frame_id: tf.fixed_frame
+			},
+			twist: getTwist(x, y, z, wx, wy, wz)
+		});
+	}
+
 	if(typedict[topic] == "geometry_msgs/Twist"){
-		cmdVelPublisher.publish(getTwist(linearX, linearY, 0, 0, 0, angularZ));
+		cmdVelPublisher.publish(getTwist(x, y, z, wx, wy, wz));
 	}else{
-		cmdVelPublisher.publish(getTwistStamped(linearX, linearY, 0, 0, 0, angularZ));
+		cmdVelPublisher.publish(getTwistStamped(x, y, z, wx, wy, wz));
 	}
 }
 
@@ -211,22 +368,14 @@ icon.addEventListener("click", (event) => {
 
 loadTopics();
 
-// Joystick
-linearVelSlider.addEventListener('input', function () {
-	linearVelValue.textContent = this.value;
-});
-
-angularVelSlider.addEventListener('input', function () {
-	angularVelValue.textContent = this.value;
-});
-
 // Teleop logic
-let linearVel = 0;
-let angularVel = 0;
+let horiz_vel = 0;
+let vert_vel = 0;
 
-let targetLinearVel = 0;
-let targetAngularVel = 0;
+let horiz_target = 0;
+let vert_target = 0;
 
+//for accelerating smoothly
 let interval = undefined;
 
 const joystickContainer  = document.getElementById('{uniqueID}_joystick');
@@ -258,85 +407,133 @@ function addJoystickListeners(){
 	joystick.on('touchend', onJoystickEnd);
 }
 
+function mapAndSend(){
+	const cfg = settings['{uniqueID}'];
+
+	let vert_move = cfg.invert_vert ? -vert_vel : vert_vel;
+	let horiz_move = cfg.invert_horiz ? -horiz_vel: horiz_vel;
+
+	let x = 0;
+	let y = 0;
+	let z = 0;
+	let wx = 0;
+	let wy = 0;
+	let wz = 0;
+
+	switch (cfg.axis_horiz) {
+		case "linear_x": x += horiz_move; break;
+		case "linear_y": y += horiz_move; break;
+		case "linear_z": z += horiz_move; break;
+		case "angular_x": wx += horiz_move; break;
+		case "angular_y": wy += horiz_move; break;
+		case "angular_z": wz += horiz_move; break;
+	}
+
+	switch (cfg.axis_vert) {
+		case "linear_x": x += vert_move; break;
+		case "linear_y": y += vert_move; break;
+		case "linear_z": z += vert_move; break;
+		case "angular_x": wx += vert_move; break;
+		case "angular_y": wy += vert_move; break;
+		case "angular_z": wz += vert_move; break;
+	}
+
+	publishTwist(x, y, z, wx, wy, wz);
+}
+
+function joystickStop(){
+	vert_vel = 0;
+	horiz_vel = 0;
+	vert_target = 0;
+	horiz_target = 0;
+	publishTwist(0, 0, 0, 0, 0, 0);
+
+	console.log("interval",interval)
+
+	if(interval !== undefined){
+		clearInterval(interval);
+		interval = undefined;
+	}
+}
+
 function onJoystickMove(event, data) {
-	const maxLinearVel = parseFloat(linearVelSlider.value);
-	const maxAngularVel = parseFloat(angularVelSlider.value);
+	const cfg = settings['{uniqueID}'];
 	const force = Math.min(Math.max(data.force, 0.0), 1.0);
 
-	targetLinearVel = maxLinearVel * Math.sin(data.angle.radian) * force;
-	targetAngularVel = - maxAngularVel * Math.cos(data.angle.radian) * force;
+	vert_target = cfg.vel_vert * Math.sin(data.angle.radian) * force;
+	horiz_target = -cfg.vel_horiz * Math.cos(data.angle.radian) * force;
 
-	if (settings['{uniqueID}'].invert_angular && targetLinearVel < 0 && !settings['{uniqueID}'].holonomic_swap) {
-		targetAngularVel = -targetAngularVel;
+	if (cfg.ackermann_emulation && vert_target < 0) {
+		horiz_target = -horiz_target;
 	}
+
+	console.log("move!")
 
 	if(interval === undefined){
 		interval = setInterval(() => {
-			let accel = settings['{uniqueID}'].accel;
 
-			if (targetLinearVel == 0 && targetAngularVel == 0)
-				accel *= 2;
-		
-			if(linearVel != targetLinearVel){
-				if(linearVel < targetLinearVel){
-					linearVel += accel;
-		
-					if(linearVel > targetLinearVel)
-						linearVel = targetLinearVel;
-				}
-				else if(linearVel > targetLinearVel){
-					linearVel -= accel;
-		
-					if(linearVel < targetLinearVel)
-						linearVel = targetLinearVel;
-				}
-			}
+			const cfg = settings['{uniqueID}'];
+			const accel_vert = cfg.accel_vert / 20.0;
+			const accel_horiz = cfg.accel_horiz / 20.0;
 
-			let angular_accel = settings['{uniqueID}'].accel * 10;
-
-			if(settings['{uniqueID}'].holonomic_swap)
-				angular_accel = accel;
-
-
-			if(angularVel != targetAngularVel){
-				if(angularVel < targetAngularVel){
-					angularVel += angular_accel;
-		
-					if(angularVel > targetAngularVel)
-						angularVel = targetAngularVel;
-				}
-				else if(angularVel > targetAngularVel){
-					angularVel -= angular_accel;
-		
-					if(angularVel < targetAngularVel)
-						angularVel = targetAngularVel;
+			if(cfg.accel_vert == 12.0){
+				vert_vel = vert_target;
+			}else{
+				if(vert_vel != vert_target){
+					if(vert_vel < vert_target){
+						vert_vel += accel_vert;
+			
+						if(vert_vel > vert_target)
+							vert_vel = vert_target;
+					}
+					else if(vert_vel > vert_target){
+						vert_vel -= accel_vert;
+			
+						if(vert_vel < vert_target)
+							vert_vel = vert_target;
+					}
 				}
 			}
 		
-			if(Math.abs(linearVel) < 0.005 && Math.abs(angularVel) < 0.005){
-				linearVel = 0;
-				targetLinearVel = 0;
-				targetAngularVel = 0;
-				publishTwist(0, 0, 0);
-				clearInterval(interval);
-				interval = undefined;
+
+			if(cfg.accel_horiz == 12.0){
+				horiz_vel = horiz_target;
+			}else{
+				if(horiz_vel != horiz_target){
+					if(horiz_vel < horiz_target){
+						horiz_vel += accel_horiz;
+			
+						if(horiz_vel > horiz_target)
+							horiz_vel = horiz_target;
+					}
+					else if(horiz_vel > horiz_target){
+						horiz_vel -= accel_horiz;
+			
+						if(horiz_vel < horiz_target)
+							horiz_vel = horiz_target;
+					}
+				}
+			}
+
+			if(Math.abs(vert_vel) < 0.005 && Math.abs(horiz_vel) < 0.005){
+				joystickStop();
 				return;
 			}
 		
-			if(settings['{uniqueID}'].holonomic_swap){
-				publishTwist(linearVel, angularVel, 0);
-			}
-			else{
-				publishTwist(linearVel, 0, angularVel);
-			}
+			mapAndSend();
 			
-		}, 1000 / 20);
+		}, 1000 / 20); //20 hz standard
 	}
 };
 
 function onJoystickEnd(event) {
-	targetLinearVel = 0;
-	targetAngularVel = 0;
+	vert_target = 0;
+	horiz_target = 0;
+
+	if(settings['{uniqueID}'].instant_stop){
+		//pull the parking brake
+		joystickStop();
+	}
 }
 
 addJoystickListeners();

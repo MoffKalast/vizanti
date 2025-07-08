@@ -1032,3 +1032,45 @@ li {
     color: white;
     font-family: 'Ubuntu Mono', Monospace;
 }
+
+/* joystick config */
+
+.axis_config_section {
+	margin: 15px 0;
+}
+
+.axis_top_row {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 10px;
+}
+
+.axis_icon {
+	width: 80px;
+	height: 80px;
+	flex-shrink: 0;
+}
+
+/*
+
+.axis_dropdown_group {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+
+.axis_controls {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.axis_controls label {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 6px;
+}
+*/
