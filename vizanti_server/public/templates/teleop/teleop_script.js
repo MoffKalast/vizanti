@@ -16,7 +16,6 @@ let status = new Status(
 	document.getElementById("{uniqueID}_status")
 );
 
-let stamp_seq = 0;
 let typedict = {};
 let joy_offset_x = "50%";
 let joy_offset_y = "85%";
@@ -315,8 +314,6 @@ function connect(){
 		messageType : typedict[topic],
 		queue_size: 1
 	});
-
-	stamp_seq = 0;
 }
 
 
@@ -328,8 +325,8 @@ function publishTwist(x, y, z, wx, wy, wz) {
 		const currentTimeNsecs = (currentTime.getTime() % 1000) * 1e6;
 
 		return {
-			secs: currentTimeSecs,
-			nsecs: currentTimeNsecs
+			sec: currentTimeSecs,
+			nanosec: currentTimeNsecs
 		}
 	}
 
@@ -349,10 +346,8 @@ function publishTwist(x, y, z, wx, wy, wz) {
 	}
 
 	function getTwistStamped(x, y, z, wx, wy, wz){
-		stamp_seq++;
 		return new ROSLIB.Message({
 			header: {
-				seq: stamp_seq,
 				stamp: getStamp(),
 				frame_id: tf.fixed_frame
 			},
@@ -360,7 +355,7 @@ function publishTwist(x, y, z, wx, wy, wz) {
 		});
 	}
 
-	if(typedict[topic] == "geometry_msgs/Twist"){
+	if(typedict[topic] == "geometry_msgs/msg/Twist"){
 		cmdVelPublisher.publish(getTwist(x, y, z, wx, wy, wz));
 	}else{
 		cmdVelPublisher.publish(getTwistStamped(x, y, z, wx, wy, wz));
