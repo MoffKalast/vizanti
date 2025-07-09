@@ -204,6 +204,7 @@ if (settings.hasOwnProperty('{uniqueID}')) {
 		invertVerticalCheckbox.checked = false;
 		invertHorizontalCheckbox.checked = false;
 		specialKeyboardCheckbox.checked = false;
+		saveSettings();
 
 	}else{
 
