@@ -277,7 +277,7 @@ class ServiceHandler(Node):
 
             value = req.value
             if param_type == Parameter.Type.BOOL:
-                value = bool(value)
+                value = value == "true"
             elif param_type == Parameter.Type.INTEGER:
                 value = int(value)
             elif param_type == Parameter.Type.DOUBLE:
@@ -290,6 +290,8 @@ class ServiceHandler(Node):
                 value = int(value)
             elif param_type == Parameter.Type.STRING_ARRAY:
                 value = int(value)"""
+            
+            self.get_logger().info(f"Setting {req.node}/{req.param} to {value}")
 
             parameter = Parameter(name=req.param, type_=param_type, value=value)
             param_client.set_parameters([parameter])
