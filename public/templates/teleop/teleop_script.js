@@ -3,6 +3,7 @@ let persistentModule = await import(`${base_url}/js/modules/persistent.js`);
 let joystickModule = await import(`${base_url}/js/modules/joystick.js`);
 let StatusModule = await import(`${base_url}/js/modules/status.js`);
 let tfModule = await import(`${base_url}/js/modules/tf.js`);
+let utilModule = await import(`${base_url}/js/modules/util.js`);
 
 let tf = tfModule.tf;
 let rosbridge = rosbridgeModule.rosbridge;
@@ -22,8 +23,33 @@ let joy_offset_x = "50%";
 let joy_offset_y = "85%";
 let cmdVelPublisher = undefined;
 
+function updateColor(color, alpha){
+	const toHex8 = (hex, transparency) => hex + Math.round(transparency * 255).toString(16).padStart(2, '0');
+	const combined_color = toHex8(color, parseFloat(alpha)+0.3);
+	utilModule.setIconColor(icon, combined_color);
+}
+
 const selectionbox = document.getElementById("{uniqueID}_topic");
-const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
+const click_icon = document.getElementById("{uniqueID}_icon");
+const icon = click_icon.getElementsByTagName('object')[0];
+
+const colourpickerBox = document.getElementById("{uniqueID}_colorpicker");
+colourpickerBox.addEventListener("input", (event) =>{
+	updateColor(colourpickerBox.value, opacityBox.value);
+	joystick.destroy();
+	joystick = makeJoystick();
+	saveSettings();
+});
+
+const opacityValue = document.getElementById('{uniqueID}_opacity_value');
+const opacityBox = document.getElementById("{uniqueID}_opacity");
+opacityBox.addEventListener("input", (event) =>{
+	updateColor(colourpickerBox.value, opacityBox.value);
+	opacityValue.textContent = opacityBox.value;
+	joystick.destroy();
+	joystick = makeJoystick();
+	saveSettings();
+});
 
 // Axis dropdown
 const presetSelectorBox = document.getElementById("{uniqueID}_preset");
@@ -182,6 +208,12 @@ if (settings.hasOwnProperty('{uniqueID}')) {
 	joy_offset_x = loaded_data.joy_offset_x;
 	joy_offset_y = loaded_data.joy_offset_y;
 
+	opacityBox.value = loaded_data.opacity ?? 0.5;
+	opacityValue.textContent = opacityBox.value;
+
+	colourpickerBox.value = loaded_data.color ?? "#000000";
+	updateColor(colourpickerBox.value, opacityBox.value);
+
 	// parse legacy configs
 	if(loaded_data.linear_velocity){
 
@@ -244,6 +276,9 @@ if(topic == ""){
 function saveSettings() {
 	settings['{uniqueID}'] = {
 		topic: topic,
+
+		color: colourpickerBox.value,
+		opacity: opacityBox.value,
 
 		axis_horiz: axisHorizontalBox.value,
 		axis_vert: axisVerticalBox.value,
@@ -378,7 +413,7 @@ selectionbox.addEventListener("click", (event) => {
 	connect();
 });
 
-icon.addEventListener("click", (event) => {
+click_icon.addEventListener("click", (event) => {
 	loadTopics();
 });
 
@@ -409,8 +444,8 @@ function makeJoystick(){
 		},
 		size: 150,
 		threshold: 0.1,
-		color: 'black',
-		restOpacity: 0.7
+		color: colourpickerBox.value,
+		restOpacity: parseFloat(opacityBox.value)+0.3
 	})
 }
 

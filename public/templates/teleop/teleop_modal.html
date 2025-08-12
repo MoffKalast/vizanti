@@ -103,6 +103,7 @@
 		</div>
 
 		<div class="spacer"></div>
+		
 		<hr class="dark_hr"/>
 		<h4>Special Cases</h4>
 
@@ -118,6 +119,18 @@
 		<input type="checkbox" id="{uniqueID}_special_keyboard">
 		<p class="comment">Classic WASD control, experimental.</p>
 
+		<hr class="dark_hr"/>
+		
+		<h4>Style</h4>
+
+		<label for="{uniqueID}_colorpicker">Colour:</label>
+		<input type="color" value="#FFFFFF" id="{uniqueID}_colorpicker">
+
+		<div class="spacer"></div>
+
+		<label for="{uniqueID}_opacity">Opacity:</label>
+		<span id="{uniqueID}_opacity_value">0.6</span>
+		<input type="range" value="0.6" step="0.05" min="0.1" max="0.7" id="{uniqueID}_opacity">
 
 		<div class="spacer"></div>
 		<hr class="dark_hr"/>
@@ -126,5 +139,7 @@
 	</div>
 
 	<!-- Spacer for scrolling up -->
-	<div style="height: 180vh; width: 1px;"></div>
+	<div style="height: 300vh; width: 1px;">
+		<!-- Scroll spacer-->
+	</div>
 </div>
