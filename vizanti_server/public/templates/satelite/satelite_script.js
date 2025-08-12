@@ -70,6 +70,21 @@ tileServerString.addEventListener('input', function () {
 	saveSettings();
 });
 
+//dirty hack to show entire datalist when dropdown is clicked
+let tileServer_prev = '';
+tileServerString.addEventListener('focus', function () {
+    if (this.value.trim() !== '') {
+        tileServer_prev = this.value; // store for later
+        this.setAttribute('placeholder', this.value);
+    }
+    this.value = '';
+});
+tileServerString.addEventListener('blur', function () {
+    if (this.value.trim() === '') {
+        this.value = tileServer_prev;
+    }
+});
+
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
 ctx.clip = function(){};
@@ -83,6 +98,8 @@ if(settings.hasOwnProperty("{uniqueID}")){
 		copyright = "© OpenStreetMap";
 	else
 		copyright = "";
+
+	tileServerString.value = server_url;
 
 	smoothingCheckbox.checked = loaded_data.smoothing;
 	ignoreRotationCheckbox.checked = loaded_data.ignore_rotation ?? false;
