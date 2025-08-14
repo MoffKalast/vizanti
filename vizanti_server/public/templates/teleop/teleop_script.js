@@ -853,9 +853,24 @@ function keyup(event) {
 			break;
 	}
 
-	const pressed = key_move.up || key_move.down || key_move.left || key_move.right;
-	if(!pressed && settings['{uniqueID}'].instant_stop){
-		keyboardStop();
+	const vertical_motion = key_move.up || key_move.down;
+	const horizontal_motion = key_move.left || key_move.right;
+	const motion = key_move.up || key_move.down || key_move.left || key_move.right;
+
+	if(settings['{uniqueID}'].instant_stop){
+
+		if(!vertical_motion){
+			vert_target = 0;
+			vert_vel = 0;
+		}
+
+		if(!horizontal_motion){
+			horiz_target = 0;
+			horiz_vel = 0;
+		}
+		
+		if(!motion)
+			keyboardStop();
 	}
 }
 
