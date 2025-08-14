@@ -117,7 +117,22 @@
 
 		<label>Keyboard input:</label>
 		<input type="checkbox" id="{uniqueID}_special_keyboard">
-		<p class="comment">Classic WASD control, experimental.</p>
+		<p class="comment">Map keyboard keys to axes.</p>
+
+		<div id="{uniqueID}_keyboard_section" style="display: none;">
+			<hr class="dark_hr"/>
+			<h4>Key Mappings</h4>
+			
+			<div class="keyboard_joystick_visual">
+				<img src="assets/joystick_keybind.svg" alt="" class="key_joystick_center">
+				<button class="key_bind_button key_up" id="{uniqueID}_key_up">W</button>
+				<button class="key_bind_button key_left" id="{uniqueID}_key_left">A</button>
+				<button class="key_bind_button key_right" id="{uniqueID}_key_right">D</button>
+				<button class="key_bind_button key_down" id="{uniqueID}_key_down">S</button>
+			</div>
+			
+			<p class="comment">Click a button and press a key to rebind.</p>
+		</div>
 
 		<hr class="dark_hr"/>
 		
