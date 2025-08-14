@@ -23,6 +23,25 @@ let joy_offset_x = "50%";
 let joy_offset_y = "85%";
 let cmdVelPublisher = undefined;
 
+//experimental keyboard control
+let keybindings = {
+	key_up: 'w',
+	key_left: 'a',
+	key_down: 's', 
+	key_right: 'd'
+};
+let key_move = {
+	vert: 0.0,
+	horiz: 0.0,
+	up: false,
+	down: false,
+	left: false,
+	right: false
+};
+let active_keybinds = [];
+let keyboard_interval = undefined;
+let new_keybind_listener = undefined;
+
 function updateColor(color, alpha){
 	const toHex8 = (hex, transparency) => hex + Math.round(transparency * 255).toString(16).padStart(2, '0');
 	const combined_color = toHex8(color, parseFloat(alpha)+0.3);
@@ -67,7 +86,12 @@ const invertVerticalCheckbox = document.getElementById('{uniqueID}_invert_vert')
 const invertHorizontalCheckbox = document.getElementById('{uniqueID}_invert_horiz');
 const specialAckermannCheckbox = document.getElementById('{uniqueID}_special_ackermann_emulation');
 const specialInstantStopCheckbox = document.getElementById('{uniqueID}_special_instant_stop');
+
 const specialKeyboardCheckbox = document.getElementById('{uniqueID}_special_keyboard');
+const button_key_up = document.getElementById('{uniqueID}_key_up');
+const button_key_down = document.getElementById('{uniqueID}_key_down');
+const button_key_right = document.getElementById('{uniqueID}_key_right');
+const button_key_left = document.getElementById('{uniqueID}_key_left');
 
 // Value text
 const velocityVerticalValue = document.getElementById('{uniqueID}_vel_vert_value');
@@ -114,11 +138,7 @@ specialAckermannCheckbox.addEventListener('change', saveSettings);
 specialInstantStopCheckbox.addEventListener('change', saveSettings);
 
 specialKeyboardCheckbox.addEventListener('change', function(){
-	if(this.checked)
-		enableKeyboard();
-	else
-		disableKeyboard();
-
+	updateKeyboardSetup();
 	saveSettings();
 });
 
@@ -131,6 +151,13 @@ presetSelectorBox.addEventListener('change', function () {
 	invertHorizontalCheckbox.checked = false;
 	specialAckermannCheckbox.checked = false;
 	specialInstantStopCheckbox.checked = false;
+
+	keybindings = {
+		key_up: 'w',
+		key_left: 'a',
+		key_down: 's', 
+		key_right: 'd'
+	};
 
 	switch (this.value) {
 		case "diffdrive":
@@ -159,6 +186,14 @@ presetSelectorBox.addEventListener('change', function () {
 			velocityHorizontalSlider.value = 0.05;
 			accelVerticalSlider.value = 2.0;
 			accelHorizontalSlider.value = 0.5;
+
+			keybindings = {
+				key_up: ' ',
+				key_left: 'a',
+				key_down: 'shift', 
+				key_right: 'd'
+			};
+
 			break;
 
 		case "holonomic":
@@ -168,6 +203,14 @@ presetSelectorBox.addEventListener('change', function () {
 			velocityHorizontalSlider.value = 1.0;
 			accelVerticalSlider.value = 2.0;
 			accelHorizontalSlider.value = 2.0;
+
+			keybindings = {
+				key_up: 'i',
+				key_left: 'j',
+				key_down: 'k', 
+				key_right: 'l'
+			};
+
 			break;
 
 		case "pitchroll":			
@@ -263,6 +306,11 @@ if (settings.hasOwnProperty('{uniqueID}')) {
 	accelVerticalSlider.dispatchEvent(new Event('input'));
 	accelHorizontalSlider.dispatchEvent(new Event('input'));
 
+	if(loaded_data.keybindings){
+		keybindings = loaded_data.keybindings;
+		updateKeyboardSetup();
+	}
+
 }else{
 	saveSettings();
 }
@@ -296,6 +344,8 @@ function saveSettings() {
 		instant_stop: specialInstantStopCheckbox.checked,
 		keyboard_control: specialKeyboardCheckbox.checked,
 
+		keybindings: keybindings,
+
 		//deprecated legacy stuff
 		//linear_velocity: parseFloat(linearVelSlider.value),
 		//angular_velocity: parseFloat(angularVelSlider.value),
@@ -309,6 +359,7 @@ function saveSettings() {
 		typedict: typedict
 	};
 	settings.save();
+	updateKeyButtons();
 }
 
 // Topic and connections
@@ -624,7 +675,7 @@ function onMove(event) {
 		joystick.destroy();
 		joystick = makeJoystick();
 	
-		addJoystickListeners(joystick);
+		addJoystickListeners();
 	}
 }
 
@@ -640,25 +691,139 @@ joypreview.addEventListener('mousedown', onStart);
 joypreview.addEventListener('touchstart', onStart);
 
 
-//experimental keyboard control
-const view_container = document.getElementById("view_container");
-const key_move = {
-    vert: 0.0,
-    horiz: 0.0,
-	up: false,
-	down: false,
-	left: false,
-	right: false
-};
+// --- keyboard control ---
 
-let keyboard_interval = undefined;
+const buttons = document.querySelectorAll('#{uniqueID}_keyboard_section .key_bind_button');
+buttons.forEach(button => {
+	button.addEventListener('click', (e) => {
+		e.preventDefault();
+		
+		// Clear any existing listener
+		if (new_keybind_listener) {
+			new_keybind_listener.classList.remove("listening");
+		}
+		
+		button.classList.add('listening');
+		button.textContent = '?';
+		
+		new_keybind_listener = button;
+	});
+});
 
-function keydown(event){
-	switch(event.code) {
-		case 'KeyW': key_move.vert = 1.0; 		key_move.up = true;	break;
-		case 'KeyS': key_move.vert = -1.0; 		key_move.down = true;	break;
-		case 'KeyA': key_move.horiz = -1.0; 	key_move.left = true;	break;
-		case 'KeyD': key_move.horiz = 1.0;	 	key_move.right = true;	break;
+function updateKeyboardSetup(){
+	const key_checkbox = document.getElementById(`{uniqueID}_special_keyboard`);
+	const key_section = document.getElementById(`{uniqueID}_keyboard_section`);
+
+	if (key_checkbox.checked) {
+		key_section.style.display = 'block';
+		enableKeyboard();
+	} else {
+		key_section.style.display = 'none';
+		disableKeyboard();
+	}
+}
+
+function updateKeyButtons() {    
+
+	function getActiveKeybinds(){
+		let list = [];
+
+		if(axisHorizontalBox.value != "none"){
+			list.push(keybindings.key_right);
+			list.push(keybindings.key_left);
+		}
+
+		if(axisVerticalBox.value != "none"){
+			list.push(keybindings.key_up);
+			list.push(keybindings.key_down);
+		}
+
+		return list;
+	}
+
+	active_keybinds = getActiveKeybinds();
+
+	function keyCodeToDisplay(keyCode) {
+		const mappings = {
+			" ": "SPACE",
+			"arrowleft": "←",
+			"arrowright": "→",
+			"arrowup": "↑",
+			"arrowdown": "↓",
+		};
+
+		if(keyCode in mappings)
+			return mappings[keyCode];
+		return keyCode.replace('Key', '').replace('Digit', '').toUpperCase();
+	}
+
+	if(axisHorizontalBox.value == "none"){
+		button_key_right.textContent = "";
+		button_key_left.textContent = "";
+		button_key_right.disabled = true;
+		button_key_left.disabled = true;
+	}else{
+		button_key_right.textContent = keyCodeToDisplay(keybindings.key_right);
+		button_key_left.textContent = keyCodeToDisplay(keybindings.key_left);
+		button_key_right.disabled = false;
+		button_key_left.disabled = false;
+	}
+
+	if(axisVerticalBox.value == "none"){
+		button_key_up.textContent = "";
+		button_key_down.textContent = "";
+		button_key_up.disabled = true;
+		button_key_down.disabled = true;
+	}else{
+		button_key_up.textContent = keyCodeToDisplay(keybindings.key_up);
+		button_key_down.textContent = keyCodeToDisplay(keybindings.key_down);
+		button_key_up.disabled = false;
+		button_key_down.disabled = false;
+	}
+
+
+	if (new_keybind_listener) {
+		new_keybind_listener.classList.remove("listening");
+		new_keybind_listener = null;
+	}
+}
+
+function keydown(event) {
+
+	if (new_keybind_listener) {
+		event.preventDefault();
+
+		const id = new_keybind_listener.id.replace("{uniqueID}_","");
+		keybindings[id] = event.key.toLowerCase();
+		updateKeyButtons();
+		saveSettings();
+		return;
+	}
+
+	//skip if it's not our key, so we don't fight other joystick widgets
+	if(!active_keybinds.includes(event.key.toLowerCase()))
+		return;
+
+	switch(event.key.toLowerCase()) {
+		case keybindings.key_up:
+			key_move.vert = 1.0;         
+			key_move.up = true;    
+			break;
+
+		case keybindings.key_down: 
+			key_move.vert = -1.0;      
+			key_move.down = true;
+			break;
+
+		case keybindings.key_left:
+			key_move.horiz = -1.0; 
+			key_move.left = true;
+			break;
+
+		case keybindings.key_right: 
+			key_move.horiz = 1.0;     
+			key_move.right = true;   
+			break;
 	}
 
 	if(keyboard_interval === undefined){
@@ -666,16 +831,34 @@ function keydown(event){
 	}
 }
 
-function keyup(event){
-	switch(event.code) {
-		case 'KeyW': key_move.vert = 0.0;	key_move.up = false;	break;
-		case 'KeyS': key_move.vert = 0.0;	key_move.down = false;	break;
-		case 'KeyA': key_move.horiz = 0.0;	key_move.left = false;	break;
-		case 'KeyD': key_move.horiz = 0.0;	key_move.right = false;break;
+function keyup(event) {
+
+	if(!active_keybinds.includes(event.key.toLowerCase()))
+		return;
+
+	switch(event.key.toLowerCase()) {
+		case keybindings.key_up:
+			key_move.vert = 0.0;
+			key_move.up = false;
+			break;
+
+		case keybindings.key_down: 
+			key_move.vert = 0.0;      
+			key_move.down = false;
+			break;
+
+		case keybindings.key_left:
+			key_move.horiz = 0.0; 
+			key_move.left = false;
+			break;
+
+		case keybindings.key_right: 
+			key_move.horiz = 0.0;     
+			key_move.right = false;
+			break;
 	}
 
 	const pressed = key_move.up || key_move.down || key_move.left || key_move.right;
-
 	if(!pressed && settings['{uniqueID}'].instant_stop){
 		keyboardStop();
 	}
@@ -687,45 +870,45 @@ function keyboardStop(){
 	horiz_vel = 0;
 	vert_vel = 0;
 	publishTwist(0, 0, 0, 0, 0, 0);
-
 	if(keyboard_interval !== undefined){
 		clearInterval(keyboard_interval);
 		keyboard_interval = undefined;
 	}
 }
 
-function setKeyboardInterval(){
-	keyboard_interval = setInterval(() => {
+function setKeyboardInterval() {
+	const loop = () => {
 		const cfg = settings['{uniqueID}'];
-
 		vert_target = cfg.vel_vert * key_move.vert;
 		horiz_target = -cfg.vel_horiz * key_move.horiz;
-	
+
 		if (cfg.ackermann_emulation && vert_target < 0) {
 			horiz_target = -horiz_target;
 		}
-
 		integrateAcceleration();
- 
-		if(Math.abs(vert_vel) < 0.005 && Math.abs(horiz_vel) < 0.005){
+
+		if (Math.abs(vert_vel) < 0.005 && Math.abs(horiz_vel) < 0.005) {
 			keyboardStop();
 			return;
-		} 
-	
+		}
+
 		mapAndSend();
-		
-	}, 1000 / 20); //20 hz standard
+	};
+
+	loop();
+	keyboard_interval = setInterval(loop, 1000 / 20);//20 hz standard 
 }
 
-function enableKeyboard(){
+function enableKeyboard() {
 	document.addEventListener('keydown', keydown);
 	document.addEventListener('keyup', keyup);
+	updateKeyButtons();
 }
 
-function disableKeyboard(){
+function disableKeyboard() {    
 	document.removeEventListener('keydown', keydown);
 	document.removeEventListener('keyup', keyup);
-	if(keyboard_interval !== undefined){
+	if (keyboard_interval !== undefined) {
 		clearInterval(keyboard_interval);
 		keyboard_interval = undefined;
 	}
