@@ -89,6 +89,19 @@ object {
 	pointer-events: none;
 }
 
+.folder-icon-text{
+	word-spacing: 100vw;
+	position: absolute;
+    top: 65%;
+    left: 50%;
+    margin: 0;
+    transform: translate(-50%, -50%);
+	font-weight: bold;
+    font-size: 0.4em;
+	pointer-events: none;
+	text-align: center;
+}
+
 .icon-text-dial {
     position: absolute;
     top: 45%;
