@@ -67,7 +67,8 @@ let icons = {};
 icons["map"] = await imageToDataURL("assets/map.svg");
 icons["costmap"] = await imageToDataURL("assets/costmap.svg");
 icons["raw"] = await imageToDataURL("assets/rawmap.svg");
-icons["raw_transparent"] = await imageToDataURL("assets/rawmap_transparent.svg");
+icons["raw_transparent"] = await imageToDataURL("assets/rawmap_transparent_white.svg");
+icons["raw_transparent_black"] = await imageToDataURL("assets/rawmap_transparent_black.svg");
 
 let listener = undefined;
 let map_topic = undefined;
