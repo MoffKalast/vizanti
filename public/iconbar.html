@@ -50,6 +50,7 @@
 		const iconContainer = document.getElementById('icon_container');
 		const iconBarHandle = document.getElementById('icon_bar_handle');
 
+		//default height
 		if(iconBar.style.height == ""){
 			iconBar.style.height = "75px";
 			iconContainer.style.height = "75px";
@@ -89,6 +90,8 @@
 
 		document.removeEventListener('mouseup', iconBarMouseUp);
 		document.removeEventListener('touchend', iconBarMouseUp);
+
+		saveHeight();
 	}
 
 	window.addEventListener('icons_changed', calculateWidth);
@@ -97,6 +100,23 @@
 	//allow scrolling without holding down shift
 	document.getElementById('icon_bar').addEventListener("wheel", function (e) {
 		document.getElementById('icon_bar').scrollLeft += e.deltaY*0.5;
+	});
+
+	function saveHeight() {
+		const height = document.getElementById('icon_bar').style.height;
+		if (height) {
+			localStorage.setItem('iconBarHeight', height);
+		}
+	}
+
+	//restore height on load, this is display-specific so it's not part of the main settings
+	document.addEventListener('DOMContentLoaded', ()=>{
+		const savedHeight = localStorage.getItem('iconBarHeight');
+		if (savedHeight) {			
+			document.getElementById('icon_bar').style.height = savedHeight;
+			document.getElementById('icon_container').style.height = savedHeight;
+			calculateWidth();
+		}
 	});
 
 </script>
