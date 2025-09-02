@@ -113,6 +113,50 @@ async function drawMarkers(){
 		ctx.fillRect(-size/2, -size/2, size, size);
 	}
 
+	function drawCubeList(marker, size) {
+		ctx.scale(marker.scale.x, marker.scale.y);
+
+		const sizeHalf = size / 2;
+		const sizeDouble = size * 2;
+		const topMap = new Map();
+		
+		// Z-culling with numeric keys and index storage
+		marker.points.forEach((point, index) => {
+			const keyX = Math.round(point.x * 2);
+			const keyY = Math.round(point.y * 2);
+			const key = keyX * 100000 + keyY;
+			const existing = topMap.get(key);
+			if (!existing || point.z > marker.points[existing].z) {
+				topMap.set(key, index);
+			}
+		});
+		
+		const groups = new Map();
+		for (const index of topMap.values()) {
+			const color = rgbaToFillColor(marker.colors[index]);
+
+			if (!groups.has(color))
+				groups.set(color, []);
+
+			groups.get(color).push(marker.points[index]);
+		}
+
+		groups.forEach((points, color) => {
+			ctx.fillStyle = color;
+			ctx.beginPath();
+			points.forEach(point => {
+				const x = point.x * sizeDouble - sizeHalf;
+				const y = -point.y * sizeDouble - sizeHalf;
+				ctx.moveTo(x, y);
+				ctx.lineTo(x + size, y);
+				ctx.lineTo(x + size, y + size);
+				ctx.lineTo(x, y + size);
+				ctx.closePath();
+			});
+			ctx.fill();
+		});
+	}
+
 	function drawArrow(marker, size){
 		const height = parseInt(size*marker.scale.x);
 		const width = parseInt(size*0.2*marker.scale.y)+1;
@@ -202,7 +246,7 @@ async function drawMarkers(){
 			case 3: drawCircle(marker, unit); break; //SPHERE=2 CYLINDER=3
 			case 4: drawLine(marker, unit); break; //LINE_STRIP=4
 			case 5: status.setWarn("LINE_LIST markers are not supported yet."); break; //LINE_LIST=5
-			case 6: status.setWarn("CUBE_LIST markers are not supported yet."); break; //CUBE_LIST=6
+			case 6:	drawCubeList(marker, unit); break; //CUBE_LIST=6
 			case 7: status.setWarn("SPHERE_LIST markers are not supported yet."); break; //SPHERE_LIST=7
 			case 8: status.setWarn("POINTS markers are not supported yet."); break; //POINTS=8
 			case 9: drawText(marker, unit); break;//TEXT_VIEW_FACING=9
