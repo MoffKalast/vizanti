@@ -36,6 +36,8 @@ axesCheckbox.addEventListener('change', saveSettings);
 linesCheckbox.addEventListener('change', saveSettings);
 scaleSlider.addEventListener('change', saveSettings);
 
+let prev_transforms = new Set();
+let grouped_frames = [];
 let frame_visibility = {};
 
 // Settings
@@ -68,7 +70,7 @@ function saveSettings() {
 
 // Rendering
 
-async function drawLines(origin, relative, absolute){
+async function drawLines(relative, absolute){
 
 	ctx.strokeStyle = "#eba834";
 	ctx.lineWidth = 1*parseFloat(scaleSlider.value);
@@ -103,7 +105,7 @@ async function drawLines(origin, relative, absolute){
 
 }
 
-async function drawText(origin, relative, absolute){
+async function drawText(absolute){
 
 	ctx.lineJoin = 'round';
 	ctx.miterLimit = 2;
@@ -113,9 +115,6 @@ async function drawText(origin, relative, absolute){
 
 	ctx.strokeStyle = "#161B21";
 	ctx.lineWidth = 5*parseFloat(scaleSlider.value);
-
-	//ctx.strokeText(tf.fixed_frame, origin.x, origin.y+15);
-	//ctx.fillText(tf.fixed_frame, origin.x, origin.y+15);
 
 	Object.keys(absolute).forEach(key => {
 
@@ -145,7 +144,7 @@ function getBasisPoints(basis, translation, rotation){
 	];
 }
 
-async function drawAxes(origin, relative, absolute) {
+async function drawAxes(absolute) {
 
 	const unit = view.getPixelsInMapUnits(30*parseFloat(scaleSlider.value));
 
@@ -201,46 +200,37 @@ async function drawAxes(origin, relative, absolute) {
 
 }
 
-function filterFrames(framelist){
-	let filteredlist = {};
-	Object.keys(framelist).forEach(key => {
-		if(frame_visibility.hasOwnProperty(key) && frame_visibility[key])
-			filteredlist[key] = framelist[key];
-	});
-	return filteredlist;
-}
+const framesDiv = document.getElementById('{uniqueID}_frames');
+
+let visibleRelativeKeys = new Set();
+let visibleAbsoluteKeys = new Set();
 
 async function drawFrames() {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-	const relative = filterFrames(tf.transforms);
-	const absolute = filterFrames(tf.absoluteTransforms);
-
-	let origin = view.fixedToScreen({
-		x: 0,
-		y: 0,
-	});
+	const relative = Object.fromEntries(
+		[...visibleRelativeKeys].map(k => [k, tf.transforms[k]])
+	);
+	const absolute = Object.fromEntries(
+		[...visibleAbsoluteKeys].map(k => [k, tf.absoluteTransforms[k]])
+	);
 
 	if(linesCheckbox.checked)
-		drawLines(origin, relative, absolute);
+		drawLines(relative, absolute);
 
 	if(axesCheckbox.checked)
-		drawAxes(origin, relative, absolute);
+		drawAxes(absolute);
 
 	if(namesCheckbox.checked)
-		drawText(origin, relative, absolute);
+		drawText(absolute);
 }
-
-const framesDiv = document.getElementById('{uniqueID}_frames');
-
-let prev_transforms = new Set();
-let grouped_frames = [];
 
 function updateVisibility(){
 
-	const eqSet = (xs, ys) => xs.size === ys.size && [...xs].every((x) => ys.has(x));
+	//check for new frames and precompute filters once a second
 
-	let current_transforms = new Set();
+	visibleRelativeKeys.clear();
+	visibleAbsoluteKeys.clear();
 
 	Object.keys(tf.transforms).forEach(key => {
 		const child = key;
@@ -254,9 +244,37 @@ function updateVisibility(){
 			frame_visibility[parent] = true;
 		}
 
+		if (frame_visibility[child]) {
+			visibleRelativeKeys.add(child);
+			if(tf.absoluteTransforms.hasOwnProperty(child)){
+				visibleAbsoluteKeys.add(child);
+			}
+		}
+		if (frame_visibility[parent]) {
+			visibleRelativeKeys.add(parent);
+			if(tf.absoluteTransforms.hasOwnProperty(parent)){
+				visibleAbsoluteKeys.add(parent);
+			}
+		}
+	});	
+}
+
+function updateGUI(){
+
+	updateVisibility();
+
+	const eqSet = (xs, ys) => xs.size === ys.size && [...xs].every((x) => ys.has(x));
+
+	let current_transforms = new Set();
+	Object.keys(tf.transforms).forEach(child => {
 		current_transforms.add(child);
-		current_transforms.add(parent);
+		current_transforms.add(tf.transforms[child].parent);
 	});
+
+	if (!eqSet(prev_transforms, current_transforms)){
+		grouped_frames = utilModule.groupStringsByPrefix(Array.from(current_transforms), 2);
+		prev_transforms = current_transforms;
+	}
 
 	function getEntry(key){
 		const checkbox = document.createElement('input');
@@ -276,11 +294,6 @@ function updateVisibility(){
 		div.appendChild(checkbox);
 		div.appendChild(label);
 		return div;
-	}
-
-	if (!eqSet(prev_transforms, current_transforms)){
-		grouped_frames = utilModule.groupStringsByPrefix(Array.from(current_transforms), 2);
-		prev_transforms = current_transforms;
 	}
 
 	framesDiv.innerHTML = '';
@@ -316,7 +329,7 @@ document.getElementById('{uniqueID}_enable_all').addEventListener('click',  asyn
 		frame_visibility[key] = true;
 	}
 	saveSettings();
-	updateVisibility();
+	updateGUI();
 });
 
 document.getElementById('{uniqueID}_standard_only').addEventListener('click',  async () => {
@@ -327,7 +340,7 @@ document.getElementById('{uniqueID}_standard_only').addEventListener('click',  a
 		frame_visibility[key] = hasStandardFrame(key);
 	}
 	saveSettings();
-	updateVisibility();
+	updateGUI();
 
 });
 
@@ -336,10 +349,10 @@ document.getElementById('{uniqueID}_disable_all').addEventListener('click',  asy
 		frame_visibility[key] = false;
 	}
 	saveSettings();
-	updateVisibility();
+	updateGUI();
 });
 
-icon.addEventListener("click", updateVisibility);
+icon.addEventListener("click", updateGUI);
 
 function resizeScreen(){
 	canvas.height = window.innerHeight;
@@ -352,12 +365,16 @@ window.addEventListener("tf_changed", ()=>{
 	drawFrames();
 });
 
+window.addEventListener("tf_fixed_frame_changed", ()=>{
+	drawFrames();
+});
+
+setInterval(updateVisibility, 1000);
+
 window.addEventListener("view_changed", drawFrames);
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);
 
 resizeScreen();
-
-window.addEventListener("tf_changed", updateVisibility, {once : true});
 
 console.log("TF Widget Loaded {uniqueID}")
