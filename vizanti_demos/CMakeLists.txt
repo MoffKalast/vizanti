@@ -37,6 +37,7 @@ install(PROGRAMS
   scripts/test_marker_array.py
   scripts/test_tf.py
   scripts/test_button.py
+  scripts/test_parameters.py
   scripts/waypoints_to_simple_goals.py
   DESTINATION lib/${PROJECT_NAME}
 )
