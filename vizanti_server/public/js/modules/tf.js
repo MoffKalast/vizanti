@@ -98,14 +98,14 @@ export class TF {
 
 		this.tf_static_topic = new ROSLIB.Topic({
 			ros: rosbridge.ros,
-			name: '/tf_static',
+			name: '/vizanti/tf_static_consolidated',
 			messageType: 'tf2_msgs/msg/TFMessage',
-			latch: true,
 			compression: rosbridge.compression
 		});
 
 		this.tf_static_listener = this.tf_static_topic.subscribe((msg) => {
 			this.updateTransforms(msg.transforms);
+			
 		});
 
 		this.event_timestamp = performance.now();

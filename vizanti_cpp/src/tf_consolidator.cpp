@@ -2,31 +2,66 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <thread>
 
 #include "rclcpp/rclcpp.hpp"
 #include "tf2_msgs/msg/tf_message.hpp"
+#include "std_msgs/msg/int32.hpp"
 
 class TfConsolidator:public rclcpp::Node{
 	public:
 
 		bool updated;
 		std::map<std::string, geometry_msgs::msg::TransformStamped> transforms;
+		std::map<std::string, geometry_msgs::msg::TransformStamped> static_transforms;
 		std::map<std::string, rclcpp::Time> transform_timeout;
 
 		rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr tf_sub;
 		rclcpp::Publisher<tf2_msgs::msg::TFMessage>::SharedPtr tf_pub;
+
+		rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr tf_static_sub;
+		rclcpp::Publisher<tf2_msgs::msg::TFMessage>::SharedPtr tf_static_pub;
+
+		rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr client_delta_sub;
+
 		rclcpp::TimerBase::SharedPtr clear_timer;
 		rclcpp::TimerBase::SharedPtr publish_timer;
 
 		//subscribes to all /tf frames published separately by different nodes and consolidates them into one throttled message
 		TfConsolidator():Node("vizanti_tf_consolidator"),  updated(false){
-			tf_sub = create_subscription<tf2_msgs::msg::TFMessage>("/tf", rclcpp::QoS(20), std::bind(&TfConsolidator::tf_callback, this, std::placeholders::_1));
+			tf_sub = create_subscription<tf2_msgs::msg::TFMessage>(
+				"/tf", 
+				rclcpp::QoS(20), 
+				std::bind(&TfConsolidator::tf_callback, this, std::placeholders::_1)
+			);
 			tf_pub = create_publisher<tf2_msgs::msg::TFMessage>(
 				"/vizanti/tf_consolidated",
 				rclcpp::QoS(10)
 					.durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL) //latched in case there's no tf activity so that the web client can set itself up
 					.lifespan(rclcpp::Duration(0, 66000000))  // 66ms
 			);
+
+			tf_static_sub = create_subscription<tf2_msgs::msg::TFMessage>(
+				"/tf_static",
+				rclcpp::QoS(rclcpp::KeepLast(1))
+					.reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
+					.durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL),
+				std::bind(&TfConsolidator::tf_static_callback, this, std::placeholders::_1)
+			);
+			tf_static_pub = create_publisher<tf2_msgs::msg::TFMessage>(
+				"/vizanti/tf_static_consolidated",
+				rclcpp::QoS(rclcpp::KeepLast(1))
+					.durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL)
+					.reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
+			);
+
+			client_delta_sub = create_subscription<std_msgs::msg::Int32>(
+				"/client_count", 
+				rclcpp::QoS(20), 
+				std::bind(&TfConsolidator::client_callback, this, std::placeholders::_1)
+			);
+
+
 			clear_timer = create_wall_timer(std::chrono::seconds(5), std::bind(&TfConsolidator::clear_old_tfs, this));
 			publish_timer = create_wall_timer(std::chrono::milliseconds(33), std::bind(&TfConsolidator::publish, this));
 
@@ -35,20 +70,20 @@ class TfConsolidator:public rclcpp::Node{
 
 		//removes any non-static frames that haven't been published for 10-15 seconds
 		void clear_old_tfs(){
-			auto current_time = rclcpp::Clock().now();
+			auto current_time = this->get_clock()->now();
 			for (auto it = transforms.begin(); it != transforms.end(); /* no increment */) {
 				const auto key = it->first;
 				if (current_time.seconds() - transform_timeout[key].seconds() > 10.0){
 					const auto parent = it->second.header.frame_id;
 
 					std::string parent_str(parent.begin(), parent.end());
-            		std::string key_str(key.begin(), key.end());
+					std::string key_str(key.begin(), key.end());
 
 					it = transforms.erase(it);
 					transform_timeout.erase(key);
 					updated = true;
 					RCLCPP_WARN(get_logger(), "Removed old TF link: %s -> %s", parent_str.c_str(), key_str.c_str());
-        	} else {
+			} else {
 					++it;
 				}
 			}
@@ -68,13 +103,38 @@ class TfConsolidator:public rclcpp::Node{
 			tf_pub->publish(msg);
 		}
 
+		void publish_tf_static(){
+			auto consolidated_msg = tf2_msgs::msg::TFMessage();
+			for (const auto &entry : static_transforms){
+				consolidated_msg.transforms.push_back(entry.second);
+			}
+			tf_static_pub->publish(consolidated_msg);
+		}
+
 		//adds extra timestamps for tracking staleness regardless of ros time skips, since old bags might shift time and presist otherwise
 		void tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg){
 			for (const auto &transform : msg->transforms){
 				transforms[transform.child_frame_id] = transform;
-				transform_timeout[transform.child_frame_id] = rclcpp::Clock().now();
+				transform_timeout[transform.child_frame_id] = this->get_clock()->now();
 			}
 			updated = true;
+		}
+
+		//collect and keep all static TFs so new clients get them more consistently
+		void tf_static_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg){
+			for (const auto &transform : msg->transforms){
+				static_transforms[transform.child_frame_id] = transform;
+			}
+			publish_tf_static();
+		}
+
+		//send an update after a client connects due to rosbridge latching unrealiability
+		void client_callback(const std_msgs::msg::Int32::SharedPtr msg){
+			if(msg->data > 0){
+				rclcpp::Rate r(std::chrono::seconds(1));
+				r.sleep();
+				publish_tf_static();
+			}
 		}
 };
 
