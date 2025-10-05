@@ -21,6 +21,8 @@
 		<param name="delay_between_messages" value="$(arg delay_between_messages)"/>
 		<param name="max_message_size" value="$(arg max_message_size)"/>
 		<param name="unregister_timeout" value="99999999"/> <!-- https://github.com/RobotWebTools/rosbridge_suite/issues/298 -->
+		<param name="websocket_ping_interval" value="2" />
+ 		<param name="websocket_ping_timeout" value="6" /> <!-- https://github.com/RobotWebTools/rosbridge_suite/issues/831 --> 
 	</node>
 
 	<node name="vizanti_rosapi" pkg="rosapi" type="rosapi_node" />
