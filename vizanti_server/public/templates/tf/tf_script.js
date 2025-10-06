@@ -276,7 +276,8 @@ function updateGUI(){
 		prev_transforms = current_transforms;
 	}
 
-	function getEntry(key){
+
+	function getEntry(key) {
 		const checkbox = document.createElement('input');
 		checkbox.type = 'checkbox';
 		checkbox.id = `{uniqueID}_${key}`;
@@ -286,8 +287,25 @@ function updateGUI(){
 			saveSettings();
 		});
 
+		const frame = tf.transforms[key];
 		const label = document.createElement('label');
-		label.textContent = ` ${key}`;
+
+		function addSpan(text, color) {
+			const span = document.createElement('span');
+			if (color) span.style.color = color;
+			span.textContent = text;
+			label.appendChild(span);
+		}
+		
+		addSpan(` ${key} `, 'white');
+		addSpan(`← ${frame.parent} `, 'darkgray');
+		addSpan('(', 'darkgray');
+		addSpan(frame.translation.x.toFixed(2), '#ff6666');  // soft red
+		addSpan(' ', null);
+		addSpan(frame.translation.y.toFixed(2), '#66cc66');  // soft green
+		addSpan(' ', null);
+		addSpan(frame.translation.z.toFixed(2), '#66aaff');  // light blue
+		addSpan(')', 'darkgray');
 
 		const div = document.createElement('div');
 		div.classList.add('tf_label');
