@@ -99,6 +99,11 @@ function rgbaToFillColor(rosColorRGBA) {
 	return `rgba(${r255}, ${g255}, ${b255}, ${a})`;
 }
 
+function getContrastingColor(rosColorRGBA) {
+	// Calculate luminance (per WCAG)
+	return (0.299 * rosColorRGBA.r + 0.587 * rosColorRGBA.g + 0.114 * rosColorRGBA.b) > 0.5 ? '#161B21' : '#FFFFFF';
+}
+
 async function drawMarkers(){
 
 	function drawCircle(marker, size){
@@ -176,8 +181,13 @@ async function drawMarkers(){
 	}
 
 	function drawLine(marker, size){
+
+		if(marker.colors.length == 0)
+			ctx.strokeStyle = rgbaToFillColor(marker.color);
+		else
+			ctx.strokeStyle = rgbaToFillColor(marker.colors[0]); // for now
+
 		ctx.lineWidth = parseInt(marker.scale.x*size);
-		ctx.strokeStyle = rgbaToFillColor(marker.colors[0]); // for now
 
 		ctx.beginPath();
 		marker.points.forEach((point, index) => {
@@ -193,20 +203,42 @@ async function drawMarkers(){
 		ctx.stroke();
 	}
 
-	function drawText(marker, size){
+	function drawText(marker, size) {
 		ctx.scale(0.1, 0.1);
-
-		ctx.font = (marker.scale.z*10.0*size)+"px Monospace";
+		const scale = size * marker.scale.z
+		ctx.font = `${10 * scale}px Monospace`;
 		ctx.textAlign = "center";
 		ctx.fillStyle = rgbaToFillColor(marker.color);
-	
-		ctx.strokeStyle = "#161B21";
-		ctx.lineWidth = 0.3*size;
+		ctx.strokeStyle = getContrastingColor(marker.color)
+		ctx.lineWidth = 2.5 * scale;
+		ctx.lineJoin = 'round';
+		ctx.miterLimit = 2;
 
-		ctx.translate(0, marker.scale.z*size*2.0);
-		ctx.strokeText(marker.text, 0, 0);
-		ctx.fillText(marker.text, 0, 0);
+		const lines = marker.text.split('\n');
+		let maxAscent = 0;
+		let maxDescent = 0;
+		let lineHeight = 0;
+
+		for (const line of lines) {
+			const metrics = ctx.measureText(line);
+			maxAscent = Math.max(maxAscent, metrics.actualBoundingBoxAscent);
+			maxDescent = Math.max(maxDescent, metrics.actualBoundingBoxDescent);
+		}
+		lineHeight = (maxAscent + maxDescent) * 1.2; // 1.2 = line spacing factor
+
+		// Compute vertical offset so that the text block is vertically centered
+		const totalHeight = lines.length * lineHeight;
+		ctx.translate(0, totalHeight / -2 + maxAscent);
+
+		// Render each line
+		for (let i = 0; i < lines.length; i++) {
+			const y = i * lineHeight;
+			ctx.strokeText(lines[i], 0, y);
+			ctx.fillText(lines[i], 0, y);
+		}
 	}
+
+
 
 	const unit = view.getMapUnitsInPixels(1.0);
 
