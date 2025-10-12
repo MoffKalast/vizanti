@@ -298,14 +298,20 @@ function updateGUI(){
 		}
 		
 		addSpan(` ${key} `, 'white');
-		addSpan(`← ${frame.parent} `, 'darkgray');
-		addSpan('(', 'darkgray');
-		addSpan(frame.translation.x.toFixed(2), '#ff6666');  // soft red
-		addSpan(' ', null);
-		addSpan(frame.translation.y.toFixed(2), '#66cc66');  // soft green
-		addSpan(' ', null);
-		addSpan(frame.translation.z.toFixed(2), '#66aaff');  // light blue
-		addSpan(')', 'darkgray');
+
+		if(frame != undefined){
+			addSpan(`← ${frame.parent} `, 'darkgray');
+			addSpan('(', 'darkgray');
+			addSpan(frame.translation.x.toFixed(2), '#ff6666');  // soft red
+			addSpan(' ', null);
+			addSpan(frame.translation.y.toFixed(2), '#66cc66');  // soft green
+			addSpan(' ', null);
+			addSpan(frame.translation.z.toFixed(2), '#9aacc3ff');  // light blue
+			addSpan(')', 'darkgray');
+		}else{
+			addSpan('(origin)', 'darkgray');
+		}
+
 
 		const div = document.createElement('div');
 		div.classList.add('tf_label');

@@ -356,6 +356,12 @@ object {
 	height: 60px;
 	z-index: 12; 
 }
+
+.navball_canvas {
+	pointer-events: none;
+	z-index: 12; 
+	transform: translate(-50%, -50%);
+}
   
 
 /*Add widget cards*/
