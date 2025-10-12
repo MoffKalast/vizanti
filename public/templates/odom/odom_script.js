@@ -205,17 +205,17 @@ function appendPose(pose){
 
 //Topic
 function connect(){
-	if(topic == ""){
-		status.setError("No target.");
-		return;
-	}
-
 	if(odom_topic !== undefined){
 		odom_topic.unsubscribe(listener);
 	}
 
 	if(mode != "topic")
 		return;
+
+	if(topic == ""){
+		status.setError("No target.");
+		return;
+	}
 
 	odom_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
