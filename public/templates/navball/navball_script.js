@@ -201,7 +201,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	displayImageOffset(offset_x, offset_y);
 	setMode();
 }else{
-	displayImageOffset(0, 100);
+	displayImageOffset(50, 95);
 	saveSettings();
 }
 
