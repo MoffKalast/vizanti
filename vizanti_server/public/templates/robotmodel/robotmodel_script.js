@@ -9,6 +9,7 @@ let tf = tfModule.tf;
 let settings = persistentModule.settings;
 let Status = StatusModule.Status;
 let paths = pathsModule.default;
+let applyRotation = tfModule.applyRotation;
 
 let models = {};
 let categorizedModels = {};
@@ -141,6 +142,8 @@ async function drawRobot() {
 
 	if(robotframe && modelimg){
 
+		const is_flipped = applyRotation({x: 0, y: 0, z: 1.0}, robotframe.rotation).z < 0;
+
 		const pos = view.fixedToScreen({
 			x: robotframe.translation.x,
 			y: robotframe.translation.y
@@ -158,6 +161,11 @@ async function drawRobot() {
 		ctx.transform(1, 0, 0, 1,  offset_x, offset_y);
 		ctx.rotate(offset_yaw)
 
+		if(is_flipped)
+			ctx.filter = 'invert(1)';
+		else
+			ctx.filter = 'none';
+		
 		ctx.drawImage(modelimg, -length/2, -(length*ratio)/2, length, length*ratio);
 		
 		status.setOK();
