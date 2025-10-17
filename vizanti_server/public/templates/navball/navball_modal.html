@@ -20,11 +20,29 @@
 		<div class="live_data_display">
 			<p id="{uniqueID}_pitch">Pitch: ?</p>
 			<p id="{uniqueID}_roll">Roll: ?</p>
-	
 			<p id="{uniqueID}_yaw">Yaw: ?</p>
 			<p id="{uniqueID}_heading">Heading: ?</p>
-	
+
+			<div>
+				<p style="color: lightgray;">Accelerometer:</p>
+				<div class="live_data_indented">
+					<p style="color: rgb(210, 87, 87);" id="{uniqueID}_accel_x">X: /</p>
+					<p style="color: rgb(77, 175, 77); " id="{uniqueID}_accel_y">Y: /</p>
+					<p style="color: rgb(72, 102, 191);" id="{uniqueID}_accel_z">Z: /</p>
+				</div>
+			</div>
+
+			<div>
+				<p style="color: lightgray;">Gyroscope:</p>
+				<div class="live_data_indented">
+					<p style="color: rgb(210, 87, 87);" id="{uniqueID}_gyro_x">X: /</p>
+					<p style="color: rgb(77, 175, 77);" id="{uniqueID}_gyro_y">Y: /</p>
+					<p style="color: rgb(72, 102, 191);" id="{uniqueID}_gyro_z">Z: /</p>
+				</div>
+			</div>
+
 			<p id="{uniqueID}_quaternion" style="color: lightgray;">Quaternion XYZW: ?</p>
+			<p id="{uniqueID}_frame_id" style="color: lightgray;">Frame: ?</p>
 		</div>
 
 		<p>Render pitch yaw and roll from sensor_msgs/Imu messages.</p>
