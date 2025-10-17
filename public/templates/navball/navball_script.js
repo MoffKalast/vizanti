@@ -46,6 +46,16 @@ const text_yaw = document.getElementById("{uniqueID}_yaw");
 const text_heading = document.getElementById("{uniqueID}_heading");
 const text_quaternion = document.getElementById("{uniqueID}_quaternion");
 
+const text_gyro_x = document.getElementById("{uniqueID}_gyro_x");
+const text_gyro_y = document.getElementById("{uniqueID}_gyro_y");
+const text_gyro_z = document.getElementById("{uniqueID}_gyro_z");
+
+const text_accel_x = document.getElementById("{uniqueID}_accel_x");
+const text_accel_y = document.getElementById("{uniqueID}_accel_y");
+const text_accel_z = document.getElementById("{uniqueID}_accel_z");
+
+const text_frame_id = document.getElementById("{uniqueID}_frame_id");
+
 const opacitySlider = document.getElementById('{uniqueID}_opacity');
 const opacityValue = document.getElementById('{uniqueID}_opacity_value');
 opacitySlider.addEventListener('input', () =>  {
@@ -303,7 +313,7 @@ function renderNavball() {
 		const texIndex = (texY * texWidth + texX) * 4;
 		
 		const pixelIndex = lut_index[i];
-		data[pixelIndex]     = texturePixels[texIndex];
+		data[pixelIndex] = texturePixels[texIndex];
 		data[pixelIndex + 1] = texturePixels[texIndex + 1];
 		data[pixelIndex + 2] = texturePixels[texIndex + 2];
 	}
@@ -325,8 +335,6 @@ function updateData(){
 		const heading = (90 - radToDeg(yawRad)) % 360;
 		return (heading + 360) % 360;
 	}
-
-	text_quaternion.innerText = "Quaternion XYZW: "+quat.x.toFixed(3)+","+quat.y.toFixed(3)+","+quat.z.toFixed(3)+","+quat.w.toFixed(3);
 
 	let data = quat.toEuler();
 	const pitch = data.pitch;
@@ -359,6 +367,15 @@ function connect(){
 
 	status.setWarn("No data received.");
 
+	const alpha = 0.95;  // Higher value = trust gyro more (for high-rate data)
+	let lastTime = null; 
+	let estimatedQuat = new Quaternion(1, 0, 0, 0);  // Identity quaternion (w, x, y, z)
+
+	function isQuaternionValid(q) {
+		const norm = Math.sqrt(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w);
+		return norm > 0.5 && Math.abs(norm - 1.0) < 0.1;  // basic sanity check
+	}
+
 	imu_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : raw_target,
@@ -366,17 +383,95 @@ function connect(){
 		throttle_rate: parseInt(throttle.value)
 	});
 	
-	listener = imu_topic.subscribe(async (msg) => {  
+	listener = imu_topic.subscribe((msg) => {  
 
-		quat = new Quaternion([
+		text_frame_id.innerText = "Frame: "+msg.header.frame_id;
+
+		const msg_quat = new Quaternion([
 			msg.orientation.w, 
 			msg.orientation.x, 
 			msg.orientation.y, 
 			msg.orientation.z
 		]);
 
+		text_quaternion.innerText = "Quaternion XYZW: "+quat.x.toFixed(3)+","+quat.y.toFixed(3)+","+quat.z.toFixed(3)+","+quat.w.toFixed(3);
+
+		const ax = msg.linear_acceleration.x;
+		const ay = msg.linear_acceleration.y;
+		const az = msg.linear_acceleration.z;
+
+		const gx = msg.angular_velocity.x;
+		const gy = msg.angular_velocity.y;
+		const gz = msg.angular_velocity.z;
+
+		if(!isQuaternionValid(msg_quat)){
+			const now = msg.header.stamp.secs + msg.header.stamp.nsecs * 1e-9; 
+			let dt = lastTime ? (now - lastTime) : 0.05;
+			dt = Math.min(dt, 0.05);
+			lastTime = now;
+
+			let gyroQuat = estimatedQuat.clone();
+			let isGyroValid = false;
+
+			// Apply gyro rotation if available
+			if(gx != 0 || gy != 0 || gz != 0){
+				const angle = Math.sqrt(gx*gx + gy*gy + gz*gz) * dt;
+				if(angle > 0.0001) {
+					const axis = [
+						gx / angle * dt,
+						gy / angle * dt,
+						gz / angle * dt
+					];
+					const deltaQuat = Quaternion.fromAxisAngle(axis, angle);
+					gyroQuat = estimatedQuat.mul(deltaQuat).normalize();
+				}
+				isGyroValid = true;
+			}
+
+			// Apply accelerometer-based orientation if available
+			if(ax != 0 || ay != 0 || az != 0){
+				const accRoll = Math.atan2(ay, az);
+				const accPitch = Math.atan2(-ax, Math.sqrt(ay * ay + az * az));
+
+				const rollQuat = Quaternion.fromEuler(0, accRoll, 0);
+				const pitchQuat = Quaternion.fromEuler(0, 0, accPitch);
+
+				let deltaQuat = pitchQuat.mul(rollQuat).normalize();
+			
+				if(isGyroValid){
+					const yawQuat = Quaternion.fromEuler(gyroQuat.toEuler().h, 0, 0);
+					deltaQuat = yawQuat.mul(deltaQuat).normalize();
+					status.setWarn("Quaternion invalid, estimating with accel and gyro.");
+				}else{
+					status.setWarn("Quaternion and gyro invalid, estimating with accel only.");
+				}
+
+				estimatedQuat = deltaQuat;
+				const interpolator = quat.slerp(estimatedQuat);
+				quat = interpolator(0.05);
+
+			} else {
+				// Gyro only
+				estimatedQuat = gyroQuat;
+				quat = estimatedQuat;
+				status.setWarn("Quaternion and accelerometer invalid, estimating with gyro only.");
+			}
+			
+		} else {
+			quat = msg_quat;
+			status.setOK();
+		}
+
+		text_accel_x.innerText = "X: "+ ax;
+		text_accel_y.innerText = "Y: "+ ay;
+		text_accel_z.innerText = "Z: "+ az;
+
+		text_gyro_x.innerText = "X: "+ gx;
+		text_gyro_y.innerText = "Y: "+ gy;
+		text_gyro_z.innerText = "Z: "+ gz;
+
 		updateData();
-		status.setOK();
+		
 	});
 
 	saveSettings();
@@ -432,6 +527,15 @@ function setMode(){
 	if(topic.endsWith("(Frame)")){
 		mode = "tf";
 		raw_target = topic.replace(" (Frame)", "");
+
+		text_accel_x.innerText = "X: /";
+		text_accel_y.innerText = "Y: /";
+		text_accel_z.innerText = "Z: /";
+
+		text_gyro_x.innerText = "X: /";
+		text_gyro_y.innerText = "Y: /";
+		text_gyro_z.innerText = "Z: /";
+
 	}else if(topic.endsWith("(Imu)")){
 		mode = "topic";
 		raw_target = topic.replace(" (Imu)", "");
@@ -453,8 +557,8 @@ window.addEventListener("tf_changed", ()=>{
 				return;
 			}
 
-				
 			quat = frame.rotation;
+			text_quaternion.innerText = "Quaternion XYZW: "+quat.x.toFixed(3)+","+quat.y.toFixed(3)+","+quat.z.toFixed(3)+","+quat.w.toFixed(3);
 			updateData();
 
 			status.setOK();

@@ -455,6 +455,12 @@ object {
     margin-bottom: 5px;
 }
 
+
+.live_data_indented {
+	margin-left: 1.5em;
+}
+
+
 /* Input box */
 
 input[type=color] {
