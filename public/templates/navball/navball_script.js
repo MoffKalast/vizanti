@@ -367,9 +367,9 @@ function connect(){
 
 	status.setWarn("No data received.");
 
-	const alpha = 0.95;  // Higher value = trust gyro more (for high-rate data)
-	let lastTime = null; 
+	let stamp = null; 
 	let estimatedQuat = new Quaternion(1, 0, 0, 0);  // Identity quaternion (w, x, y, z)
+	let isGyroValid = false;
 
 	function isQuaternionValid(q) {
 		const norm = Math.sqrt(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w);
@@ -394,7 +394,7 @@ function connect(){
 			msg.orientation.z
 		]);
 
-		text_quaternion.innerText = "Quaternion XYZW: "+quat.x.toFixed(3)+","+quat.y.toFixed(3)+","+quat.z.toFixed(3)+","+quat.w.toFixed(3);
+		text_quaternion.innerText = "Quaternion XYZW: "+msg_quat.x.toFixed(3)+","+msg_quat.y.toFixed(3)+","+msg_quat.z.toFixed(3)+","+msg_quat.w.toFixed(3);
 
 		const ax = msg.linear_acceleration.x;
 		const ay = msg.linear_acceleration.y;
@@ -406,12 +406,11 @@ function connect(){
 
 		if(!isQuaternionValid(msg_quat)){
 			const now = msg.header.stamp.secs + msg.header.stamp.nsecs * 1e-9; 
-			let dt = lastTime ? (now - lastTime) : 0.05;
+			let dt = stamp ? (now - stamp) : 0.05;
 			dt = Math.min(dt, 0.05);
-			lastTime = now;
+			stamp = now;
 
 			let gyroQuat = estimatedQuat.clone();
-			let isGyroValid = false;
 
 			// Apply gyro rotation if available
 			if(gx != 0 || gy != 0 || gz != 0){
@@ -435,20 +434,23 @@ function connect(){
 
 				const rollQuat = Quaternion.fromEuler(0, accRoll, 0);
 				const pitchQuat = Quaternion.fromEuler(0, 0, accPitch);
-
-				let deltaQuat = pitchQuat.mul(rollQuat).normalize();
-			
+				const accelQuat = pitchQuat.mul(rollQuat).normalize();
+				
 				if(isGyroValid){
 					const yawQuat = Quaternion.fromEuler(gyroQuat.toEuler().h, 0, 0);
-					deltaQuat = yawQuat.mul(deltaQuat).normalize();
+					
+					const fusedQuat = yawQuat.mul(accelQuat).normalize();
+					const interpolator = gyroQuat.slerp(fusedQuat);
+
+					estimatedQuat = interpolator(0.03);
+					quat = estimatedQuat;
 					status.setWarn("Quaternion invalid, estimating with accel and gyro.");
 				}else{
+					estimatedQuat = accelQuat;
+					const interpolator = quat.slerp(estimatedQuat);
+					quat = interpolator(0.05);
 					status.setWarn("Quaternion and gyro invalid, estimating with accel only.");
 				}
-
-				estimatedQuat = deltaQuat;
-				const interpolator = quat.slerp(estimatedQuat);
-				quat = interpolator(0.05);
 
 			} else {
 				// Gyro only
