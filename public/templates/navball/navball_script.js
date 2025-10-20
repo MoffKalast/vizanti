@@ -39,6 +39,7 @@ let lut_size = 0;
 let imageData
 let data;
 
+let textureInvLoaded = false;
 let textureLoaded = false;
 let overlayLoaded = false;
 let centerLoaded = false;
@@ -46,6 +47,7 @@ let centerLoaded = false;
 let canvasSizeChanged = false;
 let renderOnce = true;
 let textureData;
+let textureDataInv;
 
 const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
 const vwToVh = vw => (vw * window.innerWidth) / window.innerHeight;
@@ -129,6 +131,21 @@ texture.onload = () => {
 	textureLoaded = true;
 };
 
+const texture_inv = new Image();
+texture_inv.src = 'assets/navball_invtex.jpg';
+texture_inv.onload = () => {
+	const textureInvCanvas = document.createElement('canvas');
+	textureInvCanvas.width = texture_inv.width;
+	textureInvCanvas.height = texture_inv.height;
+
+	const textureInvCtx = textureInvCanvas.getContext('2d');
+	textureInvCtx.drawImage(texture_inv, 0, 0);
+	textureDataInv = textureInvCtx.getImageData(0, 0, texture_inv.width, texture_inv.height);
+
+	textureInvLoaded = true;
+};
+
+
 const overlay = new Image();
 overlay.src = 'assets/navball_overlay.png';
 overlay.onload = () => {
@@ -210,7 +227,7 @@ function setupCanvas() {
 		for (let x = 0; x < width; x++) {
 			const dx = x - radius;
 			const distSq = dx * dx + dy * dy;
-			if (distSq <= radiusSq * 0.82) {
+			if (distSq <= radiusSq * 0.76) {
 				pixelCount++;
 			}
 		}
@@ -230,7 +247,7 @@ function setupCanvas() {
 			const dx = x - radius;
 			const distSq = dx * dx + dySq;
 			
-			if (distSq <= radiusSq * 0.82) {
+			if (distSq <= radiusSq * 0.76) {
 				const dz = Math.sqrt(radiusSq - distSq);
 				
 				// Store in our new SoA structure
@@ -255,7 +272,7 @@ function setupCanvas() {
 
 function renderNavball() {
 
-	if(!textureLoaded || !overlayLoaded)
+	if(!textureLoaded || !overlayLoaded  || !textureInvLoaded)
 		return;
 
 	if(canvasSizeChanged){
@@ -285,10 +302,10 @@ function renderNavball() {
 
 	const texWidth = texture.width;
 	const texHeight = texture.height;
-	const texturePixels = textureData.data;
 	const invPI = 1 / Math.PI;
 	const texWidthMinus1 = texWidth - 1;
 	const texHeightMinus1 = texHeight - 1;
+	let texturePixels = textureData.data;
 
 	prev_pitch = pitch;
 	prev_yaw = yaw;
@@ -301,10 +318,11 @@ function renderNavball() {
 		yaw = -yaw + Math.PI/2;
 		roll = roll + Math.PI;
 		true_roll = -roll + Math.PI;
+		texturePixels = textureDataInv.data;
 	}else if(mode == "horizon_fake"){
 		yaw = yaw - Math.PI/2;
 		roll = roll + Math.PI;
-		true_roll = alt_roll ? roll + Math.PI : -roll;
+		true_roll = alt_roll ? roll + Math.PI : -roll + Math.PI;
 	}else{
 		pitch = pitch;
 		yaw = yaw - Math.PI/2;
