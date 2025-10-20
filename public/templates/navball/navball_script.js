@@ -13,6 +13,40 @@ let tf = tfModule.tf;
 let offset_x = "-999";
 let offset_y = "-999";
 
+let mode = "" //see setMode()
+let raw_target = "";
+
+//all angles summed need to move at least this much to trigger an update
+const angleDelta = 0.001;
+
+let prev_pitch = 0;
+let prev_yaw = 0;
+let prev_roll = 0;
+
+let pitch = 0;
+let yaw = 0; 
+let roll = 0;
+
+let quat = new Quaternion();
+let quat_smooth = new Quaternion();
+
+//precomputed pixels
+let lut_px;
+let lut_py;
+let lut_pz;
+let lut_index;
+let lut_size = 0;
+let imageData
+let data;
+
+let textureLoaded = false;
+let overlayLoaded = false;
+let centerLoaded = false;
+
+let canvasSizeChanged = false;
+let renderOnce = true;
+let textureData;
+
 const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
 const vwToVh = vw => (vw * window.innerWidth) / window.innerHeight;
 
@@ -34,7 +68,9 @@ stock_images["error"] = await imageToDataURL("assets/tile_error.png");
 let imu_topic = undefined;
 let listener = undefined;
 
+const angleModeBox = document.getElementById('{uniqueID}_angle_mode');
 const selectionbox = document.getElementById("{uniqueID}_topic");
+const altRollCheckbox = document.getElementById('{uniqueID}_alt_roll');
 
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
 const canvas = document.getElementById('{uniqueID}_canvas');
@@ -76,40 +112,85 @@ throttle.addEventListener("input", (event) =>{
 	connect();
 });
 
-let mode = "" //see setMode()
-let raw_target = "";
+angleModeBox.addEventListener('change', saveSettings);
+altRollCheckbox.addEventListener('change', saveSettings);
+
+const texture = new Image();
+texture.src = 'assets/navball_texture.jpg';
+texture.onload = () => {
+	const textureCanvas = document.createElement('canvas');
+	textureCanvas.width = texture.width;
+	textureCanvas.height = texture.height;
+
+	const textureCtx = textureCanvas.getContext('2d');
+	textureCtx.drawImage(texture, 0, 0);
+	textureData = textureCtx.getImageData(0, 0, texture.width, texture.height);
+
+	textureLoaded = true;
+};
+
+const overlay = new Image();
+overlay.src = 'assets/navball_overlay.png';
+overlay.onload = () => {
+	overlayLoaded = true;
+};
+
+const center = new Image();
+center.src = 'assets/navball_center.png';
+center.onload = () => {
+	centerLoaded = true;
+};
+
+
+//Settings
+
+if(settings.hasOwnProperty("{uniqueID}")){
+	const loaded_data  = settings["{uniqueID}"];
+	topic = loaded_data.topic;
+
+	offset_x = loaded_data.offset_x;
+	offset_y = loaded_data.offset_y;
+
+	throttle.value = loaded_data.throttle;
+
+	opacitySlider.value = loaded_data.opacity;
+	opacityValue.innerText = loaded_data.opacity;
+	canvas.style.opacity = loaded_data.opacity;
+
+	widthSlider.value = loaded_data.width;
+	widthValue.innerText = loaded_data.width;
+
+	angleModeBox.value = loaded_data.angle_mode;
+	altRollCheckbox.checked = loaded_data.alt_roll;
+
+	displayImageOffset(offset_x, offset_y);
+	setMode();
+}else{
+	displayImageOffset(50, 95);
+	saveSettings();
+}
+
+function saveSettings(){
+	setMode();
+	settings["{uniqueID}"] = {
+		topic: topic,
+		opacity: opacitySlider.value,
+		throttle: throttle.value,
+		width: widthSlider.value,
+		offset_x: offset_x,
+		offset_y: offset_y,
+		angle_mode: angleModeBox.value,
+		alt_roll: altRollCheckbox.checked
+	}
+	settings.save();
+
+	canvas.style.opacity = opacitySlider.value;
+	displayImageOffset(offset_x, offset_y);
+}
+
 
 //Canvas setup
 const ctx = canvas.getContext('2d', { willReadFrequently: true });
-
-let textureLoaded = false;
-let overlayLoaded = false;
-let canvasSizeChanged = false;
-let renderOnce = true;
-
-//all angles summed need to move at least this much to trigger an update
-const angleDelta = 0.001;
-
-let prev_pitch = 0;
-let prev_yaw = 0;
-let prev_roll = 0;
-
-let pitch = 0;
-let yaw = 0; 
-let roll = 0;
-
-let quat = new Quaternion();
-let quat_smooth = new Quaternion();
-
-//precomputed pixels
-let lut_px;
-let lut_py;
-let lut_pz;
-let lut_index;
-let lut_size = 0;
-let imageData
-let data;
-let textureData;
 
 function setupCanvas() {
 
@@ -170,67 +251,6 @@ function setupCanvas() {
 	renderOnce = true;
 }
 
-const texture = new Image();
-texture.src = 'assets/navball_texture.jpg';
-texture.onload = () => {
-	const textureCanvas = document.createElement('canvas');
-	textureCanvas.width = texture.width;
-	textureCanvas.height = texture.height;
-
-	const textureCtx = textureCanvas.getContext('2d');
-	textureCtx.drawImage(texture, 0, 0);
-	textureData = textureCtx.getImageData(0, 0, texture.width, texture.height);
-
-	textureLoaded = true;
-};
-
-const overlay = new Image();
-overlay.src = 'assets/navball_overlay.png';
-overlay.onload = () => {
-	overlayLoaded = true;
-};
-
-//Settings
-
-if(settings.hasOwnProperty("{uniqueID}")){
-	const loaded_data  = settings["{uniqueID}"];
-	topic = loaded_data.topic;
-
-	offset_x = loaded_data.offset_x;
-	offset_y = loaded_data.offset_y;
-
-	throttle.value = loaded_data.throttle;
-
-	opacitySlider.value = loaded_data.opacity;
-	opacityValue.innerText = loaded_data.opacity;
-	canvas.style.opacity = loaded_data.opacity;
-
-	widthSlider.value = loaded_data.width;
-	widthValue.innerText = loaded_data.width;
-
-	displayImageOffset(offset_x, offset_y);
-	setMode();
-}else{
-	displayImageOffset(50, 95);
-	saveSettings();
-}
-
-function saveSettings(){
-	setMode();
-	settings["{uniqueID}"] = {
-		topic: topic,
-		opacity: opacitySlider.value,
-		throttle: throttle.value,
-		width: widthSlider.value,
-		offset_x: offset_x,
-		offset_y: offset_y
-	}
-	settings.save();
-
-	canvas.style.opacity = opacitySlider.value;
-	displayImageOffset(offset_x, offset_y);
-}
-
 //Topic
 
 function renderNavball() {
@@ -242,13 +262,16 @@ function renderNavball() {
 		setupCanvas();
 	}
 
+	const mode = settings["{uniqueID}"].angle_mode;
+	const alt_roll = settings["{uniqueID}"].alt_roll;
+
 	const interpolator = quat_smooth.slerp(quat);
 	quat_smooth = interpolator(0.1);
 
 	const euler = quat_smooth.toEuler();
-	const pitch = euler.pitch;
-	const yaw = euler.h; 
-	const roll = euler.g;
+	let pitch = euler.pitch;
+	let yaw = euler.h; 
+	let roll = euler.g;
 
  	const dp = Math.abs(prev_pitch - pitch);
 	const dy = Math.abs(prev_yaw - yaw);
@@ -271,12 +294,33 @@ function renderNavball() {
 	prev_yaw = yaw;
 	prev_roll = roll;
 
+	let true_roll = roll;
+
+	if(mode == "horizon_true"){
+		pitch = -pitch;
+		yaw = -yaw + Math.PI/2;
+		roll = roll + Math.PI;
+		true_roll = -roll;
+	}else if(mode == "horizon_fake"){
+		yaw = yaw - Math.PI/2;
+		roll = roll + Math.PI;
+		true_roll = alt_roll ? roll : -roll;
+	}else{
+		pitch = pitch;
+		yaw = yaw - Math.PI/2;
+		roll = -roll + Math.PI;
+	}
+
+	if(alt_roll){
+		roll = Math.PI;
+	}
+
 	const cosP = Math.cos(pitch);
 	const sinP = Math.sin(pitch);
-	const cosY = Math.cos(yaw - Math.PI/2);
-	const sinY = Math.sin(yaw - Math.PI/2);
-	const cosR = Math.cos(roll + Math.PI);
-	const sinR = Math.sin(roll + Math.PI);
+	const cosY = Math.cos(yaw);
+	const sinY = Math.sin(yaw);
+	const cosR = Math.cos(roll);
+	const sinR = Math.sin(roll);
 	
 	// Pre-calculate the combined rotation matrix
 	const m11 = cosY * cosR + sinY * sinP * sinR;
@@ -318,9 +362,21 @@ function renderNavball() {
 		data[pixelIndex + 2] = texturePixels[texIndex + 2];
 	}
 	
+	ctx.setTransform(1,0,0,1,0,0); 
 	ctx.putImageData(imageData, 0, 0);
+
+	if(centerLoaded){
+		ctx.setTransform(1,0,0,1,width/2, height/2); 
+		if(alt_roll)
+			ctx.rotate(true_roll);
+		ctx.drawImage(center, -width/2, -height/2, width, height);
+	}
+
 	if (overlayLoaded) {
-		ctx.drawImage(overlay, 0, 0, width, height);
+		ctx.setTransform(1,0,0,1,width/2, height/2); 
+		if(!alt_roll)
+			ctx.rotate(true_roll);
+		ctx.drawImage(overlay, -width/2, -height/2, width, height);
 	}
 
 	renderOnce = false;

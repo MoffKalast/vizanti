@@ -45,7 +45,21 @@
 			<p id="{uniqueID}_frame_id" style="color: lightgray;">Frame: ?</p>
 		</div>
 
-		<p>Render pitch yaw and roll from sensor_msgs/Imu messages.</p>
+		<label for="{uniqueID}_angle_mode">Mode:</label>
+		<select id="{uniqueID}_angle_mode">
+			<option value="horizon_fake">Pilot (Inside-Out)</option>
+			<option value="horizon_true">Inertial Reference (Outside-In)</option>
+			<option value="external">Observer (Direct Rotation)</option>
+		</select>
+
+		<p class="comment">
+			<strong>Pilot:</strong> Traditional aerospace view from inside the sphere, an artificial horizon that moves inverse to vehicle motion.<br>
+			<strong>Inertial Reference:</strong> Magic floating sphere that's fixed to world rotation (pilot view with flipped pitch and yaw).<br>
+			<strong>Observer:</strong> Simply rotates the ball in the same direction as the given orientation.
+		</p>
+
+		<label>Show roll on indicator line:</label>
+		<input type="checkbox" id="{uniqueID}_alt_roll">
 
 		<div class="spacer"></div>
 

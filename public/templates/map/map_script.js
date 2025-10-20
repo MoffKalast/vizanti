@@ -104,7 +104,6 @@ opacitySlider.addEventListener('input', () =>  {
 	drawMap();
 });
 
-
 const loadPathBox = document.getElementById("{uniqueID}_loadpath");
 const loadTopicBox = document.getElementById("{uniqueID}_loadtopic");
 const savePathBox = document.getElementById("{uniqueID}_savepath");
