@@ -300,11 +300,11 @@ function renderNavball() {
 		pitch = -pitch;
 		yaw = -yaw + Math.PI/2;
 		roll = roll + Math.PI;
-		true_roll = -roll;
+		true_roll = -roll + Math.PI;
 	}else if(mode == "horizon_fake"){
 		yaw = yaw - Math.PI/2;
 		roll = roll + Math.PI;
-		true_roll = alt_roll ? roll : -roll;
+		true_roll = alt_roll ? roll + Math.PI : -roll;
 	}else{
 		pitch = pitch;
 		yaw = yaw - Math.PI/2;
