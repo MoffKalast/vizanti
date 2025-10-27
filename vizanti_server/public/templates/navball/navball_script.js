@@ -272,7 +272,7 @@ function setupCanvas() {
 
 function renderNavball() {
 
-	if(!textureLoaded || !overlayLoaded  || !textureInvLoaded)
+	if(!textureLoaded || !overlayLoaded  || !textureInvLoaded || !settings["{uniqueID}"])
 		return;
 
 	if(canvasSizeChanged){
