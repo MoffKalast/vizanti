@@ -239,6 +239,8 @@ export class TF {
 
 			this.frame_list.add(childFrameId);
 			this.frame_list.add(parentFrameId);
+
+			this.frame_list = new Set([...this.frame_list].sort());
 	
 			this.transforms[childFrameId] = {
 				translation: pose.transform.translation,

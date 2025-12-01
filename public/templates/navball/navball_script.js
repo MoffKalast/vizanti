@@ -677,6 +677,7 @@ function displayImageOffset(x, y){
 		canvas.height = new_size;
 		canvasSizeChanged = true;
 	}
+	renderNavball();
 }
 
 window.addEventListener('resize', ()=>{
