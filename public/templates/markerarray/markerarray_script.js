@@ -205,6 +205,37 @@ async function drawMarkers(){
 		ctx.stroke();
 	}
 
+	function drawLineList(marker, size){
+		ctx.lineWidth = parseInt(marker.scale.x*size);
+
+		// Draw lines between pairs of points: 0-1, 2-3, 4-5, etc.
+		for(let i = 0; i < marker.points.length - 1; i += 2){
+			const point1 = marker.points[i];
+			const point2 = marker.points[i + 1];
+			
+			// Set color for this line segment
+			if(marker.colors.length === 0){
+				ctx.strokeStyle = rgbaToFillColor(marker.color);
+			} else if(marker.colors.length > i){
+				// Create gradient from start to end point for per-vertex color
+				const x1 = point1.x * size;
+				const y1 = -point1.y * size;
+				const x2 = point2.x * size;
+				const y2 = -point2.y * size;
+				
+				const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+				gradient.addColorStop(0, rgbaToFillColor(marker.colors[i]));
+				gradient.addColorStop(1, rgbaToFillColor(marker.colors[i + 1] || marker.colors[i]));
+				ctx.strokeStyle = gradient;
+			}
+
+			ctx.beginPath();
+			ctx.moveTo(point1.x * size, -point1.y * size);
+			ctx.lineTo(point2.x * size, -point2.y * size);
+			ctx.stroke();
+		}
+	}
+
 	function drawText(marker, size) {
 		ctx.scale(0.1, 0.1);
 		const scale = size * marker.scale.z
@@ -281,7 +312,7 @@ async function drawMarkers(){
 			case 2: 
 			case 3: drawCircle(marker, unit); break; //SPHERE=2 CYLINDER=3
 			case 4: drawLine(marker, unit); break; //LINE_STRIP=4
-			case 5: status.setWarn("LINE_LIST markers are not supported yet."); break; //LINE_LIST=5
+			case 5: drawLineList(marker, unit); break; //LINE_LIST=5
 			case 6:	drawCubeList(marker, unit); break; //CUBE_LIST=6
 			case 7: status.setWarn("SPHERE_LIST markers are not supported yet."); break; //SPHERE_LIST=7
 			case 8: status.setWarn("POINTS markers are not supported yet."); break; //POINTS=8
