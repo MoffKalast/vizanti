@@ -20,6 +20,7 @@ let listener = undefined;
 let marker_topic = undefined;
 
 let markers = {};
+let z_sorted_keys = [];
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
@@ -50,6 +51,8 @@ function saveSettings(){
 	}
 	settings.save();
 }
+
+
 
 //Rendering
 
@@ -250,7 +253,9 @@ async function drawMarkers(){
 
 	let current_time = new Date();
 
-	for (const [key, marker] of Object.entries(markers)) {
+	for (const key of z_sorted_keys) {
+		const marker = markers[key];
+		
 		ctx.fillStyle = rgbaToFillColor(marker.color);
 
 		const frame = tf.absoluteTransforms[marker.header.frame_id];
@@ -259,7 +264,7 @@ async function drawMarkers(){
 			continue;
 
 		//skip old markers
-		if((current_time - marker.stamp)/1000.0 > marker.lifetime.sec + marker.lifetime.nanosec*1e-9)
+		if((current_time - marker.stamp) / 1000.0 > marker.lifetime.sec + marker.lifetime.nanosec*1e-9)
 			continue;
 
 		const pos = view.fixedToScreen({
@@ -316,6 +321,7 @@ function connect(){
 		msg.markers.forEach(m => {
 			if(m.action == 3){
 				markers = {};
+				z_sorted_keys = [];
 				return;
 			}
 			const id = m.ns + m.id;
@@ -346,6 +352,12 @@ function connect(){
 
 			m.stamp = new Date();	
 			markers[id] = m;
+		});
+
+		z_sorted_keys = Object.keys(markers).sort((a, b) => {
+			const markerA = markers[a];
+			const markerB = markers[b];
+			return markerA.transformed.translation.z - markerB.transformed.translation.z;
 		});
 
 		if(!error){
@@ -383,6 +395,7 @@ async function loadTopics(){
 selectionbox.addEventListener("change", (event) => {
 	topic = selectionbox.value;
 	markers = {};
+	z_sorted_keys = [];
 	connect();
 });
 
@@ -410,4 +423,3 @@ window.addEventListener('orientationchange', resizeScreen);
 resizeScreen();
 
 console.log("MarkerArray Widget Loaded {uniqueID}")
-
