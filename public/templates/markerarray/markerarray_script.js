@@ -236,6 +236,26 @@ async function drawMarkers(){
 		}
 	}
 
+	function drawSphereList(marker, size) {
+		const radius = (size * marker.scale.x) / 2; // Use scale.x for sphere diameter
+		
+		marker.points.forEach((point, index) => {
+			// Set color for this sphere
+			if (marker.colors.length === 0) {
+				ctx.fillStyle = rgbaToFillColor(marker.color);
+			} else if (marker.colors.length > index) {
+				ctx.fillStyle = rgbaToFillColor(marker.colors[index]);
+			} else {
+				ctx.fillStyle = rgbaToFillColor(marker.color);
+			}
+			
+			// Draw the circle at the point position
+			ctx.beginPath();
+			ctx.arc(point.x * size, -point.y * size, radius, 0, 2 * Math.PI, false);
+			ctx.fill();
+		});
+	}
+
 	function drawText(marker, size) {
 		ctx.scale(0.1, 0.1);
 		const scale = size * marker.scale.z
@@ -314,7 +334,7 @@ async function drawMarkers(){
 			case 4: drawLine(marker, unit); break; //LINE_STRIP=4
 			case 5: drawLineList(marker, unit); break; //LINE_LIST=5
 			case 6:	drawCubeList(marker, unit); break; //CUBE_LIST=6
-			case 7: status.setWarn("SPHERE_LIST markers are not supported yet."); break; //SPHERE_LIST=7
+			case 7: drawSphereList(marker, unit); break; //SPHERE_LIST=7
 			case 8: status.setWarn("POINTS markers are not supported yet."); break; //POINTS=8
 			case 9: drawText(marker, unit); break;//TEXT_VIEW_FACING=9
 			case 10: status.setWarn("MESH_RESOURCE markers are not supported yet."); break; //MESH_RESOURCE=10
