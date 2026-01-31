@@ -1,0 +1,14 @@
+<launch>
+
+  <node pkg="vizanti_demos" exec="_test_button.py" name="test_button" output="screen" />
+  <node pkg="vizanti_demos" exec="_test_grid_cells.py" name="test_grid_cells" output="screen" />
+  <node pkg="vizanti_demos" exec="_test_line_list.py" name="test_line_list" output="screen"/>
+  <node pkg="vizanti_demos" exec="_test_marker_array.py" name="test_marker_array" output="screen" />
+  <node pkg="vizanti_demos" exec="_test_occupancy_grid.py" name="test_occupancy_grid" output="screen" />
+  <node pkg="vizanti_demos" exec="_test_parameters.py" name="test_params" output="screen"  />
+  <node pkg="vizanti_demos" exec="_test_sphere_list.py" name="test_sphere_list" output="screen"/>
+  <node pkg="vizanti_demos" exec="_test_tf.py" name="test_tf" output="screen"/>
+
+  <node pkg="tf2_ros" exec="static_transform_publisher" name="test_tf_publisher_1" output="screen" args="10 0 0 0 0 0 map world" />
+
+</launch>

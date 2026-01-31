@@ -16,7 +16,7 @@ def generate_launch_description():
     unregister_timeout = launch.substitutions.LaunchConfiguration('unregister_timeout', default='9999999.9')
     retry_startup_delay = launch.substitutions.LaunchConfiguration('retry_startup_delay', default='10.0')
     fragment_timeout = launch.substitutions.LaunchConfiguration('fragment_timeout', default='30')
-    delay_between_messages = launch.substitutions.LaunchConfiguration('delay_between_messages', default='0')
+    delay_between_messages = launch.substitutions.LaunchConfiguration('delay_between_messages', default='0.0')
     max_message_size = launch.substitutions.LaunchConfiguration('max_message_size', default='999999999')
 
     rosbridge_node = launch_ros.actions.Node(

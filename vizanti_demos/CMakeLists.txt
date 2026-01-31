@@ -30,14 +30,16 @@ install(DIRECTORY
 )
 
 install(PROGRAMS
+  scripts/_test_button.py
+  scripts/_test_grid_cells.py
+  scripts/_test_line_list.py
+  scripts/_test_occupancy_grid.py
+  scripts/_test_marker_array.py
+  scripts/_test_parameters.py
+  scripts/_test_sphere_list.py
+  scripts/_test_tf.py
   scripts/particle_cloud_to_pose_array.py
   scripts/path_to_nav2poses.py
-  scripts/test_occupancy_grid.py
-  scripts/test_grid_cells.py
-  scripts/test_marker_array.py
-  scripts/test_tf.py
-  scripts/test_button.py
-  scripts/test_parameters.py
   scripts/waypoints_to_simple_goals.py
   DESTINATION lib/${PROJECT_NAME}
 )

@@ -185,7 +185,7 @@ async function drawMarkers(){
 
 	function drawLine(marker, size){
 
-		if(marker.colors.length == 0)
+		if(!marker.hasOwnProperty("colors") || marker.colors.length == 0)
 			ctx.strokeStyle = rgbaToFillColor(marker.color);
 		else
 			ctx.strokeStyle = rgbaToFillColor(marker.colors[0]); // for now
@@ -215,7 +215,7 @@ async function drawMarkers(){
 			const point2 = marker.points[i + 1];
 			
 			// Set color for this line segment
-			if(marker.colors.length === 0){
+			if(!marker.hasOwnProperty("colors") || marker.colors.length === 0){
 				ctx.strokeStyle = rgbaToFillColor(marker.color);
 			} else if(marker.colors.length > i){
 				// Create gradient from start to end point for per-vertex color
@@ -242,9 +242,7 @@ async function drawMarkers(){
 		
 		marker.points.forEach((point, index) => {
 			// Set color for this sphere
-			if (marker.colors.length === 0) {
-				ctx.fillStyle = rgbaToFillColor(marker.color);
-			} else if (marker.colors.length > index) {
+			if (marker.hasOwnProperty("colors") && marker.colors.length > index) {
 				ctx.fillStyle = rgbaToFillColor(marker.colors[index]);
 			} else {
 				ctx.fillStyle = rgbaToFillColor(marker.color);
