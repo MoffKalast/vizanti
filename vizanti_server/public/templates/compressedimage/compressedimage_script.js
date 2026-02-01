@@ -102,6 +102,21 @@ function saveSettings(){
 	displayImageOffset(img_offset_x, img_offset_y);
 }
 
+let isRWSFormat = null;
+function getBase64ImageData(msg) {
+	if (isRWSFormat === null) {
+		isRWSFormat = typeof msg.data !== 'string';
+		console.log(`Detected message format: ${isRWSFormat ? 'RWS' : 'rosbridge'}`);
+	}
+	
+	if (isRWSFormat) {
+		const msg_data = new Uint8Array(msg.data);
+		return msg_data.toBase64();
+	} else {
+		return msg.data;
+	}
+}
+
 //Topic
 async function getImage(src) {
     return new Promise((resolve, reject) => {
@@ -137,7 +152,8 @@ function connect(){
 	
 	let received = false;
 	listener = image_topic.subscribe(async (msg) => {  
-		const src = 'data:image/jpeg;base64,' + msg.data
+		const base64Data = getBase64ImageData(msg);
+		const src = 'data:image/jpeg;base64,' + base64Data;
 
 		getImage(src)
 			.then(() => {
