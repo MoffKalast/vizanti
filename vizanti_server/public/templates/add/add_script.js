@@ -2,6 +2,7 @@ let rosbridgeModule = await import(`${base_url}/js/modules/rosbridge.js`);
 
 let rosbridge = rosbridgeModule.rosbridge;
 
+const icon = document.getElementById('icon_add_element');
 const typeButton = document.getElementById('add_set_type');
 const topicButton = document.getElementById('add_set_topics');
 
@@ -43,6 +44,10 @@ topicButton.addEventListener("click", (event) => {
 
 	typeDiv.style.display = "none";
 	topicDiv.style.display = "block";
+});
+
+icon.addEventListener("click", (event) => {
+	update_topics();
 });
 
 // rebuild topic list
