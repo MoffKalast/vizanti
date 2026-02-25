@@ -159,8 +159,18 @@ function connect(){
 	
 	let received = false;
 	listener = image_topic.subscribe(async (msg) => {  
-		const base64Data = getBase64ImageData(msg);
-		const src = 'data:image/jpeg;base64,' + base64Data;
+
+		const mime = msg.format.includes("png") ? "image/png" : "image/jpeg";
+		let base64Data = getBase64ImageData(msg);
+
+		if (mime == "image/png") {
+			const pngIndex = base64Data.indexOf("iVBORw0KGgo");
+			if (pngIndex !== -1) {
+				base64Data =  base64Data.substring(pngIndex);
+			}
+		}
+
+		const src = `data:${mime};base64,${base64Data}`;
 
 		getImage(src)
 			.then((img) => {
@@ -168,6 +178,14 @@ function connect(){
 			        last_natural_width = canvas.naturalWidth;
 			        last_natural_height = canvas.naturalHeight;
 			        if(!received){
+
+						//lightweight hackery to show depth in a more usable way, we'd need to re-render it to 8bit to do it properly
+						if (msg.format && msg.format.includes("compressedDepth")) {
+							canvas.style.filter = "brightness(600%)";
+						} else {
+							canvas.style.filter = "none";
+						}
+
 			            displayImageOffset(img_offset_x, img_offset_y);
 			            status.setOK();
 			            received = true;
