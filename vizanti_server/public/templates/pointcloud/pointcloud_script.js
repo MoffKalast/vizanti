@@ -96,35 +96,45 @@ const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
 
 async function drawCloud() {
+    const pixel = view.getMapUnitsInPixels(thicknessSlider.value);
+    const wid = canvas.width;
+    const hei = canvas.height;
 
-	const pixel = view.getMapUnitsInPixels(thicknessSlider.value);
+    ctx.clearRect(0, 0, wid, hei);
+    ctx.globalAlpha = opacitySlider.value;
 
-	const wid = canvas.width;
-	const hei = canvas.height;
-
-	ctx.clearRect(0, 0, wid, hei);
-	ctx.globalAlpha = opacitySlider.value;
-	ctx.fillStyle = colourpicker.value;
-
-	if(data == undefined){
+    if(data == undefined)
 		return;
+
+    const delta = parseInt(pixel / 2);
+
+    const drawGroup = (points, color) => {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+
+        for(const pt of points){
+            const screenpos = view.fixedToScreen(pt);
+            const x = screenpos.x - delta;
+            const y = screenpos.y - delta;
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + pixel, y);
+            ctx.lineTo(x + pixel, y + pixel);
+            ctx.lineTo(x, y + pixel);
+            ctx.lineTo(x, y);
+        }
+
+        ctx.fill();
+    };
+
+    if(data.use_rgb){
+		for(const group of data.groups){
+            drawGroup(group.points, group.color);
+        }
+	}else{
+		drawGroup(data.points, colourpicker.value);
 	}
 
-	let delta = parseInt(pixel/2);
-	ctx.beginPath();
-	for(let i = 0; i < data.points.length; i++){
-		const screenpos = view.fixedToScreen(data.points[i].translation);
-		const x = screenpos.x - delta;
-		const y = screenpos.y - delta;
-		
-		ctx.moveTo(x, y);
-		ctx.lineTo(x + pixel, y);
-		ctx.lineTo(x + pixel, y + pixel);
-		ctx.lineTo(x, y + pixel); 
-		ctx.lineTo(x, y);
-	}
-	ctx.fill();
-	ctx.restore();
+    ctx.restore();
 }
 
 function resizeScreen(){
@@ -140,16 +150,91 @@ window.addEventListener('orientationchange', resizeScreen);
 
 function bytes_to_datatype(view, offset, type, littleEndian){
 	switch(type){
-		case 1: return parseFloat(view.getInt8(offset)); //INT8    = 1
-		case 2: return parseFloat(view.getUint8(offset)); //UINT8   = 2
-		case 3: return parseFloat(view.getInt16(offset, littleEndian)); //INT16   = 3
-		case 4: return parseFloat(view.getUInt16(offset, littleEndian)); //UINT16  = 4
-		case 5: return parseFloat(view.getInt32(offset, littleEndian)); //INT32   = 5
-		case 6: return parseFloat(view.getUInt32(offset, littleEndian)); //UINT32  = 6
-		case 7: return view.getFloat32(offset, littleEndian); //FLOAT32 = 7
-		case 8: return view.getFloat64(offset, littleEndian); //FLOAT64 = 8
+		case 1: return parseFloat(view.getInt8(offset));
+		case 2: return parseFloat(view.getUint8(offset));
+		case 3: return parseFloat(view.getInt16(offset, littleEndian));
+		case 4: return parseFloat(view.getUInt16(offset, littleEndian)); 
+		case 5: return parseFloat(view.getInt32(offset, littleEndian)); 
+		case 6: return parseFloat(view.getUInt32(offset, littleEndian)); 
+		case 7: return view.getFloat32(offset, littleEndian); 
+		case 8: return view.getFloat64(offset, littleEndian);
 		default: return 0;
 	}	
+}
+
+
+function histogramCut(points, numBuckets) {
+	if(points.length === 0) return [];
+
+	// Find range of each channel
+	let minR = 255;
+	let maxR = 0;
+	
+	let minG = 255;
+	let maxG = 0;
+
+	let minB = 255;
+	let maxB = 0;
+	for(const p of points){
+		if(p.r < minR)
+			minR = p.r;
+		if(p.r > maxR)
+			maxR = p.r;
+		if(p.g < minG)
+			minG = p.g;
+		if(p.g > maxG)
+			maxG = p.g;
+		if(p.b < minB)
+			minB = p.b;
+		if(p.b > maxB)
+			maxB = p.b;
+	}
+
+	// Pick the channel with the widest range to bin along
+	const rRange = maxR - minR;
+	const gRange = maxG - minG;
+	const bRange = maxB - minB;
+	const axis = rRange >= gRange && rRange >= bRange ? 'r' : gRange >= bRange ? 'g' : 'b';
+	const axisMin = axis === 'r' ? minR : axis === 'g' ? minG : minB;
+	const axisMax = axis === 'r' ? maxR : axis === 'g' ? maxG : maxB;
+	const axisRange = axisMax - axisMin || 1;
+
+	// Assign each point to a histogram bucket
+	const buckets = Array.from({ length: numBuckets }, () => []);
+	for(const p of points){
+		const idx = Math.min(
+			Math.floor(((p[axis] - axisMin) / axisRange) * numBuckets),
+			numBuckets - 1
+		);
+		buckets[idx].push(p);
+	}
+
+	// Convert each non-empty bucket to a group with averaged colour
+	const groups = [];
+	for(const bucket of buckets){
+		const n = bucket.length;
+
+		if(n === 0)
+			continue;
+
+		let r = 0;
+		let g = 0;
+		let b = 0;
+
+		for(const p of bucket){
+			r += p.r;
+			g += p.g;
+			b += p.b;
+		}
+		
+		const hex = '#' + [r/n, g/n, b/n].map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
+		groups.push({
+			color: hex,
+			points: bucket
+		});
+	}
+
+	return groups;
 }
 
 //Topic
@@ -174,69 +259,129 @@ function connect(){
 
 	status.setWarn("No data received.");
 
+	const MAX_POINTS = 20000;
+	const COLOR_GROUPS = 5;
+
 	listener = range_topic.subscribe((msg) => {	
 
 		let error = false;
 		if(msg.header.frame_id == ""){
-			status.setWarn("Transform frame is an empty string, falling back to fixed frame. Fix your publisher ;)");
+			status.setWarn("Transform frame is an empty string, falling back to fixed frame.");
 			msg.header.frame_id = tf.fixed_frame;
 			error = true;
 		}
 
 		const pose = tf.absoluteTransforms[msg.header.frame_id];
-
 		if(!pose){
 			status.setError("Required transform frame \""+msg.header.frame_id+"\" not found.");
 			return;
 		}
 
-		/* if(msg.width * msg.height != msg.data.length / msg.point_step){
-			status.setError("Invalid cloud data, point count is inconsistent with binary blob length.");
-			return;
-		} */
-
+		const numPoints = msg.width * msg.height;
 		const xData = msg.fields.find(field => field.name === 'x');
 		const yData = msg.fields.find(field => field.name === 'y');
 		const zData = msg.fields.find(field => field.name === 'z');
+		const rgbData = msg.fields.find(field => field.name === 'rgb');
 
-		if(xData === undefined || yData === undefined || zData === undefined){
+		if(!xData || !yData || !zData){
 			status.setError("XYZ coordinate data not found in cloud.");
 			return;
 		}
 
-		const littleEndian = !msg.is_bigendian;
+		const sampleStep = numPoints <= MAX_POINTS ? 1 : Math.floor(numPoints / MAX_POINTS);
+		const sampledCount = Math.ceil(numPoints / sampleStep);
 
-		const buffer = new ArrayBuffer(msg.data.length);
-		const dataview = new DataView(buffer);
+		// Build sampled byte array — only copy bytes for points we'll actually use
+		const sampledBytes = new Uint8Array(sampledCount * msg.point_step);
 
-		//for some reason these two aren't equal, so we have to throw each byte in separately like cavemen, not great but works for now
-		//console.log(buffer.slice(0, msg.point_step))
-		//console.log(msg.data.buffer.slice(0, msg.point_step))
-		for(let i = 0; i < msg.data.length; i++){
-			dataview.setUint8(i, msg.data[i]);
-		}
-
-		let pointarray = [];
-		for(let i = 0; i < msg.data.length; i += msg.point_step){
-			//const dataview = new DataView(msg.data.buffer.slice(i, i+msg.point_step));
-			
-			const point = {
-				x: bytes_to_datatype(dataview, i+xData.offset, xData.datatype, littleEndian),
-				y: bytes_to_datatype(dataview, i+yData.offset, yData.datatype, littleEndian),
-				z: bytes_to_datatype(dataview, i+zData.offset, zData.datatype, littleEndian)
-			};
-			pointarray.push(tf.transformPose(msg.header.frame_id, tf.fixed_frame, point, new Quaternion()));
-		}
-
-		if(pointarray.length > 0){
-			data = {};
-			data.pose = pose;
-			data.points = pointarray;
-			drawCloud();
-			if(!error){
-				status.setOK();
+		if(typeof msg.data === 'string'){
+			const binaryString = atob(msg.data);
+			for(let i = 0, s = 0; i < numPoints; i += sampleStep, s++){
+				const srcOffset = i * msg.point_step;
+				for(let b = 0; b < msg.point_step; b++){
+					sampledBytes[s * msg.point_step + b] = binaryString.charCodeAt(srcOffset + b);
+				}
+			}
+		} else {
+			let src;
+			if(msg.data instanceof Uint8Array){
+				src = msg.data;
+			} else if(msg.data instanceof ArrayBuffer){
+				src = new Uint8Array(msg.data);
+			} else if(typeof msg.data === 'object' && msg.data[0] !== undefined){
+				src = Uint8Array.from(msg.data);
+			} else {
+				status.setError("Cloud in unknown data type: " + typeof msg.data);
+				return;
+    }
+			for(let i = 0, s = 0; i < numPoints; i += sampleStep, s++){
+				sampledBytes.set(src.subarray(i * msg.point_step, (i + 1) * msg.point_step), s * msg.point_step);
 			}
 		}
+
+		const littleEndian = !msg.is_bigendian;
+		const dataview = new DataView(sampledBytes.buffer);
+		let pointarray = [];
+
+		if(!rgbData){
+
+			for(let s = 0; s < sampledCount; s++){
+				const byteOffset = s * msg.point_step;
+				const point = {
+					x: bytes_to_datatype(dataview, byteOffset + xData.offset, xData.datatype, littleEndian),
+					y: bytes_to_datatype(dataview, byteOffset + yData.offset, yData.datatype, littleEndian),
+					z: bytes_to_datatype(dataview, byteOffset + zData.offset, zData.datatype, littleEndian)
+				};
+				const transformed = tf.transformPose(msg.header.frame_id, tf.fixed_frame, point, new Quaternion()).translation;
+				pointarray.push(transformed);
+			}
+
+			if(pointarray.length > 0){
+				data = {
+					use_rgb: false,
+					points: pointarray
+				};
+				drawCloud();
+				if(!error){
+					status.setOK();
+				}
+			}
+
+		}else{
+
+			for(let s = 0; s < sampledCount; s++){
+				const byteOffset = s * msg.point_step;
+				const point = {
+					x: bytes_to_datatype(dataview, byteOffset + xData.offset, xData.datatype, littleEndian),
+					y: bytes_to_datatype(dataview, byteOffset + yData.offset, yData.datatype, littleEndian),
+					z: bytes_to_datatype(dataview, byteOffset + zData.offset, zData.datatype, littleEndian)
+				};
+				const transformed = tf.transformPose(msg.header.frame_id, tf.fixed_frame, point, new Quaternion()).translation;
+
+				if(rgbData){
+					const bits = dataview.getUint32(byteOffset + rgbData.offset, littleEndian);
+					transformed.r = (bits >> 16) & 0xFF;
+					transformed.g = (bits >> 8)  & 0xFF;
+					transformed.b = bits & 0xFF;
+				}
+				pointarray.push(transformed);
+			}
+
+			if(pointarray.length > 0){
+				data = {
+					use_rgb: true,
+					groups: histogramCut(pointarray, COLOR_GROUPS)
+				};
+
+				drawCloud();
+				if(!error){
+					status.setOK();
+				}
+			}
+
+		}
+
+		
 	});
 
 	saveSettings();
