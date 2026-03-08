@@ -30,7 +30,6 @@ const opacityValue = document.getElementById('{uniqueID}_opacity_value');
 opacitySlider.addEventListener('input', () =>  {
 	opacityValue.textContent = opacitySlider.value;
 	saveSettings();
-	drawCloud();
 });
 
 const thicknessSlider = document.getElementById('{uniqueID}_thickness');
@@ -38,14 +37,26 @@ const thicknessValue = document.getElementById('{uniqueID}_thickness_value');
 thicknessSlider.addEventListener('input', () =>  {
 	thicknessValue.textContent = thicknessSlider.value;
 	saveSettings();
-	drawCloud();
+});
+
+const maxPointsSlider = document.getElementById('{uniqueID}_max_points');
+const maxPointsValue = document.getElementById('{uniqueID}_max_points_value');
+maxPointsSlider.addEventListener('input', () =>  {
+	maxPointsValue.textContent = maxPointsSlider.value;
+	saveSettings();
+});
+
+const colourCountSlider = document.getElementById('{uniqueID}_colour_count');
+const colourCountValue = document.getElementById('{uniqueID}_colour_count_value');
+colourCountSlider.addEventListener('input', () =>  {
+	colourCountValue.textContent = colourCountSlider.value;
+	saveSettings();
 });
 
 const colourpicker = document.getElementById("{uniqueID}_colorpicker");
 colourpicker.addEventListener("input", (event) =>{
 	utilModule.setIconColor(icon, colourpicker.value);
 	saveSettings();
-	drawCloud();
 });
 
 const throttle = document.getElementById('{uniqueID}_throttle');
@@ -54,6 +65,8 @@ throttle.addEventListener("input", (event) =>{
 	connect();
 });
 
+const colourOverrideCheckbox = document.getElementById('{uniqueID}_color_override');
+colourOverrideCheckbox.addEventListener('change', saveSettings);
 
 //Settings
 if(settings.hasOwnProperty("{uniqueID}")){
@@ -64,10 +77,18 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	opacityValue.innerText = loaded_data.opacity;
 
 	thicknessSlider.value = loaded_data.thickness;
-	thicknessValue.innerText = loaded_data.thickness;
+	thicknessValue.innerText = thicknessSlider.value;
+
+	maxPointsSlider.value = loaded_data.max_points ?? 15000;
+	maxPointsValue.innerText = maxPointsSlider.value;
+
+	colourCountSlider.value = loaded_data.colour_count ?? 5;
+	colourCountValue.innerText = colourCountSlider.value;
 
 	colourpicker.value = loaded_data.color;
 	throttle.value = loaded_data.throttle;
+
+	colourOverrideCheckbox.checked = loaded_data.colour_override ?? false;
 	
 }else{
 	saveSettings();
@@ -87,9 +108,13 @@ function saveSettings(){
 		opacity: opacitySlider.value,
 		thickness: thicknessSlider.value,
 		color: colourpicker.value,
-		throttle: throttle.value
+		throttle: throttle.value,
+		max_points: maxPointsSlider.value,
+		colour_count: colourCountSlider.value,
+		colour_override: colourOverrideCheckbox.checked
 	};
 	settings.save();
+	drawCloud();
 }
 
 const canvas = document.getElementById('{uniqueID}_canvas');
@@ -108,10 +133,7 @@ async function drawCloud() {
 
     const delta = parseInt(pixel / 2);
 
-    const drawGroup = (points, color) => {
-        ctx.fillStyle = color;
-        ctx.beginPath();
-
+    function drawGroup(points) {
         for(const pt of points){
             const screenpos = view.fixedToScreen(pt);
             const x = screenpos.x - delta;
@@ -122,16 +144,29 @@ async function drawCloud() {
             ctx.lineTo(x, y + pixel);
             ctx.lineTo(x, y);
         }
-
-        ctx.fill();
-    };
+    }
 
     if(data.use_rgb){
-		for(const group of data.groups){
-            drawGroup(group.points, group.color);
-        }
+		if(colourOverrideCheckbox.checked){
+			ctx.fillStyle = colourpicker.value;
+			ctx.beginPath();
+			for(const group of data.groups){
+            	drawGroup(group.points);
+        	}
+			ctx.fill();
+		}else{
+			for(const group of data.groups){
+				ctx.fillStyle = group.color;
+				ctx.beginPath();
+            	drawGroup(group.points);
+				ctx.fill();
+        	}
+		}
 	}else{
-		drawGroup(data.points, colourpicker.value);
+		ctx.fillStyle = colourpicker.value;
+        ctx.beginPath();
+		drawGroup(data.points);
+		ctx.fill();
 	}
 
     ctx.restore();
@@ -259,9 +294,6 @@ function connect(){
 
 	status.setWarn("No data received.");
 
-	const MAX_POINTS = 20000;
-	const COLOR_GROUPS = 5;
-
 	listener = range_topic.subscribe((msg) => {	
 
 		let error = false;
@@ -288,6 +320,8 @@ function connect(){
 			return;
 		}
 
+		const MAX_POINTS = maxPointsSlider.value;
+		const COLOUR_COUNT = colourCountSlider.value;
 		const sampleStep = numPoints <= MAX_POINTS ? 1 : Math.floor(numPoints / MAX_POINTS);
 		const sampledCount = Math.ceil(numPoints / sampleStep);
 
@@ -370,7 +404,7 @@ function connect(){
 			if(pointarray.length > 0){
 				data = {
 					use_rgb: true,
-					groups: histogramCut(pointarray, COLOR_GROUPS)
+					groups: histogramCut(pointarray, COLOUR_COUNT)
 				};
 
 				drawCloud();
