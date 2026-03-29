@@ -293,8 +293,20 @@ function connect(){
 		}
 
 		if(!tf.absoluteTransforms[msg.header.frame_id]){
-			status.setError("Required transform frame \""+msg.header.frame_id+"\" not found.");
-			return;
+			if(msg.header.frame_id == "map"){
+				status.setWarn("Map transform not available yet, using identity transform.");
+
+				//add a temporary transform so one can send an initialpose relative to it
+				tf.absoluteTransforms[msg.header.frame_id] = {
+					translation: {x: 0, y:0, z:0},
+					rotation: new Quaternion()
+				}
+				tf.frame_list.add("map");
+
+			}else{
+				status.setError("Required transform frame \""+msg.header.frame_id+"\" not found.");
+				return;
+			}
 		}
 
 		queueWorkerMsg(msg);
