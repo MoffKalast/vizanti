@@ -291,6 +291,50 @@ async function drawMarkers(){
 		}
 	}
 
+	function drawTriangleList2(marker, size) {
+		const points = marker.transformedPoints;
+		const colors = marker.colors;
+		const hasVertexColors = colors && colors.length === points.length;
+		const hasFaceColors = colors && colors.length === points.length / 3;
+		const globalAlpha = marker.color.a > 0 ? marker.color.a : 1.0;
+
+		for (let i = 0; i < points.length - 2; i += 3) {
+			const p0 = points[i], p1 = points[i + 1], p2 = points[i + 2];
+
+			if (hasVertexColors) {
+				const c = colors[i];
+				ctx.fillStyle = `rgba(${Math.round(c.r*255)}, ${Math.round(c.g*255)}, ${Math.round(c.b*255)}, ${globalAlpha * c.a})`;
+			} else if (hasFaceColors) {
+				const c = colors[i / 3];
+				ctx.fillStyle = `rgba(${Math.round(c.r*255)}, ${Math.round(c.g*255)}, ${Math.round(c.b*255)}, ${globalAlpha * c.a})`;
+			} else {
+				ctx.fillStyle = rgbaToFillColor(marker.color);
+			}
+
+			ctx.beginPath();
+			ctx.moveTo(p0.x * size, -p0.y * size);
+			ctx.lineTo(p1.x * size, -p1.y * size);
+			ctx.lineTo(p2.x * size, -p2.y * size);
+			ctx.closePath();
+			ctx.fill();
+		}
+	}
+
+	function drawTriangleList(marker, size) {
+		const tris = marker.triangles;
+		if (!tris) return;
+
+		for (const tri of tris) {
+			ctx.fillStyle = tri.color;
+
+			ctx.beginPath();
+			ctx.moveTo(tri.p0.x * size, -tri.p0.y * size);
+			ctx.lineTo(tri.p1.x * size, -tri.p1.y * size);
+			ctx.lineTo(tri.p2.x * size, -tri.p2.y * size);
+			ctx.closePath();
+			ctx.fill();
+		}
+	}
 
 
 	const unit = view.getMapUnitsInPixels(1.0);
@@ -313,9 +357,11 @@ async function drawMarkers(){
 		if(!frame)
 			continue;
 
-		//skip old markers
-		if((current_time - marker.stamp) / 1000.0 > marker.lifetime.sec + marker.lifetime.nanosec*1e-9)
-			continue;
+
+		//skip old markers (only if lifetime is not 0/infinite)
+        const isInfiniteLifetime = marker.lifetime.sec === 0 && marker.lifetime.nanosec === 0;
+        if (!isInfiniteLifetime && (current_time - marker.stamp) / 1000.0 > marker.lifetime.sec + marker.lifetime.nanosec * 1e-9)
+            continue;
 
 		const pos = view.fixedToScreen({
 			x: marker.transformed.translation.x,
@@ -338,7 +384,7 @@ async function drawMarkers(){
 			case 8: status.setWarn("POINTS markers are not supported yet."); break; //POINTS=8
 			case 9: drawText(marker, unit); break;//TEXT_VIEW_FACING=9
 			case 10: status.setWarn("MESH_RESOURCE markers are not supported yet."); break; //MESH_RESOURCE=10
-			case 11: status.setWarn("TRIANGLE_LIST markers are not supported yet."); break; //TRIANGLE_LIST=11
+			case 11: ctx.setTransform(1, 0, 0, 1, pos.x, pos.y); drawTriangleList(marker, unit); break; //TRIANGLE_LIST=11
 		}
 	}
 }
@@ -399,6 +445,71 @@ function connect(){
 				m.pose.position, 
 				m.pose.orientation
 			);
+
+			//preprocess triangle_lists for correct 3D rotation and colour
+			if (m.type === 11 && m.points && m.points.length > 0) {
+				const {x, y, z, w} = m.transformed.rotation;
+
+				//rotate and scale matrix
+				const r00 = 1 - 2*(y*y + z*z);
+				const r01 = 2*(x*y - w*z);
+				const r02 = 2*(x*z + w*y);
+				const r10 = 2*(x*y + w*z);
+				const r11 = 1 - 2*(x*x + z*z);
+				const r12 = 2*(y*z - w*x);
+				const r20 = 2*(x*z - w*y);
+				const r21 = 2*(y*z + w*x);
+				const r22 = 1 - 2*(x*x + y*y);
+
+				const hasVertexColors = m.colors && m.colors.length === m.points.length;
+				const hasFaceColors = m.colors && m.colors.length === m.points.length / 3;
+				const globalAlpha = m.color.a > 0 ? m.color.a : 1.0;
+
+				const triangles = [];
+				for (let i = 0; i < m.points.length - 2; i += 3) {
+					const pts = [];
+
+					for (let j = 0; j < 3; j++) {
+						const p = m.points[i + j];
+
+						const sx = p.x * m.scale.x;
+						const sy = p.y * m.scale.y;
+						const sz = p.z * m.scale.z;
+
+						const rx = r00*sx + r01*sy + r02*sz;
+						const ry = r10*sx + r11*sy + r12*sz;
+						const rz = r20*sx + r21*sy + r22*sz;
+
+						pts.push({ x: rx, y: ry, z: rz });
+					}
+
+					const avgZ = (pts[0].z + pts[1].z + pts[2].z) / 3;
+
+					let color;
+					if (hasVertexColors) {
+						const c = m.colors[i];
+						color = `rgba(${Math.round(c.r*255)}, ${Math.round(c.g*255)}, ${Math.round(c.b*255)}, ${globalAlpha * c.a})`;
+					}else if (hasFaceColors) {
+						const c = m.colors[i / 3];
+						color = `rgba(${Math.round(c.r*255)}, ${Math.round(c.g*255)}, ${Math.round(c.b*255)}, ${globalAlpha * c.a})`;
+					}else {
+						color = rgbaToFillColor(m.color);
+					}
+
+					triangles.push({
+						p0: pts[0],
+						p1: pts[1],
+						p2: pts[2],
+						avgZ,
+						color
+					});
+				}
+
+				// Z sorting (back → front)
+				triangles.sort((a, b) => a.avgZ - b.avgZ);
+
+				m.triangles = triangles;
+			}
 
 			m.stamp = new Date();	
 			markers[id] = m;
