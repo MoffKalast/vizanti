@@ -461,6 +461,14 @@ object {
 }
 
 
+.param_toggle_label {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 3px 5px;
+	border-radius: 3px;
+}
+
 /* Input box */
 
 input[type=color] {

@@ -34,11 +34,36 @@ throttle.addEventListener("input", (event) =>{
 	connect();
 });
 
+const opacitySlider = document.getElementById('{uniqueID}_opacity');
+const opacityValue = document.getElementById('{uniqueID}_opacity_value');
+
+function setOpacityText(val){
+	if(val == 0.0)
+		opacityValue.textContent = "0.0 (Marker rendering disabled)";
+	else
+		opacityValue.textContent = val;
+}
+
+opacitySlider.addEventListener('input', () =>  {
+	setOpacityText(opacitySlider.value);
+	saveSettings();
+	drawMarkers();
+});
+
+const namespaceDiv = document.getElementById('{uniqueID}_namespace');
+let disabled_namespaces = new Set();
+
 //Settings
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
 	throttle.value = loaded_data.throttle ?? 100;
+
+	opacitySlider.value = loaded_data.opacity ?? 1.0;
+	setOpacityText(loaded_data.opacity);
+
+	disabled_namespaces = new Set(loaded_data.disabled_namespaces) ?? new Set();
+	updateNamespaceGUI();
 }else{
 	saveSettings();
 }
@@ -46,7 +71,9 @@ if(settings.hasOwnProperty("{uniqueID}")){
 function saveSettings(){
 	settings["{uniqueID}"] = {
 		topic: topic,
-		throttle: throttle.value
+		throttle: throttle.value,
+		opacity: opacitySlider.value,
+		disabled_namespaces: [...disabled_namespaces]
 	}
 	settings.save();
 }
@@ -291,35 +318,6 @@ async function drawMarkers(){
 		}
 	}
 
-	function drawTriangleList2(marker, size) {
-		const points = marker.transformedPoints;
-		const colors = marker.colors;
-		const hasVertexColors = colors && colors.length === points.length;
-		const hasFaceColors = colors && colors.length === points.length / 3;
-		const globalAlpha = marker.color.a > 0 ? marker.color.a : 1.0;
-
-		for (let i = 0; i < points.length - 2; i += 3) {
-			const p0 = points[i], p1 = points[i + 1], p2 = points[i + 2];
-
-			if (hasVertexColors) {
-				const c = colors[i];
-				ctx.fillStyle = `rgba(${Math.round(c.r*255)}, ${Math.round(c.g*255)}, ${Math.round(c.b*255)}, ${globalAlpha * c.a})`;
-			} else if (hasFaceColors) {
-				const c = colors[i / 3];
-				ctx.fillStyle = `rgba(${Math.round(c.r*255)}, ${Math.round(c.g*255)}, ${Math.round(c.b*255)}, ${globalAlpha * c.a})`;
-			} else {
-				ctx.fillStyle = rgbaToFillColor(marker.color);
-			}
-
-			ctx.beginPath();
-			ctx.moveTo(p0.x * size, -p0.y * size);
-			ctx.lineTo(p1.x * size, -p1.y * size);
-			ctx.lineTo(p2.x * size, -p2.y * size);
-			ctx.closePath();
-			ctx.fill();
-		}
-	}
-
 	function drawTriangleList(marker, size) {
 		const tris = marker.triangles;
 		if (!tris || tris.length === 0) return;
@@ -362,10 +360,21 @@ async function drawMarkers(){
 	ctx.setTransform(1,0,0,1,0,0);
 	ctx.clearRect(0, 0, wid, hei);
 
+	ctx.globalAlpha = opacitySlider.value;
+
+	if(opacitySlider.value == 0.0){
+		return;
+	}
+
+
 	let current_time = new Date();
 
 	for (const key of z_sorted_keys) {
 		const marker = markers[key];
+		const ns = marker.ns || '';
+
+		if (disabled_namespaces.has(ns))
+			continue;
 		
 		ctx.fillStyle = rgbaToFillColor(marker.color);
 
@@ -559,6 +568,37 @@ function connect(){
 	});
 
 	saveSettings();
+	updateNamespaceGUI();
+}
+
+function updateNamespaceGUI() {
+	const seen = new Set(Object.values(markers).map(m => m.ns || ''));
+
+	namespaceDiv.innerHTML = '';
+	for (const ns of [...seen].sort()) {
+		const label = ns === '' ? 'No namespace' : ns;
+		const checkbox = document.createElement('input');
+		checkbox.type = 'checkbox';
+		checkbox.id = `{uniqueID}_ns_${ns}`;
+		checkbox.checked = !disabled_namespaces.has(ns);
+		checkbox.addEventListener('change', (e) => {
+			if (e.target.checked)
+				disabled_namespaces.delete(ns);
+			else
+				disabled_namespaces.add(ns);
+			saveSettings();
+			drawMarkers();
+		});
+		const labelEl = document.createElement('label');
+		labelEl.htmlFor = checkbox.id;
+		labelEl.textContent = ` ${label}`;
+		const div = document.createElement('div');
+		div.classList.add('tf_label');
+		div.appendChild(checkbox);
+		div.appendChild(labelEl);
+		div.classList.add('param_toggle_label');
+		namespaceDiv.appendChild(div);
+	}
 }
 
 async function loadTopics(){
@@ -597,6 +637,7 @@ selectionbox.addEventListener("click", (event) => {
 
 icon.addEventListener("click", (event) => {
 	loadTopics();
+	updateNamespaceGUI();
 });
 
 loadTopics();
