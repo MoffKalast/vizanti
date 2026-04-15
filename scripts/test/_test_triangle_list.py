@@ -52,7 +52,7 @@ class TriangleListTestPublisher:
         marker1 = Marker()
         marker1.header.frame_id = "map"
         marker1.header.stamp = now
-        marker1.ns = "triangle_list_test"
+        marker1.ns = "square marker"
         marker1.id = 1
         marker1.type = Marker.TRIANGLE_LIST
         marker1.action = Marker.ADD
@@ -78,7 +78,7 @@ class TriangleListTestPublisher:
         marker2 = Marker()
         marker2.header.frame_id = "map"
         marker2.header.stamp = now
-        marker2.ns = "triangle_list_test"
+        marker2.ns = "fan marker"
         marker2.id = 2
         marker2.type = Marker.TRIANGLE_LIST
         marker2.action = Marker.ADD
@@ -134,7 +134,7 @@ class TriangleListTestPublisher:
         marker3 = Marker()
         marker3.header.frame_id = "map"
         marker3.header.stamp = now
-        marker3.ns = "triangle_list_test"
+        marker3.ns = "pyramid thing"
         marker3.id = 3
         marker3.type = Marker.TRIANGLE_LIST
         marker3.action = Marker.ADD
@@ -173,7 +173,7 @@ class TriangleListTestPublisher:
         marker4 = Marker()
         marker4.header.frame_id = "map"
         marker4.header.stamp = now
-        marker4.ns = "triangle_list_test"
+        marker4.ns = ""
         marker4.id = 4
         marker4.type = Marker.TRIANGLE_LIST
         marker4.action = Marker.ADD
