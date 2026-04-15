@@ -16,10 +16,10 @@ def euler_to_quaternion(roll, pitch, yaw):
     sr = math.sin(roll * 0.5)
 
     return (
-        sr * cp * cy,
-        cr * sp * cy + sr * cp * sy,
-        cr * cp * sy - sr * sp * cy,
-        cr * cp * cy + sr * sp * sy,
+        sr * cp * cy - cr * sp * sy,  # x
+        cr * sp * cy + sr * cp * sy,  # y
+        cr * cp * sy - sr * sp * cy,  # z
+        cr * cp * cy + sr * sp * sy,  # w
     )
 
 
@@ -28,12 +28,7 @@ class TriangleListTestPublisher:
         rospy.init_node("triangle_list_test_publisher")
 
         # ROS1 equivalent of TRANSIENT_LOCAL
-        self.pub = rospy.Publisher(
-            "/test_triangle_list",
-            MarkerArray,
-            queue_size=1,
-            latch=True,
-        )
+        self.pub = rospy.Publisher("/test_triangle_list", MarkerArray, queue_size=1, latch=True)
 
         self.angle = 0.0
         self.angular_speed = 0.8
