@@ -322,8 +322,25 @@ async function drawMarkers(){
 
 	function drawTriangleList(marker, size) {
 		const tris = marker.triangles;
-		if (!tris) return;
+		if (!tris || tris.length === 0) return;
 
+		// Fast path: single color
+		if (marker.trianglesUniformColor) {
+			ctx.fillStyle = marker.triangles[0].color;
+			ctx.beginPath();
+
+			for (const tri of tris) {
+				ctx.moveTo(tri.p0.x * size, -tri.p0.y * size);
+				ctx.lineTo(tri.p1.x * size, -tri.p1.y * size);
+				ctx.lineTo(tri.p2.x * size, -tri.p2.y * size);
+				ctx.closePath();
+			}
+
+			ctx.fill();
+			return;
+		}
+
+		// Fallback: per-triangle color
 		for (const tri of tris) {
 			ctx.fillStyle = tri.color;
 
@@ -505,9 +522,23 @@ function connect(){
 					});
 				}
 
-				// Z sorting (back → front)
-				triangles.sort((a, b) => a.avgZ - b.avgZ);
+				//can we render the whole thing in one draw call?
+				let uniformColor = true;
+				let firstColor = triangles.length > 0 ? triangles[0].color : null;
 
+				for (let i = 1; i < triangles.length; i++) {
+					if (triangles[i].color !== firstColor) {
+						uniformColor = false;
+						break;
+					}
+				}
+
+				// Z sorting (back → front), only if there's different colours
+				if (!uniformColor){
+					triangles.sort((a, b) => a.avgZ - b.avgZ);
+				}
+
+				m.isUniformColor = uniformColor;
 				m.triangles = triangles;
 			}
 
