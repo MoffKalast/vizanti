@@ -327,6 +327,10 @@ async function drawMarkers(){
 			ctx.strokeText(lines[i], 0, y);
 			ctx.fillText(lines[i], 0, y);
 		}
+
+		// Reset so miter calculation doesn't bug out for other marker types
+		ctx.lineJoin = 'miter';
+		ctx.miterLimit = 10;
 	}
 
 	function drawTriangleList(marker, size) {
