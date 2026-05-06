@@ -328,8 +328,9 @@ async function drawMarkers(){
 		}
 
 		// Reset so miter calculation doesn't bug out for other marker types
-		ctx.lineJoin = 'miter';
-		ctx.miterLimit = 10;
+		ctx.lineWidth = 1;                   // Default line width
+		ctx.lineJoin = 'miter';              // Default line join
+		ctx.miterLimit = 10;                 // Default miter limit
 	}
 
 	function drawTriangleList(marker, size) {
