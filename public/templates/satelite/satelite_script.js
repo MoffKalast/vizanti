@@ -85,6 +85,17 @@ tileServerString.addEventListener('blur', function () {
     }
 });
 
+let drawPending = false;
+function scheduleDraw() {
+    if (!drawPending) {
+        drawPending = true;
+        requestAnimationFrame(() => {
+            drawPending = false;
+            drawTiles();
+        });
+    }
+}
+
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
 ctx.clip = function(){};
@@ -121,53 +132,58 @@ function saveSettings(){
 	settings.save();
 }
 
-function drawTile(screenSize, i, j, tempMeterSize, tempZoomLevel, maxtile){
+function findParentTile(x, y, z, maxLevelsUp = 4) {
+	for (let dz = 1; dz <= maxLevelsUp && (z - dz) >= 0; dz++) {
+		const parentX = x >> dz;
+		const parentY = y >> dz;
+		const parentURL = server_url.replace("{z}", z - dz).replace("{x}", parentX).replace("{y}", parentY);
+		const parentImage = navsat.live_cache[parentURL];
+		if (parentImage && parentImage.complete) {
+			const regionSize = navsat.tile_size >> dz; // size of our tile's region within the parent
+			const srcX = (x % (1 << dz)) * regionSize;
+			const srcY = (y % (1 << dz)) * regionSize;
+			return { image: parentImage, srcX, srcY, srcSize: regionSize };
+		}
+	}
+	return null;
+}
 
-	//wrap around the date line
+function drawTile(screenSize, i, j, tempMeterSize, tempZoomLevel, maxtile) {
 	const x = (fix_data.tilePos.x + i + maxtile + 1) % (maxtile + 1);
 	const y = (fix_data.tilePos.y + j + maxtile + 1) % (maxtile + 1);
 
 	const offsetX = fix_data.offset.x - i * tempMeterSize;
 	const offsetY = fix_data.offset.y - j * tempMeterSize;
 
-	const tileURL = server_url.replace("{z}",tempZoomLevel).replace("{x}",x).replace("{y}",y);
+	const tileURL = server_url.replace("{z}", tempZoomLevel).replace("{x}", x).replace("{y}", y);
 	let tileImage = navsat.live_cache[tileURL];
+	let parentCrop = null;
 
-	if(!tileImage || !tileImage.complete){
-		tileImage = placeholder;
+	if (!tileImage || !tileImage.complete) {
 		navsat.enqueue(tileURL);
+		parentCrop = findParentTile(x, y, tempZoomLevel);
+		if (!parentCrop)
+			tileImage = placeholder;
 	}
 
-	let transformed = undefined;
-
-	if(!ignoreRotationCheckbox.checked){
-		transformed = tf.transformPose(
-			map_fix.header.frame_id,
-			tf.fixed_frame,
-			{x: -offsetX, y: offsetY, z: 0},
-			new Quaternion()
-		);
-	}else{
-		transformed = tf.transformPose(
-			map_fix.header.frame_id,
-			tf.fixed_frame,
-			{x: 0, y: 0, z: 0},
-			new Quaternion()
-		);
-
+	let transformed;
+	if (!ignoreRotationCheckbox.checked) {
+		transformed = tf.transformPose(map_fix.header.frame_id, tf.fixed_frame, {x: -offsetX, y: offsetY, z: 0}, new Quaternion());
+	} else {
+		transformed = tf.transformPose(map_fix.header.frame_id, tf.fixed_frame, {x: 0, y: 0, z: 0}, new Quaternion());
 		transformed.translation.x -= offsetX;
 		transformed.translation.y += offsetY;
-		transformed.rotation = Quaternion()
+		transformed.rotation = new Quaternion();
 	}
 
-	const pos = view.fixedToScreen({
-		x: transformed.translation.x,
-		y: transformed.translation.y,
-	});
-
+	const pos = view.fixedToScreen({x: transformed.translation.x, y: transformed.translation.y});
 	const matrix = view.quaterionToProjectionMatrix(transformed.rotation);
 	ctx.setTransform(matrix[0], matrix[1], matrix[2], matrix[3], pos.x, pos.y);
-	ctx.drawImage(tileImage, 0, 0, screenSize, screenSize);
+
+	if (parentCrop)
+		ctx.drawImage(parentCrop.image, parentCrop.srcX, parentCrop.srcY, parentCrop.srcSize, parentCrop.srcSize, 0, 0, screenSize, screenSize);
+	else
+		ctx.drawImage(tileImage, 0, 0, screenSize, screenSize);
 }
 
 function clamp(val, from, to){
@@ -420,18 +436,18 @@ loadTopics();
 function resizeScreen(){
 	canvas.height = window.innerHeight;
 	canvas.width = window.innerWidth;
-	drawTiles();
+	scheduleDraw();
 }
 
-window.addEventListener("navsat_tilecache_updated", drawTiles);
-window.addEventListener("tf_fixed_frame_changed", drawTiles);
+window.addEventListener("navsat_tilecache_updated", scheduleDraw);
+window.addEventListener("tf_fixed_frame_changed", scheduleDraw);
 window.addEventListener("tf_changed", ()=>{
 	if(map_fix && map_fix.header.frame_id != tf.fixed_frame){
-		drawTiles();
+		scheduleDraw();
 	}
 });
 
-window.addEventListener("view_changed", drawTiles);
+window.addEventListener("view_changed", scheduleDraw);
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);
 

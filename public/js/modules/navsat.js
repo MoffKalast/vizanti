@@ -62,76 +62,92 @@ export class Navsat {
 		this.download_queue = new Set();
 		this.currently_downloading = new Set();
 
-		this.loadingloop = async ()=>{
+		this.MAX_CONCURRENT_DOWNLOADS = 6;
+		this.loopRunning = false;
 
-			let items = Array.from(this.queue);
-			for(let tile_url of items){
-				
-				//we already got it?
-				if(this.live_cache[tile_url] !== undefined){
-					this.queue.delete(tile_url);
-					continue;
+		this.kickLoadLoop = async () => {
+			if (this.loopRunning)
+				return;
+
+			this.loopRunning = true;
+			while (this.queue.size > 0 || this.download_queue.size > 0) {
+
+				if (this.queue.size > 0) {
+					const dbChecks = Array.from(this.queue).map(async (tile_url) => {
+						if (this.live_cache[tile_url] !== undefined) {
+							this.queue.delete(tile_url);
+							return;
+						}
+						if (Boolean(await db.keyExists(tile_url))) {
+							const data = await db.getObject(tile_url);
+							this.live_cache[tile_url] = await dataToImage(data);
+							this.queue.delete(tile_url);
+							window.dispatchEvent(new Event("navsat_tilecache_updated"));
+							return;
+						}
+						this.download_queue.add(tile_url);
+						this.queue.delete(tile_url);
+					});
+					await Promise.all(dbChecks);
 				}
 
-				//check the indexed DB
-				if(Boolean(await db.keyExists(tile_url))){
-					const data = await db.getObject(tile_url);
-					this.live_cache[tile_url] = await dataToImage(data);
-					this.queue.delete(tile_url);
-					window.dispatchEvent(new Event("navsat_tilecache_updated"));
-					continue;
+				const slots = this.MAX_CONCURRENT_DOWNLOADS - this.currently_downloading.size;
+				if (slots > 0) {
+					const pending = Array.from(this.download_queue).filter(url => !this.currently_downloading.has(url)).slice(0, slots);
+					for (const tile_url of pending) {
+						this.currently_downloading.add(tile_url);
+						console.log(this.currently_downloading)
+						this.attemptDownload(tile_url);
+					}
 				}
 
-				//hit up the CDN
-				this.download_queue.add(tile_url);
+				// yield to the event loop between batches so we don't block rendering
+				await new Promise(resolve => setTimeout(resolve, 0));
 			}
 
-			setTimeout(this.loadingloop, 100);
-		}
-		this.loadingloop();
-
-		this.downloadingloop = async ()=>{
-
-			const attemptDownload = async (tile_url) => {
-				//download from tile server, in case there's no internet we don't hang forever
-				const timeout = new Promise(resolve => setTimeout(() => resolve(undefined), 4000));
-				const data = await Promise.race([imageToDataURL(tile_url), timeout]);
-			
-				if (data) {
-					await db.setObject(tile_url, data);
-					this.live_cache[tile_url] = await dataToImage(data);
-					this.download_queue.delete(tile_url);
-					window.dispatchEvent(new Event("navsat_tilecache_updated"));
-				}
-
-				this.currently_downloading.delete(tile_url);
-			}
-			
-			// Inside your loop
-			let items = Array.from(this.download_queue);
-			for (let tile_url of items) {
-				if(tile_url && !this.currently_downloading.has(tile_url)){
-					this.currently_downloading.add(tile_url);
-					attemptDownload(tile_url);
-				}
-			}
-			setTimeout(this.downloadingloop, 500);
-		}
-		this.downloadingloop();
+			this.loopRunning = false;
+		};
 	}
 
-	async enqueue(keyurl){
-		if(this.queue_history.has(keyurl))
+	async attemptDownload(tile_url, attempt = 0) {
+		const MAX_ATTEMPTS = 3;
+		const timeout = new Promise(resolve => setTimeout(() => resolve(undefined), 4000));
+		const data = await Promise.race([imageToDataURL(tile_url), timeout]);
+
+		if (data) {
+			await db.setObject(tile_url, data);
+			this.live_cache[tile_url] = await dataToImage(data);
+			this.download_queue.delete(tile_url);
+			this.currently_downloading.delete(tile_url);
+			window.dispatchEvent(new Event("navsat_tilecache_updated"));
+			return;
+		}
+
+		if (attempt < MAX_ATTEMPTS - 1) {
+			setTimeout(() => this.attemptDownload(tile_url, attempt + 1), 1000 * (attempt + 1));
+		} else {
+			// give up, remove from all queues so it can be re-enqueued next session or after clear
+			this.download_queue.delete(tile_url);
+			this.currently_downloading.delete(tile_url);
+			this.queue_history.delete(tile_url); // allow retry after zoom change
+		}
+	}
+
+
+	enqueue(keyurl) {
+		if (this.queue_history.has(keyurl))
 			return;
 
 		this.queue_history.add(keyurl);
 		this.queue.add(keyurl);
+		this.kickLoadLoop();
 	}
 
-	async clear_queue(keyurl){
+	clear_queue() {
 		this.queue = new Set();
 		this.queue_history = new Set();
 		this.download_queue = new Set();
+		this.currently_downloading = new Set();
 	}
 
 	//https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
