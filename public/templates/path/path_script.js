@@ -22,6 +22,10 @@ let path_topic = undefined;
 
 let pose_array = undefined;
 
+const text_frameid = document.getElementById("{uniqueID}_frame_text");
+const text_point_count = document.getElementById("{uniqueID}_points_text");
+const text_total_dist = document.getElementById("{uniqueID}_distance_text");
+
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const click_icon = document.getElementById("{uniqueID}_icon");
 const icon = click_icon.getElementsByTagName('object')[0];
@@ -42,11 +46,30 @@ throttle.addEventListener("input", (event) =>{
 	connect();
 });
 
+const opacitySlider = document.getElementById('{uniqueID}_opacity');
+const opacityValue = document.getElementById('{uniqueID}_opacity_value');
+
+function setOpacityText(val){
+	if(val == 0.0)
+		opacityValue.textContent = "0.0 (Path rendering disabled)";
+	else
+		opacityValue.textContent = val;
+}
+
+opacitySlider.addEventListener('input', () =>  {
+	setOpacityText(opacitySlider.value);
+	saveSettings();
+	drawPath();
+});
+
 
 //Settings
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
+
+	opacitySlider.value = loaded_data.opacity ?? 1.0;
+	setOpacityText(loaded_data.opacity);
 
 	colourpicker.value = loaded_data.color ?? "#54db67";
 	throttle.value = loaded_data.throttle ?? 100;
@@ -66,9 +89,32 @@ function saveSettings(){
 	settings["{uniqueID}"] = {
 		topic: topic,
 		color: colourpicker.value,
-		throttle: throttle.value	
+		throttle: throttle.value,
+		opacity: opacitySlider.value
 	}
 	settings.save();
+}
+
+function getDistance(posearray) {
+    if (!Array.isArray(posearray) || posearray.length < 2)
+		return 0;
+    
+    let dist = 0;
+    for (let i = 0; i < posearray.length - 1; i++) {
+        const pose1 = posearray[i]?.pose?.position;
+        const pose2 = posearray[i + 1]?.pose?.position;
+        
+        // Skip this pair if either point is missing
+        if (!pose1 || !pose2) continue;
+        
+        const dx = pose2.x - pose1.x;
+        const dy = pose2.y - pose1.y;
+        const dz = pose2.z - pose1.z;
+        
+        dist += Math.sqrt(dx * dx + dy * dy + dz * dz);
+    }
+    
+    return dist;
 }
 
 //Rendering
@@ -78,7 +124,9 @@ async function drawPath(){
     const hei = canvas.height;
 	ctx.clearRect(0, 0, wid, hei);
 
-	if(pose_array === undefined || pose_array.length < 2){
+	ctx.globalAlpha = opacitySlider.value;
+
+	if(pose_array === undefined || pose_array.length < 2 || opacitySlider.value == 0.0){
 		return false;
 	}
 
@@ -159,6 +207,21 @@ function connect(){
 				point.pose.orientation
 			));
 		});
+
+		text_frameid.innerText = "Frame: "+msg.header.frame_id;
+		text_point_count.innerText = "Points: "+msg.poses.length;
+
+		let dist = getDistance(msg.poses)
+
+		if(dist > 1000.0){
+			dist /= 1000.0
+			text_total_dist.innerText = "Distance: "+dist.toFixed(3)+" km";
+		}else if(dist < 1.0){
+			dist *= 100.0
+			text_total_dist.innerText = "Distance: "+dist.toFixed(1)+" cm";
+		}else{
+			text_total_dist.innerText = "Distance: "+dist.toFixed(2)+" m";
+		}
 
 		pose_array = newposes;
 		drawPath();
