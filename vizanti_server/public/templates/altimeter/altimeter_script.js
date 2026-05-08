@@ -23,7 +23,7 @@ let meters_smooth = 0;
 let target = NaN;
 
 let frame = "";
-let topic = getTopic("{uniqueID}");
+let topic = "";
 
 let float_topic = undefined;
 let listener = undefined;
@@ -96,7 +96,8 @@ function saveSettings(){
 function connect(){
 
 	if(topic == ""){
-		status.setWarn("Empty topic.");
+		target = NaN;
+		text_target.innerText = "Target: N/A";
 		return;
 	}
 
@@ -419,20 +420,17 @@ async function loadTopics(){
 
 	let topiclist = "";
 	result.forEach(element => {
-		topiclist += "<option value='"+element+"'>"+element+"</option>"
+		topiclist += "<option value='"+element+"'>"+element+"</option>";
 	});
+	topiclist += "<option value=''>(Disabled)</option>";
 	selectionbox.innerHTML = topiclist
 
-	if(topic == "")
-		topic = selectionbox.value;
-	else{
-		if(result.includes(topic)){
-			selectionbox.value = topic;
-		}else{
-			topiclist += "<option value='"+topic+"'>"+topic+"</option>"
-			selectionbox.innerHTML = topiclist
-			selectionbox.value = topic;
-		}
+	if(result.includes(topic) || topic == ""){
+		selectionbox.value = topic;
+	}else{
+		topiclist += "<option value='"+topic+"'>"+topic+"</option>"
+		selectionbox.innerHTML = topiclist
+		selectionbox.value = topic;
 	}
 
 	connect();
@@ -522,6 +520,9 @@ function onTargetStart(event) {
 }
 
 function onTargetEnd(event) {
+
+	if(topic == "")
+		return;
 
 	targeting_active = false;
 	document.removeEventListener('mouseup', onTargetEnd);
