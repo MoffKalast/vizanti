@@ -80,7 +80,6 @@ function saveSettings(){
 }
 
 
-
 //Rendering
 
 /* 
@@ -381,7 +380,6 @@ async function drawMarkers(){
 	if(opacitySlider.value == 0.0){
 		return;
 	}
-
 
 	let current_time = new Date();
 
