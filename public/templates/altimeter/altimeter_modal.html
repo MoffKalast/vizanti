@@ -14,7 +14,13 @@
 			<option value='base_link'>base_link</option>
 		</select>
 
-		<div class="spacer"></div>
+		<p>Displays the Z value of the frame on a depth/altitude gauge. Inverted modes treat negative values to positive.</p>
+
+		<div class="live_data_display">
+			<p id="{uniqueID}_altitude_text">Altitude: ?</p>
+			<p id="{uniqueID}_target_text">Target: N/A</p>
+		</div>
+
 
 		<label for="{uniqueID}_mode">Display Mode:</label>
 		<select id="{uniqueID}_mode" name="topic">
@@ -31,14 +37,7 @@
 
 		<div class="spacer"></div>
 
-		<div class="live_data_display">
-			<p id="{uniqueID}_altitude_text">Altitude: ?</p>
-			<p id="{uniqueID}_target_text">Target: N/A</p>
-		</div>
-
-		Displays the Z value of the frame on a depth/altitude gauge. Inverted modes treat negative values to positive.
-
-		<div class="spacer"></div>
+		<hr class="dark_hr"/>
 
 		<h4>Click Target</h4>
 
