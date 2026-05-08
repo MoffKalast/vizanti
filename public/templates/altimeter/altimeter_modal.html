@@ -40,18 +40,17 @@
 
 		<div class="spacer"></div>
 
-		<h4>Send Target</h4>
-
-		<div class="spacer"></div>
-
-		<label for="{uniqueID}_topic">Value Topic:</label>
-		<select id="{uniqueID}_topic" name="topic">
-			<option value="/depth_tgt">/depth_tgt</option>
-		</select>
+		<h4>Click Target</h4>
 
 		<p>Send a std_msgs/Float32 value to this topic.</p>
 
-		<p class="comment">Clicking the altimeter will mark the depth/alitude with a yellow flag and publish it. Or click the button below and input it manually.</p>
+		<p class="comment">If a topic is selected, then clicking the altimeter will mark the depth/alitude with a yellow flag and publish it.</p>
+
+		<label for="{uniqueID}_topic">Target topic:</label>
+		<select id="{uniqueID}_topic" name="topic">
+		</select>
+
+		<div class="spacer"></div>
 
 		<button id="{uniqueID}_manual_target" class="export_button">Input and send target manually</button>
 
