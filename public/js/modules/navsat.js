@@ -57,7 +57,6 @@ export class Navsat {
 		this.tile_size = 256;
 		this.live_cache = {};
 		this.queue = new Set();
-		this.queue_history = new Set();
 
 		this.download_queue = new Set();
 		this.currently_downloading = new Set();
@@ -96,7 +95,6 @@ export class Navsat {
 					const pending = Array.from(this.download_queue).filter(url => !this.currently_downloading.has(url)).slice(0, slots);
 					for (const tile_url of pending) {
 						this.currently_downloading.add(tile_url);
-						console.log(this.currently_downloading)
 						this.attemptDownload(tile_url);
 					}
 				}
@@ -126,26 +124,22 @@ export class Navsat {
 		if (attempt < MAX_ATTEMPTS - 1) {
 			setTimeout(() => this.attemptDownload(tile_url, attempt + 1), 1000 * (attempt + 1));
 		} else {
-			// give up, remove from all queues so it can be re-enqueued next session or after clear
+			// give up, remove from all queues so it can be re-enqueued
 			this.download_queue.delete(tile_url);
 			this.currently_downloading.delete(tile_url);
-			this.queue_history.delete(tile_url); // allow retry after zoom change
 		}
 	}
 
-
 	enqueue(keyurl) {
-		if (this.queue_history.has(keyurl))
+		if (this.live_cache[keyurl] !== undefined || this.queue.has(keyurl) || this.download_queue.has(keyurl) || this.currently_downloading.has(keyurl))
 			return;
 
-		this.queue_history.add(keyurl);
 		this.queue.add(keyurl);
 		this.kickLoadLoop();
 	}
 
 	clear_queue() {
 		this.queue = new Set();
-		this.queue_history = new Set();
 		this.download_queue = new Set();
 		this.currently_downloading = new Set();
 	}
@@ -207,6 +201,6 @@ export class Navsat {
 		const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
 		const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 		return R * c;
-	}	
+	}
 }
 export let navsat = new Navsat();
