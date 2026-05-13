@@ -9,10 +9,24 @@
 			<!-- add topics here-->
 		</select>
 
-		<div class="spacer"></div>
+		<p>Display a nav_msgs/Path.</p>
+
+		<div class="live_data_display">
+			<p id="{uniqueID}_frame_text">Frame: ?</p>
+			<p id="{uniqueID}_points_text">Points: ?</p>
+			<p id="{uniqueID}_distance_text">Distance: ?</p>
+		</div>
+
 
 		<label for="{uniqueID}_colorpicker">Colour:</label>
 		<input type="color" value="#54db67" id="{uniqueID}_colorpicker">
+
+		<div class="spacer"></div>
+		<div class="spacer"></div>
+
+		<label for="{uniqueID}_opacity">Opacity:</label>
+		<span id="{uniqueID}_opacity_value">1.0</span>
+		<input type="range" value="1.0" step="0.05" min="0.0" max="1.0" id="{uniqueID}_opacity">
 
 		<div class="spacer"></div>
 
@@ -20,8 +34,6 @@
 		<input type="number" value="100" step="1" min="0" max="10000" id="{uniqueID}_throttle">
 
 		<div class="spacer"></div>
-
-		<p>Display a nav_msgs/Path.</p>
 
 		<hr class="dark_hr"/>
 

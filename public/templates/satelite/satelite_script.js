@@ -179,8 +179,11 @@ function drawTile(screenSize, i, j, tempMeterSize, tempZoomLevel, maxtile) {
 	const matrix = view.quaterionToProjectionMatrix(transformed.rotation);
 	ctx.setTransform(matrix[0], matrix[1], matrix[2], matrix[3], pos.x, pos.y);
 
-	if (parentCrop)
+	if (parentCrop){
+		ctx.globalAlpha = opacitySlider.value * 0.8;
 		ctx.drawImage(parentCrop.image, parentCrop.srcX, parentCrop.srcY, parentCrop.srcSize, parentCrop.srcSize, 0, 0, screenSize, screenSize);
+		ctx.globalAlpha = opacitySlider.value;
+	}
 	else
 		ctx.drawImage(tileImage, 0, 0, screenSize, screenSize);
 }
