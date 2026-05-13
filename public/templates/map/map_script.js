@@ -223,9 +223,8 @@ async function drawMap(){
 	let tf_pose = map_data.pose;
 
 	if(!timestampCheckbox.checked){
-		tf_pose = tf.transformPose(
-			map_data.header.frame_id,
-			tf.fixed_frame,
+		tf_pose = tf.transformPoseStamped(
+			map_data.header,
 			map_data.info.origin.position,
 			map_data.info.origin.orientation
 		);
@@ -317,10 +316,9 @@ function connect(){
 }
 
 function queueWorkerMsg(msg){
-	msg.pose = tf.transformPose(
-		msg.header.frame_id,
-		tf.fixed_frame,
-		msg.info.origin.position,
+	msg.pose = tf.transformPoseStamped(
+		msg.header,
+		msg.info.origin.position, 
 		msg.info.origin.orientation
 	);
 

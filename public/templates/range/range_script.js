@@ -213,7 +213,7 @@ function connect(){
 			error = true;
 		}
 
-		const pose = tf.absoluteTransforms[msg.header.frame_id];
+		const pose = tf.getAbsoluteTransform(msg.header);
 
 		if(!pose){
 			status.setError("Required transform frame \""+msg.header.frame_id+"\" not found.");

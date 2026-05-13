@@ -96,7 +96,7 @@ export class Navsat {
 					const pending = Array.from(this.download_queue).filter(url => !this.currently_downloading.has(url)).slice(0, slots);
 					for (const tile_url of pending) {
 						this.currently_downloading.add(tile_url);
-						console.log(this.currently_downloading)
+						//console.log(this.currently_downloading)
 						this.attemptDownload(tile_url);
 					}
 				}

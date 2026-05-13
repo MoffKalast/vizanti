@@ -395,7 +395,7 @@ async function drawMarkers(){
 		
 		ctx.fillStyle = rgbaToFillColor(marker.color);
 
-		const frame = tf.absoluteTransforms[marker.header.frame_id];
+		const frame = tf.getAbsoluteTransform(marker.header);
 
 		if(!frame)
 			continue;
@@ -482,9 +482,8 @@ function connect(){
 				error = true;
 			}
 
-			m.transformed = tf.transformPose(
-				m.header.frame_id, 
-				tf.fixed_frame, 
+			m.transformed = tf.transformPoseStamped(
+				m.header,
 				m.pose.position, 
 				m.pose.orientation
 			);

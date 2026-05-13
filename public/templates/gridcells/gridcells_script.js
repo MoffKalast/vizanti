@@ -101,7 +101,7 @@ async function drawCells() {
 	ctx.globalAlpha = opacitySlider.value;
 	ctx.fillStyle = colourpicker.value;
 
-	let tf_pose = timestampCheckbox.checked ? data.pose : tf.absoluteTransforms[data.msg.header.frame_id];
+	let tf_pose = timestampCheckbox.checked ? data.pose : tf.getAbsoluteTransform(data.msg.header);
 
 	if(!tf_pose){
 		return;

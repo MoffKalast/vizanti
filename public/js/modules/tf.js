@@ -1,66 +1,53 @@
 import { rosbridge } from './rosbridge.js';
 
-/* class TimeStampedData {
-	constructor(maxLength) {
-		this.maxLength = maxLength;
-		this.data = [];
-		this.index = new Map();
+export function applyRotation(vector, r, inverse) {
+	if (inverse)
+		r = r.inverse();
+
+	const v = r.rotateVector([vector.x, vector.y, vector.z]);
+	return { x: v[0], y: v[1], z: v[2] };
+}
+
+// Fixed-size ring buffer storing { secs, nsecs, transform } entries per frame.
+// Oldest entry is overwritten once capacity is reached.
+class TransformRingBuffer {
+	constructor(capacity) {
+		this.capacity = capacity;
+		this.buf = new Array(capacity);
+		this.head = 0; // next write position
+		this.size = 0;
 	}
 
-	getKey({ secs, nsecs }) {
-		// Use the provided data structure to form a unique key
-		// The precision should be enough for up to 1ns resolution over approximately 285 years.
-		return secs * 1e9 + nsecs;
+	push(secs, nsecs, transform) {
+		this.buf[this.head] = { t: secs + nsecs * 1e-9, transform };
+		this.head = (this.head + 1) % this.capacity;
+		if (this.size < this.capacity) this.size++;
 	}
 
-	add(key, value) {
-		const timestampKey = this.getKey(key);
+	// Returns the transform whose timestamp is closest to the given stamp.
+	// Falls back to the most recently pushed entry if called with no arguments.
+	// Full scan (no early exit) handles non-monotonic clocks (e.g. rosbag restart).
+	nearest(secs, nsecs) {
+		if (this.size === 0) return null;
 
-		// If we're at maximum capacity, remove the oldest item
-		if (this.data.length >= this.maxLength) {
-			const oldestKey = this.getKey(this.data[0].key);
-			this.index.delete(oldestKey);
-			this.data.shift();
+		const latest = (this.head - 1 + this.capacity) % this.capacity;
+
+		if (secs == null || nsecs == null) return this.buf[latest].transform;
+
+		const target = secs + nsecs * 1e-9;
+		let bestIdx = latest;
+		let bestDist = Infinity;
+
+		for (let i = 0; i < this.size; i++) {
+			const idx = (this.head - 1 - i + this.capacity) % this.capacity;
+			const dist = Math.abs(this.buf[idx].t - target);
+			if (dist < bestDist) {
+				bestDist = dist;
+				bestIdx = idx;
+			}
 		}
 
-		// Add the new item
-		this.data.push({ key, value });
-		this.index.set(timestampKey, value);
-	}
-
-	get(key) {
-		const timestampKey = this.getKey(key);
-		return this.index.get(timestampKey);
-	}
-
-	find(key) {
-		const timestampKey = this.getKey(key);
-		const keys = Array.from(this.index.keys());
-
-		console.log("Find: ",timestampKey," in ",keys);
-
-		// Find the key closest to the input timestamp
-		const closestKey = keys.reduce((prev, curr) => {
-			return (Math.abs(curr - timestampKey) < Math.abs(prev - timestampKey) ? curr : prev);
-		});
-		return this.index.get(closestKey);
-	}
-} */
-
-export function applyRotation(vector, r, inverse){
-	if(inverse)
-		r = r.inverse();
-		
-	const v = r.rotateVector([
-		vector.x,
-		vector.y,
-		vector.z
-	]);
-
-	return {
-		x: v[0],
-		y: v[1],
-		z: v[2]
+		return this.buf[bestIdx].transform;
 	}
 }
 
@@ -70,7 +57,7 @@ export class TF {
 
 		this.transforms = {};
 		this.absoluteTransforms = {};
-		//this.absoluteTransformsHistory = new TimeStampedData(20);
+		this.absoluteTransformBuffers = {};
 		this.frame_list = new Set();
 		this.frame_timestamps = {};
 		this.frame_headerstamps = {};
@@ -84,17 +71,14 @@ export class TF {
 		});
 
 		this.tf_listener = this.tf_topic.subscribe((msg) => {
-
-			//local timestamping for removing inactive frames
 			const time_stamp = new Date();
 			msg.transforms.forEach((pose) => {
 				this.frame_timestamps[pose.child_frame_id] = time_stamp;
 				this.frame_timestamps[pose.header.frame_id] = time_stamp;
-				this.updateFrameTimestamp(pose.child_frame_id,pose.header.stamp);
-			})
+				this.updateFrameTimestamp(pose.child_frame_id, pose.header.stamp);
+			});
 
 			this.updateTransforms(msg.transforms);
-			//this.absoluteTransformsHistory.add(msg.transforms[0].header.stamp, this.absoluteTransforms);
 		});
 
 		this.tf_static_topic = new ROSLIB.Topic({
@@ -110,98 +94,43 @@ export class TF {
 
 		this.event_timestamp = performance.now();
 
-		window.addEventListener("view_changed", ()=> {
+		window.addEventListener("view_changed", () => {
 			this.event_timestamp = performance.now();
 		});
 
-		//removing inactive TF frames
-		setInterval(()=>{
-			const now = new Date()
+		setInterval(() => {
+			const now = new Date();
 			let deleted_anything = false;
 			for (const [frame_id, time_stamp] of Object.entries(this.frame_timestamps)) {
-				if(now - time_stamp > 1000 * 100){
+				if (now - time_stamp > 1000 * 100) {
 					this.frame_list.delete(frame_id);
 					delete this.transforms[frame_id];
 					delete this.absoluteTransforms[frame_id];
+					delete this.absoluteTransformBuffers[frame_id];
 					delete this.frame_headerstamps[frame_id];
+					delete this.frame_timestamps[frame_id];
 					deleted_anything = true;
 				}
 			}
 
-			if(deleted_anything){
+			if (deleted_anything)
 				window.dispatchEvent(new Event("tf_changed"));
-			}
-		},5000)
+		}, 5000);
 	}
 
-	updateFrameTimestamp(frame_id, stamp){
+	updateFrameTimestamp(frame_id, stamp) {
 		this.frame_headerstamps[frame_id] = stamp;
 
-		//update all child frames that were moved as well
 		for (const frame in this.transforms) {
 			if (this.transforms[frame].parent === frame_id) {
-				this.frame_headerstamps[frame] = stamp; //we assume that the frame we just got is newer than what we already have
+				this.frame_headerstamps[frame] = stamp;
 				this.updateFrameTimestamp(frame, stamp);
 			}
 		}
 	}
 
-
-	/* interpolateTransforms() {
-		if (this.lastReceivedTransforms !== null && this.previousTransforms !== null && performance.now() - this.lastReceivedTime > 15) {
-			const prevdelta = (this.lastReceivedTime - this.previousTime) / 1000;
-			let delta = ((performance.now() - this.lastReceivedTime) / 1000) / prevdelta;
-
-			console.log("interpolation")
-
-			delta *= 0.005;
-
-			const transformsMap = new Map();
-			this.previousTransforms.forEach(transform => {
-				transformsMap.set(transform.child_frame_id, { previous: transform });
-			});
-	
-			this.lastReceivedTransforms.forEach(transform => {
-				if (transformsMap.has(transform.child_frame_id)) {
-					transformsMap.get(transform.child_frame_id).current = transform;
-				}
-			});
-	
-			const interpolatedTransforms = [];
-	
-			transformsMap.forEach(({ previous, current }, child_frame_id) => {
-				if (current) {
-					const positionDelta = {
-						x: current.transform.translation.x - previous.transform.translation.x,
-						y: current.transform.translation.y - previous.transform.translation.y
-					};
-					const velocity = {
-						x: positionDelta.x * delta,
-						y: positionDelta.y * delta,
-					};
-
-					const interpolatedTransform = {
-						child_frame_id: child_frame_id,
-						header: current.header,
-						transform: {
-							translation: {
-								x: current.transform.translation.x + velocity.x,
-								y: current.transform.translation.y + velocity.y,
-								z: current.transform.translation.z
-							},
-							rotation: current.transform.rotation
-						}
-					};
-					interpolatedTransforms.push(interpolatedTransform);
-				}
-			});
-	
-			this.updateTransforms(interpolatedTransforms);
-		}
-	} */
-
-	async sendUpdateEvent(){
-		if(performance.now() - this.event_timestamp > 12){
+	sendUpdateEvent() {
+		if (performance.now() - this.event_timestamp > 12) {
 			window.dispatchEvent(new Event("tf_changed"));
 			this.event_timestamp = performance.now();
 		}
@@ -209,39 +138,34 @@ export class TF {
 
 	getPathToRoot(frame) {
 		const currentFrame = this.transforms[frame];
-		if (!currentFrame) {
-			return [frame];
-		}
-		if (!currentFrame.parent) {
-			return [frame];
-		}
+		if (!currentFrame) return [frame];
+		if (!currentFrame.parent) return [frame];
 		return [frame].concat(this.getPathToRoot(currentFrame.parent));
 	}
-	
+
 	findPath(startFrame, endFrame) {
 		const p = this.getPathToRoot(startFrame);
 		const q = this.getPathToRoot(endFrame);
-	
+
 		let common = null;
 		while (p.length > 0 && q.length > 0 && p[p.length - 1] === q[q.length - 1]) {
 			common = p.pop();
 			q.pop();
 		}
-	
+
+		if (common === null) return null;
 		return p.concat(common, q.reverse());
 	}
 
 	updateTransforms(newtransforms) {
 		newtransforms.forEach((pose) => {
-
 			const childFrameId = pose.child_frame_id;
 			const parentFrameId = pose.header.frame_id;
 
 			this.frame_list.add(childFrameId);
 			this.frame_list.add(parentFrameId);
-
 			this.frame_list = new Set([...this.frame_list].sort());
-	
+
 			this.transforms[childFrameId] = {
 				translation: pose.transform.translation,
 				rotation: new Quaternion(
@@ -260,69 +184,98 @@ export class TF {
 
 	setFixedFrame(newframe) {
 		this.fixed_frame = newframe;
+		this.absoluteTransformBuffers = {};
 		this.recalculateAbsoluteTransforms();
 		window.dispatchEvent(new Event("tf_fixed_frame_changed"));
 	}
 
 	recalculateAbsoluteTransforms() {
 		for (const key of this.frame_list.values()) {
-			this.absoluteTransforms[key] = this.transformPose(key, this.fixed_frame, {x: 0, y:0, z:0}, new Quaternion());
+			const transform = this.transformPose(key, this.fixed_frame, { x: 0, y: 0, z: 0 }, new Quaternion());
+			this.absoluteTransforms[key] = transform;
+
+			if (!this.absoluteTransformBuffers[key])
+				this.absoluteTransformBuffers[key] = new TransformRingBuffer(16);
+
+			const stamp = this.frame_headerstamps[key];
+			if (stamp)
+				this.absoluteTransformBuffers[key].push(stamp.secs, stamp.nsecs, transform);
 		}
 	}
 
-	getZeroFrame(){
+	getZeroFrame() {
 		return {
-			translation:{x: 0, y:0, z:0},
+			translation: { x: 0, y: 0, z: 0 },
 			rotation: new Quaternion()
-		}
+		};
+	}
+
+	getAbsoluteTransform(header) {
+		const buf = this.absoluteTransformBuffers[header.frame_id];
+		if (!buf)
+			return this.absoluteTransforms[header.frame_id];
+		return buf.nearest(header.stamp?.secs, header.stamp?.nsecs) ?? this.absoluteTransforms[header.frame_id];
+	}
+
+	// Timestamp-aware drop-in for transformPose(frame, fixed_frame, position, orientation).
+	// Applies the offset pose on top of the buffered absolute transform for header.frame_id.
+	transformPoseStamped(header, position, orientation) {
+		const abs = this.getAbsoluteTransform(header);
+		if (!abs)
+			return null;
+
+		const inputQuat = new Quaternion(orientation);
+
+		// Rotate the local offset into fixed-frame space, then add the frame's fixed-frame origin.
+		const rotated = applyRotation(position, abs.rotation, false);
+		return {
+			translation: {
+				x: abs.translation.x + rotated.x,
+				y: abs.translation.y + rotated.y,
+				z: abs.translation.z + rotated.z
+			},
+			rotation: abs.rotation.mul(inputQuat)
+		};
 	}
 
 	transformPose(sourceFrame, targetFrame, inputVector, inputQuat) {
-
 		let outputVector = Object.assign({}, inputVector);
 		let outputQuat = new Quaternion(inputQuat);
 
-		if(sourceFrame == targetFrame){
-			return {
-				translation: outputVector,
-				rotation: outputQuat
-			};
-		}
+		if (sourceFrame == targetFrame)
+			return { translation: outputVector, rotation: outputQuat };
 
 		const path = this.findPath(sourceFrame, targetFrame);
+
+		if (!path) return null;
 
 		for (let i = 0; i < path.length - 1; i++) {
 			let source = this.transforms[path[i]];
 
-			if(!source)
+			if (!source)
 				source = this.getZeroFrame();
 
-			if(source.parent == path[i+1]){
+			if (source.parent == path[i + 1]) {
 				outputQuat = source.rotation.mul(outputQuat);
-	
 				outputVector = applyRotation(outputVector, source.rotation, false);
 				outputVector.x += source.translation.x;
 				outputVector.y += source.translation.y;
 				outputVector.z += source.translation.z;
-			}else{
-				source = this.transforms[path[i+1]];
+			} else {
+				source = this.transforms[path[i + 1]];
 
-				if(!source)
+				if (!source)
 					source = this.getZeroFrame();
 
 				outputQuat = source.rotation.inverse().mul(outputQuat);
-	
 				outputVector.x -= source.translation.x;
 				outputVector.y -= source.translation.y;
 				outputVector.z -= source.translation.z;
 				outputVector = applyRotation(outputVector, source.rotation, true);
 			}
 		}
-	
-		return {
-			translation: outputVector,
-			rotation: outputQuat
-		};
+
+		return { translation: outputVector, rotation: outputQuat };
 	}
 
 	getTimeStampDelta(timestamp1, timestamp2) {
