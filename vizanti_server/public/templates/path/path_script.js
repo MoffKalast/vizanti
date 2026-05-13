@@ -192,18 +192,15 @@ function connect(){
 				point.header.frame_id = tf.fixed_frame;
 				error = true;
 			}
-
-			const frame = tf.absoluteTransforms[point.header.frame_id];
 	
-			if(!frame){
+			if(!tf.absoluteTransforms[point.header.frame_id]){
 				status.setError("Required transform frame \""+point.header.frame_id+"\" not found.");
 				error = true;
 				return;
 			}
 	
-			newposes.push(tf.transformPose(
-				point.header.frame_id, 
-				tf.fixed_frame, 
+			newposes.push(tf.transformPoseStamped(
+				point.header, 
 				point.pose.position, 
 				point.pose.orientation
 			));

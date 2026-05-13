@@ -165,12 +165,11 @@ function drawTile(screenSize, i, j, tempMeterSize, tempZoomLevel, maxtile) {
 		if (!parentCrop)
 			tileImage = placeholder;
 	}
-
 	let transformed;
 	if (!ignoreRotationCheckbox.checked) {
-		transformed = tf.transformPose(map_fix.header.frame_id, tf.fixed_frame, {x: -offsetX, y: offsetY, z: 0}, new Quaternion());
+		transformed = tf.transformPoseStamped(map_fix.header, {x: -offsetX, y: offsetY, z: 0}, new Quaternion());
 	} else {
-		transformed = tf.transformPose(map_fix.header.frame_id, tf.fixed_frame, {x: 0, y: 0, z: 0}, new Quaternion());
+		transformed = tf.transformPoseStamped(map_fix.header, {x: 0, y: 0, z: 0}, new Quaternion());
 		transformed.translation.x -= offsetX;
 		transformed.translation.y += offsetY;
 		transformed.rotation = new Quaternion();
@@ -216,7 +215,7 @@ async function drawTiles(){
 		return;
 	}
 
-	const frame = tf.absoluteTransforms[map_fix.header.frame_id];
+	const frame = tf.getAbsoluteTransform(map_fix.header);
 
 	let	tempZoomLevel = Math.round(Math.log2(view.scale)+17);
 	tempZoomLevel = clamp(tempZoomLevel, 7, 19);
@@ -246,8 +245,8 @@ async function drawTiles(){
 			if(ignoreRotationCheckbox.checked){
 				transformed = {
 					translation: {
-						x: -tf.absoluteTransforms[map_fix.header.frame_id].translation.x + meters.x,
-						y: -tf.absoluteTransforms[map_fix.header.frame_id].translation.y + meters.y
+						x: -frame.translation.x + meters.x,
+						y: -frame.translation.y + meters.y
 					}
 				}
 			}else{

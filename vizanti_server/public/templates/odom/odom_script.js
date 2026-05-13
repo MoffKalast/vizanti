@@ -244,9 +244,8 @@ function connect(){
 			return;
 		}
 
-		const transformed = tf.transformPose(
-			msg.header.frame_id,
-			tf.fixed_frame, 
+		const transformed = tf.transformPoseStamped(
+			msg.header,
 			msg.pose.pose.position, 
 			msg.pose.pose.orientation
 		)

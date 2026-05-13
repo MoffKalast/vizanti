@@ -197,9 +197,8 @@ function connect(){
 		frame = tf.fixed_frame;
 
 		msg.poses.forEach(p => {
-			const transformed = tf.transformPose(
-				msg.header.frame_id, 
-				tf.fixed_frame, 
+			const transformed = tf.transformPoseStamped(
+				msg.header,
 				p.position, 
 				p.orientation
 			);
