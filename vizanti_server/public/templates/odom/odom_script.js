@@ -65,8 +65,10 @@ const historypicker = document.getElementById('{uniqueID}_history');
 historypicker.addEventListener("input", (event) =>{
 	saveSettings();
 
-	while (sample_array.length > historypicker.value) {
-		sample_array.shift();
+	if(historypicker.value > 0){
+		while (sample_array.length > historypicker.value) {
+			sample_array.shift();
+		}
 	}
 
 	drawHistory();
@@ -196,8 +198,10 @@ function appendPose(pose){
 		sample_array.push(pose2D);
 	}
 
-	while (sample_array.length > historypicker.value) {
-		sample_array.shift();
+	if(historypicker.value > 0){
+		while (sample_array.length > historypicker.value) {
+			sample_array.shift();
+		}
 	}
 
 	return true;
