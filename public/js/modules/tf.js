@@ -153,7 +153,6 @@ export class TF {
 			q.pop();
 		}
 
-		if (common === null) return null;
 		return p.concat(common, q.reverse());
 	}
 
@@ -246,8 +245,6 @@ export class TF {
 			return { translation: outputVector, rotation: outputQuat };
 
 		const path = this.findPath(sourceFrame, targetFrame);
-
-		if (!path) return null;
 
 		for (let i = 0; i < path.length - 1; i++) {
 			let source = this.transforms[path[i]];
