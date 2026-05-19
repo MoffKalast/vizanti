@@ -28,11 +28,13 @@ class TransformRingBuffer {
 	// Falls back to the most recently pushed entry if called with no arguments.
 	// Full scan (no early exit) handles non-monotonic clocks (e.g. rosbag restart).
 	nearest(secs, nsecs) {
-		if (this.size === 0) return null;
+		if (this.size === 0)
+			return null;
 
 		const latest = (this.head - 1 + this.capacity) % this.capacity;
 
-		if (secs == null || nsecs == null) return this.buf[latest].transform;
+		if (secs == null || nsecs == null)
+			return this.buf[latest].transform;
 
 		const target = secs + nsecs * 1e-9;
 		let bestIdx = latest;
@@ -220,8 +222,9 @@ export class TF {
 	// Applies the offset pose on top of the buffered absolute transform for header.frame_id.
 	transformPoseStamped(header, position, orientation) {
 		const abs = this.getAbsoluteTransform(header);
+		
 		if (!abs)
-			return null;
+			return this.getZeroFrame();
 
 		const inputQuat = new Quaternion(orientation);
 

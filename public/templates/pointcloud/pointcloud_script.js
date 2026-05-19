@@ -389,7 +389,7 @@ function connect(){
 					y: bytes_to_datatype(dataview, byteOffset + yData.offset, yData.datatype, littleEndian),
 					z: bytes_to_datatype(dataview, byteOffset + zData.offset, zData.datatype, littleEndian)
 				};
-				const transformed = tf.transformPoseStamped(msg.header.frame_id, point, new Quaternion()).translation;
+				const transformed = tf.transformPoseStamped(msg.header, point, new Quaternion()).translation;
 
 				if(rgbData){
 					const bits = dataview.getUint32(byteOffset + rgbData.offset, littleEndian);
