@@ -65,6 +65,85 @@ startCheckbox.addEventListener('change', ()=>{
 	saveSettings();
 });
 
+const importCSVButton = document.getElementById("{uniqueID}_importcsv");
+const importCSVInput = document.getElementById("{uniqueID}_importcsv_input");
+
+importCSVButton.addEventListener('click', ()=>{
+	importCSVInput.click();
+});
+
+importCSVInput.addEventListener('change', async (event)=>{
+
+	const file = event.target.files[0];
+	if(!file){
+		return;
+	}
+
+	try{
+		const text = await file.text();
+		const lines = text.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
+
+		if(lines.length < 2){
+			status.setError("CSV file is empty.");
+			return;
+		}
+
+		const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
+		const xIndex = headers.findIndex(h => h === "x");
+		const yIndex = headers.findIndex(h => h === "y");
+		const zIndex = headers.findIndex(h => h === "z");
+
+		if(xIndex < 0 || yIndex < 0){
+			status.setError("CSV must contain X and Y columns.");
+			return;
+		}
+
+		const imported_points = [];
+
+		for(let i = 1; i < lines.length; i++){
+
+			const cols = lines[i].split(",").map(c => c.trim());
+			const x = parseFloat(cols[xIndex]);
+			const y = parseFloat(cols[yIndex]);
+
+			let z = 0;
+			if(zIndex >= 0){
+				z = parseFloat(cols[zIndex]);
+				if(Number.isNaN(z)){
+					z = 0;
+				}
+			}
+
+			if(Number.isNaN(x) || Number.isNaN(y)){
+				continue;
+			}
+
+			imported_points.push({
+				x: x,
+				y: y,
+				z: z
+			});
+		}
+
+		if(imported_points.length === 0){
+			status.setError("No valid points found in CSV.");
+			return;
+		}
+
+		points = imported_points;
+
+		drawWaypoints();
+		saveSettings();
+		status.setOK(`Imported ${points.length} waypoints.`);
+
+	}catch(error){
+		console.error(error);
+		status.setError("Failed to import CSV.");
+	}
+
+	importCSVInput.value = "";
+});
+
 // Settings
 
 if(settings.hasOwnProperty("{uniqueID}")){

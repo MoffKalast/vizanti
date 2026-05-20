@@ -41,10 +41,8 @@
 			<li><button id="{uniqueID}_z_set" >Set all Z values</button></li>
 		</ul>
 		
-		
-		<p style="color: #b4b4b4;">When editing X/Y/Z positions, click the icon again to stop editing.</p>
-		
-		<div class="spacer"></div>
+		<p class="comment">When editing X/Y/Z positions, click the icon again to stop editing.</p>
+
 
 		<label for="{uniqueID}_margin">Safety margin visual indicator (meters):</label>
 		<input type="number" value="0.8" step="0.1" min="0" max="1000" id="{uniqueID}_margin">
@@ -54,7 +52,12 @@
 		<label>Start from closest waypoint:</label>
 		<input type="checkbox" id="{uniqueID}_startclosest">
 
-		<div class="spacer"></div>
+		<h4>Import Path</h4>
+
+		<button id="{uniqueID}_importcsv">Load CSV</button>
+		<input type="file" id="{uniqueID}_importcsv_input" accept=".csv" style="display:none;">
+
+		<p class="comment">Imports x,y,z column data assumed to be in the fixed frame, such as paths recorded by the Pose Tracker widget. Z is optional.</p>
 
 		<h4>Clear Path</h4>
 
