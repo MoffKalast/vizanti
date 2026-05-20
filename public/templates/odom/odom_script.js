@@ -93,6 +93,40 @@ clearHistoryButton.addEventListener('click', ()=>{
 	db.setObject(DB_KEY, null);
 });
 
+const downloadCSVButton = document.getElementById("{uniqueID}_downloadcsv");
+
+downloadCSVButton.addEventListener('click', () => {
+
+	if(sample_array.length === 0){
+		alert("No poses to export.");
+		return;
+	}
+
+	let csv = "x,y,yaw\n";
+
+	for(const pose of sample_array){
+		csv += `${pose.x},${pose.y},${pose.yaw}\n`;
+	}
+
+	const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+
+	const url = URL.createObjectURL(blob);
+
+	const link = document.createElement('a');
+	link.href = url;
+
+	const safeTopic = raw_target.replace(/[^\w\d_-]/g, "_");
+	link.download = `${safeTopic || "odom_history"}.csv`;
+
+	document.body.appendChild(link);
+	link.click();
+	document.body.removeChild(link);
+
+	URL.revokeObjectURL(url);
+
+	status.setOK("CSV downloaded.");
+});
+
 //Settings
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data = settings["{uniqueID}"];
