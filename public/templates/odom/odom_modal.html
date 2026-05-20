@@ -11,7 +11,10 @@
 
 		<p>Track a TF link or nav_msgs/Odometry data.</p>
 
-		<hr class="dark_hr"/>
+		<div class="live_data_display">
+			<p id="{uniqueID}_points_text">Points: ?</p>
+			<p id="{uniqueID}_distance_text">Distance: ?</p>
+		</div>
 
 		<label for="{uniqueID}_colorpicker">Colour:</label>
 		<input type="color" value="#c43b00" id="{uniqueID}_colorpicker">
@@ -35,6 +38,13 @@
 
 		<label>Draw arrows:</label>
 		<input type="checkbox" checked id="{uniqueID}_draw_arrows">
+
+		<hr class="dark_hr"/>
+
+		<h4>Persistence</h4>
+
+		<label>Save history:</label>
+		<input type="checkbox" checked id="{uniqueID}_save_history">
 
 		<div class="spacer"></div>
 

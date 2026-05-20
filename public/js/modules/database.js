@@ -6,11 +6,18 @@ export class IndexedDatabase {
 
 	async openDB() {
 		return new Promise((resolve, reject) => {
-			const request = indexedDB.open("vizantiDB", 1);
+			const request = indexedDB.open("vizantiDB", 2);
 
 			request.onupgradeneeded = (event) => {
 				const db = event.target.result;
-				db.createObjectStore(this.storeName);
+
+				//yeah, not great, but can't really create stores outside upgrade callbacks
+				if (!db.objectStoreNames.contains("odom_history")) {
+					db.createObjectStore("odom_history");
+				}
+				if (!db.objectStoreNames.contains("tile_data")) {
+					db.createObjectStore("tile_data");
+				}
 			};
 
 			request.onsuccess = (event) => {

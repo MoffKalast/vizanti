@@ -4,12 +4,17 @@ let rosbridgeModule = await import(`${base_url}/js/modules/rosbridge.js`);
 let persistentModule = await import(`${base_url}/js/modules/persistent.js`);
 let StatusModule = await import(`${base_url}/js/modules/status.js`);
 let utilModule = await import(`${base_url}/js/modules/util.js`);
+let dbModule = await import(`${base_url}/js/modules/database.js`);
 
 let view = viewModule.view;
 let tf = tfModule.tf;
 let rosbridge = rosbridgeModule.rosbridge;
 let settings = persistentModule.settings;
 let Status = StatusModule.Status;
+
+const db = new dbModule.IndexedDatabase('odom_history');
+await db.openDB();
+const DB_KEY = "odom_pose_history_{uniqueID}";
 
 let topic = getTopic("{uniqueID}");
 
@@ -29,6 +34,9 @@ let sample_array = [];
 let mode = "" //see setMode()
 let raw_target = "";
 
+const text_point_count = document.getElementById("{uniqueID}_points_text");
+const text_total_dist = document.getElementById("{uniqueID}_distance_text");
+
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const click_icon = document.getElementById("{uniqueID}_icon");
 const icon = click_icon.getElementsByTagName('object')[0];
@@ -44,6 +52,12 @@ drawarrows.addEventListener('change', ()=>{
 
 const drawpath = document.getElementById('{uniqueID}_draw_path');
 drawpath.addEventListener('change', ()=>{
+	saveSettings();
+	drawHistory();
+});
+
+const save_history = document.getElementById('{uniqueID}_save_history');
+save_history.addEventListener('change', ()=>{
 	saveSettings();
 	drawHistory();
 });
@@ -65,10 +79,8 @@ const historypicker = document.getElementById('{uniqueID}_history');
 historypicker.addEventListener("input", (event) =>{
 	saveSettings();
 
-	if(historypicker.value > 0){
-		while (sample_array.length > historypicker.value) {
-			sample_array.shift();
-		}
+	while (sample_array.length > historypicker.value) {
+		sample_array.shift();
 	}
 
 	drawHistory();
@@ -77,21 +89,28 @@ historypicker.addEventListener("input", (event) =>{
 const clearHistoryButton = document.getElementById("{uniqueID}_clearhistory");
 clearHistoryButton.addEventListener('click', ()=>{
 	sample_array = [];
+	points_since_flush = 0;
+	db.setObject(DB_KEY, null);
 });
 
 //Settings
 if(settings.hasOwnProperty("{uniqueID}")){
-	const loaded_data  = settings["{uniqueID}"];
+	const loaded_data = settings["{uniqueID}"];
 	topic = loaded_data.topic;
 
 	historypicker.value = loaded_data.history;
-	drawarrows.checked =  loaded_data.draw_arrows;
-	drawpath.checked =  loaded_data.draw_path;
+	drawarrows.checked = loaded_data.draw_arrows;
+	drawpath.checked = loaded_data.draw_path;
 	throttle.value = loaded_data.throttle;
 	colourpicker.value = loaded_data.color ?? "#54db67";
+	save_history.checked = loaded_data.save_history ?? true;
 	setMode();
 }else{
 	saveSettings();
+}
+
+if(save_history.checked){
+	await loadPoints();
 }
 
 //update the icon colour when it's loaded or when the image source changes
@@ -110,9 +129,30 @@ function saveSettings(){
 		color: colourpicker.value,
 		throttle: throttle.value,
 		draw_arrows: drawarrows.checked,
-		draw_path: drawpath.checked
+		draw_path: drawpath.checked,
+		save_history: save_history.checked
 	}
 	settings.save();
+}
+
+async function loadPoints(){
+	const stored = await db.getObject(DB_KEY);
+	if(stored instanceof Float32Array && stored.length % 3 === 0){
+		for(let i = 0; i < stored.length; i += 3){
+			sample_array.push({ x: stored[i], y: stored[i+1], yaw: stored[i+2] });
+		}
+		drawHistory();
+	}
+}
+
+function savePoints(){
+	const packed = new Float32Array(sample_array.length * 3);
+	for(let i = 0; i < sample_array.length; i++){
+		packed[i*3] = sample_array[i].x;
+		packed[i*3+1] = sample_array[i].y;
+		packed[i*3+2] = sample_array[i].yaw;
+	}
+	db.setObject(DB_KEY, packed);
 }
 
 //Rendering
@@ -179,6 +219,39 @@ async function drawHistory(){
 	}
 }
 
+
+function updateTextDisplay(){
+
+	function getDistance(posearray) {
+		if (!Array.isArray(posearray) || posearray.length < 2)
+			return 0;
+		
+		let dist = 0;
+		for (let i = 0; i < posearray.length - 1; i++) {
+			const pose1 = posearray[i];
+			const pose2 = posearray[i + 1];
+			const dx = pose2.x - pose1.x;
+			const dy = pose2.y - pose1.y;
+			dist += Math.sqrt(dx * dx + dy * dy);
+		}
+		return dist;
+	}
+
+	text_point_count.innerText = "Points: "+sample_array.length;
+	let dist = getDistance(sample_array)
+
+	if(dist > 1000.0){
+		dist /= 1000.0
+		text_total_dist.innerText = "Distance: "+dist.toFixed(3)+" km";
+	}else if(dist < 1.0){
+		dist *= 100.0
+		text_total_dist.innerText = "Distance: "+dist.toFixed(1)+" cm";
+	}else{
+		text_total_dist.innerText = "Distance: "+dist.toFixed(2)+" m";
+	}
+}
+
+let time_since_updated = Date.now();
 function appendPose(pose){
 	const pose2D = {
 		x: pose.translation.x,
@@ -198,10 +271,19 @@ function appendPose(pose){
 		sample_array.push(pose2D);
 	}
 
-	if(historypicker.value > 0){
-		while (sample_array.length > historypicker.value) {
-			sample_array.shift();
+	while (sample_array.length > historypicker.value) {
+		sample_array.shift();
+	}
+
+	const now = Date.now();
+	if(now - time_since_updated > 3000){
+		updateTextDisplay();
+
+		if(save_history.checked){
+			savePoints();
 		}
+
+		time_since_updated = now;
 	}
 
 	return true;
@@ -248,8 +330,9 @@ function connect(){
 			return;
 		}
 
-		const transformed = tf.transformPoseStamped(
-			msg.header,
+		const transformed = tf.transformPose(
+			msg.header.frame_id,
+			tf.fixed_frame, 
 			msg.pose.pose.position, 
 			msg.pose.pose.orientation
 		)
@@ -310,6 +393,7 @@ selectionbox.addEventListener("click", (event) => {
 
 click_icon.addEventListener("click", (event) => {
 	loadTopics();
+	updateTextDisplay();
 });
 
 loadTopics();
@@ -366,4 +450,3 @@ window.addEventListener('orientationchange', resizeScreen);
 resizeScreen();
 
 console.log("Odom Pose Tracker Widget Loaded {uniqueID}")
-
