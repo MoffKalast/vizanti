@@ -22,7 +22,7 @@
 		<div class="spacer"></div>
 
 		<label for="{uniqueID}_history">History (N):</label>
-		<input type="number" value="200" step="1" min="2" max="50000" id="{uniqueID}_history">
+		<input type="number" value="2000" step="1" min="2" max="50000" id="{uniqueID}_history">
 
 		<div class="spacer"></div>
 
@@ -46,11 +46,11 @@
 		<label>Save history:</label>
 		<input type="checkbox" checked id="{uniqueID}_save_history">
 
-		<div class="spacer"></div>
+		<p class="comment">Recorded data will reset upon page reload if saving is disabled.</p>
 
 		<button id="{uniqueID}_downloadcsv">Download as CSV</button>
 
-		<div class="spacer"></div>
+		<p class="comment">Export pose data as x, y, yaw for analisys, or to import as a waypoint mission.</p>
 
 		<button id="{uniqueID}_clearhistory" style="background-color: rgb(104, 78, 31);">Clear history</button>
 
