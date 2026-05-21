@@ -76,7 +76,7 @@ const CHEMISTRY = [
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
 
-const text_percent = document.getElementById("{uniqueID}_pecentage");
+const text_percent = document.getElementById("{uniqueID}_percentage");
 const text_voltage = document.getElementById("{uniqueID}_voltage");
 const text_cell_voltage = document.getElementById("{uniqueID}_cell_voltage");
 const text_current = document.getElementById("{uniqueID}_current");
