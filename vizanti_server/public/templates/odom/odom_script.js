@@ -79,7 +79,7 @@ const historypicker = document.getElementById('{uniqueID}_history');
 historypicker.addEventListener("input", (event) =>{
 	saveSettings();
 
-	while (sample_array.length > historypicker.value) {
+	while (sample_array.length > parseInt(historypicker.value)) {
 		sample_array.shift();
 	}
 
@@ -89,13 +89,25 @@ historypicker.addEventListener("input", (event) =>{
 const clearHistoryButton = document.getElementById("{uniqueID}_clearhistory");
 clearHistoryButton.addEventListener('click', ()=>{
 	sample_array = [];
-	points_since_flush = 0;
 	db.setObject(DB_KEY, null);
+	updateTextDisplay();
+	drawHistory();
 });
 
 const downloadCSVButton = document.getElementById("{uniqueID}_downloadcsv");
 
 downloadCSVButton.addEventListener('click', () => {
+
+	function getCurrentDateTimeString() {
+		const date = new Date();
+		const year = date.getFullYear();
+		const month = (date.getMonth() + 1).toString().padStart(2, '0');
+		const day = date.getDate().toString().padStart(2, '0');
+		const hours = date.getHours().toString().padStart(2, '0');
+		const minutes = date.getMinutes().toString().padStart(2, '0');
+
+		return `${year}-${month}-${day}-${hours}-${minutes}`;
+	}
 
 	if(sample_array.length === 0){
 		alert("No poses to export.");
@@ -115,7 +127,7 @@ downloadCSVButton.addEventListener('click', () => {
 	const link = document.createElement('a');
 	link.href = url;
 
-	const safeTopic = raw_target.replace(/[^\w\d_-]/g, "_");
+	const safeTopic = `${raw_target}_in_${tf.fixed_frame}_`.replace(/[^\w\d_-]/g, "_")+getCurrentDateTimeString();
 	link.download = `${safeTopic || "odom_history"}.csv`;
 
 	document.body.appendChild(link);
@@ -223,7 +235,7 @@ async function drawHistory(){
 		view_points[i].yaw = sample_array[i].yaw;
 	}
 
-	//continious line 
+	//continuous line 
 	if(drawpath.checked){
 		ctx.moveTo(view_points[0].x, view_points[0].y);
 		for (let i = 1; i < view_points.length; i++) {
@@ -237,10 +249,10 @@ async function drawHistory(){
 	if(drawarrows.checked){
 		ctx.beginPath();
 
-		let prev_p = Infinity;
+		let prev_p = null;
 		for (let i = 0; i < view_points.length; i++) {
 			const p = view_points[i];
-			if(i == 0 || Math.hypot(p.x - prev_p.x, p.y - prev_p.y) > 20){
+			if(prev_p === null || Math.hypot(p.x - prev_p.x, p.y - prev_p.y) > 20){
 				ctx.setTransform(1,0,0,-1,p.x, p.y); //sx,0,0,sy,px,py
 				ctx.rotate(p.yaw);
 				drawArrow(15, 5);
@@ -293,7 +305,7 @@ function appendPose(pose){
 		yaw: pose.rotation.toEuler().h
 	};
 
-	if(sample_array.length > 2){
+	if(sample_array.length > 0){
 		const last = sample_array[sample_array.length-1];
 		const delta = Math.hypot(last.x - pose2D.x, last.y - pose2D.y);
 		if(delta > 0.03){
@@ -305,7 +317,7 @@ function appendPose(pose){
 		sample_array.push(pose2D);
 	}
 
-	while (sample_array.length > historypicker.value) {
+	while (sample_array.length > parseInt(historypicker.value)) {
 		sample_array.shift();
 	}
 
