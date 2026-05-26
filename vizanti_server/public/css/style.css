@@ -205,7 +205,9 @@ object {
 	overflow-y: hidden;
 	scrollbar-width: none;
 	display: block;
-	position: relative;
+	position: fixed;
+	top: 0;
+	left: 0;
 	transition: height 0.1s;
 	z-index: 10;
 	-ms-overflow-style: none;
