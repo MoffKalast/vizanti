@@ -7,10 +7,7 @@ SHELL ["/bin/bash", "-c"]
 # Username
 ENV user=vizanti
 
-# Update and build the vizanti package
 RUN apt-get update
-
-# Need openssh-client for git to work properly, can be removed when rosbridge has binaries properly updated.
 RUN apt-get install openssh-client -y
 RUN apt-get install ros-$ROS_DISTRO-rmw-fastrtps-dynamic-cpp -y
 RUN apt-get install ros-$ROS_DISTRO-rmw-cyclonedds-cpp -y
@@ -23,19 +20,9 @@ RUN usermod -o -u 1000 -g 1000 $user
 USER $user
 RUN mkdir -p /home/$user/colcon_ws/src
 COPY . /home/$user/colcon_ws/src/vizanti/.
-
-# Note: There are breaking changes in the rosbridge suite for ROS versions. We need to switch based on version.
-RUN if [ "${ROS_DISTRO}" == "humble" ] ; then \
-      cd /home/$user/colcon_ws/src/ \
-      && git clone -b humble https://github.com/RobotWebTools/rosbridge_suite.git ; \
-    else \
-      cd /home/$user/colcon_ws/src/ \
-      && git clone -b ros2 https://github.com/RobotWebTools/rosbridge_suite.git ; \
-    fi
-
+    
 # Install the RWS implementation alternative to ROSbridge.
-RUN cd /home/$user/colcon_ws/src/ \
-    && git clone -b $ROS_DISTRO https://github.com/v-kiniv/rws.git ;
+RUN cd /home/$user/colcon_ws/src/ && git clone -b $ROS_DISTRO https://github.com/v-kiniv/rws.git ;
 
 RUN rosdep update
 
