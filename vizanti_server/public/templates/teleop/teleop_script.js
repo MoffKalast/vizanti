@@ -494,12 +494,12 @@ function setLock(lock){
 	joy_locked = lock;
 
 	if(joy_locked){
-		joystickContainer.style.display = "none";
+		joystickContainer.style.visibility = "hidden";
 		icon.style.display = "none";
 		icon_locked.style.display = "block";
 		stopAll();
 	}else{
-		joystickContainer.style.display = "block";
+		joystickContainer.style.visibility = "visible";
 		icon.style.display = "block";
 		icon_locked.style.display = "none";
 	}
