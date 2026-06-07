@@ -250,6 +250,7 @@ export class View {
 		view.addEventListener('mouseup', this.handleDragEnd.bind(this));
 		
 		view.addEventListener('touchstart', (event) => {
+			event.preventDefault()
 			if (event.touches.length === 2) {
 				if (!this.touch1 || !this.touch2) {
 					this.touch1 = {
@@ -269,15 +270,16 @@ export class View {
 				this.touch2 = null;
 				this.handleDragStart(event);
 			}
-		});	
+		}, { passive: false });
 
 		view.addEventListener('touchmove', (event) => {
+			event.preventDefault();
 			if (event.touches.length === 2) {
 				this.handleZoom(event);
 			} else {
 				this.handleDragMove(event);
 			}
-		});
+		}, { passive: false });
 
 		view.addEventListener('touchend', (event) => {
 			this.touch1 = null;
@@ -291,7 +293,11 @@ export class View {
 			this.handleDragEnd(event);
 		});
 
-		view.addEventListener('wheel', this.handleZoom.bind(this));
+		view.addEventListener('wheel', (event) => {
+			event.preventDefault();
+			this.handleZoom(event)
+
+		}, { passive: false });
 	}
 
 }
