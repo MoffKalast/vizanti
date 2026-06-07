@@ -562,7 +562,7 @@ function makeJoystick(){
 	joypreview.style.left = `calc(${joy_offset_x} - 50px)`;
 	joypreview.style.top = `calc(${joy_offset_y} - 50px)`;
 
-	return nipplejs.create({
+	const stick = nipplejs.create({
 		zone: joystickContainer,
 		mode: 'static',
 		position: {
@@ -574,16 +574,16 @@ function makeJoystick(){
 		color: colourpickerBox.value,
 		restOpacity: parseFloat(opacityBox.value)+0.3
 	})
+
+	stick.on('move', onJoystickMove);
+	stick.on('touchmove', onJoystickMove);
+	stick.on('end', onJoystickEnd);
+	stick.on('touchend', onJoystickEnd);
+
+	return stick;
 }
 
 let joystick = makeJoystick();
-
-function addJoystickListeners(){
-	joystick.on('move', onJoystickMove);
-	joystick.on('touchmove', onJoystickMove);
-	joystick.on('end', onJoystickEnd);
-	joystick.on('touchend', onJoystickEnd);
-}
 
 function mapAndSend(){
 	const cfg = settings['{uniqueID}'];
@@ -715,8 +715,6 @@ function onJoystickEnd(event) {
 	}
 }
 
-addJoystickListeners();
-
 //preview for moving around
 let preview_active = false;
 
@@ -747,8 +745,6 @@ function onMove(event) {
 
 		joystick.destroy();
 		joystick = makeJoystick();
-	
-		addJoystickListeners();
 	}
 }
 
