@@ -1116,6 +1116,18 @@ li {
 	flex-shrink: 0;
 }
 
+.joy_text {
+	position: fixed;
+	font-weight: bold;
+    font-size: 1.5em;
+	opacity: 1.0;
+	color: black;
+	transform: translate(-50%, -50%);
+	pointer-events: none;
+	z-index: 30;
+	display: none;
+}
+
 /*
 
 .axis_dropdown_group {

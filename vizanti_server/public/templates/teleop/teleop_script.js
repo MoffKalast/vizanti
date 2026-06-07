@@ -10,6 +10,7 @@ let rosbridge = rosbridgeModule.rosbridge;
 let settings = persistentModule.settings;
 let nipplejs = joystickModule.nipplejs;
 let Status = StatusModule.Status;
+let imageToDataURL = utilModule.imageToDataURL;
 
 let topic = getTopic("{uniqueID}");
 let status = new Status(
@@ -17,9 +18,11 @@ let status = new Status(
 	document.getElementById("{uniqueID}_status")
 );
 
+
 let typedict = {};
 let joy_offset_x = "50%";
 let joy_offset_y = "85%";
+let joy_locked = false;
 let cmdVelPublisher = undefined;
 
 //experimental keyboard control
@@ -29,6 +32,7 @@ let keybindings = {
 	key_down: 's', 
 	key_right: 'd'
 };
+
 let key_move = {
 	vert: 0.0,
 	horiz: 0.0,
@@ -37,19 +41,33 @@ let key_move = {
 	left: false,
 	right: false
 };
+
+// Teleop logic
+let horiz_vel = 0;
+let vert_vel = 0;
+
+let horiz_target = 0;
+let vert_target = 0;
+
 let active_keybinds = [];
 let keyboard_interval = undefined;
+let joy_interval = undefined;
 let new_keybind_listener = undefined;
+
+const joystickContainer  = document.getElementById('{uniqueID}_joystick');
+const joypreview = document.getElementById('{uniqueID}_joypreview');
 
 function updateColor(color, alpha){
 	const toHex8 = (hex, transparency) => hex + Math.round(transparency * 255).toString(16).padStart(2, '0');
 	const combined_color = toHex8(color, parseFloat(alpha)+0.3);
 	utilModule.setIconColor(icon, combined_color);
+	utilModule.setIconColor(icon_locked, combined_color);
 }
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const click_icon = document.getElementById("{uniqueID}_icon");
-const icon = click_icon.getElementsByTagName('object')[0];
+const icon = document.getElementById("{uniqueID}_icon_svg");
+const icon_locked = document.getElementById("{uniqueID}_icon_svg_locked");
 
 const colourpickerBox = document.getElementById("{uniqueID}_colorpicker");
 colourpickerBox.addEventListener("input", (event) =>{
@@ -68,6 +86,11 @@ opacityBox.addEventListener("input", (event) =>{
 	joystick = makeJoystick();
 	saveSettings();
 });
+
+const joy_text_up = document.getElementById("{uniqueID}_joy_up");
+const joy_text_down = document.getElementById("{uniqueID}_joy_down");
+const joy_text_left = document.getElementById("{uniqueID}_joy_left");
+const joy_text_right = document.getElementById("{uniqueID}_joy_right");
 
 // Axis dropdown
 const presetSelectorBox = document.getElementById("{uniqueID}_preset");
@@ -250,6 +273,8 @@ if (settings.hasOwnProperty('{uniqueID}')) {
 	joy_offset_x = loaded_data.joy_offset_x;
 	joy_offset_y = loaded_data.joy_offset_y;
 
+	setLock(loaded_data.joy_locked ?? false);
+
 	opacityBox.value = loaded_data.opacity ?? 0.5;
 	opacityValue.textContent = opacityBox.value;
 
@@ -354,6 +379,7 @@ function saveSettings() {
 
 		joy_offset_x: joy_offset_x,
 		joy_offset_y: joy_offset_y,
+		joy_locked: joy_locked,
 
 		typedict: typedict
 	};
@@ -404,6 +430,9 @@ function connect(){
 
 
 function publishTwist(x, y, z, wx, wy, wz) {
+
+	if(joy_locked)
+		return;
 
 	function getStamp(){
 		const currentTime = new Date();
@@ -459,28 +488,76 @@ selectionbox.addEventListener("click", (event) => {
 	connect();
 });
 
-click_icon.addEventListener("click", (event) => {
-	loadTopics();
+
+// Long press modal open stuff
+function setLock(lock){
+	joy_locked = lock;
+
+	if(joy_locked){
+		joystickContainer.style.display = "none";
+		icon.style.display = "none";
+		icon_locked.style.display = "block";
+		stopAll();
+	}else{
+		joystickContainer.style.display = "block";
+		icon.style.display = "block";
+		icon_locked.style.display = "none";
+	}
+}
+
+let longPressTimer;
+let isLongPress = false;
+
+click_icon.addEventListener("click", (event) =>{
+	if(!isLongPress){
+		loadTopics();
+		openModal("{uniqueID}_modal");
+	}else{
+		isLongPress = false;
+	}
 });
+
+click_icon.addEventListener("mousedown", startLongPress);
+click_icon.addEventListener("touchstart", startLongPress);
+
+click_icon.addEventListener("mouseup", cancelLongPress);
+click_icon.addEventListener("mouseleave", cancelLongPress);
+click_icon.addEventListener("touchend", cancelLongPress);
+click_icon.addEventListener("touchcancel", cancelLongPress);
+
+click_icon.addEventListener("contextmenu", (event) => {
+	event.preventDefault();
+});
+
+function startLongPress(event) {
+	isLongPress = false;
+	longPressTimer = setTimeout(() => {
+		isLongPress = true;
+		setLock(!joy_locked);
+		saveSettings();
+	}, 500);
+}
+
+function cancelLongPress(event) {
+	clearTimeout(longPressTimer);
+}
 
 loadTopics();
 
-// Teleop logic
-let horiz_vel = 0;
-let vert_vel = 0;
-
-let horiz_target = 0;
-let vert_target = 0;
-
-//for accelerating smoothly
-let interval = undefined;
-
-const joystickContainer  = document.getElementById('{uniqueID}_joystick');
-const joypreview = document.getElementById('{uniqueID}_joypreview');
-joypreview.style.left = `calc(${joy_offset_x} - 50px)`;
-joypreview.style.top = `calc(${joy_offset_y} - 50px)`;
+function set_text_pos_val(element, x, y){
+	element.style.left = `calc(${joy_offset_x} + ${x}px)`;
+	element.style.top = `calc(${joy_offset_y} + ${y}px)`;
+}
 
 function makeJoystick(){
+	set_text_pos_val(joy_text_up, 0, -80);
+	set_text_pos_val(joy_text_down, 0, 32);
+	set_text_pos_val(joy_text_left, -55, -26);
+	set_text_pos_val(joy_text_right, 55, -26);
+
+	joypreview.style.left = `calc(${joy_offset_x} - 50px)`;
+	joypreview.style.top = `calc(${joy_offset_y} - 50px)`;
+
 	return nipplejs.create({
 		zone: joystickContainer,
 		mode: 'static',
@@ -590,13 +667,14 @@ function joystickStop(){
 	horiz_target = 0;
 	publishTwist(0, 0, 0, 0, 0, 0);
 
-	if(interval !== undefined){
-		clearInterval(interval);
-		interval = undefined;
+	if(joy_interval !== undefined){
+		clearInterval(joy_interval);
+		joy_interval = undefined;
 	}
 }
 
 function onJoystickMove(event, data) {
+
 	const cfg = settings['{uniqueID}'];
 	const force = Math.min(Math.max(data.force, 0.0), 1.0);
 
@@ -607,8 +685,8 @@ function onJoystickMove(event, data) {
 		horiz_target = -horiz_target;
 	}
 
-	if(interval === undefined){
-		interval = setInterval(() => {
+	if(joy_interval === undefined){
+		joy_interval = setInterval(() => {
 
 			integrateAcceleration();
 
@@ -636,7 +714,6 @@ function onJoystickEnd(event) {
 addJoystickListeners();
 
 //preview for moving around
-
 let preview_active = false;
 
 function onStart(event) {
@@ -663,9 +740,6 @@ function onMove(event) {
 		joy_offset_x = (currentX/window.innerWidth * 100) +"%";
 		joy_offset_y = (currentY/window.innerHeight * 100) +"%";
 		saveSettings();
-
-		joypreview.style.left = `calc(${joy_offset_x} - 50px)`;
-		joypreview.style.top = `calc(${joy_offset_y} - 50px)`;
 
 		joystick.destroy();
 		joystick = makeJoystick();
@@ -711,9 +785,21 @@ function updateKeyboardSetup(){
 
 	if (key_checkbox.checked) {
 		key_section.style.display = 'block';
+
+		joy_text_left.style.display = 'block';
+		joy_text_right.style.display = 'block';
+		joy_text_up.style.display = 'block';
+		joy_text_down.style.display = 'block';
+
 		enableKeyboard();
 	} else {
 		key_section.style.display = 'none';
+
+		joy_text_left.style.display = 'none';
+		joy_text_right.style.display = 'none';
+		joy_text_up.style.display = 'none';
+		joy_text_down.style.display = 'none';
+
 		disableKeyboard();
 	}
 }
@@ -776,6 +862,10 @@ function updateKeyButtons() {
 		button_key_down.disabled = false;
 	}
 
+	joy_text_left.textContent = button_key_left.textContent;
+	joy_text_right.textContent = button_key_right.textContent;
+	joy_text_up.textContent = button_key_up.textContent;
+	joy_text_down.textContent = button_key_down.textContent;
 
 	if (new_keybind_listener) {
 		new_keybind_listener.classList.remove("listening");
@@ -784,6 +874,9 @@ function updateKeyButtons() {
 }
 
 function keydown(event) {
+
+	if(joy_locked)
+		return;
 
 	if (new_keybind_listener) {
 		event.preventDefault();
@@ -827,6 +920,9 @@ function keydown(event) {
 }
 
 function keyup(event) {
+
+	if(joy_locked)
+		return;
 
 	if(!active_keybinds.includes(event.key.toLowerCase()))
 		return;
@@ -927,5 +1023,18 @@ function disableKeyboard() {
 if(settings['{uniqueID}'].keyboard_control){
 	enableKeyboard();
 }
+
+//loss of focus safety checks
+function stopAll(){
+	joystickStop();
+	keyboardStop();
+}
+
+window.addEventListener('blur', stopAll);
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        stopAll();
+    }
+});
 
 console.log("Teleop Widget Loaded {uniqueID}")
