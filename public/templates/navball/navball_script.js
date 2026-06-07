@@ -671,8 +671,8 @@ function displayImageOffset(x, y){
 	const new_size = Math.round((canvas_width/100.0) * window.innerWidth);
 
 	if(canvas.width != new_size){
-		canvas.style.width = canvas_width+"vw";
-		canvas.style.height = canvas_height+"vh";
+		canvas.style.width = new_size+"px";
+		canvas.style.height = new_size+"px";
 		canvas.width = new_size;
 		canvas.height = new_size;
 		canvasSizeChanged = true;
