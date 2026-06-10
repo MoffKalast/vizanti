@@ -43,6 +43,7 @@ const text_lat = document.getElementById("{uniqueID}_latitude");
 const text_lon = document.getElementById("{uniqueID}_longitude");
 const text_alt = document.getElementById("{uniqueID}_altitude");
 const text_cov = document.getElementById("{uniqueID}_covariance");
+const text_frame = document.getElementById("{uniqueID}_frame");
 
 const placeholder = new Image();
 placeholder.src = "assets/tile_loading.png";
@@ -479,6 +480,7 @@ function connect(){
 	text_lon.innerText = "Longitude: ?";
 	text_alt.innerText = "Altitude: ?";
 	text_cov.innerText = "Ground Covariance: ?";
+	text_frame.innerText = "TF Frame: ?";
 	
 	listener = map_topic.subscribe((msg) => {
 		const cov_mat = msg.position_covariance;
@@ -499,6 +501,8 @@ function connect(){
 			status.setWarn("No fix.");
 			return;
 		}
+
+		text_frame.innerText = "TF Frame: "+msg.header.frame_id;
 
 		map_fix = msg;
 		updateFixData();

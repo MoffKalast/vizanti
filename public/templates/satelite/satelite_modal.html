@@ -14,12 +14,14 @@
 			<p id="{uniqueID}_longitude">Longitude: ?</p> 
 			<p id="{uniqueID}_altitude">Altitude: ?</p>
 			<p id="{uniqueID}_covariance">Ground Covariance: ?</p>
+			<p id="{uniqueID}_frame">TF Frame: ?</p>
 		</div>
 
 
-		Renders a tile map based on sensor_msgs/NavSatFix positional data. Use with a local origin for best results, an ENU projection is assumed as per REP 103.
+		<p>Renders a tile map around a point specified by a sensor_msgs/NavSatFix and its header frame.</p>
 
-		<div class="spacer"></div>
+		<p class="comment">Uses an ENU local tangent plane as specified by REP 103. The tiles are reprojected to match, which maintains alignment between geodetic coordinates and metric X,Y positions (it's basically a perpendicular globe at the given location). As the tangent plane increasingly diverges from the terrain with distance, Z offsets become larger and straight-line distances less useful. For best results, place the ENU origin near the operating area.</p>
+		
 		<hr class="dark_hr"/>
 		<div class="spacer"></div>
 
