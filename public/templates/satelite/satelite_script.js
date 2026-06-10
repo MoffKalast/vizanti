@@ -7,9 +7,11 @@ let StatusModule = await import(`${base_url}/js/modules/status.js`);
 
 let view = viewModule.view;
 let tf = tfModule.tf;
+let applyRotation = tfModule.applyRotation;
 let rosbridge = rosbridgeModule.rosbridge;
 let settings = persistentModule.settings;
 let navsat = navsatModule.navsat;
+let Navsat = navsatModule.Navsat;
 let Status = StatusModule.Status;
 
 let status = new Status(
@@ -26,6 +28,7 @@ let zoomLevel = 12;
 let map_topic = undefined;
 let map_fix = undefined;
 let fix_data = undefined;
+let enu_origin = undefined;
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
@@ -49,6 +52,8 @@ function setOpacityText(val){
 		opacityValue.textContent = "0.0 (Tile rendering disabled)";
 	else
 		opacityValue.textContent = val;
+
+	canvas.style.opacity = parseFloat(opacitySlider.value);
 }
 
 opacitySlider.addEventListener('input', function () {
@@ -98,6 +103,12 @@ function scheduleDraw() {
 
 const canvas = document.getElementById('{uniqueID}_canvas');
 const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
+
+// The widget framework disables clip() on this context (see below), but the
+// quad renderer needs real clipping for triangle texture mapping. Grab the
+// native implementation off the prototype before the override so we can call
+// it explicitly, scoped inside save()/restore() so no clip state ever leaks.
+const nativeClip = CanvasRenderingContext2D.prototype.clip;
 ctx.clip = function(){};
 
 if(settings.hasOwnProperty("{uniqueID}")){
@@ -148,44 +159,163 @@ function findParentTile(x, y, z, maxLevelsUp = 4) {
 	return null;
 }
 
-function drawTile(screenSize, i, j, tempMeterSize, tempZoomLevel, maxtile) {
-	const x = (fix_data.tilePos.x + i + maxtile + 1) % (maxtile + 1);
-	const y = (fix_data.tilePos.y + j + maxtile + 1) % (maxtile + 1);
+// Per-frame cache of tile corner ENU positions (corners are shared between
+// neighbouring tiles, so this saves ~4x the trig). Cleared at the start of
+// every drawTiles() pass, so it can never go stale w.r.t. the ENU origin.
+const cornerCache = new Map();
+function tileCornerEnu(x, y, z){
+	const key = x + "," + y + "," + z;
+	let v = cornerCache.get(key);
+	if(v === undefined){
+		const c = Navsat.tileToCoord(x, y, z);
+		v = Navsat.llaToEnu(c.latitude, c.longitude, undefined, enu_origin); // at origin altitude
+		cornerCache.set(key, v);
+	}
+	return v;
+}
 
-	const offsetX = fix_data.offset.x - i * tempMeterSize;
-	const offsetY = fix_data.offset.y - j * tempMeterSize;
+// Texture-map one triangle of an image onto three screen points.
+//
+// (su, sv) are source coordinates in image pixels, p* are destination screen
+// points. The affine is solved exactly so each source vertex lands exactly on
+// its destination vertex; the clip confines the draw to this triangle so two
+// of these calls render an arbitrary quadrilateral.
+//
+// The clip path is inflated by ~0.75 px outward from the triangle centroid to
+// hide antialiasing hairlines along the internal diagonal and between tiles.
+// The affine itself is fitted to the exact (un-inflated) corners so geometry
+// stays exact; the inflated rim just shows a sliver of extrapolated texture.
+function drawImageTriangle(img, su0, sv0, su1, sv1, su2, sv2, p0, p1, p2) {
+	const cx = (p0.x + p1.x + p2.x) / 3;
+	const cy = (p0.y + p1.y + p2.y) / 3;
+	const GROW = 1.1; // px
 
-	const tileURL = server_url.replace("{z}", tempZoomLevel).replace("{x}", x).replace("{y}", y);
+	function inflate(p) {
+		const dx = p.x - cx, dy = p.y - cy;
+		const len = Math.hypot(dx, dy) || 1;
+		return { x: p.x + (dx / len) * GROW, y: p.y + (dy / len) * GROW };
+	}
+	const q0 = inflate(p0), q1 = inflate(p1), q2 = inflate(p2);
+
+	// Solve the affine T with T(su,sv) = p for all three vertices.
+	const du1 = su1 - su0, dv1 = sv1 - sv0;
+	const du2 = su2 - su0, dv2 = sv2 - sv0;
+	const det = du1 * dv2 - du2 * dv1;
+	if (det === 0) return;
+
+	const a = ((p1.x - p0.x) * dv2 - (p2.x - p0.x) * dv1) / det;
+	const b = ((p1.y - p0.y) * dv2 - (p2.y - p0.y) * dv1) / det;
+	const c = ((p2.x - p0.x) * du1 - (p1.x - p0.x) * du2) / det;
+	const d = ((p2.y - p0.y) * du1 - (p1.y - p0.y) * du2) / det;
+	const e = p0.x - a * su0 - c * sv0;
+	const f = p0.y - b * su0 - d * sv0;
+
+	ctx.save();
+	ctx.setTransform(1, 0, 0, 1, 0, 0);
+	ctx.beginPath();
+	ctx.moveTo(q0.x, q0.y);
+	ctx.lineTo(q1.x, q1.y);
+	ctx.lineTo(q2.x, q2.y);
+	ctx.closePath();
+	nativeClip.call(ctx);
+	ctx.setTransform(a, b, c, d, e, f);
+	ctx.drawImage(img, 0, 0);
+	ctx.restore();
+}
+
+// Draw an image (or a sub-rectangle of it) onto an arbitrary screen-space
+// quadrilateral, split along the NW-SE... actually the NE-SW diagonal:
+//   triangle 1: NW, NE, SW    triangle 2: NE, SE, SW
+// Because all four corners are mapped exactly (no parallelogram extrapolation
+// of SE), adjacent tiles share identical corner positions and identical edge
+// chords, so the tile mosaic is gap-free at every zoom level by construction.
+function drawImageQuad(img, sx, sy, sw, sh, pNW, pNE, pSW, pSE) {
+	drawImageTriangle(img, sx, sy, sx + sw, sy, sx, sy + sh, pNW, pNE, pSW);
+	drawImageTriangle(img, sx + sw, sy, sx + sw, sy + sh, sx, sy + sh, pNE, pSE, pSW);
+}
+
+function drawTile(i, j, tempZoomLevel, maxtile) {
+	const tx = fix_data.tilePos.x + i;
+	const ty = fix_data.tilePos.y + j;
+
+	// web mercator never wraps vertically — skip out-of-range rows instead
+	if (ty < 0 || ty > maxtile)
+		return;
+
+	// proper positive modulo for horizontal antimeridian wrap (any negative tx)
+	const wrappedX = ((tx % (maxtile + 1)) + (maxtile + 1)) % (maxtile + 1);
+
+	// All four ENU corners of this tile. tileToCoord is evaluated with the
+	// *unwrapped* tx so tiles across the antimeridian still land at a
+	// continuous easting (sin/cos of longitude are periodic).
+	const nw = tileCornerEnu(tx,     ty,     tempZoomLevel);
+	const ne = tileCornerEnu(tx + 1, ty,     tempZoomLevel);
+	const sw = tileCornerEnu(tx,     ty + 1, tempZoomLevel);
+	const se = tileCornerEnu(tx + 1, ty + 1, tempZoomLevel);
+
+	const tileURL = server_url.replace("{z}", tempZoomLevel).replace("{x}", wrappedX).replace("{y}", ty);
 	let tileImage = navsat.live_cache[tileURL];
 	let parentCrop = null;
 
 	if (!tileImage || !tileImage.complete) {
 		navsat.enqueue(tileURL);
-		parentCrop = findParentTile(x, y, tempZoomLevel);
+		parentCrop = findParentTile(wrappedX, ty, tempZoomLevel);
 		if (!parentCrop)
 			tileImage = placeholder;
 	}
-	let transformed;
-	if (!ignoreRotationCheckbox.checked) {
-		transformed = tf.transformPoseStamped(map_fix.header, {x: -offsetX, y: offsetY, z: 0}, new Quaternion());
-	} else {
-		transformed = tf.transformPoseStamped(map_fix.header, {x: 0, y: 0, z: 0}, new Quaternion());
-		transformed.translation.x -= offsetX;
-		transformed.translation.y += offsetY;
-		transformed.rotation = new Quaternion();
+
+	// Transform the four corners through the TF tree so the tile inherits the
+	// robot/map rotation exactly like every other rendered element. Using
+	// transformPoseStamped for all four keeps the TF sample identical.
+	function transformCorner(enu) {
+		if (!ignoreRotationCheckbox.checked) {
+			return tf.transformPoseStamped(map_fix.header, {x: enu.x, y: enu.y, z: 0}, new Quaternion());
+		} else {
+			const t = tf.transformPoseStamped(map_fix.header, {x: 0, y: 0, z: 0}, new Quaternion());
+			t.translation.x += enu.x;
+			t.translation.y += enu.y;
+			t.rotation = new Quaternion();
+			return t;
+		}
 	}
 
-	const pos = view.fixedToScreen({x: transformed.translation.x, y: transformed.translation.y});
-	const matrix = view.quaterionToProjectionMatrix(transformed.rotation);
-	ctx.setTransform(matrix[0], matrix[1], matrix[2], matrix[3], pos.x, pos.y);
+	function inflateCorners(pNW, pNE, pSW, pSE, grow){
+		const cx = (pNW.x+pNE.x+pSW.x+pSE.x)/4;
+		const cy = (pNW.y+pNE.y+pSW.y+pSE.y)/4;
+		const push = (p) => {
+			const dx=p.x-cx, dy=p.y-cy, len=Math.hypot(dx,dy)||1;
+			return { x:p.x+(dx/len)*grow, y:p.y+(dy/len)*grow };
+		};
+		return [push(pNW), push(pNE), push(pSW), push(pSE)];
+	}
 
+	const tNW = transformCorner(nw);
+	const tNE = transformCorner(ne);
+	const tSW = transformCorner(sw);
+	const tSE = transformCorner(se);
+
+	const pNW = view.fixedToScreen({x: tNW.translation.x, y: tNW.translation.y});
+	const pNE = view.fixedToScreen({x: tNE.translation.x, y: tNE.translation.y});
+	const pSW = view.fixedToScreen({x: tSW.translation.x, y: tSW.translation.y});
+	const pSE = view.fixedToScreen({x: tSE.translation.x, y: tSE.translation.y});
+
+	const [iNW, iNE, iSW, iSE] = inflateCorners(pNW, pNE, pSW, pSE, 1.4);
+
+	// Map the image onto the exact quadrilateral. The SE corner is no longer
+	// extrapolated as a parallelogram (NE + SW - NW) — the tile footprint in a
+	// tangent plane is a trapezoid, and that extrapolation is what produced
+	// the triangular gaps between the bottom corners of adjacent tiles when
+	// zoomed far out.
 	if (parentCrop){
-		ctx.globalAlpha = opacitySlider.value * 0.8;
-		ctx.drawImage(parentCrop.image, parentCrop.srcX, parentCrop.srcY, parentCrop.srcSize, parentCrop.srcSize, 0, 0, screenSize, screenSize);
-		ctx.globalAlpha = opacitySlider.value;
+		//ctx.globalAlpha = opacitySlider.value * 0.8;
+		drawImageQuad(parentCrop.image, parentCrop.srcX, parentCrop.srcY, parentCrop.srcSize, parentCrop.srcSize, iNW, iNE, iSW, iSE);
+		//ctx.globalAlpha = opacitySlider.value;
 	}
-	else
-		ctx.drawImage(tileImage, 0, 0, screenSize, screenSize);
+	else {
+		const sw_px = tileImage.naturalWidth || navsat.tile_size;
+		const sh_px = tileImage.naturalHeight || navsat.tile_size;
+		drawImageQuad(tileImage, 0, 0, sw_px, sh_px, iNW, iNE, iSW, iSE);
+	}
 }
 
 function clamp(val, from, to){
@@ -203,7 +333,7 @@ async function drawTiles(){
     const hei = canvas.height;
 
 	ctx.clearRect(0, 0, wid, hei);
-	ctx.globalAlpha = opacitySlider.value;
+	ctx.globalAlpha = 1.0;//opacitySlider.value;
 	ctx.imageSmoothingEnabled = smoothingCheckbox.checked;
 
 	if(!map_fix){
@@ -228,8 +358,8 @@ async function drawTiles(){
 
 	if(frame){
 
-		let metersSize = navsat.tileSizeInMeters(map_fix.latitude, tempZoomLevel)
-		const tileScreenSize = view.getMapUnitsInPixels(metersSize);
+		cornerCache.clear();
+
 		const corners = [
 			{ x: 0, y: 0, z: 0 },
 			{ x: wid, y: 0, z: 0 },
@@ -237,35 +367,35 @@ async function drawTiles(){
 			{ x: 0, y: hei, z: 0  },
 		];
 
-		// Convert the corners from pixels to meters, transform them to map_fix frame and convert to latitude, longitude
+		// Convert the corners from pixels to ENU meters in the map_fix frame,
+		// then invert the exact same ENU projection used for tile placement to
+		// get latitude/longitude. Because culling and drawing now use one and
+		// the same (exact, invertible) mapping, they can never diverge no
+		// matter how far the view moves from the origin.
+		// Note: the inverse transform uses the same stamped absolute transform
+		// ("frame") that transformPoseStamped uses in drawTile, so cull and
+		// draw also agree on the TF sample.
 		const cornerCoords = corners.map((corner) => {
 			const meters = view.screenToFixed(corner);
-
-			let transformed;
-			if(ignoreRotationCheckbox.checked){
-				transformed = {
-					translation: {
-						x: -frame.translation.x + meters.x,
-						y: -frame.translation.y + meters.y
-					}
-				}
-			}else{
-				transformed = tf.transformPose(
-					tf.fixed_frame,
-					map_fix.header.frame_id,
-					meters,
-					new Quaternion()
-				);
-			}
-			return {
-				latitude: map_fix.latitude + (transformed.translation.y * fix_data.degreesPerMeter.latitude),
-				longitude: map_fix.longitude + (transformed.translation.x * fix_data.degreesPerMeter.longitude)
+			const d = {
+				x: meters.x - frame.translation.x,
+				y: meters.y - frame.translation.y,
+				z: -frame.translation.z
 			};
+
+			let local;
+			if(ignoreRotationCheckbox.checked){
+				local = d;
+			}else{
+				local = applyRotation(d, frame.rotation, true);
+			}
+
+			return Navsat.enuGroundToLla(local.x, local.y, enu_origin);
 		});
 
-		// Convert the corners to tile coordinates
+		// Convert the corners to tile coordinates (exact mercator)
 		const cornerTileCoords = cornerCoords.map((coord) =>
-			navsat.coordToTile(coord.longitude, coord.latitude, tempZoomLevel)
+			Navsat.coordToTile(coord.longitude, coord.latitude, tempZoomLevel)
 		);
 
 		// Calculate the range of tiles to cover the screen
@@ -289,7 +419,7 @@ async function drawTiles(){
 		const maxDimension = Math.max(matrixWidth, matrixHeight);
 		for (let i = 0; i < maxDimension ** 2; i++) {
 			if (-matrixWidth / 2 < x && x <= matrixWidth / 2 && -matrixHeight / 2 < y && y <= matrixHeight / 2) {
-				drawTile(tileScreenSize, centerX+x, centerY+y, metersSize, tempZoomLevel, maxtile);
+				drawTile(centerX+x, centerY+y, tempZoomLevel, maxtile);
 			}
 			if (x === y || (x < 0 && x === -y) || (x > 0 && x === 1 - y)) {
 				[dx, dy] = [-dy, dx];
@@ -301,14 +431,16 @@ async function drawTiles(){
 		//transform reset
 		ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-		ctx.globalAlpha = 0.6;
-		ctx.fillStyle = "#171717";
-		ctx.fillRect(0, hei-20, 120, 20);
+		if(copyright != ""){
+			ctx.globalAlpha = 0.6;
+			ctx.fillStyle = "#171717";
+			ctx.fillRect(0, hei-20, 120, 20);
 
-		ctx.globalAlpha = 1.0;
-		ctx.font = "12px Monospace";
-		ctx.fillStyle = "white";
-		ctx.fillText(copyright, 5, hei-5);
+			ctx.globalAlpha = 1.0;
+			ctx.font = "12px Monospace";
+			ctx.fillStyle = "white";
+			ctx.fillText(copyright, 5, hei-5);
+		}
 
 		status.setOK();
 	}else{
@@ -377,24 +509,15 @@ function connect(){
 }
 
 function updateFixData(){
-	const tilePos = navsat.coordToTile(map_fix.longitude, map_fix.latitude, zoomLevel);
-	const tileCoords = navsat.tileToCoord(tilePos.x, tilePos.y, zoomLevel);
-	const nextTileCoords = navsat.tileToCoord(tilePos.x+1, tilePos.y+1, zoomLevel);
-	const metersSize = navsat.tileSizeInMeters(map_fix.latitude, zoomLevel);
+	// The ENU tangent plane is anchored at the fix coordinate. If the backend
+	// projects GNSS with a fixed datum (recommended), make sure this topic
+	// publishes that datum so both ENU frames coincide exactly.
+	const alt = Number.isFinite(map_fix.altitude) ? map_fix.altitude : 0;
+	enu_origin = Navsat.buildEnuOrigin(map_fix.latitude, map_fix.longitude, alt);
 
 	fix_data = {
-		tilePos: tilePos,
-		tileCoords: tileCoords,
-		offset:{
-			x: navsat.haversine(map_fix.latitude, tileCoords.longitude, map_fix.latitude, map_fix.longitude),
-			y: navsat.haversine(tileCoords.latitude, map_fix.longitude, map_fix.latitude, map_fix.longitude)
-		},
-		metersSize: metersSize,
-		degreesPerMeter: {
-			longitude: Math.abs(tileCoords.longitude - nextTileCoords.longitude)/metersSize,
-			latitude: Math.abs(tileCoords.latitude - nextTileCoords.latitude)/metersSize
-		}
-	}
+		tilePos: Navsat.coordToTile(map_fix.longitude, map_fix.latitude, zoomLevel)
+	};
 }
 
 async function loadTopics(){
