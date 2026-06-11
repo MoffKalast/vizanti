@@ -36,14 +36,34 @@ class WaypointsToSimpleGoals(Node):
         self.waypoints_header = None
         self.last_robot_pose = None
 
-        self.tf_buffer = Buffer()
-        self.tf_listener = TransformListener(self.tf_buffer, self)
+        # TF listener is lazy: created when waypoints arrive, torn down when
+        # idle. The Python TF listener deserializes every /tf message in the
+        # background, which costs >60% CPU on busy graphs (cartographer +
+        # nav2 + many joints). Idle nodes should be ~free.
+        self.tf_buffer = None
+        self.tf_listener = None
 
         self.goal_pub = self.create_publisher(PoseStamped, '/goal_pose', 10)
         self.state_pub = self.create_publisher(Bool, '/waypoints/state', 10)
-        
+
         self.create_subscription(PoseArray, '/waypoints', self.waypoints_callback, 10)
         self.create_subscription(Empty, '/waypoints/estop', self.estop_callback, 10)
+
+    def _ensure_tf(self):
+        if self.tf_listener is None:
+            self.tf_buffer = Buffer()
+            self.tf_listener = TransformListener(self.tf_buffer, self)
+
+    def _release_tf(self):
+        # tf2_ros.TransformListener has no public destroy; tear down its
+        # subscriptions directly via the owning node.
+        if self.tf_listener is not None:
+            for sub_attr in ('tf_sub', 'tf_static_sub'):
+                sub = getattr(self.tf_listener, sub_attr, None)
+                if sub is not None:
+                    self.destroy_subscription(sub)
+            self.tf_listener = None
+            self.tf_buffer = None
 
         self.add_on_set_parameters_callback(self.parameters_callback)
 
@@ -72,6 +92,7 @@ class WaypointsToSimpleGoals(Node):
         self.waypoints = poses
         self.waypoints_header = msg.header
         self.current_goal = None
+        self._ensure_tf()
         self.get_logger().info("New path received!")
 
     def estop_callback(self, _):
@@ -84,6 +105,7 @@ class WaypointsToSimpleGoals(Node):
         self.waypoints = []
         self.current_goal = None
         self.publish_navigation_state(False)
+        self._release_tf()
 
         self.get_logger().info("Emergency stop triggered!")
 
@@ -112,6 +134,7 @@ class WaypointsToSimpleGoals(Node):
 
             if not self.waypoints:
                 self.get_logger().info("Path finished!")
+                self._release_tf()
 
     def check_goal_reached(self, goal):
         try:
