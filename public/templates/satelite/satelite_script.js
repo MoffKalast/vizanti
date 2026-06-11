@@ -29,6 +29,7 @@ let map_topic = undefined;
 let map_fix = undefined;
 let fix_data = undefined;
 let enu_origin = undefined;
+let enuToScreenMat = undefined;
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
@@ -170,6 +171,11 @@ function tileCornerEnu(x, y, z){
 	if(v === undefined){
 		const c = Navsat.tileToCoord(x, y, z);
 		v = Navsat.llaToEnu(c.latitude, c.longitude, undefined, enu_origin); // at origin altitude
+
+		//clear if it gets over 1MB
+		if (cornerCache.size > 16384)
+			cornerCache.clear();
+
 		cornerCache.set(key, v);
 	}
 	return v;
@@ -265,21 +271,6 @@ function drawTile(i, j, tempZoomLevel, maxtile) {
 			tileImage = placeholder;
 	}
 
-	// Transform the four corners through the TF tree so the tile inherits the
-	// robot/map rotation exactly like every other rendered element. Using
-	// transformPoseStamped for all four keeps the TF sample identical.
-	function transformCorner(enu) {
-		if (!ignoreRotationCheckbox.checked) {
-			return tf.transformPoseStamped(map_fix.header, {x: enu.x, y: enu.y, z: 0}, new Quaternion());
-		} else {
-			const t = tf.transformPoseStamped(map_fix.header, {x: 0, y: 0, z: 0}, new Quaternion());
-			t.translation.x += enu.x;
-			t.translation.y += enu.y;
-			t.rotation = new Quaternion();
-			return t;
-		}
-	}
-
 	function inflateCorners(pNW, pNE, pSW, pSE, grow){
 		const cx = (pNW.x+pNE.x+pSW.x+pSE.x)/4;
 		const cy = (pNW.y+pNE.y+pSW.y+pSE.y)/4;
@@ -290,15 +281,18 @@ function drawTile(i, j, tempZoomLevel, maxtile) {
 		return [push(pNW), push(pNE), push(pSW), push(pSE)];
 	}
 
-	const tNW = transformCorner(nw);
-	const tNE = transformCorner(ne);
-	const tSW = transformCorner(sw);
-	const tSE = transformCorner(se);
+	function enuToScreen(p){
+		const m = enuToScreenMat;
+		return {
+			x: m.a * p.x + m.b * p.y + m.e,
+			y: m.c * p.x + m.d * p.y + m.f
+		};
+	}
 
-	const pNW = view.fixedToScreen({x: tNW.translation.x, y: tNW.translation.y});
-	const pNE = view.fixedToScreen({x: tNE.translation.x, y: tNE.translation.y});
-	const pSW = view.fixedToScreen({x: tSW.translation.x, y: tSW.translation.y});
-	const pSE = view.fixedToScreen({x: tSE.translation.x, y: tSE.translation.y});
+	const pNW = enuToScreen(nw);
+	const pNE = enuToScreen(ne);
+	const pSW = enuToScreen(sw);
+	const pSE = enuToScreen(se);
 
 	const [iNW, iNE, iSW, iSE] = inflateCorners(pNW, pNE, pSW, pSE, 1.4);
 
@@ -308,9 +302,7 @@ function drawTile(i, j, tempZoomLevel, maxtile) {
 	// the triangular gaps between the bottom corners of adjacent tiles when
 	// zoomed far out.
 	if (parentCrop){
-		//ctx.globalAlpha = opacitySlider.value * 0.8;
 		drawImageQuad(parentCrop.image, parentCrop.srcX, parentCrop.srcY, parentCrop.srcSize, parentCrop.srcSize, iNW, iNE, iSW, iSE);
-		//ctx.globalAlpha = opacitySlider.value;
 	}
 	else {
 		const sw_px = tileImage.naturalWidth || navsat.tile_size;
@@ -334,7 +326,7 @@ async function drawTiles(){
     const hei = canvas.height;
 
 	ctx.clearRect(0, 0, wid, hei);
-	ctx.globalAlpha = 1.0;//opacitySlider.value;
+	ctx.globalAlpha = 1.0;
 	ctx.imageSmoothingEnabled = smoothingCheckbox.checked;
 
 	if(!map_fix){
@@ -359,7 +351,20 @@ async function drawTiles(){
 
 	if(frame){
 
-		cornerCache.clear();
+		// ENU -> screen is one affine per frame: screen = S * (R * enu + t).
+		// Build it once; per corner it's then 4 multiplies + 2 adds.
+		const ignoreRot = ignoreRotationCheckbox.checked;
+		const q = frame.rotation;
+		const m00 = ignoreRot ? 1 : 1 - 2 * (q.y * q.y + q.z * q.z);
+		const m01 = ignoreRot ? 0 : 2 * (q.x * q.y - q.w * q.z);
+		const m10 = ignoreRot ? 0 : 2 * (q.x * q.y + q.w * q.z);
+		const m11 = ignoreRot ? 1 : 1 - 2 * (q.x * q.x + q.z * q.z);
+		const p0 = view.fixedToScreen({x: frame.translation.x, y: frame.translation.y});
+		const s = view.scale;
+		enuToScreenMat = {
+			a:  s * m00, b:  s * m01, e: p0.x,
+			c: -s * m10, d: -s * m11, f: p0.y
+		};
 
 		const corners = [
 			{ x: 0, y: 0, z: 0 },
@@ -513,6 +518,8 @@ function connect(){
 }
 
 function updateFixData(){
+	cornerCache.clear();
+
 	// The ENU tangent plane is anchored at the fix coordinate. If the backend
 	// projects GNSS with a fixed datum (recommended), make sure this topic
 	// publishes that datum so both ENU frames coincide exactly.
