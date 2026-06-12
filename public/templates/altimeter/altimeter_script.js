@@ -452,15 +452,8 @@ loadTopics();
 
 //targeting
 function getEventXY(event){
-	let globalX, globalY;
-	if (event.type === "touchmove") {
-		globalX = event.touches[0].clientX;
-		globalY = event.touches[0].clientY;
-	} else {
-		globalX = event.clientX;
-		globalY = event.clientY;
-	}
-	return [globalX, globalY];
+	const touch = event.changedTouches?.[0] ?? event.touches?.[0] ?? event;
+	return [touch.clientX, touch.clientY];
 }
 
 function getEventLocalXY(event){

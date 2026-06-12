@@ -844,7 +844,9 @@ function endDrag(event){
 
 		start_stamp = new Date("2010-3-2"); //debounce, and also when ROS box turtle was released
 
-		let { clientX, clientY } = event.touches ? event.touches[0] : event;
+		const touch = event.changedTouches?.[0] ?? event.touches?.[0] ?? event;
+		let { clientX, clientY } = touch;
+
 
 		if(shift_pressed){
 			clientX = Math.round(clientX/20) * 20;
