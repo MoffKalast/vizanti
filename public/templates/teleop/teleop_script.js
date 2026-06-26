@@ -69,6 +69,10 @@ const click_icon = document.getElementById("{uniqueID}_icon");
 const icon = document.getElementById("{uniqueID}_icon_svg");
 const icon_locked = document.getElementById("{uniqueID}_icon_svg_locked");
 
+const reapplyColor = () => updateColor(colourpickerBox.value, opacityBox.value);
+icon.addEventListener("load", reapplyColor);
+icon_locked.addEventListener("load", reapplyColor);
+
 const colourpickerBox = document.getElementById("{uniqueID}_colorpicker");
 colourpickerBox.addEventListener("input", (event) =>{
 	updateColor(colourpickerBox.value, opacityBox.value);
@@ -273,8 +277,6 @@ if (settings.hasOwnProperty('{uniqueID}')) {
 	joy_offset_x = loaded_data.joy_offset_x;
 	joy_offset_y = loaded_data.joy_offset_y;
 
-	setLock(loaded_data.joy_locked ?? false);
-
 	opacityBox.value = loaded_data.opacity ?? 0.5;
 	opacityValue.textContent = opacityBox.value;
 
@@ -329,6 +331,8 @@ if (settings.hasOwnProperty('{uniqueID}')) {
 	velocityHorizontalSlider.dispatchEvent(new Event('input'));
 	accelVerticalSlider.dispatchEvent(new Event('input'));
 	accelHorizontalSlider.dispatchEvent(new Event('input'));
+
+	setLock(loaded_data.joy_locked ?? false);
 
 	if(loaded_data.keybindings){
 		keybindings = loaded_data.keybindings;
@@ -507,6 +511,8 @@ function setLock(lock){
 		icon.style.display = "block";
 		icon_locked.style.display = "none";
 	}
+
+	updateColor(colourpickerBox.value, opacityBox.value);
 }
 
 let longPressTimer;
