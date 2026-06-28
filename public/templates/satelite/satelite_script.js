@@ -30,6 +30,8 @@ let map_fix = undefined;
 let fix_data = undefined;
 let enu_origin = undefined;
 let enuToScreenMat = undefined;
+let last_fix_key = undefined;
+let update_throttle = undefined;
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
@@ -338,8 +340,6 @@ async function drawTiles(){
 		return;
 	}
 
-	const frame = tf.getAbsoluteTransform(map_fix.header);
-
 	let	tempZoomLevel = Math.round(Math.log2(view.scale)+17);
 	tempZoomLevel = clamp(tempZoomLevel, 7, 19);
 	if(tempZoomLevel != zoomLevel){
@@ -349,109 +349,105 @@ async function drawTiles(){
 	}
 
 
-	if(frame){
+	// ENU -> screen is one affine per frame: screen = S * (R * enu + t).
+	// Build it once; per corner it's then 4 multiplies + 2 adds.
+	const frame = map_fix.frame;
+	const ignoreRot = ignoreRotationCheckbox.checked;
+	const q = frame.rotation;
+	const m00 = ignoreRot ? 1 : 1 - 2 * (q.y * q.y + q.z * q.z);
+	const m01 = ignoreRot ? 0 : 2 * (q.x * q.y - q.w * q.z);
+	const m10 = ignoreRot ? 0 : 2 * (q.x * q.y + q.w * q.z);
+	const m11 = ignoreRot ? 1 : 1 - 2 * (q.x * q.x + q.z * q.z);
+	const p0 = view.fixedToScreen({x: frame.translation.x, y: frame.translation.y});
+	const s = view.scale;
+	enuToScreenMat = {
+		a:  s * m00, b:  s * m01, e: p0.x,
+		c: -s * m10, d: -s * m11, f: p0.y
+	};
 
-		// ENU -> screen is one affine per frame: screen = S * (R * enu + t).
-		// Build it once; per corner it's then 4 multiplies + 2 adds.
-		const ignoreRot = ignoreRotationCheckbox.checked;
-		const q = frame.rotation;
-		const m00 = ignoreRot ? 1 : 1 - 2 * (q.y * q.y + q.z * q.z);
-		const m01 = ignoreRot ? 0 : 2 * (q.x * q.y - q.w * q.z);
-		const m10 = ignoreRot ? 0 : 2 * (q.x * q.y + q.w * q.z);
-		const m11 = ignoreRot ? 1 : 1 - 2 * (q.x * q.x + q.z * q.z);
-		const p0 = view.fixedToScreen({x: frame.translation.x, y: frame.translation.y});
-		const s = view.scale;
-		enuToScreenMat = {
-			a:  s * m00, b:  s * m01, e: p0.x,
-			c: -s * m10, d: -s * m11, f: p0.y
+	const corners = [
+		{ x: 0, y: 0, z: 0 },
+		{ x: wid, y: 0, z: 0 },
+		{ x: wid, y: hei, z: 0  },
+		{ x: 0, y: hei, z: 0  },
+	];
+
+	// Convert the corners from pixels to ENU meters in the map_fix frame,
+	// then invert the exact same ENU projection used for tile placement to
+	// get latitude/longitude. Because culling and drawing now use one and
+	// the same (exact, invertible) mapping, they can never diverge no
+	// matter how far the view moves from the origin.
+	// Note: the inverse transform uses the same stamped absolute transform
+	// ("frame") that transformPoseStamped uses in drawTile, so cull and
+	// draw also agree on the TF sample.
+	const cornerCoords = corners.map((corner) => {
+		const meters = view.screenToFixed(corner);
+		const d = {
+			x: meters.x - frame.translation.x,
+			y: meters.y - frame.translation.y,
+			z: -frame.translation.z
 		};
 
-		const corners = [
-			{ x: 0, y: 0, z: 0 },
-			{ x: wid, y: 0, z: 0 },
-			{ x: wid, y: hei, z: 0  },
-			{ x: 0, y: hei, z: 0  },
-		];
-
-		// Convert the corners from pixels to ENU meters in the map_fix frame,
-		// then invert the exact same ENU projection used for tile placement to
-		// get latitude/longitude. Because culling and drawing now use one and
-		// the same (exact, invertible) mapping, they can never diverge no
-		// matter how far the view moves from the origin.
-		// Note: the inverse transform uses the same stamped absolute transform
-		// ("frame") that transformPoseStamped uses in drawTile, so cull and
-		// draw also agree on the TF sample.
-		const cornerCoords = corners.map((corner) => {
-			const meters = view.screenToFixed(corner);
-			const d = {
-				x: meters.x - frame.translation.x,
-				y: meters.y - frame.translation.y,
-				z: -frame.translation.z
-			};
-
-			let local;
-			if(ignoreRotationCheckbox.checked){
-				local = d;
-			}else{
-				local = applyRotation(d, frame.rotation, true);
-			}
-
-			return Navsat.enuGroundToLla(local.x, local.y, enu_origin);
-		});
-
-		// Convert the corners to tile coordinates (exact mercator)
-		const cornerTileCoords = cornerCoords.map((coord) =>
-			Navsat.coordToTile(coord.longitude, coord.latitude, tempZoomLevel)
-		);
-
-		// Calculate the range of tiles to cover the screen
-		const minX = Math.min(...cornerTileCoords.map((coord) => coord.x)) - fix_data.tilePos.x - 1;
-		const maxX = Math.max(...cornerTileCoords.map((coord) => coord.x)) - fix_data.tilePos.x + 1;
-		const minY = Math.min(...cornerTileCoords.map((coord) => coord.y)) - fix_data.tilePos.y - 1;
-		const maxY = Math.max(...cornerTileCoords.map((coord) => coord.y)) - fix_data.tilePos.y + 1;
-
-		//draw tiles in concentric circles, starting from the center of the screen
-		const matrixWidth = (maxX - minX)+2;
-		const matrixHeight = (maxY - minY)+2;
-		const centerX = Math.round((maxX+minX)/2);
-		const centerY = Math.round((maxY+minY)/2)-1;
-		const maxtile = Math.pow(2, tempZoomLevel) - 1;
-
-		let x = 0;
-		let y = 0;
-		let dx = 0;
-		let dy = -1;
-
-		const maxDimension = Math.max(matrixWidth, matrixHeight);
-		for (let i = 0; i < maxDimension ** 2; i++) {
-			if (-matrixWidth / 2 < x && x <= matrixWidth / 2 && -matrixHeight / 2 < y && y <= matrixHeight / 2) {
-				drawTile(centerX+x, centerY+y, tempZoomLevel, maxtile);
-			}
-			if (x === y || (x < 0 && x === -y) || (x > 0 && x === 1 - y)) {
-				[dx, dy] = [-dy, dx];
-			}
-			x += dx;
-			y += dy;
+		let local;
+		if(ignoreRotationCheckbox.checked){
+			local = d;
+		}else{
+			local = applyRotation(d, frame.rotation, true);
 		}
 
-		//transform reset
-		ctx.setTransform(1, 0, 0, 1, 0, 0);
+		return Navsat.enuGroundToLla(local.x, local.y, enu_origin);
+	});
 
-		if(copyright != ""){
-			ctx.globalAlpha = 0.6;
-			ctx.fillStyle = "#171717";
-			ctx.fillRect(0, hei-20, 120, 20);
+	// Convert the corners to tile coordinates (exact mercator)
+	const cornerTileCoords = cornerCoords.map((coord) =>
+		Navsat.coordToTile(coord.longitude, coord.latitude, tempZoomLevel)
+	);
 
-			ctx.globalAlpha = 1.0;
-			ctx.font = "12px Monospace";
-			ctx.fillStyle = "white";
-			ctx.fillText(copyright, 5, hei-5);
+	// Calculate the range of tiles to cover the screen
+	const minX = Math.min(...cornerTileCoords.map((coord) => coord.x)) - fix_data.tilePos.x - 1;
+	const maxX = Math.max(...cornerTileCoords.map((coord) => coord.x)) - fix_data.tilePos.x + 1;
+	const minY = Math.min(...cornerTileCoords.map((coord) => coord.y)) - fix_data.tilePos.y - 1;
+	const maxY = Math.max(...cornerTileCoords.map((coord) => coord.y)) - fix_data.tilePos.y + 1;
+
+	//draw tiles in concentric circles, starting from the center of the screen
+	const matrixWidth = (maxX - minX)+2;
+	const matrixHeight = (maxY - minY)+2;
+	const centerX = Math.round((maxX+minX)/2);
+	const centerY = Math.round((maxY+minY)/2)-1;
+	const maxtile = Math.pow(2, tempZoomLevel) - 1;
+
+	let x = 0;
+	let y = 0;
+	let dx = 0;
+	let dy = -1;
+
+	const maxDimension = Math.max(matrixWidth, matrixHeight);
+	for (let i = 0; i < maxDimension ** 2; i++) {
+		if (-matrixWidth / 2 < x && x <= matrixWidth / 2 && -matrixHeight / 2 < y && y <= matrixHeight / 2) {
+			drawTile(centerX+x, centerY+y, tempZoomLevel, maxtile);
 		}
-
-		status.setOK();
-	}else{
-		status.setError("Required transform frame \""+map_fix.header.frame_id+"\" not found.");
+		if (x === y || (x < 0 && x === -y) || (x > 0 && x === 1 - y)) {
+			[dx, dy] = [-dy, dx];
+		}
+		x += dx;
+		y += dy;
 	}
+
+	//transform reset
+	ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+	if(copyright != ""){
+		ctx.globalAlpha = 0.6;
+		ctx.fillStyle = "#171717";
+		ctx.fillRect(0, hei-20, 120, 20);
+
+		ctx.globalAlpha = 1.0;
+		ctx.font = "12px Monospace";
+		ctx.fillStyle = "white";
+		ctx.fillText(copyright, 5, hei-5);
+	}
+
+	status.setOK();
 }
 
 const COVARIANCE_TYPE = {
@@ -476,8 +472,7 @@ function connect(){
 	map_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : 'sensor_msgs/NavSatFix',
-		throttle_rate: 33
+		messageType : 'sensor_msgs/NavSatFix'
 	});
 
 	status.setWarn("No data received.");
@@ -486,8 +481,16 @@ function connect(){
 	text_alt.innerText = "Altitude: ?";
 	text_cov.innerText = "Ground Covariance: ?";
 	text_frame.innerText = "TF Frame: ?";
+
+	last_fix_key = undefined;
+	update_throttle = new Date("2010-3-2");
 	
 	listener = map_topic.subscribe((msg) => {
+		if(new Date() - update_throttle < 4000 || opacitySlider.value == 0.0) //reduces jitter and CPU load in raw receiver mode
+			return;
+
+		update_throttle = new Date();
+
 		const cov_mat = msg.position_covariance;
 		const covariance_meters = Math.hypot(Math.sqrt(cov_mat[0]), Math.sqrt(cov_mat[4]))
 
@@ -509,8 +512,26 @@ function connect(){
 
 		text_frame.innerText = "TF Frame: "+msg.header.frame_id;
 
+		const frame = tf.getAbsoluteTransform(msg.header);
+
+		if(!frame){
+			status.setError("Required transform frame \""+msg.header.frame_id+"\" not found.");
+			return;
+		}
+		msg.frame = frame;
+		
 		map_fix = msg;
-		updateFixData();
+
+		// Only rebuild the ENU origin and tile state if the actual fix changed.
+		// If it's the same position with a new header, no need to dump the corner cache and redo all the tile math.
+		const cov = msg.position_covariance;
+		const fix_key = `${msg.latitude},${msg.longitude},${msg.altitude},${cov[0]},${cov[4]},${cov[8]}`;
+		if(fix_key !== last_fix_key){
+			last_fix_key = fix_key;
+			updateFixData();
+			console.log("dropping corner cache");
+		}
+		
 		drawTiles();
 	});
 
