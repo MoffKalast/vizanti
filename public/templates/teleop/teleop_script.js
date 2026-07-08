@@ -881,6 +881,9 @@ function updateKeyButtons() {
 
 function keydown(event) {
 
+	if(event.key === undefined)
+		return;
+
 	if(joy_locked)
 		return;
 
@@ -926,6 +929,9 @@ function keydown(event) {
 }
 
 function keyup(event) {
+
+	if(event.key === undefined)
+		return;
 
 	if(joy_locked)
 		return;

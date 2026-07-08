@@ -529,7 +529,6 @@ function connect(){
 		if(fix_key !== last_fix_key){
 			last_fix_key = fix_key;
 			updateFixData();
-			console.log("dropping corner cache");
 		}
 		
 		drawTiles();
