@@ -486,7 +486,7 @@ function connect(){
 	update_throttle = new Date("2010-3-2");
 	
 	listener = map_topic.subscribe((msg) => {
-		
+
 		if(new Date() - update_throttle < 4000 || opacitySlider.value == 0.0) //reduces jitter and CPU load in raw receiver mode
 			return;
 
@@ -530,7 +530,6 @@ function connect(){
 		if(fix_key !== last_fix_key){
 			last_fix_key = fix_key;
 			updateFixData();
-			console.log("dropping corner cache");
 		}
 		
 		drawTiles();
