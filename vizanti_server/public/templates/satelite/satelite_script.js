@@ -457,6 +457,8 @@ const COVARIANCE_TYPE = {
 	3: "(known)"
 }
 
+let connect_retry = 0;
+
 //Topic
 function connect(){
 
@@ -517,8 +519,16 @@ function connect(){
 
 		if(!frame){
 			status.setError("Required transform frame \""+msg.header.frame_id+"\" not found.");
+			connect_retry = (connect_retry + 1) % 5;
+			if(connect_retry != 0){
+				console.log("Satelite tiles connect retry...")
+				setTimeout(connect, 500);
+				return;
+			}
 			return;
 		}
+
+		connect_retry = 0;
 		msg.frame = frame;
 		
 		map_fix = msg;
