@@ -264,7 +264,7 @@ async function drawMarkers(){
 		ctx.setTransform(1,0,0,-1,screenpos.x, screenpos.y); //sx,0,0,sy,px,py
 		
 		drawTranslationalCovariance(posemsg.eigenvalues, unit);
-		ctx.setTransform(1,0,0,-1,screenpos.x, screenpos.y);			
+		ctx.setTransform(1,0,0,-1,screenpos.x, screenpos.y);
 
 		if(!posemsg.rotation_invalid){
 			ctx.rotate(posemsg.yaw);
@@ -372,9 +372,8 @@ function connect(){
 			q = new Quaternion();
 		}
 
-		const transformed = tf.transformPose(
-			msg.header.frame_id, 
-			tf.fixed_frame, 
+		const transformed = tf.transformPoseStamped(
+			msg.header,
 			pose.position, 
 			q
 		);

@@ -104,6 +104,27 @@ export class View {
 		}
 	}
 
+	quaterionToProjectionMatrix(quaternion) {
+		let quat = new Quaternion(
+			quaternion.w, 
+			-quaternion.x, 
+			quaternion.y, 
+			-quaternion.z
+		);
+
+		const w = quat.w;
+		const x = quat.x;
+		const y = quat.y;
+		const z = quat.z;
+		
+		const m11 = 1 - 2 * (y * y + z * z);
+		const m21 = 2 * (x * y + w * z);
+		const m12 = 2 * (x * y - w * z);
+		const m22 = 1 - 2 * (x * x + z * z);
+		return [m11, m21, m12, m22];
+	}
+
+
 	getPixelsInMapUnits(length){
 		let p1 = this.screenToFixed({
 			x: 0,
@@ -229,6 +250,7 @@ export class View {
 		view.addEventListener('mouseup', this.handleDragEnd.bind(this));
 		
 		view.addEventListener('touchstart', (event) => {
+			event.preventDefault()
 			if (event.touches.length === 2) {
 				if (!this.touch1 || !this.touch2) {
 					this.touch1 = {
@@ -248,15 +270,16 @@ export class View {
 				this.touch2 = null;
 				this.handleDragStart(event);
 			}
-		});	
+		}, { passive: false });
 
 		view.addEventListener('touchmove', (event) => {
+			event.preventDefault();
 			if (event.touches.length === 2) {
 				this.handleZoom(event);
 			} else {
 				this.handleDragMove(event);
 			}
-		});
+		}, { passive: false });
 
 		view.addEventListener('touchend', (event) => {
 			this.touch1 = null;
@@ -270,7 +293,11 @@ export class View {
 			this.handleDragEnd(event);
 		});
 
-		view.addEventListener('wheel', this.handleZoom.bind(this));
+		view.addEventListener('wheel', (event) => {
+			event.preventDefault();
+			this.handleZoom(event)
+
+		}, { passive: false });
 	}
 
 }

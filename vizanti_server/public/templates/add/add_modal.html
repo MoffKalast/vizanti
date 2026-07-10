@@ -5,7 +5,7 @@
 		<div class="spacer"></div>
 
 		<div class="tab">
-			<button class="tablinks active_tab" id="add_set_type">By Type</button>
+			<button class="tablinks active-tab" id="add_set_type">By Type</button>
 			<button class="tablinks" id="add_set_topics">By Topic</button>
 		</div>
 
@@ -89,11 +89,11 @@
 
 			<hr>
 
-			<div class="widget_entry" onclick="addWidget('teleop','')" data-topic="geometry_msgs/msg/Twist">
+			<div class="widget_entry" onclick="addWidget('teleop','')" data-topic="geometry_msgs/msg/Twist,geometry_msgs/msg/TwistStamped">
 				<img src="assets/joystick.svg" alt="Teleop" class="card_icon">
 				<div class="card">
 					<b class="card_title">Teleop Joystick</b>
-					<p class="card_desc">geometry_msgs/Twist</p>
+					<p class="card_desc">Send velocity with [geometry_msgs/Twist] or [geometry_msgs/TwistStamped]</p>
 				</div>
 			</div>
 
@@ -137,7 +137,7 @@
 				</div>
 			</div>
 
-			<div class="widget_entry" onclick="addWidget('altimeter','')" data-topic="std_msgs/msg/Float32">
+			<div class="widget_entry" onclick="addWidget('altimeter','')">
 				<img src="assets/altimeter.svg" alt="Altimeter" class="card_icon">
 				<div class="card">
 					<b class="card_title">Altimeter</b>
@@ -157,7 +157,15 @@
 				<img src="assets/odom.svg" alt="Tracker" class="card_icon">
 				<div class="card">
 					<b class="card_title">Pose Tracker</b>
-					<p class="card_desc">Track a TF link or [nav_msgs/Odometry] data over time</p>
+					<p class="card_desc">Track a TF link or [nav_msgs/Odometry] data over time.</p>
+				</div>
+			</div>
+
+			<div class="widget_entry" onclick="addWidget('navball','')" data-topic="sensor_msgs/msg/Imu">
+				<img src="assets/navball_icon.svg" alt="Navball" class="card_icon">
+				<div class="card">
+					<b class="card_title">Attitude Indicator</b>
+					<p class="card_desc">Display the orientation of a TF link or [sensor_msgs/Imu].</p>
 				</div>
 			</div>
 
@@ -173,9 +181,9 @@
 			</div>
 
 			<div class="widget_entry" onclick="addWidget('satelite','')" data-topic="sensor_msgs/msg/NavSatFix">
-				<img src="assets/satelite.svg" alt="Satelite" class="card_icon">
+				<img src="assets/satelite.svg" alt="Satellite" class="card_icon">
 				<div class="card">
-					<b class="card_title">Satelite Tiles</b>
+					<b class="card_title">Satellite Tiles</b>
 					<p class="card_desc">sensor_msgs/NavSatFix</p>
 				</div>
 			</div>
@@ -254,11 +262,11 @@
 				</div>
 			</div>
 
-			<div class="widget_entry" onclick="addWidget('posearray','')" data-topic="geometry_msgs/msg/PoseArray">
+			<div class="widget_entry" onclick="addWidget('posearray','')" data-topic="geometry_msgs/msg/PoseArray,nav2_msgs/msg/ParticleCloud">
 				<img src="assets/posearray.svg" alt="PoseArray" class="card_icon">
 				<div class="card">
 					<b class="card_title">Pose Array</b>
-					<p class="card_desc">geometry_msgs/PoseArray</p>
+					<p class="card_desc">geometry_msgs/PoseArray, nav2_msgs/ParticleCloud</p>
 				</div>
 			</div>
 

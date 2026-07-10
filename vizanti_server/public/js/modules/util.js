@@ -32,11 +32,7 @@ export function imageToDataURL(url) {
 			ctx.drawImage(img, 0, 0);
 			resolve(canvas.toDataURL());
 		};
-		img.onerror = (error) => {
-			setTimeout(() => {
-				img.src = url;
-			}, 1000);
-		};
+		img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
 
 		img.src = url;
 	});

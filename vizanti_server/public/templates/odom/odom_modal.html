@@ -11,7 +11,10 @@
 
 		<p>Track a TF link or nav_msgs/Odometry data.</p>
 
-		<hr class="dark_hr"/>
+		<div class="live_data_display">
+			<p id="{uniqueID}_points_text">Points: ?</p>
+			<p id="{uniqueID}_distance_text">Distance: ?</p>
+		</div>
 
 		<label for="{uniqueID}_colorpicker">Colour:</label>
 		<input type="color" value="#c43b00" id="{uniqueID}_colorpicker">
@@ -19,7 +22,7 @@
 		<div class="spacer"></div>
 
 		<label for="{uniqueID}_history">History (N):</label>
-		<input type="number" value="200" step="1" min="2" max="10000" id="{uniqueID}_history">
+		<input type="number" value="2000" step="1" min="2" max="50000" id="{uniqueID}_history">
 
 		<div class="spacer"></div>
 
@@ -36,7 +39,18 @@
 		<label>Draw arrows:</label>
 		<input type="checkbox" checked id="{uniqueID}_draw_arrows">
 
-		<div class="spacer"></div>
+		<hr class="dark_hr"/>
+
+		<h4>Persistence</h4>
+
+		<label>Save history:</label>
+		<input type="checkbox" checked id="{uniqueID}_save_history">
+
+		<p class="comment">Recorded data will reset upon page reload if saving is disabled.</p>
+
+		<button id="{uniqueID}_downloadcsv">Download as CSV</button>
+
+		<p class="comment">Export pose data as x, y, yaw for analysis, or to import as a waypoint mission.</p>
 
 		<button id="{uniqueID}_clearhistory" style="background-color: rgb(104, 78, 31);">Clear history</button>
 

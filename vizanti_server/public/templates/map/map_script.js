@@ -67,7 +67,8 @@ let icons = {};
 icons["map"] = await imageToDataURL("assets/map.svg");
 icons["costmap"] = await imageToDataURL("assets/costmap.svg");
 icons["raw"] = await imageToDataURL("assets/rawmap.svg");
-icons["raw_transparent"] = await imageToDataURL("assets/rawmap_transparent.svg");
+icons["raw_transparent"] = await imageToDataURL("assets/rawmap_transparent_white.svg");
+icons["raw_transparent_black"] = await imageToDataURL("assets/rawmap_transparent_black.svg");
 
 let listener = undefined;
 let map_topic = undefined;
@@ -105,7 +106,6 @@ opacitySlider.addEventListener('input', () =>  {
 	saveSettings();
 	drawMap();
 });
-
 
 const loadPathBox = document.getElementById("{uniqueID}_loadpath");
 const loadTopicBox = document.getElementById("{uniqueID}_loadtopic");
@@ -207,6 +207,7 @@ async function drawMap(){
 	if(!map_data)
 		return;
 
+	ctx.setTransform(1,0,0,1,0,0);
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	ctx.imageSmoothingEnabled = false;
 
@@ -224,9 +225,8 @@ async function drawMap(){
 	let tf_pose = map_data.pose;
 
 	if(!timestampCheckbox.checked){
-		tf_pose = tf.transformPose(
-			map_data.header.frame_id,
-			tf.fixed_frame,
+		tf_pose = tf.transformPoseStamped(
+			map_data.header,
 			map_data.info.origin.position,
 			map_data.info.origin.orientation
 		);
@@ -237,15 +237,12 @@ async function drawMap(){
 		y: tf_pose.translation.y,
 	});
 
-	const yaw = tf_pose.rotation.toEuler().h;
+	const matrix = view.quaterionToProjectionMatrix(tf_pose.rotation);
 
-	ctx.save();
 	ctx.globalAlpha = opacitySlider.value;
-	ctx.translate(pos.x, pos.y);
+	ctx.setTransform(matrix[0], matrix[1], matrix[2], matrix[3], pos.x, pos.y); //sx,0,0,sy,px,py
 	ctx.scale(1.0, -1.0);
-	ctx.rotate(yaw);
 	ctx.drawImage(temp_canvas, 0, 0, map_width, map_height);
-	ctx.restore();
 }
 
 //Topic
@@ -297,8 +294,20 @@ function connect(){
 		}
 
 		if(!tf.absoluteTransforms[msg.header.frame_id]){
-			status.setError("Required transform frame \""+msg.header.frame_id+"\" not found.");
-			return;
+			if(msg.header.frame_id == "map"){
+				status.setWarn("Map transform not available yet, using identity transform.");
+
+				//add a temporary transform so one can send an initialpose relative to it
+				tf.absoluteTransforms[msg.header.frame_id] = {
+					translation: {x: 0, y:0, z:0},
+					rotation: new Quaternion()
+				}
+				tf.frame_list.add("map");
+
+			}else{
+				status.setError("Required transform frame \""+msg.header.frame_id+"\" not found.");
+				return;
+			}
 		}
 
 		queueWorkerMsg(msg);
@@ -309,10 +318,9 @@ function connect(){
 }
 
 function queueWorkerMsg(msg){
-	msg.pose = tf.transformPose(
-		msg.header.frame_id,
-		tf.fixed_frame,
-		msg.info.origin.position,
+	msg.pose = tf.transformPoseStamped(
+		msg.header,
+		msg.info.origin.position, 
 		msg.info.origin.orientation
 	);
 

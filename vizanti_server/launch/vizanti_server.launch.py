@@ -11,11 +11,15 @@ def generate_launch_description():
     default_widget_config = launch.substitutions.LaunchConfiguration('default_widget_config', default='') #e.g. ~/your_custom_config.json
 
     #rosbridge internal params
+    send_action_goals_in_new_thread = launch.substitutions.LaunchConfiguration('send_action_goals_in_new_thread', default='true')
+    call_services_in_new_thread = launch.substitutions.LaunchConfiguration('call_services_in_new_thread', default='true')
     unregister_timeout = launch.substitutions.LaunchConfiguration('unregister_timeout', default='9999999.9')
     retry_startup_delay = launch.substitutions.LaunchConfiguration('retry_startup_delay', default='10.0')
     fragment_timeout = launch.substitutions.LaunchConfiguration('fragment_timeout', default='30')
-    delay_between_messages = launch.substitutions.LaunchConfiguration('delay_between_messages', default='0')
+    delay_between_messages = launch.substitutions.LaunchConfiguration('delay_between_messages', default='0.0')
     max_message_size = launch.substitutions.LaunchConfiguration('max_message_size', default='999999999')
+    websocket_ping_interval = launch.substitutions.LaunchConfiguration('websocket_ping_interval', default='4.0')
+    websocket_ping_timeout = launch.substitutions.LaunchConfiguration('websocket_ping_timeout', default='15.0')
 
     rosbridge_node = launch_ros.actions.Node(
         name='vizanti_rosbridge',
@@ -25,13 +29,17 @@ def generate_launch_description():
         parameters=[
             {'authenticate': False},
             {'port': port_rosbridge},
-            {'address': ''},
+            {'address': '0.0.0.0'},
             {'retry_startup_delay': retry_startup_delay},
             {'fragment_timeout': fragment_timeout},
             {'delay_between_messages': delay_between_messages},
             {'max_message_size': max_message_size},
             {'unregister_timeout': unregister_timeout},
-            {'use_compression': True}
+            {'use_compression': True},
+            {'websocket_ping_interval': websocket_ping_interval},
+            {'websocket_ping_timeout': websocket_ping_timeout},
+            {'send_action_goals_in_new_thread': send_action_goals_in_new_thread},
+            {'call_services_in_new_thread': call_services_in_new_thread}
         ]
     )
 

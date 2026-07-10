@@ -1,6 +1,6 @@
 <div id="{uniqueID}_modal" class="modal_outer noselect">
 	<div class="modal_inner noselect">
-		<h3>Satelite Tiles</h3>
+		<h3>Satellite Tiles</h3>
 		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
 		<hr class="dark_hr"/>
 
@@ -14,26 +14,37 @@
 			<p id="{uniqueID}_longitude">Longitude: ?</p> 
 			<p id="{uniqueID}_altitude">Altitude: ?</p>
 			<p id="{uniqueID}_covariance">Ground Covariance: ?</p>
+			<p id="{uniqueID}_frame">TF Frame: ?</p>
 		</div>
 
 
-		Renders a tile map based on sensor_msgs/NavSatFix positional data. Use with a local origin for best results.
+		<p>Renders a tile map around a point specified by a sensor_msgs/NavSatFix and its header frame.</p>
 
-		<div class="spacer"></div>
+		<p class="comment">Uses an ENU local tangent plane as specified by REP 103. The tiles are reprojected to match, which maintains alignment between geodetic coordinates and metric X,Y positions (it's basically a perpendicular globe at the given location). As the tangent plane increasingly diverges from the terrain with distance, Z offsets become larger and straight-line distances less useful. For best results, place the ENU origin near the operating area.</p>
+		
 		<hr class="dark_hr"/>
 		<div class="spacer"></div>
 
 		<label for="{uniqueID}_tileserver">Tile server URL:</label>
-		<input style="margin-top: 0.3em; margin-bottom: 0.3em; width: 95%"id="{uniqueID}_tileserver" type="text" value="https://tile.openstreetmap.org/{z}/{x}/{y}.png">
+		<input list="tileserver" style="margin-top: 0.3em; margin-bottom: 0.3em; width: 95%" id="{uniqueID}_tileserver" type="text" value="https://tile.openstreetmap.org/{z}/{x}/{y}.png">
 
-		<p class="comment">The tile server can be changed to anything that uses 265x256 sized tiles, the Web Mercator projection, and follows the same {x},{y},{z} convention. </p>
+		<!-- Known usable providers -->
+		<datalist id="tileserver">
+			<option value="https://tile.openstreetmap.org/{z}/{x}/{y}.png">
+			<option value="https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}.png">
+			<option value="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"></option>
+			<option value="https://t1.openseamap.org/seamark/{z}/{x}/{y}.png"></option>
+		</datalist> 
+
+
+		<p class="comment">The tile server can be changed to anything that uses 256x256 sized tiles, the Web Mercator projection, and follows the same {x},{y},{z} convention. </p>
 
 		<div class="spacer"></div>
 
 		<label>Texture smoothing:</label>
 		<input type="checkbox" checked id="{uniqueID}_smoothing">
 
-		<p class="comment">Max tile zoom doesn't provide much detail up close, so you get to chose between pixelated or blurry.</p>
+		<p class="comment">Max tile zoom doesn't provide much detail up close, so you get to choose between pixelated or blurry.</p>
 
 		<div class="spacer"></div>
 

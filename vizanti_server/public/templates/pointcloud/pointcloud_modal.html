@@ -9,34 +9,54 @@
 			<!-- add topics here-->
 		</select>
 
-		<div class="spacer"></div>
-
-		<label for="{uniqueID}_opacity">Opacity:</label>
-		<span id="{uniqueID}_opacity_value">1.0</span>
-		<input type="range" value="1.0" step="0.05" min="0.1" max="1.0" id="{uniqueID}_opacity">
+		<p>Render a sensor_msgs/PointCloud2 containing X, Y, Z and RGB data.</p>
 
 		<div class="spacer"></div>
 
 		<label for="{uniqueID}_thickness">Thickness (m):</label>
 		<span id="{uniqueID}_thickness_value">0.02</span>
-		<input type="range" value="0.02" step="0.01" min="0.01" max="0.2" id="{uniqueID}_thickness">
+		<input type="range" value="0.02" step="0.01" min="0.01" max="0.5" id="{uniqueID}_thickness">
 
 		<div class="spacer"></div>
 
-		<label for="{uniqueID}_colorpicker">Colour:</label>
+		<label for="{uniqueID}_max_points">Max Points:</label>
+		<span id="{uniqueID}_max_points_value">15000</span>
+		<input type="range" value="15000" step="100" min="100" max="50000" id="{uniqueID}_max_points">
+
+		<div class="spacer"></div>
+
+		<label for="{uniqueID}_opacity">Opacity:</label>
+		<span id="{uniqueID}_opacity_value">1.0</span>
+		<input type="range" value="1.0" step="0.05" min="0.1" max="1.0" id="{uniqueID}_opacity">	
+
+		<h4>Colour Config</h4>
+
+		<label for="{uniqueID}_colorpicker">Fallback Colour:</label>
 		<input type="color" value="#1f8eec" id="{uniqueID}_colorpicker">
+
+		<p class="comment">If the cloud contains no rgb data, the above colour will be used.</p>
+
+		<label>Override RGB with flat colour:</label>
+		<input type="checkbox" id="{uniqueID}_color_override">	
+
+		<div class="spacer"></div>
+
+		<label for="{uniqueID}_colour_count">RGB Colour Count:</label>
+		<span id="{uniqueID}_colour_count_value">5</span>
+		<input type="range" value="5" step="1" min="2" max="32" id="{uniqueID}_colour_count">
+
+		<p class="comment">The RGB values will be batched together and averaged to this many colour bins for faster rendering.</p>
+
+		<hr class="dark_hr"/>
 
 		<div class="spacer"></div>
 
 		<label for="{uniqueID}_throttle">Socket throttle (ms):</label>
-		<input type="number" value="2000" step="0" min="0" max="10000" id="{uniqueID}_throttle">
+		<input type="number" value="1000" step="0" min="0" max="10000" id="{uniqueID}_throttle">
 
 		<div class="spacer"></div>
 
-		<p>Point clouds are very high bandwidth topics, and as such can easily cause TCP congestion. Lower the socket throttle rate to get faster data updates, but note that other visualizers may stutter.</p>
-
-		<p style="color:#b4b4b4;">Currently experimental and might not decode all cloud formats correctly. XYZ coordinate data is required, the rest is ignored for now.</p>
-
+		<p class="comment">Point clouds are very high bandwidth topics, and as such can easily cause TCP congestion. Lower the socket throttle time to get faster data updates over high bandwidth connections.</p>
 
 		<hr class="dark_hr"/>
 

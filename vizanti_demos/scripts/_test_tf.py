@@ -8,7 +8,45 @@ import numpy as np
 
 from rclpy.duration import Duration
 from rclpy.node import Node
-from scipy.spatial.transform import Rotation as R
+
+def rotation_matrix_to_quat(Rm):
+    """
+    Convert a 3x3 rotation matrix to a quaternion (x, y, z, w).
+    Assumes a proper rotation matrix.
+    """
+    m00, m01, m02 = Rm[0, 0], Rm[0, 1], Rm[0, 2]
+    m10, m11, m12 = Rm[1, 0], Rm[1, 1], Rm[1, 2]
+    m20, m21, m22 = Rm[2, 0], Rm[2, 1], Rm[2, 2]
+
+    trace = m00 + m11 + m22
+
+    if trace > 0.0:
+        s = 0.5 / math.sqrt(trace + 1.0)
+        w = 0.25 / s
+        x = (m21 - m12) * s
+        y = (m02 - m20) * s
+        z = (m10 - m01) * s
+    elif m00 > m11 and m00 > m22:
+        s = 2.0 * math.sqrt(1.0 + m00 - m11 - m22)
+        w = (m21 - m12) / s
+        x = 0.25 * s
+        y = (m01 + m10) / s
+        z = (m02 + m20) / s
+    elif m11 > m22:
+        s = 2.0 * math.sqrt(1.0 + m11 - m00 - m22)
+        w = (m02 - m20) / s
+        x = (m01 + m10) / s
+        y = 0.25 * s
+        z = (m12 + m21) / s
+    else:
+        s = 2.0 * math.sqrt(1.0 + m22 - m00 - m11)
+        w = (m10 - m01) / s
+        x = (m02 + m20) / s
+        y = (m12 + m21) / s
+        z = 0.25 * s
+
+    quat = np.array([x, y, z, w])
+    return quat / np.linalg.norm(quat)
 
 class Particle:
     def __init__(self, i, position, velocity, node):
@@ -77,7 +115,7 @@ class OrbitingFramesNode(Node):
             y_axis = np.cross(z_axis, x_axis)
             
             rotation_matrix = np.vstack([x_axis, y_axis, z_axis]).T
-            rotation_quat = R.from_matrix(rotation_matrix).as_quat()
+            rotation_quat = rotation_matrix_to_quat(rotation_matrix)
 
             # Create transform message
             transform = geometry_msgs.msg.TransformStamped()

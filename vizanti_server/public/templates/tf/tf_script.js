@@ -36,6 +36,8 @@ axesCheckbox.addEventListener('change', saveSettings);
 linesCheckbox.addEventListener('change', saveSettings);
 scaleSlider.addEventListener('change', saveSettings);
 
+let prev_transforms = new Set();
+let grouped_frames = [];
 let frame_visibility = {};
 
 // Settings
@@ -68,7 +70,7 @@ function saveSettings() {
 
 // Rendering
 
-async function drawLines(origin, relative, absolute){
+async function drawLines(relative, absolute){
 
 	ctx.strokeStyle = "#eba834";
 	ctx.lineWidth = 1*parseFloat(scaleSlider.value);
@@ -103,7 +105,7 @@ async function drawLines(origin, relative, absolute){
 
 }
 
-async function drawText(origin, relative, absolute){
+async function drawText(absolute){
 
 	ctx.lineJoin = 'round';
 	ctx.miterLimit = 2;
@@ -113,9 +115,6 @@ async function drawText(origin, relative, absolute){
 
 	ctx.strokeStyle = "#161B21";
 	ctx.lineWidth = 5*parseFloat(scaleSlider.value);
-
-	//ctx.strokeText(tf.fixed_frame, origin.x, origin.y+15);
-	//ctx.fillText(tf.fixed_frame, origin.x, origin.y+15);
 
 	Object.keys(absolute).forEach(key => {
 
@@ -131,116 +130,138 @@ async function drawText(origin, relative, absolute){
 	});
 }
 
-function getBasisPoints(basis, translation, rotation){
-	let basis_x = applyRotation(basis, rotation);
-	return [
-		view.fixedToScreen({
-			x: translation.x,
-			y: translation.y,
-		}), 
-		view.fixedToScreen({
-			x: translation.x + basis_x.x,
-			y: translation.y + basis_x.y,
-		})
-	];
+function getBasis(rotation, translation, unit) {
+	const w = rotation.w;
+	const x = rotation.x;
+	const y = rotation.y;
+	const z = rotation.z;
+
+	const xx = x * x;
+	const yy = y * y;
+	const zz = z * z;
+	const xy = x * y;
+	const xz = x * z;
+	const yz = y * z;
+	const wx = w * x;
+	const wy = w * y;
+	const wz = w * z;
+
+	// Compute rotation matrix columns inline
+	const v1x = 1 - 2 * (yy + zz);
+	const v1y = 2 * (xy + wz);
+	const v1z = 2 * (xz - wy);
+	const v2x = 2 * (xy - wz);
+	const v2y = 1 - 2 * (xx + zz);
+	const v2z = 2 * (yz + wx);
+
+	// Cross product
+	const v3x = v1y * v2z - v1z * v2y;
+	const v3y = v1z * v2x - v1x * v2z;
+	const v3z = v1x * v2y - v1y * v2x;
+
+	const tx = translation.x;
+	const ty = translation.y;
+
+	// Return flat array instead of nested objects
+	const origin = view.fixedToScreen({x: tx, y: ty});
+	const vx = view.fixedToScreen({x: tx + v1x * unit, y: ty + v1y * unit});
+	const vy = view.fixedToScreen({x: tx + v2x * unit, y: ty + v2y * unit});
+	const vz = view.fixedToScreen({x: tx + v3x * unit, y: ty + v3y * unit});
+
+	// Store as flat structure for better cache locality
+	return [origin, vx, vy, vz, v3z < 0];
 }
 
-async function drawAxes(origin, relative, absolute) {
-
-	const unit = view.getPixelsInMapUnits(30*parseFloat(scaleSlider.value));
-
-	ctx.lineWidth = 2*parseFloat(scaleSlider.value);
-	ctx.strokeStyle = "#E0000B"; //red
-	ctx.beginPath();
-
-	Object.keys(absolute).forEach(key => {
-		let transform = absolute[key];
-		let p = getBasisPoints(
-			{x: unit, y: 0, z: 0},
-			transform.translation,
-			transform.rotation
-		);
-		ctx.moveTo(parseInt(p[0].x), parseInt(p[0].y));
-		ctx.lineTo(parseInt(p[1].x), parseInt(p[1].y));
-	});
+function drawAxes(absolute) {
+	const unit = view.getPixelsInMapUnits(30 * parseFloat(scaleSlider.value));
+	const lineWidth = 2 * parseFloat(scaleSlider.value);
 	
-	ctx.stroke();
+	const frame_keys = Object.keys(absolute);
+	const vectors = new Array(frame_keys.length);
+	
+	for (let i = 0; i < frame_keys.length; i++) {
+		const transform = absolute[frame_keys[i]];
+		vectors[i] = getBasis(transform.rotation, transform.translation, unit);
+	}
 
-	ctx.strokeStyle = "#29FF26"; //green
+	ctx.lineWidth = lineWidth;
+
+	// Red X
+	ctx.strokeStyle = "#E0000B";
 	ctx.beginPath();
-
-	Object.keys(absolute).forEach(key => {
-		let transform = absolute[key];
-		let p = getBasisPoints(
-			{x: 0, y: unit, z: 0},
-			transform.translation,
-			transform.rotation
-		);
-		ctx.moveTo(parseInt(p[0].x), parseInt(p[0].y));
-		ctx.lineTo(parseInt(p[1].x), parseInt(p[1].y));
-	});
-
+	for (let i = 0; i < vectors.length; i++) {
+		const p = vectors[i];
+		ctx.moveTo(p[0].x | 0, p[0].y | 0); // Bitwise OR for fast int conversion
+		ctx.lineTo(p[1].x | 0, p[1].y | 0);
+	}
 	ctx.stroke();
 
-
-	ctx.strokeStyle = "#005DFF"; //blue
+	// Green Y
+	ctx.strokeStyle = "#29FF26";
 	ctx.beginPath();
-
-	Object.keys(absolute).forEach(key => {
-		let transform = absolute[key];
-		let p = getBasisPoints(
-			{x: 0, y: 0, z: unit},
-			transform.translation,
-			transform.rotation
-		);
-		ctx.moveTo(parseInt(p[0].x), parseInt(p[0].y));
-		ctx.lineTo(parseInt(p[1].x), parseInt(p[1].y));
-	});
-
+	for (let i = 0; i < vectors.length; i++) {
+		const p = vectors[i];
+		ctx.moveTo(p[0].x | 0, p[0].y | 0);
+		ctx.lineTo(p[2].x | 0, p[2].y | 0);
+	}
 	ctx.stroke();
 
-}
+	// Blue +Z
+	ctx.strokeStyle = "#0084ff";
+	ctx.beginPath();
+	for (let i = 0; i < vectors.length; i++) {
+		const p = vectors[i];
+		if (!p[4]) {
+			ctx.moveTo(p[0].x | 0, p[0].y | 0);
+			ctx.lineTo(p[3].x | 0, p[3].y | 0);
+		}
+	}
+	ctx.stroke();
 
-function filterFrames(framelist){
-	let filteredlist = {};
-	Object.keys(framelist).forEach(key => {
-		if(frame_visibility.hasOwnProperty(key) && frame_visibility[key])
-			filteredlist[key] = framelist[key];
-	});
-	return filteredlist;
-}
-
-async function drawFrames() {
-	ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-	const relative = filterFrames(tf.transforms);
-	const absolute = filterFrames(tf.absoluteTransforms);
-
-	let origin = view.fixedToScreen({
-		x: 0,
-		y: 0,
-	});
-
-	if(linesCheckbox.checked)
-		drawLines(origin, relative, absolute);
-
-	if(axesCheckbox.checked)
-		drawAxes(origin, relative, absolute);
-
-	if(namesCheckbox.checked)
-		drawText(origin, relative, absolute);
+	// Dark blue -Z
+	ctx.strokeStyle = "#0003c0";
+	ctx.beginPath();
+	for (let i = 0; i < vectors.length; i++) {
+		const p = vectors[i];
+		if (p[4]) {
+			ctx.moveTo(p[0].x | 0, p[0].y | 0);
+			ctx.lineTo(p[3].x | 0, p[3].y | 0);
+		}
+	}
+	ctx.stroke();
 }
 
 const framesDiv = document.getElementById('{uniqueID}_frames');
 
-let prev_transforms = new Set();
-let grouped_frames = [];
+let visibleRelativeKeys = new Set();
+let visibleAbsoluteKeys = new Set();
+
+async function drawFrames() {
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+	const relative = Object.fromEntries(
+		[...visibleRelativeKeys].map(k => [k, tf.transforms[k]])
+	);
+	const absolute = Object.fromEntries(
+		[...visibleAbsoluteKeys].map(k => [k, tf.absoluteTransforms[k]])
+	);
+
+	if(linesCheckbox.checked)
+		drawLines(relative, absolute);
+
+	if(axesCheckbox.checked)
+		drawAxes(absolute);
+
+	if(namesCheckbox.checked)
+		drawText(absolute);
+}
 
 function updateVisibility(){
 
-	const eqSet = (xs, ys) => xs.size === ys.size && [...xs].every((x) => ys.has(x));
+	//check for new frames and precompute filters once a second
 
-	let current_transforms = new Set();
+	visibleRelativeKeys.clear();
+	visibleAbsoluteKeys.clear();
 
 	Object.keys(tf.transforms).forEach(key => {
 		const child = key;
@@ -254,11 +275,40 @@ function updateVisibility(){
 			frame_visibility[parent] = true;
 		}
 
+		if (frame_visibility[child]) {
+			visibleRelativeKeys.add(child);
+			if(tf.absoluteTransforms.hasOwnProperty(child)){
+				visibleAbsoluteKeys.add(child);
+			}
+		}
+		if (frame_visibility[parent]) {
+			visibleRelativeKeys.add(parent);
+			if(tf.absoluteTransforms.hasOwnProperty(parent)){
+				visibleAbsoluteKeys.add(parent);
+			}
+		}
+	});	
+}
+
+function updateGUI(){
+
+	updateVisibility();
+
+	const eqSet = (xs, ys) => xs.size === ys.size && [...xs].every((x) => ys.has(x));
+
+	let current_transforms = new Set();
+	Object.keys(tf.transforms).forEach(child => {
 		current_transforms.add(child);
-		current_transforms.add(parent);
+		current_transforms.add(tf.transforms[child].parent);
 	});
 
-	function getEntry(key){
+	if (!eqSet(prev_transforms, current_transforms)){
+		grouped_frames = utilModule.groupStringsByPrefix(Array.from(current_transforms), 2);
+		prev_transforms = current_transforms;
+	}
+
+
+	function getEntry(key) {
 		const checkbox = document.createElement('input');
 		checkbox.type = 'checkbox';
 		checkbox.id = `{uniqueID}_${key}`;
@@ -268,19 +318,37 @@ function updateVisibility(){
 			saveSettings();
 		});
 
+		const frame = tf.transforms[key];
 		const label = document.createElement('label');
-		label.textContent = ` ${key}`;
+
+		function addSpan(text, color) {
+			const span = document.createElement('span');
+			if (color) span.style.color = color;
+			span.textContent = text;
+			label.appendChild(span);
+		}
+		
+		addSpan(` ${key} `, 'white');
+
+		if(frame != undefined){
+			addSpan(`← ${frame.parent} `, 'darkgray');
+			addSpan('(', 'darkgray');
+			addSpan(frame.translation.x.toFixed(2), '#ff6666');  // soft red
+			addSpan(' ', null);
+			addSpan(frame.translation.y.toFixed(2), '#66cc66');  // soft green
+			addSpan(' ', null);
+			addSpan(frame.translation.z.toFixed(2), '#9aacc3ff');  // light blue
+			addSpan(')', 'darkgray');
+		}else{
+			addSpan('(origin)', 'darkgray');
+		}
+
 
 		const div = document.createElement('div');
 		div.classList.add('tf_label');
 		div.appendChild(checkbox);
 		div.appendChild(label);
 		return div;
-	}
-
-	if (!eqSet(prev_transforms, current_transforms)){
-		grouped_frames = utilModule.groupStringsByPrefix(Array.from(current_transforms), 2);
-		prev_transforms = current_transforms;
 	}
 
 	framesDiv.innerHTML = '';
@@ -316,7 +384,7 @@ document.getElementById('{uniqueID}_enable_all').addEventListener('click',  asyn
 		frame_visibility[key] = true;
 	}
 	saveSettings();
-	updateVisibility();
+	updateGUI();
 });
 
 document.getElementById('{uniqueID}_standard_only').addEventListener('click',  async () => {
@@ -327,7 +395,7 @@ document.getElementById('{uniqueID}_standard_only').addEventListener('click',  a
 		frame_visibility[key] = hasStandardFrame(key);
 	}
 	saveSettings();
-	updateVisibility();
+	updateGUI();
 
 });
 
@@ -336,10 +404,10 @@ document.getElementById('{uniqueID}_disable_all').addEventListener('click',  asy
 		frame_visibility[key] = false;
 	}
 	saveSettings();
-	updateVisibility();
+	updateGUI();
 });
 
-icon.addEventListener("click", updateVisibility);
+icon.addEventListener("click", updateGUI);
 
 function resizeScreen(){
 	canvas.height = window.innerHeight;
@@ -352,12 +420,16 @@ window.addEventListener("tf_changed", ()=>{
 	drawFrames();
 });
 
+window.addEventListener("tf_fixed_frame_changed", ()=>{
+	drawFrames();
+});
+
+setInterval(updateVisibility, 1000);
+
 window.addEventListener("view_changed", drawFrames);
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);
 
 resizeScreen();
-
-window.addEventListener("tf_changed", updateVisibility, {once : true});
 
 console.log("TF Widget Loaded {uniqueID}")

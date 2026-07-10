@@ -1,0 +1,96 @@
+<div id="{uniqueID}_modal" class="modal_outer noselect">
+
+	<div id="{uniqueID}_imgpreview" class="noselect compressedimage_preview">
+		<img  src="assets/joypos.svg" alt="Navball Preview" width="100" height="100">
+	</div> 
+
+
+	<div class="modal_inner noselect">
+		<h3>Attitude Indicator</h3>
+		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
+		<hr class="dark_hr"/>
+
+		<label for="{uniqueID}_topic">Topic:</label>
+		<select id="{uniqueID}_topic" name="topic">
+			<!-- add topics here-->
+		</select>
+
+		<div class="spacer"></div>
+
+		<div class="live_data_display">
+			<p id="{uniqueID}_pitch">Pitch: ?</p>
+			<p id="{uniqueID}_roll">Roll: ?</p>
+			<p id="{uniqueID}_yaw">Yaw: ?</p>
+			<p id="{uniqueID}_heading">Heading: ?</p>
+
+			<div>
+				<p style="color: lightgray;">Accelerometer:</p>
+				<div class="live_data_indented">
+					<p style="color: rgb(210, 87, 87);" id="{uniqueID}_accel_x">X: /</p>
+					<p style="color: rgb(77, 175, 77); " id="{uniqueID}_accel_y">Y: /</p>
+					<p style="color: rgb(72, 102, 191);" id="{uniqueID}_accel_z">Z: /</p>
+				</div>
+			</div>
+
+			<div>
+				<p style="color: lightgray;">Gyroscope:</p>
+				<div class="live_data_indented">
+					<p style="color: rgb(210, 87, 87);" id="{uniqueID}_gyro_x">X: /</p>
+					<p style="color: rgb(77, 175, 77);" id="{uniqueID}_gyro_y">Y: /</p>
+					<p style="color: rgb(72, 102, 191);" id="{uniqueID}_gyro_z">Z: /</p>
+				</div>
+			</div>
+
+			<p id="{uniqueID}_quaternion" style="color: lightgray;">Quaternion XYZW: ?</p>
+			<p id="{uniqueID}_frame_id" style="color: lightgray;">Frame: ?</p>
+		</div>
+
+		<label for="{uniqueID}_angle_mode">Mode:</label>
+		<select id="{uniqueID}_angle_mode">
+			<option value="horizon_fake">Pilot (Inside-Out)</option>
+			<option value="horizon_true">Inertial Reference (Outside-In)</option>
+			<option value="external">Observer (Direct Rotation)</option>
+		</select>
+
+		<p class="comment">
+			<strong>Pilot:</strong> Traditional aerospace view from inside the sphere, an artificial horizon that moves inverse to vehicle motion.<br>
+			<strong>Inertial Reference:</strong> Magic floating sphere that's fixed to world rotation (pilot view with flipped pitch and yaw).<br>
+			<strong>Observer:</strong> Simply rotates the ball in the same direction as the given orientation.
+		</p>
+
+		<label>Show roll on indicator line:</label>
+		<input type="checkbox" id="{uniqueID}_alt_roll">
+
+		<div class="spacer"></div>
+
+		<label for="{uniqueID}_opacity">Opacity:</label>
+		<span id="{uniqueID}_opacity_value">0.85</span>
+		<input type="range" value="0.85" step="0.05" min="0.1" max="1.0" id="{uniqueID}_opacity">
+
+		<div class="spacer"></div>
+
+		<label for="{uniqueID}_width">Width (screen %):</label>
+		<span id="{uniqueID}_width_value">10</span>
+		<input type="range" value="10" step="1" min="5" max="50" id="{uniqueID}_width">
+
+		<div class="spacer"></div>
+
+		<label for="{uniqueID}_throttle">Socket throttle (ms):</label>
+		<input type="number" value="30" step="0" min="0" max="10000" id="{uniqueID}_throttle">
+
+		<div class="spacer"></div>
+
+		<hr class="dark_hr"/>
+
+		<div class="spacer"></div>
+
+		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
+
+		
+	</div>
+
+	<div style="height: 180vh; width: 1px;">
+		<!-- Scroll spacer-->
+	</div>
+
+</div>

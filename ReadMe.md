@@ -8,6 +8,8 @@ Vizanti is a web-based visualization and control tool developed for more conveni
 
 ## Installation
 
+This branch is compatible with [ROS 2 Humble](https://docs.ros.org/en/humble/Installation.html) on 22.04 and [ROS 2 Jazzy](https://docs.ros.org/en/jazzy/Installation.html) on 24.04, for ROS 1 [see here](https://github.com/MoffKalast/vizanti/tree/ros1).
+
 As a field tool, Vizanti is designed to operate just as well without internet access, and as such the intended way is to host it on a robot, with rosbridge autoconnecting to the host IP.
 
 ```bash
@@ -44,7 +46,7 @@ The web app can be accessed at `http://<host_ip>:5000`. Client settings are auto
 
 If you're using a mobile device connected to a robot's hotspot that doesn't have internet access and can't load the page, turn off mobile data. This will prevent the browser from sending packets to the wrong gateway.
 
-####  Check [the wiki](https://github.com/MoffKalast/vizanti/wiki) for usage and configuration instructions, as well as feature and compatibility info.
+####  Check [the wiki](https://moffkalast.github.io/vizanti_docs) for usage and configuration instructions, as well as feature and compatibility info.
 
 ## Recommended - RWS Backend
 

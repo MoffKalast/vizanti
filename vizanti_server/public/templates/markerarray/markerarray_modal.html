@@ -9,7 +9,22 @@
 			<!-- add topics here-->
 		</select>
 
-		<p>Render primitive shapes to the 2D view. Note that not all marker types are currently supported (yet!).</p>
+		<p>Render visualization_msgs/MarkerArray batches of visualization_msgs/Marker messages.</p>
+
+		<p class="comment">Most marker types are supported, except POINTS and MESH_RESOURCE. Mileage may vary with pitch and roll rotations.</p>
+
+		<hr class="dark_hr"/>
+
+		<div class="spacer"></div>
+
+		<label>Namespaces:</label>
+		<div id="{uniqueID}_namespace" class="live_data_display"></div>
+
+		<div class="spacer"></div>
+
+		<label for="{uniqueID}_opacity">Opacity:</label>
+		<span id="{uniqueID}_opacity_value">1.0</span>
+		<input type="range" value="1.0" step="0.05" min="0.0" max="1.0" id="{uniqueID}_opacity">
 
 		<div class="spacer"></div>
 

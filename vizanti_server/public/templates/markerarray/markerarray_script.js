@@ -20,6 +20,7 @@ let listener = undefined;
 let marker_topic = undefined;
 
 let markers = {};
+let z_sorted_keys = [];
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
@@ -33,11 +34,36 @@ throttle.addEventListener("input", (event) =>{
 	connect();
 });
 
+const opacitySlider = document.getElementById('{uniqueID}_opacity');
+const opacityValue = document.getElementById('{uniqueID}_opacity_value');
+
+function setOpacityText(val){
+	if(val == 0.0)
+		opacityValue.textContent = "0.0 (Marker rendering disabled)";
+	else
+		opacityValue.textContent = val;
+}
+
+opacitySlider.addEventListener('input', () =>  {
+	setOpacityText(opacitySlider.value);
+	saveSettings();
+	drawMarkers();
+});
+
+const namespaceDiv = document.getElementById('{uniqueID}_namespace');
+let disabled_namespaces = new Set();
+
 //Settings
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
 	throttle.value = loaded_data.throttle ?? 100;
+
+	opacitySlider.value = loaded_data.opacity ?? 1.0;
+	setOpacityText(loaded_data.opacity);
+
+	disabled_namespaces = new Set(loaded_data.disabled_namespaces) ?? new Set();
+	updateNamespaceGUI();
 }else{
 	saveSettings();
 }
@@ -46,10 +72,13 @@ if(settings.hasOwnProperty("{uniqueID}")){
 function saveSettings(){
 	settings["{uniqueID}"] = {
 		topic: topic,
-		throttle: throttle.value
+		throttle: throttle.value,
+		opacity: opacitySlider.value,
+		disabled_namespaces: [...disabled_namespaces]
 	}
 	settings.save();
 }
+
 
 //Rendering
 
@@ -99,6 +128,11 @@ function rgbaToFillColor(rosColorRGBA) {
 	return `rgba(${r255}, ${g255}, ${b255}, ${a})`;
 }
 
+function getContrastingColor(rosColorRGBA) {
+	// Calculate luminance (per WCAG)
+	return (0.299 * rosColorRGBA.r + 0.587 * rosColorRGBA.g + 0.114 * rosColorRGBA.b) > 0.5 ? '#161B21' : '#FFFFFF';
+}
+
 async function drawMarkers(){
 
 	function drawCircle(marker, size){
@@ -111,6 +145,53 @@ async function drawMarkers(){
 	function drawCube(marker, size){
 		ctx.scale(marker.scale.x, marker.scale.y);
 		ctx.fillRect(-size/2, -size/2, size, size);
+	}
+
+	function drawCubeList(marker, size) {
+		if (!marker.points || marker.points.length === 0)
+			return;
+
+		ctx.scale(marker.scale.x, marker.scale.y);
+
+		const sizeHalf = size / 2;
+		const sizeDouble = size * 2;
+		const topMap = new Map();
+		
+		// Z-culling with numeric keys and index storage
+		marker.points.forEach((point, index) => {
+			const keyX = Math.round(point.x * 2);
+			const keyY = Math.round(point.y * 2);
+			const key = keyX * 100000 + keyY;
+			const existing = topMap.get(key);
+			if (!existing || point.z > marker.points[existing].z) {
+				topMap.set(key, index);
+			}
+		});
+		
+		const groups = new Map();
+		for (const index of topMap.values()) {
+			const color = rgbaToFillColor(marker.colors[index]);
+
+			if (!groups.has(color))
+				groups.set(color, []);
+
+			groups.get(color).push(marker.points[index]);
+		}
+
+		groups.forEach((points, color) => {
+			ctx.fillStyle = color;
+			ctx.beginPath();
+			points.forEach(point => {
+				const x = point.x * sizeDouble - sizeHalf;
+				const y = -point.y * sizeDouble - sizeHalf;
+				ctx.moveTo(x, y);
+				ctx.lineTo(x + size, y);
+				ctx.lineTo(x + size, y + size);
+				ctx.lineTo(x, y + size);
+				ctx.closePath();
+			});
+			ctx.fill();
+		});
 	}
 
 	function drawArrow(marker, size){
@@ -132,13 +213,20 @@ async function drawMarkers(){
 	}
 
 	function drawLine(marker, size){
+		if (!marker.points || marker.points.length === 0)
+			return;
+
+		if(!marker.hasOwnProperty("colors") || marker.colors.length == 0)
+			ctx.strokeStyle = rgbaToFillColor(marker.color);
+		else
+			ctx.strokeStyle = rgbaToFillColor(marker.colors[0]); // for now
+
 		ctx.lineWidth = parseInt(marker.scale.x*size);
-		ctx.strokeStyle = rgbaToFillColor(marker.colors[0]); // for now
 
 		ctx.beginPath();
 		marker.points.forEach((point, index) => {
 			const x = point.x * size;
-			const y = point.y * size;
+			const y = -point.y * size;
 			if (index === 0) {
 				ctx.moveTo(x, y);
 			} else {
@@ -149,20 +237,135 @@ async function drawMarkers(){
 		ctx.stroke();
 	}
 
-	function drawText(marker, size){
-		ctx.scale(0.1, -0.1);
+	function drawLineList(marker, size){
+		if (!marker.points || marker.points.length === 0)
+			return;
 
-		ctx.font = (marker.scale.z*10.0*size)+"px Monospace";
+		ctx.lineWidth = parseInt(marker.scale.x*size);
+
+		// Draw lines between pairs of points: 0-1, 2-3, 4-5, etc.
+		for(let i = 0; i < marker.points.length - 1; i += 2){
+			const point1 = marker.points[i];
+			const point2 = marker.points[i + 1];
+			
+			// Set color for this line segment
+			if(!marker.hasOwnProperty("colors") || marker.colors.length === 0){
+				ctx.strokeStyle = rgbaToFillColor(marker.color);
+			} else if(marker.colors.length > i){
+				// Create gradient from start to end point for per-vertex color
+				const x1 = point1.x * size;
+				const y1 = -point1.y * size;
+				const x2 = point2.x * size;
+				const y2 = -point2.y * size;
+				
+				const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+				gradient.addColorStop(0, rgbaToFillColor(marker.colors[i]));
+				gradient.addColorStop(1, rgbaToFillColor(marker.colors[i + 1] || marker.colors[i]));
+				ctx.strokeStyle = gradient;
+			}
+
+			ctx.beginPath();
+			ctx.moveTo(point1.x * size, -point1.y * size);
+			ctx.lineTo(point2.x * size, -point2.y * size);
+			ctx.stroke();
+		}
+	}
+
+	function drawSphereList(marker, size) {
+		if (!marker.points || marker.points.length === 0)
+			return;
+
+		const radius = (size * marker.scale.x) / 2; // Use scale.x for sphere diameter
+		
+		marker.points.forEach((point, index) => {
+			// Set color for this sphere
+			if (marker.hasOwnProperty("colors") && marker.colors.length > index) {
+				ctx.fillStyle = rgbaToFillColor(marker.colors[index]);
+			} else {
+				ctx.fillStyle = rgbaToFillColor(marker.color);
+			}
+			
+			// Draw the circle at the point position
+			ctx.beginPath();
+			ctx.arc(point.x * size, -point.y * size, radius, 0, 2 * Math.PI, false);
+			ctx.fill();
+		});
+	}
+
+	function drawText(marker, size) {
+		ctx.scale(0.1, 0.1);
+		const scale = size * marker.scale.z
+		ctx.font = `${10 * scale}px Monospace`;
 		ctx.textAlign = "center";
 		ctx.fillStyle = rgbaToFillColor(marker.color);
-	
-		ctx.strokeStyle = "#161B21";
-		ctx.lineWidth = 0.3*size;
+		ctx.strokeStyle = getContrastingColor(marker.color)
+		ctx.lineWidth = 2.5 * scale;
+		ctx.lineJoin = 'round';
+		ctx.miterLimit = 2;
 
-		ctx.translate(0, marker.scale.z*size*2.0);
-		ctx.strokeText(marker.text, 0, 0);
-		ctx.fillText(marker.text, 0, 0);
+		const lines = marker.text.split('\n');
+		let maxAscent = 0;
+		let maxDescent = 0;
+		let lineHeight = 0;
+
+		for (const line of lines) {
+			const metrics = ctx.measureText(line);
+			maxAscent = Math.max(maxAscent, metrics.actualBoundingBoxAscent);
+			maxDescent = Math.max(maxDescent, metrics.actualBoundingBoxDescent);
+		}
+		lineHeight = (maxAscent + maxDescent) * 1.2; // 1.2 = line spacing factor
+
+		// Compute vertical offset so that the text block is vertically centered
+		const totalHeight = lines.length * lineHeight;
+		ctx.translate(0, totalHeight / -2 + maxAscent);
+
+		// Render each line
+		for (let i = 0; i < lines.length; i++) {
+			const y = i * lineHeight;
+			ctx.strokeText(lines[i], 0, y);
+			ctx.fillText(lines[i], 0, y);
+		}
+
+		// Reset so miter calculation doesn't bug out for other marker types
+		ctx.lineWidth = 1;                   // Default line width
+		ctx.lineJoin = 'miter';              // Default line join
+		ctx.miterLimit = 10;                 // Default miter limit
 	}
+
+	function drawTriangleList(marker, size) {
+		const tris = marker.triangles;
+		if (!tris || tris.length === 0)
+			return;
+
+		// Fast path: single color
+		if (marker.trianglesUniformColor) {
+			ctx.fillStyle = marker.triangles[0].color;
+			ctx.beginPath();
+
+			for (const tri of tris) {
+				ctx.moveTo(tri.p0.x * size, -tri.p0.y * size);
+				ctx.lineTo(tri.p1.x * size, -tri.p1.y * size);
+				ctx.lineTo(tri.p2.x * size, -tri.p2.y * size);
+				ctx.closePath();
+			}
+
+			ctx.fill();
+			return;
+		}
+
+		// Fallback: per-triangle color
+		for (const tri of tris) {
+			ctx.fillStyle = tri.color;
+
+			ctx.beginPath();
+			ctx.moveTo(tri.p0.x * size, -tri.p0.y * size);
+			ctx.lineTo(tri.p1.x * size, -tri.p1.y * size);
+			ctx.lineTo(tri.p2.x * size, -tri.p2.y * size);
+			ctx.closePath();
+			ctx.fill();
+		}
+	}
+
 
 	const unit = view.getMapUnitsInPixels(1.0);
 
@@ -172,31 +375,41 @@ async function drawMarkers(){
 	ctx.setTransform(1,0,0,1,0,0);
 	ctx.clearRect(0, 0, wid, hei);
 
+	ctx.globalAlpha = opacitySlider.value;
+
+	if(opacitySlider.value == 0.0){
+		return;
+	}
+
 	let current_time = new Date();
 
-	for (const [key, marker] of Object.entries(markers)) {
+	for (const key of z_sorted_keys) {
+		const marker = markers[key];
+		const ns = marker.ns || '';
+
+		if (disabled_namespaces.has(ns))
+			continue;
+		
 		ctx.fillStyle = rgbaToFillColor(marker.color);
 
-		const frame = tf.absoluteTransforms[marker.header.frame_id];
+		const frame = tf.getAbsoluteTransform(marker.header);
 
 		if(!frame)
 			continue;
 
-		//skip old markers
-		if((current_time - marker.stamp)/1000.0 > marker.lifetime.sec + marker.lifetime.nanosec*1e-9)
-			continue;
+
+		//skip old markers (only if lifetime is not 0/infinite)
+        const isInfiniteLifetime = marker.lifetime.sec === 0 && marker.lifetime.nanosec === 0;
+        if (!isInfiniteLifetime && (current_time - marker.stamp) / 1000.0 > marker.lifetime.sec + marker.lifetime.nanosec * 1e-9)
+            continue;
 
 		const pos = view.fixedToScreen({
 			x: marker.transformed.translation.x,
 			y: marker.transformed.translation.y
 		});
 
-		const yaw = marker.transformed.rotation.toEuler().h;
-
-		ctx.setTransform(1,0,0,-1, pos.x, pos.y); //sx,0,0,sy,px,py
-
-		if(marker.type != 9)
-			ctx.rotate(yaw);
+		const matrix = view.quaterionToProjectionMatrix(marker.transformed.rotation);
+		ctx.setTransform(matrix[0], matrix[1], matrix[2], matrix[3], pos.x, pos.y); //sx,0,0,sy,px,py
 
 		switch(marker.type)
 		{
@@ -205,13 +418,13 @@ async function drawMarkers(){
 			case 2: 
 			case 3: drawCircle(marker, unit); break; //SPHERE=2 CYLINDER=3
 			case 4: drawLine(marker, unit); break; //LINE_STRIP=4
-			case 5: status.setWarn("LINE_LIST markers are not supported yet."); break; //LINE_LIST=5
-			case 6: status.setWarn("CUBE_LIST markers are not supported yet."); break; //CUBE_LIST=6
-			case 7: status.setWarn("SPHERE_LIST markers are not supported yet."); break; //SPHERE_LIST=7
+			case 5: drawLineList(marker, unit); break; //LINE_LIST=5
+			case 6:	drawCubeList(marker, unit); break; //CUBE_LIST=6
+			case 7: drawSphereList(marker, unit); break; //SPHERE_LIST=7
 			case 8: status.setWarn("POINTS markers are not supported yet."); break; //POINTS=8
 			case 9: drawText(marker, unit); break;//TEXT_VIEW_FACING=9
 			case 10: status.setWarn("MESH_RESOURCE markers are not supported yet."); break; //MESH_RESOURCE=10
-			case 11: status.setWarn("TRIANGLE_LIST markers are not supported yet."); break; //TRIANGLE_LIST=11
+			case 11: ctx.setTransform(1, 0, 0, 1, pos.x, pos.y); drawTriangleList(marker, unit); break; //TRIANGLE_LIST=11
 		}
 	}
 }
@@ -244,6 +457,7 @@ function connect(){
 		msg.markers.forEach(m => {
 			if(m.action == 3){
 				markers = {};
+				z_sorted_keys = [];
 				return;
 			}
 			const id = m.ns + m.id;
@@ -264,16 +478,100 @@ function connect(){
 				m.header.frame_id = tf.fixed_frame;
 				error = true;
 			}
-		
-			m.transformed = tf.transformPose(
-				m.header.frame_id, 
-				tf.fixed_frame, 
+
+			m.transformed = tf.transformPoseStamped(
+				m.header,
 				m.pose.position, 
 				m.pose.orientation
 			);
 
+			//preprocess triangle_lists for correct 3D rotation and colour
+			if (m.type === 11 && m.points && m.points.length > 0) {
+				const {x, y, z, w} = m.transformed.rotation;
+
+				//rotate and scale matrix
+				const r00 = 1 - 2*(y*y + z*z);
+				const r01 = 2*(x*y - w*z);
+				const r02 = 2*(x*z + w*y);
+				const r10 = 2*(x*y + w*z);
+				const r11 = 1 - 2*(x*x + z*z);
+				const r12 = 2*(y*z - w*x);
+				const r20 = 2*(x*z - w*y);
+				const r21 = 2*(y*z + w*x);
+				const r22 = 1 - 2*(x*x + y*y);
+
+				const hasVertexColors = m.colors && m.colors.length === m.points.length;
+				const hasFaceColors = m.colors && m.colors.length === m.points.length / 3;
+				const globalAlpha = m.color.a > 0 ? m.color.a : 1.0;
+
+				const triangles = [];
+				for (let i = 0; i < m.points.length - 2; i += 3) {
+					const pts = [];
+
+					for (let j = 0; j < 3; j++) {
+						const p = m.points[i + j];
+
+						const sx = p.x * m.scale.x;
+						const sy = p.y * m.scale.y;
+						const sz = p.z * m.scale.z;
+
+						const rx = r00*sx + r01*sy + r02*sz;
+						const ry = r10*sx + r11*sy + r12*sz;
+						const rz = r20*sx + r21*sy + r22*sz;
+
+						pts.push({ x: rx, y: ry, z: rz });
+					}
+
+					const avgZ = (pts[0].z + pts[1].z + pts[2].z) / 3;
+
+					let color;
+					if (hasVertexColors) {
+						const c = m.colors[i];
+						color = `rgba(${Math.round(c.r*255)}, ${Math.round(c.g*255)}, ${Math.round(c.b*255)}, ${globalAlpha * c.a})`;
+					}else if (hasFaceColors) {
+						const c = m.colors[i / 3];
+						color = `rgba(${Math.round(c.r*255)}, ${Math.round(c.g*255)}, ${Math.round(c.b*255)}, ${globalAlpha * c.a})`;
+					}else {
+						color = rgbaToFillColor(m.color);
+					}
+
+					triangles.push({
+						p0: pts[0],
+						p1: pts[1],
+						p2: pts[2],
+						avgZ,
+						color
+					});
+				}
+
+				//can we render the whole thing in one draw call?
+				let uniformColor = true;
+				let firstColor = triangles.length > 0 ? triangles[0].color : null;
+
+				for (let i = 1; i < triangles.length; i++) {
+					if (triangles[i].color !== firstColor) {
+						uniformColor = false;
+						break;
+					}
+				}
+
+				// Z sorting (back → front), only if there's different colours
+				if (!uniformColor){
+					triangles.sort((a, b) => a.avgZ - b.avgZ);
+				}
+
+				m.isUniformColor = uniformColor;
+				m.triangles = triangles;
+			}
+
 			m.stamp = new Date();	
 			markers[id] = m;
+		});
+
+		z_sorted_keys = Object.keys(markers).sort((a, b) => {
+			const markerA = markers[a];
+			const markerB = markers[b];
+			return markerA.transformed.translation.z - markerB.transformed.translation.z;
 		});
 
 		if(!error){
@@ -283,6 +581,37 @@ function connect(){
 	});
 
 	saveSettings();
+	updateNamespaceGUI();
+}
+
+function updateNamespaceGUI() {
+	const seen = new Set(Object.values(markers).map(m => m.ns || ''));
+
+	namespaceDiv.innerHTML = '';
+	for (const ns of [...seen].sort()) {
+		const label = ns === '' ? 'No namespace' : ns;
+		const checkbox = document.createElement('input');
+		checkbox.type = 'checkbox';
+		checkbox.id = `{uniqueID}_ns_${ns}`;
+		checkbox.checked = !disabled_namespaces.has(ns);
+		checkbox.addEventListener('change', (e) => {
+			if (e.target.checked)
+				disabled_namespaces.delete(ns);
+			else
+				disabled_namespaces.add(ns);
+			saveSettings();
+			drawMarkers();
+		});
+		const labelEl = document.createElement('label');
+		labelEl.htmlFor = checkbox.id;
+		labelEl.textContent = ` ${label}`;
+		const div = document.createElement('div');
+		div.classList.add('tf_label');
+		div.appendChild(checkbox);
+		div.appendChild(labelEl);
+		div.classList.add('param_toggle_label');
+		namespaceDiv.appendChild(div);
+	}
 }
 
 async function loadTopics(){
@@ -311,6 +640,7 @@ async function loadTopics(){
 selectionbox.addEventListener("change", (event) => {
 	topic = selectionbox.value;
 	markers = {};
+	z_sorted_keys = [];
 	connect();
 });
 
@@ -320,6 +650,7 @@ selectionbox.addEventListener("click", (event) => {
 
 icon.addEventListener("click", (event) => {
 	loadTopics();
+	updateNamespaceGUI();
 });
 
 loadTopics();
@@ -338,4 +669,3 @@ window.addEventListener('orientationchange', resizeScreen);
 resizeScreen();
 
 console.log("MarkerArray Widget Loaded {uniqueID}")
-

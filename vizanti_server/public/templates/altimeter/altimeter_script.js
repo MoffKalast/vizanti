@@ -23,7 +23,7 @@ let meters_smooth = 0;
 let target = NaN;
 
 let frame = "";
-let topic = getTopic("{uniqueID}");
+let topic = "";
 
 let float_topic = undefined;
 let listener = undefined;
@@ -96,7 +96,8 @@ function saveSettings(){
 function connect(){
 
 	if(topic == ""){
-		status.setWarn("Empty topic.");
+		target = NaN;
+		text_target.innerText = "Target: N/A";
 		return;
 	}
 
@@ -419,20 +420,17 @@ async function loadTopics(){
 
 	let topiclist = "";
 	result.forEach(element => {
-		topiclist += "<option value='"+element+"'>"+element+"</option>"
+		topiclist += "<option value='"+element+"'>"+element+"</option>";
 	});
+	topiclist += "<option value=''>(Disabled)</option>";
 	selectionbox.innerHTML = topiclist
 
-	if(topic == "")
-		topic = selectionbox.value;
-	else{
-		if(result.includes(topic)){
-			selectionbox.value = topic;
-		}else{
-			topiclist += "<option value='"+topic+"'>"+topic+"</option>"
-			selectionbox.innerHTML = topiclist
-			selectionbox.value = topic;
-		}
+	if(result.includes(topic) || topic == ""){
+		selectionbox.value = topic;
+	}else{
+		topiclist += "<option value='"+topic+"'>"+topic+"</option>"
+		selectionbox.innerHTML = topiclist
+		selectionbox.value = topic;
 	}
 
 	connect();
@@ -454,15 +452,9 @@ loadTopics();
 
 //targeting
 function getEventXY(event){
-	let globalX, globalY;
-	if (event.type === "touchmove") {
-		globalX = event.touches[0].clientX;
-		globalY = event.touches[0].clientY;
-	} else {
-		globalX = event.clientX;
-		globalY = event.clientY;
-	}
-	return [globalX, globalY];
+	// touchend has empty event.touches — must read from changedTouches
+	const touch = event.changedTouches?.[0] ?? event.touches?.[0] ?? event;
+	return [touch.clientX, touch.clientY];
 }
 
 function getEventLocalXY(event){
@@ -522,6 +514,9 @@ function onTargetStart(event) {
 }
 
 function onTargetEnd(event) {
+
+	if(topic == "")
+		return;
 
 	targeting_active = false;
 	document.removeEventListener('mouseup', onTargetEnd);

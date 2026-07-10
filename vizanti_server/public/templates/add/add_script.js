@@ -2,6 +2,7 @@ let rosbridgeModule = await import(`${base_url}/js/modules/rosbridge.js`);
 
 let rosbridge = rosbridgeModule.rosbridge;
 
+const icon = document.getElementById('icon_add_element');
 const typeButton = document.getElementById('add_set_type');
 const topicButton = document.getElementById('add_set_topics');
 
@@ -29,8 +30,8 @@ for (let i = 0; i < widgets.length; i++) {
 
 //tabs swapping
 typeButton.addEventListener("click", (event) => {
-	topicButton.classList.remove("active_tab");
-	typeButton.classList.add("active_tab");
+	topicButton.classList.remove("active-tab");
+	typeButton.classList.add("active-tab");
 
 	typeDiv.style.display = "block";
 	topicDiv.style.display = "none";
@@ -38,11 +39,15 @@ typeButton.addEventListener("click", (event) => {
 
 topicButton.addEventListener("click", (event) => {
 	update_topics();
-	typeButton.classList.remove("active_tab");
-	topicButton.classList.add("active_tab");
+	typeButton.classList.remove("active-tab");
+	topicButton.classList.add("active-tab");
 
 	typeDiv.style.display = "none";
 	topicDiv.style.display = "block";
+});
+
+icon.addEventListener("click", (event) => {
+	update_topics();
 });
 
 // rebuild topic list

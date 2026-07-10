@@ -101,7 +101,7 @@ async function drawCells() {
 	ctx.globalAlpha = opacitySlider.value;
 	ctx.fillStyle = colourpicker.value;
 
-	let tf_pose = timestampCheckbox.checked ? data.pose : tf.absoluteTransforms[data.msg.header.frame_id];
+	let tf_pose = timestampCheckbox.checked ? data.pose : tf.getAbsoluteTransform(data.msg.header);
 
 	if(!tf_pose){
 		return;
@@ -112,10 +112,9 @@ async function drawCells() {
 		y: tf_pose.translation.y,
 	});
 
-	const yaw = tf_pose.rotation.toEuler().h;
-
-	ctx.setTransform(1,0,0,-1,pos.x, pos.y); //sx,0,0,sy,px,py
-	ctx.rotate(yaw);
+	const matrix = view.quaterionToProjectionMatrix(tf_pose.rotation);
+	ctx.setTransform(matrix[0], matrix[1], matrix[2], matrix[3], pos.x, pos.y); //sx,0,0,sy,px,py
+	ctx.scale(1.0, -1.0);
 
 	const unit = view.getMapUnitsInPixels(1.0);
 	const wid = Math.abs(data.msg.cell_width) * unit;

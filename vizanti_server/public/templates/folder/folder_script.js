@@ -13,13 +13,20 @@ let status = new Status(
 	document.getElementById("{uniqueID}_status")
 );
 
-const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
+const icondiv = document.getElementById("{uniqueID}_icon");
+const icon = icondiv.getElementsByTagName('img')[0];
+const icon_text = icondiv.getElementsByTagName('p')[0];
 const icon_container = document.getElementById("{uniqueID}_widget_container");
 const remove_button = document.getElementById("{uniqueID}_remove");
 
 const subicons = [
 	document.getElementById("{uniqueID}_subicon0"),
 	document.getElementById("{uniqueID}_subicon1")
+];
+
+const subtextss = [
+	document.getElementById("{uniqueID}_subtext0"),
+	document.getElementById("{uniqueID}_subtext1")
 ];
 
 const observers = [];
@@ -45,28 +52,48 @@ function set_icons(){
 	}
 
 	for(let i = 0; i < sources.length && i < 2; i++){
+		const source_obj = sources[i][0];
+		const source_img_string = sources[i][1];
+
 		subicons[i].style.display = "none";
-		if(!sources[i][1].endsWith("add.svg")){
+		if(!source_img_string.endsWith("add.svg")){
 			subicons[i].style.display = "block";
 
-			if(subicons[i].data != sources[i][1]){
-				subicons[i].data = sources[i][1];
-				if(sources[i][0].hasAttribute("data-color")){
+			//change colour if defined
+			if(subicons[i].data != source_img_string){
+				subicons[i].data = source_img_string;
+				if(source_obj.hasAttribute("data-color")){
 					subicons[i].onload = ()=>{
-						utilModule.setIconColor(subicons[i], sources[i][0].dataset.color);
+						utilModule.setIconColor(subicons[i], source_obj.dataset.color);
 					};
 				}
 			}
 
+			//display text if defined
+			if(source_obj.dataset.text){
+				subtextss[i].innerText = source_obj.dataset.text;
+			}else{
+				subtextss[i].innerText = "";
+			}
+
+			//watch for changes of all renderable params
 			const observer = new MutationObserver((mutationsList) => {
-				for(const mutation of mutationsList) {
-					if(mutation.type === 'attributes' && mutation.attributeName === 'data-color') {
-						utilModule.setIconColor(subicons[i], sources[i][0].dataset.color);
+				for (const mutation of mutationsList) {
+					if (mutation.type === 'attributes' && mutation.attributeName === 'data-color') {
+						utilModule.setIconColor(subicons[i], source_obj.dataset.color);
+					}
+					else if (mutation.type === 'attributes' && mutation.attributeName === 'data-text') {
+						subtextss[i].innerText = source_obj.dataset.text;
+					}
+					else if (mutation.type === 'attributes' && mutation.attributeName === 'src') {
+						subicons[i].data = source_obj.src;
+					}
+					else if (mutation.type === 'attributes' && mutation.attributeName === 'data') {
+						subicons[i].data = source_obj.data;
 					}
 				}
 			});
-
-			observer.observe(sources[i][0], {attributes: true, attributeFilter: ['data-color']});
+			observer.observe(source_obj, { attributes: true, attributeFilter: ['src', 'data-color', 'data-text', 'data'] });
 			observers.push(observer);
 		}
 	}

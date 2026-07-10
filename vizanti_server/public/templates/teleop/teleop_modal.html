@@ -1,60 +1,163 @@
 <div id="{uniqueID}_modal" class="modal_outer noselect">
 
-	<div id="{uniqueID}_joypreview" style="position: fixed; bottom: calc( 15vh - 50px ); left: calc( 50vw - 50px )" class="noselect">
-		<img  src="assets/joypos.svg" alt="Joystick Preview" width="100" height="100">
-	</div> 
+	<!-- Joystick Preview -->
+	<div id="{uniqueID}_joypreview" style="position: fixed; bottom: calc(15vh - 50px); left: calc(50vw - 50px)" class="noselect">
+		<img src="assets/joypos.svg" alt="Joystick Preview" width="100" height="100">
+	</div>
 
 	<div class="modal_inner noselect">
 		<h3>Joystick Teleop</h3>
 		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
 		<hr class="dark_hr"/>
+
+		<!-- Topic Selector -->
 		<label for="{uniqueID}_topic">Topic:</label>
 		<select id="{uniqueID}_topic" name="topic">
-			<!-- add topics here-->
+			<!-- Add topics here -->
 		</select>
 
-		<p>Adds a joystick overlay to the main view that can be used to send geometry_msgs/Twist movement commands.</p>
-
-		<p style="color:#b4b4b4;">Scroll up and drag the preview box to position the joystick on the screen.</p>
-
-
-		<label for="{uniqueID}_linear_velocity">Linear Velocity (m/s):</label>
-		<span id="{uniqueID}_linear_velocity_value">0.5</span>
-		<input type="range" value="0.4" step="0.05" min="0.05" max="3.0" id="{uniqueID}_linear_velocity">
-
-		<div class="spacer"></div>
-
-		<label for="{uniqueID}_angular_velocity">Angular Velocity (m/s):</label>
-		<span id="{uniqueID}_angular_velocity_value">0.5</span>
-		<input type="range" value="0.8" step="0.05" min="0.05" max="6.0" id="{uniqueID}_angular_velocity">
-
-		<div class="spacer"></div>
-
-		<label for="{uniqueID}_accel">Linear Acceleration (m/s²):</label>
-		<span id="{uniqueID}_accel_value">0.05</span>
-		<input type="range" value="0.05" step="0.01" min="0.01" max="1.0" id="{uniqueID}_accel">
-
-
-		<label>Invert angular velocity when reversing:</label>
-		<input type="checkbox" checked id="{uniqueID}_invert_angular">
-
-		<div class="spacer"></div>
-
-		<label>Use holonomic linear Y instead of angular Z:</label>
-		<input type="checkbox" id="{uniqueID}_holonomic">
-
-		<div class="spacer"></div>
+		<p class="comment">Adds a virtual joystick for sending geometry_msgs/Twist or geometry_msgs/TwistStamped movement commands. Scroll up and drag the preview box to position the joystick on the screen.</p>
 
 		<hr class="dark_hr"/>
 
+		<!-- Preset Selector -->
+		<label for="{uniqueID}_preset">Apply preset:</label>
+		<select id="{uniqueID}_preset" name="preset">
+			<option value="none">Select...</option>
+			<option value="diffdrive">Diffdrive (linear.x, angular.z)</option>
+			<option value="ackermann">Ackermann (linear.x, angular.z)</option>
+			<option value="holonomic">Holonomic (linear.x, linear.y)</option>
+			<option value="altitude">Altitude/Depth (linear.z, ---)</option>
+			<option value="pitchroll">Pitch/Roll (angular.y, angular.x)</option>
+			<option value="pantilt">Pan/Tilt (angular.y, angular.z)</option>
+		</select>
+		<p class="comment">Resets the axis setup to predefined values.</p>
+
+
 		<div class="spacer"></div>
 
-		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
+		<!-- Vertical Movement Configuration -->
+		<div class="axis_config_section">
+			<div class="axis_top_row">
+				<img src="assets/joystick_updown.svg" alt="Vertical Axis" class="axis_icon">
+				<div class="axis_dropdown_group">
+					<label for="{uniqueID}_axis_vert">Axis:</label>
+					<select id="{uniqueID}_axis_vert">
+						<option selected value="linear_x">Forward/Back (linear.x)</option>
+						<option value="linear_y">Left/Right (linear.y)</option>
+						<option value="linear_z">Up/Down (linear.z)</option>
+						<option value="angular_x">Roll (angular.x)</option>
+						<option value="angular_y">Pitch (angular.y)</option>
+						<option value="angular_z">Yaw (angular.z)</option>
+						<option value="none">--- (disabled)</option>
+					</select>
+				</div>
+			</div>
 
+			<div class="axis_controls">
+				<label for="{uniqueID}_vel_vert">Max Velocity (m/s):</label>
+				<span id="{uniqueID}_vel_vert_value">1.0</span>
+				<input type="range" value="1.0" step="0.05" min="0.05" max="5.0" id="{uniqueID}_vel_vert">
+
+				<label for="{uniqueID}_accel_vert">Acceleration (m/s²):</label>
+				<span id="{uniqueID}_accel_vert_value">2.0</span>
+				<input type="range" value="2.0" step="0.5" min="0.5" max="12.0" id="{uniqueID}_accel_vert">
+
+				<label>Invert axis:</label>
+				<input type="checkbox" id="{uniqueID}_invert_vert">
+			</div>
+		</div>
+
+		<div class="spacer"></div>
+
+		<div class="axis_config_section">
+			<div class="axis_top_row">
+				<img src="assets/joystick_leftright.svg" alt="Horizontal Axis" class="axis_icon">
+				<div class="axis_dropdown_group">
+					<label for="{uniqueID}_axis_horiz">Axis:</label>
+					<select id="{uniqueID}_axis_horiz">
+						<option value="linear_x">Forward/Back (linear.x)</option>
+						<option value="linear_y">Left/Right (linear.y)</option>
+						<option value="linear_z">Up/Down (linear.z)</option>
+						<option value="angular_x">Roll (angular.x)</option>
+						<option value="angular_y">Pitch (angular.y)</option>
+						<option selected value="angular_z">Yaw (angular.z)</option>
+						<option value="none">--- (disabled)</option>
+					</select>
+				</div>
+			</div>
+
+			<div class="axis_controls">
+
+				<label for="{uniqueID}_vel_horiz">Max Velocity (m/s):</label>
+				<span id="{uniqueID}_vel_horiz_value">1.0</span>
+				<input type="range" value="1.0" step="0.05" min="0.05" max="5.0" id="{uniqueID}_vel_horiz">
+
+				<label for="{uniqueID}_accel_horiz">Acceleration (m/s²):</label>
+				<span id="{uniqueID}_accel_horiz_value">2.0</span>
+				<input type="range" value="2.0" step="0.5" min="0.5" max="12.0" id="{uniqueID}_accel_horiz">
+
+				<label>Invert axis:</label>
+				<input type="checkbox" id="{uniqueID}_invert_horiz">
+			</div>
+		</div>
+
+		<div class="spacer"></div>
+		
+		<hr class="dark_hr"/>
+		<h4>Special Cases</h4>
+
+		<p>🔒 Long press the joystick icon to lock or unlock teleoperation. The thumbstick is hidden when locked.</p>
+
+
+		<label>Ackermann emulation for diffdrive:</label>
+		<input type="checkbox" checked id="{uniqueID}_special_ackermann_emulation">
+		<p class="comment">Invert horizontal axis only when vertical axis is negative, like driving a car.</p>
+
+		<label>Instant stop:</label>
+		<input type="checkbox" id="{uniqueID}_special_instant_stop">
+		<p class="comment">Skips deceleration and sends a zero twist immediately when the joystick is released.</p>
+
+		<label>Keyboard input:</label>
+		<input type="checkbox" id="{uniqueID}_special_keyboard">
+		<p class="comment">Map keyboard keys to axes.</p>
+
+		<div id="{uniqueID}_keyboard_section" style="display: none;">
+			<hr class="dark_hr"/>
+			<h4>Key Mappings</h4>
+			
+			<div class="keyboard_joystick_visual">
+				<img src="assets/joystick_keybind.svg" alt="" class="key_joystick_center">
+				<button class="key_bind_button key_up" id="{uniqueID}_key_up">W</button>
+				<button class="key_bind_button key_left" id="{uniqueID}_key_left">A</button>
+				<button class="key_bind_button key_right" id="{uniqueID}_key_right">D</button>
+				<button class="key_bind_button key_down" id="{uniqueID}_key_down">S</button>
+			</div>
+			
+			<p class="comment">Click a button and press a key to rebind.</p>
+		</div>
+
+		<hr class="dark_hr"/>
+		
+		<h4>Style</h4>
+
+		<label for="{uniqueID}_colorpicker">Colour:</label>
+		<input type="color" value="#FFFFFF" id="{uniqueID}_colorpicker">
+
+		<div class="spacer"></div>
+
+		<label for="{uniqueID}_opacity">Opacity:</label>
+		<span id="{uniqueID}_opacity_value">0.6</span>
+		<input type="range" value="0.6" step="0.05" min="0.1" max="0.7" id="{uniqueID}_opacity">
+
+		<div class="spacer"></div>
+		<hr class="dark_hr"/>
+
+		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
 	</div>
 
-	<div style="height: 180vh; width: 1px;">
+	<!-- Spacer for scrolling up -->
+	<div style="height: 300vh; width: 1px;">
 		<!-- Scroll spacer-->
 	</div>
-
 </div>

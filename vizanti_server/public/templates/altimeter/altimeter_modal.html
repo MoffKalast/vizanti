@@ -14,7 +14,13 @@
 			<option value='base_link'>base_link</option>
 		</select>
 
-		<div class="spacer"></div>
+		<p>Displays the Z value of the frame on a depth/altitude gauge. Inverted modes treat negative values to positive.</p>
+
+		<div class="live_data_display">
+			<p id="{uniqueID}_altitude_text">Altitude: ?</p>
+			<p id="{uniqueID}_target_text">Target: N/A</p>
+		</div>
+
 
 		<label for="{uniqueID}_mode">Display Mode:</label>
 		<select id="{uniqueID}_mode" name="topic">
@@ -31,27 +37,19 @@
 
 		<div class="spacer"></div>
 
-		<div class="live_data_display">
-			<p id="{uniqueID}_altitude_text">Altitude: ?</p>
-			<p id="{uniqueID}_target_text">Target: N/A</p>
-		</div>
+		<hr class="dark_hr"/>
 
-		Displays the Z value of the frame on a depth/altitude gauge. Inverted modes treat negative values to positive.
-
-		<div class="spacer"></div>
-
-		<h4>Send Target</h4>
-
-		<div class="spacer"></div>
-
-		<label for="{uniqueID}_topic">Value Topic:</label>
-		<select id="{uniqueID}_topic" name="topic">
-			<option value="/depth_tgt">/depth_tgt</option>
-		</select>
+		<h4>Click Target</h4>
 
 		<p>Send a std_msgs/Float32 value to this topic.</p>
 
-		<p class="comment">Clicking the altimeter will mark the depth/alitude with a yellow flag and publish it. Or click the button below and input it manually.</p>
+		<p class="comment">If a topic is selected, then clicking the altimeter will mark the depth/altitude with a yellow flag and publish it.</p>
+
+		<label for="{uniqueID}_topic">Target topic:</label>
+		<select id="{uniqueID}_topic" name="topic">
+		</select>
+
+		<div class="spacer"></div>
 
 		<button id="{uniqueID}_manual_target" class="export_button">Input and send target manually</button>
 

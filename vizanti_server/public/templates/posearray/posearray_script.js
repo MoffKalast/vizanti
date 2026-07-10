@@ -20,6 +20,7 @@ let status = new Status(
 let listener = undefined;
 let poses_topic = undefined;
 
+let typedict = {};
 let poses = [];
 let frame = "";
 
@@ -63,6 +64,10 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	scaleSlider.value = loaded_data.scale;
 	scaleSliderValue.textContent = scaleSlider.value;
 	throttle.value = loaded_data.throttle ?? 100;
+
+	if(loaded_data.topic_type != undefined)
+		typedict[topic] = loaded_data.topic_type;
+
 }else{
 	saveSettings();
 }
@@ -78,6 +83,7 @@ if (icon.contentDocument) {
 function saveSettings(){
 	settings["{uniqueID}"] = {
 		topic: topic,
+		topic_type: typedict[topic],
 		scale: parseFloat(scaleSlider.value),
 		color: colourpicker.value,
 		throttle: throttle.value
@@ -151,8 +157,6 @@ async function drawArrows(){
 			}
 		}
 
-
-
 		ctx.fill();
 	}
 }
@@ -172,7 +176,7 @@ function connect(){
 	poses_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
 		name : topic,
-		messageType : 'geometry_msgs/msg/PoseArray',
+		messageType : typedict[topic],
 		throttle_rate: parseInt(throttle.value),
 		compression: rosbridge.compression
 	});
@@ -180,7 +184,6 @@ function connect(){
 	status.setWarn("No data received.");
 	
 	listener = poses_topic.subscribe((msg) => {
-
 		let error = false;
 		if(msg.header.frame_id == ""){
 			status.setWarn("Transform frame is an empty string, falling back to fixed frame. Fix your publisher ;)");
@@ -196,20 +199,37 @@ function connect(){
 		poses = [];
 		frame = tf.fixed_frame;
 
-		msg.poses.forEach(p => {
-			const transformed = tf.transformPose(
-				msg.header.frame_id, 
-				tf.fixed_frame, 
-				p.position, 
-				p.orientation
-			);
+		if(typedict[topic] == "geometry_msgs/msg/PoseArray"){
+			msg.poses.forEach(p => {
+				const transformed = tf.transformPoseStamped(
+					msg.header,
+					p.position, 
+					p.orientation
+				);
 
-			poses.push({
-				x: transformed.translation.x,
-				y: transformed.translation.y,
-				yaw: transformed.rotation.toEuler().h
+				poses.push({
+					x: transformed.translation.x,
+					y: transformed.translation.y,
+					yaw: transformed.rotation.toEuler().h
+				});
 			});
-		});
+		}else{ //nav2_msgs/msg/ParticleCloud
+			msg.particles.forEach(p => {
+				const transformed = tf.transformPoseStamped(
+					msg.header,
+					p.pose.position, 
+					p.pose.orientation
+				);
+
+				poses.push({
+					x: transformed.translation.x,
+					y: transformed.translation.y,
+					yaw: transformed.rotation.toEuler().h
+				});
+			});
+		}
+
+
 		drawArrows();
 
 		if(!error){
@@ -221,18 +241,24 @@ function connect(){
 }
 
 async function loadTopics(){
-	let result = await rosbridge.get_topics("geometry_msgs/msg/PoseArray");
+	const result_posearray = await rosbridge.get_topics("geometry_msgs/msg/PoseArray");
+	const result_particlecloud = await rosbridge.get_topics("nav2_msgs/msg/ParticleCloud");
 
 	let topiclist = "";
-	result.forEach(element => {
-		topiclist += "<option value='"+element+"'>"+element+"</option>"
+	result_posearray.forEach(element => {
+		topiclist += "<option value='"+element+"'>"+element+" (PoseArray)</option>"
+		typedict[element] = "geometry_msgs/msg/PoseArray";
+	});
+	result_particlecloud.forEach(element => {
+		topiclist += "<option value='"+element+"'>"+element+" (ParticleCloud)</option>"
+		typedict[element] = "nav2_msgs/msg/ParticleCloud";
 	});
 	selectionbox.innerHTML = topiclist
 
 	if(topic == "")
 		topic = selectionbox.value;
 	else{
-		if(result.includes(topic)){
+		if(result_posearray.includes(topic) || result_particlecloud.includes(topic)){
 			selectionbox.value = topic;
 		}else{
 			topiclist += "<option value='"+topic+"'>"+topic+"</option>"

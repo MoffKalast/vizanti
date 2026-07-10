@@ -28,19 +28,26 @@ const icon = icondiv.getElementsByTagName('img')[0];
 const icontext = icondiv.getElementsByTagName('p')[0];
 const namebox = document.getElementById("{uniqueID}_name");
 
+//dataset text for in-folder text display
+function setLabel(string){
+	icontext.textContent = string;
+	icon.alt = string;
+	icon.dataset.text = string;
+}
+
 namebox.addEventListener('input', function() {
-	icontext.textContent = namebox.value;
+	setLabel(namebox.value);
 	saveSettings();
 });
 
 //Settings
-
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
-	namebox.value = loaded_data.text;
-	icontext.textContent = loaded_data.text;
 	typedict = loaded_data.typedict ?? {};
+
+	namebox.value = loaded_data.text;
+	setLabel(namebox.value);
 }else{
 	saveSettings();
 }
@@ -55,7 +62,6 @@ function saveSettings(){
 }
 
 //Messaging
-
 function sendMessage(){
 
 	icondiv.classList.add("button-press-effect");
@@ -87,9 +93,7 @@ function sendMessage(){
 			serviceType: "std_srvs/srv/Empty"
 		});
 		const request = new ROSLIB.ServiceRequest({});
-		service.callService(request, (result) => {
-			console.log("Empty service called.");
-		});
+		service.callService(request, (result) => {});
 	}
 	else if(typedict[topic] == "std_srvs/srv/Trigger"){
 		const service = new ROSLIB.Service({
@@ -104,6 +108,12 @@ function sendMessage(){
 			}else{
 				status.setError(result.message);
 			}
+			
+			//flash result state
+			icon.src = icons[result.success];
+			setTimeout(()=>{
+				icon.src = icons["default"];
+			}, 500);
 		});
 	}
 	else if(typedict[topic] == "std_srvs/srv/SetBool"){
