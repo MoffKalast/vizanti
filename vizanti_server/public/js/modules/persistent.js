@@ -19,18 +19,34 @@ export class Settings {
 	constructor() {
 		if (localStorage.hasOwnProperty("settings")) {
 			this.fromJSON(localStorage.getItem("settings"));
-		}else{
+		} else {
 			this.fromJSON(default_config);
 		}
+
+		this._saveTimeout = null;
+		this._savePending = false;
 	}
 
-	fromJSON(settings_object){
+	fromJSON(settings_object) {
 		let storedSettings = JSON.parse(settings_object);
 		Object.assign(this, storedSettings);
 	}
 
 	save() {
-		localStorage.setItem("settings", JSON.stringify(this));
+		if (!this._saveTimeout) {
+			localStorage.setItem("settings", JSON.stringify(this));
+			
+			this._saveTimeout = setTimeout(() => {
+				this._saveTimeout = null;
+
+				if (this._savePending) {
+					this._savePending = false;
+					this.save();
+				}
+			}, 400);
+		} else {
+			this._savePending = true;
+		}
 	}
 }
 

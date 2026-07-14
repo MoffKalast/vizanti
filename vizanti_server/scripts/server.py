@@ -163,7 +163,7 @@ def main(args=None):
 	node.declare_parameter('host', '0.0.0.0')
 	node.declare_parameter('port', param_port)
 	node.declare_parameter('port_rosbridge', param_port_rosbridge)
-	node.declare_parameter('flask_debug', True)
+	node.declare_parameter('flask_debug', False)
 	node.declare_parameter('base_url', param_base_url)
 	node.declare_parameter('compression', param_compression)
 	node.declare_parameter('default_widget_config',param_default_widget_config)
