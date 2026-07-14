@@ -16,8 +16,6 @@ async function loadElementTemplates() {
 		templates[category][type] = file.content;
 	});
 
-	console.table("Loaded templates:",templates)
-
 	return templates;
 }
 

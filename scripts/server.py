@@ -20,7 +20,7 @@ param_default_widget_config = rospy.get_param('~default_widget_config', '')
 public_dir = RosPack().get_path('vizanti') + '/public/'
 
 app = Flask(__name__, static_folder=public_dir, template_folder=public_dir)
-app.debug = rospy.get_param('~flask_debug', True)
+app.debug = rospy.get_param('~flask_debug', False)
 
 if param_default_widget_config != "":
 	param_default_widget_config = os.path.expanduser(param_default_widget_config)

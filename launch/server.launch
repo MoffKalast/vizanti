@@ -4,7 +4,7 @@
 	<arg name="port_rosbridge" default="5001" />
 	<arg name="base_url" default="" /> <!-- e.g. /vizanti -->
 	<arg name="default_widget_config" default="" /> <!-- e.g. ~/your_custom_config.json-->
-	<arg name="flask_debug" default="True" />
+	<arg name="flask_debug" default="False" />
 
 	<arg name="retry_startup_delay" default="10" />
 	<arg name="fragment_timeout" default="30" />
