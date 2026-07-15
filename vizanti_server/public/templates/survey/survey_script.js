@@ -284,7 +284,7 @@ function generateTransects(poly, angleRad, spacing, turnaround){
 		if(c > max) max = c;
 	}
 
-	const lines = [];
+	const segments = [];
 	for (let c = min + spacing * 0.5; c < max; c += spacing) {
 		const p0 = {x: nrm.x * c, y: nrm.y * c};
 		let hits = lineIntersections(poly, p0, dir);
@@ -294,7 +294,6 @@ function generateTransects(poly, angleRad, spacing, turnaround){
 
 		// keep only spans between consecutive hits whose midpoint lies inside the polygon,
 		// so concave shapes get one transect per interior span instead of garbage pairing
-		const segments = [];
 		for (let i = 0; i + 1 < hits.length; i++) {
 			const a = hits[i];
 			const b = hits[i+1];
@@ -305,68 +304,163 @@ function generateTransects(poly, angleRad, spacing, turnaround){
 				b: {x: b.x + dir.x * turnaround, y: b.y + dir.y * turnaround, z: b.z}
 			});
 		}
-		if(segments.length > 0)
-			lines.push(segments);
 	}
-	return lines;
+	return segments;
 }
 
-function orderTransects(lines, entry){
-	if(lines.length == 0)
+function perimeterDistance(poly, from, to){
+	// shorter perimeter arc length between two boundary locations, mirrors tracePerimeter's direction choice
+	const n = poly.length;
+	const edgeLen = [];
+	let perimeter = 0;
+	for (let i = 0; i < n; i++) {
+		const a = poly[i];
+		const b = poly[(i+1) % n];
+		edgeLen.push(Math.hypot(b.x - a.x, b.y - a.y));
+		perimeter += edgeLen[i];
+	}
+	if(perimeter < 1e-9)
+		return 0;
+
+	let sFrom = 0, sTo = 0, s = 0;
+	for (let i = 0; i < n; i++) {
+		if(i == from.edge) sFrom = s + edgeLen[i] * from.t;
+		if(i == to.edge) sTo = s + edgeLen[i] * to.t;
+		s += edgeLen[i];
+	}
+
+	const forward = (sTo - sFrom + perimeter) % perimeter;
+	return Math.min(forward, perimeter - forward);
+}
+
+function makeCostCache(outer, needsRoute){
+	const ids = new WeakMap();
+	let nextId = 0;
+	const cache = new Map();
+
+	// actual travel cost between two points as appendTransects will execute it:
+	// straight line when the connector may be driven directly, otherwise
+	// approach + boundary trace + departure
+	function transitCost(p, q){
+		const euclid = Math.hypot(q.x - p.x, q.y - p.y);
+		if(directTransitCheckbox.checked || !needsRoute(p, q))
+			return euclid;
+
+		const from = closestOnPolygon(outer, p);
+		const to = closestOnPolygon(outer, q);
+		return from.dist + perimeterDistance(outer, from, to) + to.dist;
+	}
+
+	return function(p, q){
+		if(!ids.has(p)) ids.set(p, nextId++);
+		if(!ids.has(q)) ids.set(q, nextId++);
+		const i = ids.get(p), j = ids.get(q);
+		const key = i < j ? i * 1000000 + j : j * 1000000 + i;
+		let c = cache.get(key);
+		if(c == undefined){
+			c = transitCost(p, q);
+			cache.set(key, c);
+		}
+		return c;
+	};
+}
+
+function orderSegments(segments, entry, exit, cost){
+	if(segments.length == 0)
 		return [];
 
-	function lineDist(line, p){
-		let d = Infinity;
-		for (const s of line)
-			d = Math.min(d, Math.hypot(s.a.x - p.x, s.a.y - p.y), Math.hypot(s.b.x - p.x, s.b.y - p.y));
-		return d;
+	// greedy nearest-neighbor construction over all segments by true transit cost
+	const remaining = segments.slice();
+	const order = [];
+	let cur = entry;
+	while(remaining.length > 0){
+		let bestIdx = 0, bestFlip = false, bestCost = Infinity;
+		for (let i = 0; i < remaining.length; i++) {
+			const cA = cost(cur, remaining[i].a);
+			const cB = cost(cur, remaining[i].b);
+			if(cA < bestCost){ bestCost = cA; bestIdx = i; bestFlip = false; }
+			if(cB < bestCost){ bestCost = cB; bestIdx = i; bestFlip = true; }
+		}
+		const seg = remaining.splice(bestIdx, 1)[0];
+		order.push(bestFlip ? {a: seg.b, b: seg.a} : {a: seg.a, b: seg.b});
+		cur = order[order.length-1].b;
 	}
 
-	if(lineDist(lines[lines.length-1], entry) < lineDist(lines[0], entry))
-		lines = lines.slice().reverse();
+	twoOptImprove(order, entry, exit, cost);
+	return order;
+}
 
-	const segs = [];
-	let cur = entry;
-	for (const line of lines) {
-		const remaining = line.slice();
-		while(remaining.length > 0){
-			let bestIdx = 0, bestFlip = false, bestDist = Infinity;
-			for (let i = 0; i < remaining.length; i++) {
-				const dA = Math.hypot(remaining[i].a.x - cur.x, remaining[i].a.y - cur.y);
-				const dB = Math.hypot(remaining[i].b.x - cur.x, remaining[i].b.y - cur.y);
-				if(dA < bestDist){ bestDist = dA; bestIdx = i; bestFlip = false; }
-				if(dB < bestDist){ bestDist = dB; bestIdx = i; bestFlip = true; }
+function twoOptImprove(order, entry, exit, cost){
+	// open-path 2-opt with fixed entry and optional exit anchor, run to convergence.
+	// reversing order[i..j] flips each segment inside; transit cost is symmetric so
+	// internal connections keep their cost and only the two boundary connections change
+	const n = order.length;
+
+	function connect(p, q){
+		return q == null ? 0 : cost(p, q);
+	}
+
+	let improved = true;
+	while(improved){
+		improved = false;
+		for (let i = 0; i < n; i++) {
+			for (let j = i; j < n; j++) {
+				const prevEnd = i == 0 ? entry : order[i-1].b;
+				const nextStart = j == n-1 ? exit : order[j+1].a;
+				const before = cost(prevEnd, order[i].a) + connect(order[j].b, nextStart);
+				const after = cost(prevEnd, order[j].b) + connect(order[i].a, nextStart);
+				if(after < before - 1e-9){
+					const block = order.slice(i, j+1).reverse().map(s => ({a: s.b, b: s.a}));
+					order.splice(i, j - i + 1, ...block);
+					improved = true;
+				}
 			}
-			const seg = remaining.splice(bestIdx, 1)[0];
-			const p1 = bestFlip ? seg.b : seg.a;
-			const p2 = bestFlip ? seg.a : seg.b;
-			segs.push({a: {x: p1.x, y: p1.y, z: p1.z}, b: {x: p2.x, y: p2.y, z: p2.z}});
-			cur = p2;
 		}
 	}
-	return segs;
 }
 
-function connectorCrossesUncharted(outer, p1, p2, tolerance){
-	// sample the straight connector; it crosses uncharted area if any sample
-	// lies outside the turnaround boundary by more than the tolerance
-	for (let i = 1; i < 10; i++) {
-		const t = i / 10;
-		const s = {x: p1.x + (p2.x - p1.x) * t, y: p1.y + (p2.y - p1.y) * t};
-		if(!pointInPolygon(outer, s) && closestOnPolygon(outer, s).dist > tolerance)
-			return true;
+function makeConnectorCheck(poly, turnaround, spacing, tolerance){
+	// a connector may only be driven directly if every point stays within the
+	// turnaround band of the polygon boundary, inside or outside: transits neither
+	// cross uncharted gaps nor cut across the survey interior. measured against
+	// the true polygon, not the miter offset, which overshoots at sharp concave
+	// vertices
+	let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+	for (const p of poly) {
+		if(p.x < minX) minX = p.x;
+		if(p.y < minY) minY = p.y;
+		if(p.x > maxX) maxX = p.x;
+		if(p.y > maxY) maxY = p.y;
 	}
-	return false;
+
+	// metric sample step from the polygon extents so long connectors can't skip
+	// over narrow features, fine enough for features at the transect spacing scale
+	const diag = Math.hypot(maxX - minX, maxY - minY);
+	const step = Math.max(tolerance, Math.min(spacing, diag / 200) * 0.5);
+	const band = turnaround + tolerance;
+
+	return function(p1, p2){
+		const len = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+		const n = Math.max(2, Math.ceil(len / step));
+		for (let i = 1; i < n; i++) {
+			const t = i / n;
+			const s = {x: p1.x + (p2.x - p1.x) * t, y: p1.y + (p2.y - p1.y) * t};
+			if(closestOnPolygon(poly, s).dist > band)
+				return true;
+		}
+		return false;
+	};
 }
 
-function appendTransects(path, segs, outer, tolerance){
+function appendTransects(path, segs, outer, needsRoute){
 	for (const seg of segs) {
 		const cur = path[path.length-1];
-		if(cur && connectorCrossesUncharted(outer, cur, seg.a, tolerance)){
+		if(cur && needsRoute(cur, seg.a)){
 			if(directTransitCheckbox.checked){
 				pushUnique(path, {x: seg.a.x, y: seg.a.y, z: seg.a.z, transit: true});
 			}else{
-				// route along the turnaround boundary instead of crossing uncharted area
+				// route along the turnaround boundary instead of crossing uncharted
+				// area or cutting through the survey interior
 				const from = closestOnPolygon(outer, cur);
 				const to = closestOnPolygon(outer, seg.a);
 				pushUnique(path, from);
@@ -404,36 +498,40 @@ function generateSurvey(){
 	const poly = getCCWPolygon(polygon);
 	const outer = offsetPolygon(poly, turnaround);
 	const tolerance = Math.max(0.01, turnaround * 0.05);
+	const needsRoute = makeConnectorCheck(poly, turnaround, spacing, tolerance);
+	const cost = makeCostCache(outer, needsRoute);
 
-	const pass = orderTransects(generateTransects(poly, angle, spacing, turnaround), start_marker);
-	if(pass.length == 0)
+	const mainSegments = generateTransects(poly, angle, spacing, turnaround);
+	if(mainSegments.length == 0)
 		return;
 
 	const path = [];
 	pushUnique(path, start_marker);
 
-	// approach the outer boundary at the closest point, then trace edges to the survey entry
-	const approach = closestOnPolygon(outer, start_marker);
-	const entry = closestOnPolygon(outer, pass[0].a);
-	pushUnique(path, approach);
-	for (const v of tracePerimeter(outer, approach, entry))
-		pushUnique(path, v);
-	pushUnique(path, entry);
-
-	appendTransects(path, pass, outer, tolerance);
-
+	// the end marker anchors the final pass; with crosshatch the main pass ends free
+	// since its exit feeds the cross pass, whose own entry is only known afterwards
 	if(crosshatchCheckbox.checked){
-		const cross = orderTransects(generateTransects(poly, angle + Math.PI/2, spacing, turnaround), path[path.length-1]);
-		appendTransects(path, cross, outer, tolerance);
+		const pass = orderSegments(mainSegments, start_marker, null, cost);
+		appendTransects(path, pass, outer, needsRoute);
+
+		const crossSegments = generateTransects(poly, angle + Math.PI/2, spacing, turnaround);
+		const cross = orderSegments(crossSegments, path[path.length-1], end_marker, cost);
+		appendTransects(path, cross, outer, needsRoute);
+	}else{
+		const pass = orderSegments(mainSegments, start_marker, end_marker, cost);
+		appendTransects(path, pass, outer, needsRoute);
 	}
 
-	// trace edges from the survey exit to the point closest to the end marker, then connect
-	const exit = closestOnPolygon(outer, path[path.length-1]);
-	const depart = closestOnPolygon(outer, end_marker);
-	pushUnique(path, exit);
-	for (const v of tracePerimeter(outer, exit, depart))
-		pushUnique(path, v);
-	pushUnique(path, depart);
+	// connect to the end marker, directly when allowed, along the boundary otherwise
+	const last = path[path.length-1];
+	if(!directTransitCheckbox.checked && needsRoute(last, end_marker)){
+		const exit = closestOnPolygon(outer, last);
+		const depart = closestOnPolygon(outer, end_marker);
+		pushUnique(path, exit);
+		for (const v of tracePerimeter(outer, exit, depart))
+			pushUnique(path, v);
+		pushUnique(path, depart);
+	}
 	pushUnique(path, end_marker);
 
 	survey_points = path;
@@ -900,25 +998,27 @@ function endDrag(event){
 			if(target.type == "poly")
 				polygon.splice(target.index, 1);
 		}else{
-			// insert on a polygon edge if clicked near one, otherwise append
-			let before = -1;
-			const edges = polygon.length >= 3 ? polygon.length : polygon.length - 1;
-			for (let i = 0; i < edges; i++) {
-				const p0 = pointToScreen(polygon[i]);
-				const p1 = pointToScreen(polygon[(i+1) % polygon.length]);
-				if (distancePointToLineSegment(newpoint.x, newpoint.y, p0.x, p0.y, p1.x, p1.y) <= 10) {
-					before = i + 1;
-					break;
-				}
-			}
-
 			const p = screenToPoint(newpoint);
-			if(before > 0){
+
+			if(polygon.length >= 3){
+				// insert at the edge where the detour is smallest, so far away clicks
+				// extend the nearest side instead of appending and self-intersecting
+				let before = 1, bestCost = Infinity;
+				for (let i = 0; i < polygon.length; i++) {
+					const a = polygon[i];
+					const b = polygon[(i+1) % polygon.length];
+					const cost = Math.hypot(p.x - a.x, p.y - a.y) + Math.hypot(b.x - p.x, b.y - p.y) - Math.hypot(b.x - a.x, b.y - a.y);
+					if(cost < bestCost){
+						bestCost = cost;
+						before = i + 1;
+					}
+				}
+
 				const p0 = polygon[before-1];
 				const p1 = polygon[before % polygon.length];
 				const distP0P1 = Math.hypot(p1.x - p0.x, p1.y - p0.y);
 				const distP0P = Math.hypot(p.x - p0.x, p.y - p0.y);
-				p.z = distP0P1 > 0 ? p0.z + distP0P / distP0P1 * (p1.z - p0.z) : p0.z;
+				p.z = distP0P1 > 0 ? p0.z + Math.min(distP0P / distP0P1, 1) * (p1.z - p0.z) : p0.z;
 				polygon.splice(before, 0, p);
 			}else{
 				if (polygon.length > 0)
