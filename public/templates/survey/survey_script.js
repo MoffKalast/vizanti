@@ -758,9 +758,13 @@ function drawSurvey(){
 			const a = viewSurvey[i];
 			const b = viewSurvey[i+1];
 			const len = Math.hypot(b.x - a.x, b.y - a.y);
-			if(len < 30)
+			if(len < 50)
 				continue;
-			const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+
+			const t = 0.7;
+			const mx = a.x + (b.x - a.x) * t;
+			const my = a.y + (b.y - a.y) * t;
+
 			const ux = (b.x - a.x) / len, uy = (b.y - a.y) / len;
 			ctx.beginPath();
 			ctx.moveTo(mx + ux * 6, my + uy * 6);
