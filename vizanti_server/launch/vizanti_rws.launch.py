@@ -14,6 +14,8 @@ def generate_launch_description():
         executable='rws_server',
         name='vizanti_rws_server',
         output='screen',
+        respawn=True,
+        respawn_delay=2.0,
         parameters=[
             {'rosbridge_compatible ': True},
             {'port': port_rosbridge},

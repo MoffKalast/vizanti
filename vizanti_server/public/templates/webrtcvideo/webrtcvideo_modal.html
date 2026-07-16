@@ -15,6 +15,45 @@
 
 		<br>
 
+		<label for="{uniqueID}_camera_name">Camera type:</label>
+		<select id="{uniqueID}_camera_name" name="camera-name">
+			<option value="Front">Front</option>
+			<option value="Lewo">Lewo</option>
+			<option value="Prawo">Prawo</option>
+			<option value="Tyl">Tył</option>
+			<option value="Pulpit">Pulpit</option>
+		</select>
+
+		<br>
+
+		<label for="{uniqueID}_resolution">Resolution:</label>
+		<select id="{uniqueID}_resolution" name="resolution">
+			<option value="640,480">640x480</option>
+			<option value="1280,720">1280x720</option>
+			<option value="1920,1080">1920x1080</option>
+			<option value="3840,2160">3840x2160</option>
+		</select>
+
+		<br>
+
+		<label for="{uniqueID}_min_bitrate">Min bitrate (bps):</label>
+		<input type="number" id="{uniqueID}_min_bitrate" name="min-bitrate" min="1" step="1000" value="500000">
+
+		<br>
+
+		<label for="{uniqueID}_max_bitrate">Max bitrate (bps):</label>
+		<input type="number" id="{uniqueID}_max_bitrate" name="max-bitrate" min="1" step="1000" value="1500000">
+
+		<br>
+
+		<label for="{uniqueID}_codec">Codec:</label>
+		<select id="{uniqueID}_codec" name="codec">
+			<option value="vp8">VP8</option>
+			<option value="h264">H.264</option>
+		</select>
+
+		<br>
+
 		<label for="{uniqueID}_rotation">Rotation:</label>
 		<select id="{uniqueID}_rotation" name="rotation">
 			<option value="0">0 degrees</option>
@@ -34,6 +73,10 @@
 		<label for="{uniqueID}_width">Width (screen %):</label>
 		<span id="{uniqueID}_width_value">25</span>
 		<input type="range" value="25" step="1" min="5" max="100" id="{uniqueID}_width">
+
+		<br>
+
+		<button id="{uniqueID}_connect_button" type="button">Connect</button>
 
 		<hr>
 
