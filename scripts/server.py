@@ -5,9 +5,15 @@ from rospkg import RosPack
 import threading
 import logging
 import json
+import gzip
+import hashlib
 
-from flask import Flask, render_template, send_from_directory, make_response
+from flask import Flask, render_template, send_from_directory, make_response, request
 from waitress.server import create_server
+
+GZIP_CACHE_MAX_ENTRIES = 256
+COMPRESSIBLE_MIMETYPES = {'application/javascript', 'text/javascript', 'text/css', 'text/html', 'application/json', 'image/svg+xml', 'text/plain'}
+gzip_cache = {} 
 
 rospy.init_node('vizanti_flask_node')
 
@@ -119,6 +125,46 @@ def get_default_widget_config():
 @app.route(param_base_url + '/<path:path>')
 def serve_static(path):
 	return send_from_directory(app.static_folder, path)
+
+@app.after_request
+def add_caching_and_compression(response):
+	if response.status_code != 200:
+		return response
+
+	# images and other binary assets are safe to cache for a day,
+	# text content stays no-cache so the browser revalidates via ETag and gets cheap 304s
+	if response.mimetype in COMPRESSIBLE_MIMETYPES:
+		response.headers['Cache-Control'] = 'no-cache'
+	else:
+		response.headers['Cache-Control'] = 'public, max-age=86400'
+		return response
+
+	response.direct_passthrough = False
+	data = response.get_data()
+
+	content_hash = hashlib.md5(data).hexdigest()
+	accepts_gzip = 'gzip' in request.headers.get('Accept-Encoding', '').lower()
+
+	if accepts_gzip and len(data) > 512:
+		compressed = gzip_cache.get(content_hash)
+		if compressed is None:
+			compressed = gzip.compress(data, 6)
+			if len(gzip_cache) >= GZIP_CACHE_MAX_ENTRIES:
+				gzip_cache.clear()
+			gzip_cache[content_hash] = compressed
+
+		if len(compressed) < len(data):
+			response.set_data(compressed)
+			response.headers['Content-Encoding'] = 'gzip'
+			response.headers['Vary'] = 'Accept-Encoding'
+			response.set_etag(content_hash + '-gz')
+		else:
+			response.set_etag(content_hash)
+	else:
+		response.set_etag(content_hash)
+
+	# turns the response into a 304 if the client's If-None-Match matches
+	return response.make_conditional(request)
 
 class ServerThread(threading.Thread):
 	
