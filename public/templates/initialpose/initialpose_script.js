@@ -86,6 +86,7 @@ function sendMessage(pos, delta){
 		}
 	});	
 	publisher.publish(poseMessage);
+	publisher.unadvertise();
 
 	status.setOK();
 }
