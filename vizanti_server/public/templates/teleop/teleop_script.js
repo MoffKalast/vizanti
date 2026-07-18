@@ -424,6 +424,10 @@ async function loadTopics(){
 }
 
 function connect(){
+	if(cmdVelPublisher !== undefined){
+		cmdVelPublisher.unadvertise();
+	}
+
 	cmdVelPublisher = new ROSLIB.Topic({
 		ros: rosbridge.ros,
 		name: topic,
@@ -435,7 +439,7 @@ function connect(){
 
 function publishTwist(x, y, z, wx, wy, wz) {
 
-	if(joy_locked || cmdVelPublisher === undefined)
+	if(joy_locked)
 		return;
 
 	function getStamp(){
@@ -680,49 +684,40 @@ function joystickStop(){
 }
 
 function onJoystickMove(event, data) {
-	try{
-		const cfg = settings['{uniqueID}'];
-		const force = Math.min(Math.max(data.force, 0.0), 1.0);
 
-		vert_target = cfg.vel_vert * Math.sin(data.angle.radian) * force;
-		horiz_target = -cfg.vel_horiz * Math.cos(data.angle.radian) * force;
+	const cfg = settings['{uniqueID}'];
+	const force = Math.min(Math.max(data.force, 0.0), 1.0);
 
-		if (cfg.ackermann_emulation && vert_target < 0) {
-			horiz_target = -horiz_target;
-		}
+	vert_target = cfg.vel_vert * Math.sin(data.angle.radian) * force;
+	horiz_target = -cfg.vel_horiz * Math.cos(data.angle.radian) * force;
 
-		if(joy_interval === undefined){
-			joy_interval = setInterval(() => {
+	if (cfg.ackermann_emulation && vert_target < 0) {
+		horiz_target = -horiz_target;
+	}
 
-				integrateAcceleration();
+	if(joy_interval === undefined){
+		joy_interval = setInterval(() => {
 
-				if(Math.abs(vert_vel) < 0.005 && Math.abs(horiz_vel) < 0.005){
-					joystickStop();
-					return;
-				}
+			integrateAcceleration();
+
+			if(Math.abs(vert_vel) < 0.005 && Math.abs(horiz_vel) < 0.005){
+				joystickStop();
+				return;
+			}
+		
+			mapAndSend();
 			
-				mapAndSend();
-				
-			}, 1000 / 20); //20 hz standard
-		}
-	} catch (error) {
-		console.error(error);
-		//prevents nipplejs internals from erroring out
+		}, 1000 / 20); //20 hz standard
 	}
 };
 
 function onJoystickEnd(event) {
-	try {
-		vert_target = 0;
-		horiz_target = 0;
+	vert_target = 0;
+	horiz_target = 0;
 
-		if(settings['{uniqueID}'].instant_stop){
-			//pull the parking brake
-			joystickStop();
-		}
-	} catch (error) {
-		console.error(error);
-		//prevents nipplejs internals from erroring out
+	if(settings['{uniqueID}'].instant_stop){
+		//pull the parking brake
+		joystickStop();
 	}
 }
 

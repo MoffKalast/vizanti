@@ -19,6 +19,7 @@ let status = new Status(
 let typedict = {};
 let fixed_frame = tf.fixed_frame;
 let base_link_frame = find_base_frame();
+let path_publisher = undefined;
 let mode = "IDLE";
 let points = [];
 let shift_pressed = false;
@@ -264,7 +265,13 @@ function sendMessage(pointlist){
 		}
 	}
 
-	const publisher = new ROSLIB.Topic({
+	//unadvertising drops the latch server-side, so keep the newest publisher
+	//alive for late subscribers and only clean up the previous one
+	if(path_publisher !== undefined){
+		path_publisher.unadvertise();
+	}
+
+	path_publisher = new ROSLIB.Topic({
 		ros: rosbridge.ros,
 		name: topic,
 		messageType: stamped ? 'nav_msgs/msg/Path' : 'geometry_msgs/msg/PoseArray',
@@ -279,7 +286,7 @@ function sendMessage(pointlist){
 		poses: poseList
 	});
 	
-	publisher.publish(pathMessage);
+	path_publisher.publish(pathMessage);
 	status.setOK();
 
 	setMode("IDLE");

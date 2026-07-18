@@ -85,6 +85,7 @@ function sendMessage(){
 		}else{
 			publisher.publish(new ROSLIB.Message({}));
 		}
+		publisher.unadvertise();
 	}
 	else if(typedict[topic] == "std_srvs/srv/Empty"){
 		const service = new ROSLIB.Service({

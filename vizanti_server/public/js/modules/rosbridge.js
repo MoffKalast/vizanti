@@ -10,30 +10,20 @@ class Rosbridge {
 		this.port = params.port_rosbridge;
 		this.compression = params.compression;
 		this.connected = false;
-
-		this.connect();
+		this.reconnect_pending = false;
 		this.status = "Connecting...";
 
-		this.reset_reconnect = false;
-	}
-
-	connect(){
-		this.connected = false;
-
+		// created exactly once, roslib Topics auto-resubscribe and re-advertise on
+		// reconnect (reconnect_on_close defaults to true), but only if this instance
+		// is reused, replacing it orphans every Topic object holding a reference
 		this.ros = new ROSLIB.Ros({
 			url: 'ws://' + this.url + ':' + this.port
 		});
 
 		this.ros.on('connection', () => {
 			console.log('Connected to robot.');
-
 			this.connected = true;
 			this.status = "Connected.";
-
-			if(this.reset_reconnect){
-				location.reload(false); //otherwise topics won't re-subscribe automatically :/
-			}
-
 			window.dispatchEvent(new Event('rosbridge_change'));
 		});
 
@@ -46,12 +36,17 @@ class Rosbridge {
 		this.ros.on('close', () => {
 			this.connected = false;
 			this.status = "Connection lost.";
-			this.reset_reconnect = true;
 			window.dispatchEvent(new Event('rosbridge_change'));
 
+			if (this.reconnect_pending)
+				return;
+
+			this.reconnect_pending = true;
 			setTimeout(() => {
+				this.reconnect_pending = false;
 				this.status = "Reconnecting...";
-				this.connect();
+				window.dispatchEvent(new Event('rosbridge_change'));
+				this.ros.connect('ws://' + this.url + ':' + this.port);
 			}, 1000);
 		});
 

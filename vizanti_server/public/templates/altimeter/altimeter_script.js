@@ -159,6 +159,7 @@ function publishTarget(value){
 	});
 
 	publisher.publish(floatMsg);
+	publisher.unadvertise();
 }
 
 function getMeters(){

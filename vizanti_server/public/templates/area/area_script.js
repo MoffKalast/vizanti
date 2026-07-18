@@ -94,6 +94,7 @@ function sendMessage(start, end){
 	});
 
 	publisher.publish(polygonMsg);
+	publisher.unadvertise();
 	status.setOK();
 }
 
