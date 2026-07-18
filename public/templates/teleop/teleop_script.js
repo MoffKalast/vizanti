@@ -437,7 +437,7 @@ function connect(){
 
 function publishTwist(x, y, z, wx, wy, wz) {
 
-	if(joy_locked)
+	if(joy_locked || cmdVelPublisher === undefined)
 		return;
 
 	function getStamp(){
@@ -684,40 +684,49 @@ function joystickStop(){
 }
 
 function onJoystickMove(event, data) {
+	try{
+		const cfg = settings['{uniqueID}'];
+		const force = Math.min(Math.max(data.force, 0.0), 1.0);
 
-	const cfg = settings['{uniqueID}'];
-	const force = Math.min(Math.max(data.force, 0.0), 1.0);
+		vert_target = cfg.vel_vert * Math.sin(data.angle.radian) * force;
+		horiz_target = -cfg.vel_horiz * Math.cos(data.angle.radian) * force;
 
-	vert_target = cfg.vel_vert * Math.sin(data.angle.radian) * force;
-	horiz_target = -cfg.vel_horiz * Math.cos(data.angle.radian) * force;
+		if (cfg.ackermann_emulation && vert_target < 0) {
+			horiz_target = -horiz_target;
+		}
 
-	if (cfg.ackermann_emulation && vert_target < 0) {
-		horiz_target = -horiz_target;
-	}
+		if(joy_interval === undefined){
+			joy_interval = setInterval(() => {
 
-	if(joy_interval === undefined){
-		joy_interval = setInterval(() => {
+				integrateAcceleration();
 
-			integrateAcceleration();
-
-			if(Math.abs(vert_vel) < 0.005 && Math.abs(horiz_vel) < 0.005){
-				joystickStop();
-				return;
-			}
-		
-			mapAndSend();
+				if(Math.abs(vert_vel) < 0.005 && Math.abs(horiz_vel) < 0.005){
+					joystickStop();
+					return;
+				}
 			
-		}, 1000 / 20); //20 hz standard
+				mapAndSend();
+				
+			}, 1000 / 20); //20 hz standard
+		}
+	} catch (error) {
+		console.error(error);
+		//prevents nipplejs internals from erroring out
 	}
 };
 
 function onJoystickEnd(event) {
-	vert_target = 0;
-	horiz_target = 0;
+	try {
+		vert_target = 0;
+		horiz_target = 0;
 
-	if(settings['{uniqueID}'].instant_stop){
-		//pull the parking brake
-		joystickStop();
+		if(settings['{uniqueID}'].instant_stop){
+			//pull the parking brake
+			joystickStop();
+		}
+	} catch (error) {
+		console.error(error);
+		//prevents nipplejs internals from erroring out
 	}
 }
 
