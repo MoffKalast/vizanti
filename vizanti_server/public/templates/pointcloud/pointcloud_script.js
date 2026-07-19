@@ -289,7 +289,8 @@ function connect(){
 		name : topic,
 		messageType : 'sensor_msgs/msg/PointCloud2',
 		throttle_rate: parseInt(throttle.value),
-		compression: rosbridge.compression
+		compression: rosbridge.compression,
+		queue_length: 1
 	});
 
 	status.setWarn("No data received.");

@@ -178,7 +178,8 @@ function connect(){
 		name : topic,
 		messageType : typedict[topic],
 		throttle_rate: parseInt(throttle.value),
-		compression: rosbridge.compression
+		compression: rosbridge.compression,
+		queue_length: 1
 	});
 
 	status.setWarn("No data received.");

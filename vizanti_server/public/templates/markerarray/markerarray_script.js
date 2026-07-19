@@ -446,7 +446,8 @@ function connect(){
 		name : topic,
 		messageType : 'visualization_msgs/msg/MarkerArray',
 		compression: rosbridge.compression,
-		throttle_rate: parseInt(throttle.value)
+		throttle_rate: parseInt(throttle.value),
+		queue_length: 1
 	});
 
 	status.setWarn("No data received.");

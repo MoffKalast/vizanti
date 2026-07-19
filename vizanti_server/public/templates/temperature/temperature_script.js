@@ -68,7 +68,8 @@ function connect(){
 		name : topic,
 		messageType : 'sensor_msgs/msg/Temperature',
 		compression: rosbridge.compression,
-		throttle_rate: 500 // throttle to twice a second max
+		throttle_rate: 500, // throttle to twice a second max
+		queue_length: 1
 	});
 
 	status.setWarn("No data received.");

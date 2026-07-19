@@ -69,7 +69,8 @@ export class TF {
 			name: '/vizanti/tf_consolidated',
 			messageType: 'tf2_msgs/msg/TFMessage',
 			throttle_rate: 33,
-			compression: rosbridge.compression
+			compression: rosbridge.compression,
+			queue_length: 1
 		});
 
 		this.tf_listener = this.tf_topic.subscribe((msg) => {

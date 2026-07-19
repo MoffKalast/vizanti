@@ -104,7 +104,8 @@ function connect(){
 		name : topic,
 		messageType : 'sensor_msgs/msg/BatteryState',
 		throttle_rate: 500, // throttle to twice a second max
-		compression: rosbridge.compression
+		compression: rosbridge.compression,
+		queue_length: 1
 	});
 
 	status.setWarn("No data received.");

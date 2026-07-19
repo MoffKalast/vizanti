@@ -169,7 +169,8 @@ function connect(){
 		name : topic,
 		messageType : 'nav_msgs/msg/Path',
 		throttle_rate: parseInt(throttle.value),
-		compression: rosbridge.compression
+		compression: rosbridge.compression,
+		queue_length: 1
 	});
 
 	status.setWarn("No data received.");

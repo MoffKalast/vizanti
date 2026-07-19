@@ -338,7 +338,8 @@ function connect(){
 		ros : rosbridge.ros,
 		name : topic,
 		messageType : typedict[topic],
-		throttle_rate: parseInt(throttle.value)
+		throttle_rate: parseInt(throttle.value),
+		queue_length: 1
 	});
 
 	status.setWarn("No data received.");
