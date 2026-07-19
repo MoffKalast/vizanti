@@ -10,6 +10,8 @@ class Rosbridge {
 		this.port = params.port_rosbridge;
 		this.connected = false;
 		this.reconnect_pending = false;
+		this.suspended = false;
+		this.suspend_timer = undefined;
 		this.status = "Connecting...";
 
 		// created exactly once, roslib Topics auto-resubscribe and re-advertise on
@@ -37,16 +39,37 @@ class Rosbridge {
 			this.status = "Connection lost.";
 			window.dispatchEvent(new Event('rosbridge_change'));
 
-			if (this.reconnect_pending)
+			if (this.suspended || this.reconnect_pending)
 				return;
 
 			this.reconnect_pending = true;
 			setTimeout(() => {
 				this.reconnect_pending = false;
+				if (this.suspended)
+					return;
 				this.status = "Reconnecting...";
 				window.dispatchEvent(new Event('rosbridge_change'));
 				this.ros.connect('ws://' + this.url + ':' + this.port);
 			}, 1000);
+		});
+
+		// hidden tabs can't keep up with message processing, so the browser queues
+		// incoming websocket data and dumps the entire backlog on refocus, freezing
+		// the tab. Closing the socket while hidden drops everything at the source,
+		// roslib resubscribes all topics on reconnect so state simply repopulates.
+		document.addEventListener('visibilitychange', () => {
+			if (document.hidden) {
+				this.suspended = true;
+				this.status = "Suspended (tab inactive).";
+				this.ros.close();
+			} else {
+				if (this.suspended) {
+					this.suspended = false;
+					this.status = "Reconnecting...";
+					window.dispatchEvent(new Event('rosbridge_change'));
+					this.ros.connect('ws://' + this.url + ':' + this.port);
+				}
+			}
 		});
 
 		this.topics_client = new ROSLIB.Service({
