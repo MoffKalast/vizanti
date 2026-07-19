@@ -454,7 +454,8 @@ function connect(){
 		ros : rosbridge.ros,
 		name : raw_target,
 		messageType : 'sensor_msgs/Imu',
-		throttle_rate: parseInt(throttle.value)
+		throttle_rate: parseInt(throttle.value),
+		queue_length: 1
 	});
 	
 	listener = imu_topic.subscribe((msg) => {  

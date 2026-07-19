@@ -289,7 +289,8 @@ function connect(){
 		name : topic,
 		messageType : 'sensor_msgs/PointCloud2',
 		throttle_rate: parseInt(throttle.value),
-		compression: "cbor"
+		compression: "cbor",
+		queue_length: 1
 	});
 
 	status.setWarn("No data received.");

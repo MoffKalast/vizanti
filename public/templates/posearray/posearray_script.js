@@ -174,7 +174,8 @@ function connect(){
 		name : topic,
 		messageType : 'geometry_msgs/PoseArray',
 		throttle_rate: parseInt(throttle.value),
-		compression: "cbor"
+		compression: "cbor",
+		queue_length: 1
 	});
 
 	status.setWarn("No data received.");

@@ -69,7 +69,8 @@ export class TF {
 			name: 'vizanti/tf_consolidated',
 			messageType: 'tf/tfMessage',
 			throttle_rate: 33,
-			compression: "cbor"
+			compression: "cbor",
+			queue_length: 1
 		});
 
 		this.tf_listener = this.tf_topic.subscribe((msg) => {

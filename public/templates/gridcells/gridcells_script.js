@@ -168,7 +168,8 @@ function connect(){
 		name : topic,
 		messageType : 'nav_msgs/GridCells',
 		throttle_rate: parseInt(throttle.value),
-		compression: "cbor"
+		compression: "cbor",
+		queue_length: 1
 	});
 
 	status.setWarn("No data received.");

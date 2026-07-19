@@ -169,7 +169,8 @@ function connect(){
 		name : topic,
 		messageType : 'nav_msgs/Path',
 		compression: "cbor",
-		throttle_rate: parseInt(throttle.value)
+		throttle_rate: parseInt(throttle.value),
+		queue_length: 1
 	});
 
 	status.setWarn("No data received.");

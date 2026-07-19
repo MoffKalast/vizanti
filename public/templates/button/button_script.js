@@ -161,7 +161,8 @@ function connect(){
 			ros : rosbridge.ros,
 			name : topic,
 			messageType : "std_msgs/Bool",
-			throttle_rate: 33
+			throttle_rate: 33,
+			queue_length: 1
 		});	
 		
 		listener = booltopic.subscribe((msg) => {

@@ -261,7 +261,8 @@ function connect(){
 		name : topic,
 		messageType : 'nav_msgs/OccupancyGrid',
 		throttle_rate: parseInt(throttle.value), // throttle to once every second max
-		compression: "cbor"
+		compression: "cbor",
+		queue_length: 1
 	});
 
 	status.setWarn("No data received.");

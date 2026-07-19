@@ -200,7 +200,8 @@ function connect(){
 		ros : rosbridge.ros,
 		name : topic,
 		messageType : 'sensor_msgs/Range',
-		throttle_rate: parseInt(throttle.value)
+		throttle_rate: parseInt(throttle.value),
+		queue_length: 1
 	});
 
 	status.setWarn("No data received.");	

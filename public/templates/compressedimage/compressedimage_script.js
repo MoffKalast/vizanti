@@ -140,7 +140,8 @@ function connect(){
 		ros : rosbridge.ros,
 		name : topic,
 		messageType : 'sensor_msgs/CompressedImage',
-		throttle_rate: parseInt(throttle.value)
+		throttle_rate: parseInt(throttle.value),
+		queue_length: 1
 	});
 	
 	let received = false;
