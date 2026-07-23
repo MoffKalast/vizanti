@@ -69,6 +69,7 @@ icons["costmap"] = await imageToDataURL("assets/costmap.svg");
 icons["raw"] = await imageToDataURL("assets/rawmap.svg");
 icons["raw_transparent"] = await imageToDataURL("assets/rawmap_transparent_white.svg");
 icons["raw_transparent_black"] = await imageToDataURL("assets/rawmap_transparent_black.svg");
+icons["sonar"] = await imageToDataURL("assets/sonar.svg");
 
 let listener = undefined;
 let map_topic = undefined;
@@ -113,7 +114,6 @@ const savePathBox = document.getElementById("{uniqueID}_savepath");
 const loadButton = document.getElementById('{uniqueID}_load');
 const saveButton = document.getElementById('{uniqueID}_save');
 
-//rendring colour modes: 0 = map, 1 = costmap, 2 = raw
 const colourSchemeBox = document.getElementById('{uniqueID}_colour_scheme');
 colourSchemeBox.selectedIndex = topic.includes("cost") ? 1 : 0;
 colourSchemeBox.addEventListener('change', saveSettings);
