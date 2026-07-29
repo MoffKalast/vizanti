@@ -51,6 +51,89 @@ widthSlider.addEventListener('input', () =>  {
 	saveSettings();
 });
 
+const text_resolution = document.getElementById("{uniqueID}_resolution");
+const text_datasize = document.getElementById("{uniqueID}_datasize");
+const text_rate = document.getElementById("{uniqueID}_rate");
+const text_bandwidth = document.getElementById("{uniqueID}_bandwidth");
+const text_compression = document.getElementById("{uniqueID}_compression");
+const text_type = document.getElementById("{uniqueID}_type");
+const text_frame = document.getElementById("{uniqueID}_frame");
+
+const COMPRESSION_TYPES = ["jpeg", "jpg", "png", "tiff", "webp", "rvl"];
+
+let arrival_times = [];
+let arrival_bytes = [];
+
+function parseFormat(format){
+	const lower = (format ?? "").toLowerCase();
+	const encoding = lower.split(";")[0].trim();
+	const compression = COMPRESSION_TYPES.find(type => lower.includes(type)) ?? "unknown";
+	const is_depth = lower.includes("compresseddepth") || encoding.startsWith("16uc1") || encoding.startsWith("32fc1") || encoding.startsWith("16uc") && lower.includes("depth");
+	return {encoding, compression, is_depth};
+}
+
+function base64ByteLength(data){
+	if(data === undefined || data.length == 0)
+		return 0;
+
+	let padding = 0;
+	if(data.endsWith("=="))
+		padding = 2;
+	else if(data.endsWith("="))
+		padding = 1;
+
+	return Math.floor(data.length * 3 / 4) - padding;
+}
+
+function formatBytes(bytes){
+	if(bytes >= 1024 * 1024)
+		return (bytes / (1024 * 1024)).toFixed(2)+" MB";
+
+	if(bytes >= 1024)
+		return (bytes / 1024).toFixed(1)+" kB";
+
+	return bytes+" B";
+}
+
+function resetLiveData(){
+	arrival_times = [];
+	arrival_bytes = [];
+
+	text_resolution.innerText = "Resolution: ?";
+	text_datasize.innerText = "Data size: ?";
+	text_rate.innerText = "Rate: ?";
+	text_bandwidth.innerText = "Bandwidth: ?";
+	text_compression.innerText = "Compression: ?";
+	text_type.innerText = "Type: ?";
+	text_frame.innerText = "Frame: ?";
+}
+
+function updateLiveData(msg){
+	const info = parseFormat(msg.format);
+	const bytes = base64ByteLength(msg.data);
+
+	arrival_times.push(performance.now());
+	arrival_bytes.push(bytes);
+	if(arrival_times.length > 20){
+		arrival_times.shift();
+		arrival_bytes.shift();
+	}
+
+	text_datasize.innerText = "Data size: "+formatBytes(bytes);
+	text_compression.innerText = "Compression: "+info.compression.toUpperCase();
+	text_type.innerText = "Type: "+(info.is_depth ? "Depth" : (info.encoding.startsWith("mono") || info.encoding == "8uc1" ? "Grayscale" : "Color"))+(info.encoding == "" ? "" : " ("+info.encoding+")");
+	text_frame.innerText = "Frame: "+(msg.header?.frame_id == "" ? "(empty)" : msg.header?.frame_id ?? "?");
+
+	if(arrival_times.length > 1){
+		const seconds = (arrival_times[arrival_times.length - 1] - arrival_times[0]) / 1000;
+		const rate = (arrival_times.length - 1) / seconds;
+		const mean_bytes = arrival_bytes.reduce((a, b) => a + b, 0) / arrival_bytes.length;
+
+		text_rate.innerText = "Rate: "+rate.toFixed(1)+" Hz";
+		text_bandwidth.innerText = "Bandwidth: "+formatBytes(mean_bytes * rate)+"/s";
+	}
+}
+
 const throttle = document.getElementById('{uniqueID}_throttle');
 throttle.addEventListener("input", (event) =>{
 	saveSettings();
@@ -122,6 +205,8 @@ async function getImage(src) {
 
 function connect(){
 
+	resetLiveData();
+
 	canvas.src = stock_images["loading"];
 	displayImageOffset(img_offset_x, img_offset_y);
 
@@ -148,11 +233,14 @@ function connect(){
 	listener = image_topic.subscribe(async (msg) => {  
 		const src = 'data:image/jpeg;base64,' + msg.data
 
+		updateLiveData(msg);
+
 		getImage(src)
 			.then((img) => {
 			    canvas.onload = () => {
 			        last_natural_width = canvas.naturalWidth;
 			        last_natural_height = canvas.naturalHeight;
+			        text_resolution.innerText = "Resolution: "+canvas.naturalWidth+" x "+canvas.naturalHeight;
 			        if(!received){
 			            displayImageOffset(img_offset_x, img_offset_y);
 			            status.setOK();
