@@ -87,8 +87,9 @@ if(settings.hasOwnProperty("{uniqueID}")){
 		typedict[topic] = loaded_data.topic_type;
 
 	for (let i = 0; i < polygon.length; i++) {
-		if (polygon[i].z == null || polygon[i].z == undefined)
+		if (polygon[i].z == null || polygon[i].z == undefined){
 			polygon[i].z = 0;
+		}
 	}
 }else{
 	saveSettings();
@@ -120,97 +121,127 @@ function saveSettings(){
 
 // ---- Survey geometry ----
 
-function polygonSignedArea(poly){
+function getCCWPolygon(poly){
 	let area = 0;
 	for (let i = 0; i < poly.length; i++) {
 		const a = poly[i];
 		const b = poly[(i+1) % poly.length];
 		area += a.x * b.y - b.x * a.y;
 	}
-	return area * 0.5;
-}
 
-function getCCWPolygon(poly){
-	if(polygonSignedArea(poly) < 0)
+	if(area < 0)
 		return poly.slice().reverse();
 	return poly.slice();
 }
 
 function offsetPolygon(poly, dist){
-	if(dist <= 0)
-		return poly.map(p => ({x: p.x, y: p.y, z: p.z}));
+	if(dist <= 0){
+		return poly.map(p => ({
+			x: p.x,
+			y: p.y,
+			z: p.z
+		}));
+	}
 
 	// outward miter offset, assumes CCW winding so outward normal of edge (a->b) is (dy, -dx)
-	const n = poly.length;
+	const count = poly.length;
 	const result = [];
-	for (let i = 0; i < n; i++) {
-		const prev = poly[(i-1+n) % n];
+
+	for(let i = 0; i < count; i++){
+		const prev = poly[(i - 1 + count) % count];
 		const cur = poly[i];
-		const next = poly[(i+1) % n];
+		const next = poly[(i + 1) % count];
 
-		let d0x = cur.x - prev.x, d0y = cur.y - prev.y;
-		let d1x = next.x - cur.x, d1y = next.y - cur.y;
-		const l0 = Math.hypot(d0x, d0y) || 1;
-		const l1 = Math.hypot(d1x, d1y) || 1;
-		d0x /= l0; d0y /= l0;
-		d1x /= l1; d1y /= l1;
+		let dir0X = cur.x - prev.x;
+		let dir0Y = cur.y - prev.y;
+		let dir1X = next.x - cur.x;
+		let dir1Y = next.y - cur.y;
 
-		const n0 = {x: d0y, y: -d0x};
-		const n1 = {x: d1y, y: -d1x};
+		const len0 = Math.hypot(dir0X, dir0Y) || 1;
+		const len1 = Math.hypot(dir1X, dir1Y) || 1;
 
-		// miter direction as normalized sum of adjacent edge normals, scaled by 1/(1+dot) to hit the true offset corner
-		let mx = n0.x + n1.x, my = n0.y + n1.y;
-		const ml = Math.hypot(mx, my);
-		if(ml < 1e-9){
-			result.push({x: cur.x + n0.x * dist, y: cur.y + n0.y * dist, z: cur.z});
+		dir0X /= len0;
+		dir0Y /= len0;
+		dir1X /= len1;
+		dir1Y /= len1;
+
+		const norm0 = {
+			x: dir0Y,
+			y: -dir0X
+		};
+
+		const norm1 = {
+			x: dir1Y,
+			y: -dir1X
+		};
+
+		let miterX = norm0.x + norm1.x;
+		let miterY = norm0.y + norm1.y;
+		const miterLen = Math.hypot(miterX, miterY);
+
+		if(miterLen < 1e-9){
+			result.push({
+				x: cur.x + norm0.x * dist,
+				y: cur.y + norm0.y * dist,
+				z: cur.z
+			});
 			continue;
 		}
-		mx /= ml; my /= ml;
-		const dot = n0.x * n1.x + n0.y * n1.y;
+
+		miterX /= miterLen;
+		miterY /= miterLen;
+
+		const dot = norm0.x * norm1.x + norm0.y * norm1.y;
 		let scale = dist / Math.sqrt((1 + dot) * 0.5);
+
 		if(scale > dist * 3)
 			scale = dist * 3;
-		result.push({x: cur.x + mx * scale, y: cur.y + my * scale, z: cur.z});
+
+		result.push({
+			x: cur.x + miterX * scale,
+			y: cur.y + miterY * scale,
+			z: cur.z
+		});
 	}
+
 	return result;
 }
 
-function lineIntersections(poly, p0, dir){
-	// intersections of infinite line (p0 + t*dir) with polygon edges, z lerped along the edge
-	const hits = [];
-	for (let i = 0; i < poly.length; i++) {
-		const a = poly[i];
-		const b = poly[(i+1) % poly.length];
-		const ex = b.x - a.x, ey = b.y - a.y;
-		const denom = dir.x * ey - dir.y * ex;
-		if(Math.abs(denom) < 1e-12)
-			continue;
-		const s = (dir.y * (a.x - p0.x) - dir.x * (a.y - p0.y)) / denom;
-		if(s < 0 || s >= 1)
-			continue;
-		const t = Math.abs(dir.x) > Math.abs(dir.y) ? (a.x + s * ex - p0.x) / dir.x : (a.y + s * ey - p0.y) / dir.y;
-		hits.push({t: t, x: a.x + s * ex, y: a.y + s * ey, z: a.z + s * (b.z - a.z)});
-	}
-	hits.sort((u, v) => u.t - v.t);
-	return hits;
-}
+function closestOnPolygon(poly, point){
+	let closest = null;
 
-function closestOnPolygon(poly, p){
-	let best = null;
-	for (let i = 0; i < poly.length; i++) {
-		const a = poly[i];
-		const b = poly[(i+1) % poly.length];
-		const dx = b.x - a.x, dy = b.y - a.y;
-		const lsq = dx * dx + dy * dy;
-		let t = lsq > 0 ? ((p.x - a.x) * dx + (p.y - a.y) * dy) / lsq : 0;
+	for(let i = 0; i < poly.length; i++){
+		const start = poly[i];
+		const end = poly[(i + 1) % poly.length];
+
+		const edgeX = end.x - start.x;
+		const edgeY = end.y - start.y;
+		const edgeLenSq = edgeX * edgeX + edgeY * edgeY;
+
+		const relX = point.x - start.x;
+		const relY = point.y - start.y;
+		const dot = relX * edgeX + relY * edgeY;
+
+		let t = edgeLenSq > 0 ? dot / edgeLenSq : 0;
 		t = Math.max(0, Math.min(1, t));
-		const cx = a.x + t * dx, cy = a.y + t * dy;
-		const dist = Math.hypot(p.x - cx, p.y - cy);
-		if(best == null || dist < best.dist){
-			best = {edge: i, t: t, x: cx, y: cy, z: a.z + t * (b.z - a.z), dist: dist};
+
+		const closestX = start.x + t * edgeX;
+		const closestY = start.y + t * edgeY;
+		const dist = Math.hypot(point.x - closestX, point.y - closestY);
+
+		if(closest == null || dist < closest.dist){
+			closest = {
+				edge: i,
+				t,
+				x: closestX,
+				y: closestY,
+				z: start.z + t * (end.z - start.z),
+				dist
+			};
 		}
 	}
-	return best;
+
+	return closest;
 }
 
 function tracePerimeter(poly, from, to){
@@ -264,17 +295,61 @@ function tracePerimeter(poly, from, to){
 	return verts;
 }
 
-function pointInPolygon(poly, p){
-	let inside = false;
-	for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-		const a = poly[i], b = poly[j];
-		if(((a.y > p.y) != (b.y > p.y)) && (p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x))
-			inside = !inside;
-	}
-	return inside;
-}
-
 function generateTransects(poly, angleRad, spacing, turnaround){
+
+	function pointInPolygon(poly, p){
+		let inside = false;
+		for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+			const a = poly[i];
+			const b = poly[j];
+			if(((a.y > p.y) != (b.y > p.y)) && (p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x)){
+				inside = !inside;
+			}
+		}
+		return inside;
+	}
+
+	function lineIntersections(poly, lineOrigin, lineDir) {
+		// intersections of infinite line (p0 + t*dir) with polygon edges, z lerped along the edge
+		const hits = [];
+
+		for (let i = 0; i < poly.length; i++) {
+			const edgeStart = poly[i];
+			const edgeEnd = poly[(i + 1) % poly.length];
+
+			const edgeDx = edgeEnd.x - edgeStart.x;
+			const edgeDy = edgeEnd.y - edgeStart.y;
+
+			const determinant = lineDir.x * edgeDy - lineDir.y * edgeDx;
+
+			if (Math.abs(determinant) < 1e-12)
+				continue;
+
+			const edgeT = (lineDir.y * (edgeStart.x - lineOrigin.x) - lineDir.x * (edgeStart.y - lineOrigin.y)) / determinant;
+
+			if (edgeT < 0 || edgeT >= 1)
+				continue;
+
+			const useX = Math.abs(lineDir.x) > Math.abs(lineDir.y);
+
+			const intersectionCoord = useX ? edgeStart.x + edgeT * edgeDx : edgeStart.y + edgeT * edgeDy;
+			const lineOriginCoord = useX ? lineOrigin.x : lineOrigin.y;
+			const lineDirCoord = useX ? lineDir.x : lineDir.y;
+
+			const lineT = (intersectionCoord - lineOriginCoord) / lineDirCoord;
+
+			hits.push({
+				t: lineT,
+				x: edgeStart.x + edgeT * edgeDx,
+				y: edgeStart.y + edgeT * edgeDy,
+				z: edgeStart.z + edgeT * (edgeEnd.z - edgeStart.z)
+			});
+		}
+
+		hits.sort((a, b) => a.t - b.t);
+		return hits;
+	}
+
 	const dir = {x: Math.cos(angleRad), y: Math.sin(angleRad)};
 	const nrm = {x: -dir.y, y: dir.x};
 
@@ -309,39 +384,8 @@ function generateTransects(poly, angleRad, spacing, turnaround){
 	return segments;
 }
 
-function perimeterDistance(poly, from, to){
-	// shorter perimeter arc length between two boundary locations, mirrors tracePerimeter's direction choice
-	const n = poly.length;
-	const edgeLen = [];
-	let perimeter = 0;
-	for (let i = 0; i < n; i++) {
-		const a = poly[i];
-		const b = poly[(i+1) % n];
-		edgeLen.push(Math.hypot(b.x - a.x, b.y - a.y));
-		perimeter += edgeLen[i];
-	}
-	if(perimeter < 1e-9)
-		return 0;
-
-	let sFrom = 0, sTo = 0, s = 0;
-	for (let i = 0; i < n; i++) {
-		if(i == from.edge) sFrom = s + edgeLen[i] * from.t;
-		if(i == to.edge) sTo = s + edgeLen[i] * to.t;
-		s += edgeLen[i];
-	}
-
-	const forward = (sTo - sFrom + perimeter) % perimeter;
-	return Math.min(forward, perimeter - forward);
-}
-
 function makeCostCache(outer, needsRoute){
-	const ids = new WeakMap();
-	let nextId = 0;
-	const cache = new Map();
 
-	// actual travel cost between two points as appendTransects will execute it:
-	// straight line when the connector may be driven directly, otherwise
-	// approach + boundary trace + departure
 	function transitCost(p, q){
 		const euclid = Math.hypot(q.x - p.x, q.y - p.y);
 		if(directTransitCheckbox.checked || !needsRoute(p, q))
@@ -349,14 +393,49 @@ function makeCostCache(outer, needsRoute){
 
 		const from = closestOnPolygon(outer, p);
 		const to = closestOnPolygon(outer, q);
-		return from.dist + perimeterDistance(outer, from, to) + to.dist;
+
+		const n = outer.length;
+		const edgeLen = [];
+		let perimeter = 0;
+		for (let i = 0; i < n; i++) {
+			const a = outer[i];
+			const b = outer[(i+1) % n];
+			edgeLen.push(Math.hypot(b.x - a.x, b.y - a.y));
+			perimeter += edgeLen[i];
+		}
+
+		if(perimeter < 1e-9)
+			return from.dist + to.dist;
+
+		let sFrom = 0, sTo = 0, s = 0;
+		for (let i = 0; i < n; i++) {
+			if(i == from.edge)
+				sFrom = s + edgeLen[i] * from.t;
+
+			if(i == to.edge)
+				sTo = s + edgeLen[i] * to.t;
+
+			s += edgeLen[i];
+		}
+
+		const forward = (sTo - sFrom + perimeter) % perimeter;
+		return from.dist + Math.min(forward, perimeter - forward) + to.dist;
 	}
 
+	const ids = new WeakMap();
+	let nextId = 0;
+	const cache = new Map();
+
 	return function(p, q){
-		if(!ids.has(p)) ids.set(p, nextId++);
-		if(!ids.has(q)) ids.set(q, nextId++);
+		if(!ids.has(p))
+			ids.set(p, nextId++);
+
+		if(!ids.has(q))
+			ids.set(q, nextId++);
+
 		const i = ids.get(p), j = ids.get(q);
 		const key = i < j ? i * 1000000 + j : j * 1000000 + i;
+
 		let c = cache.get(key);
 		if(c == undefined){
 			c = transitCost(p, q);
@@ -367,57 +446,84 @@ function makeCostCache(outer, needsRoute){
 }
 
 function orderSegments(segments, entry, exit, cost){
+
+	function twoOptImprove(order, entry, exit, cost){
+		// open-path 2-opt with fixed entry and optional exit anchor, run to convergence.
+		// reversing order[i..j] flips each segment inside; transit cost is symmetric so
+		// internal connections keep their cost and only the two boundary connections change
+		const n = order.length;
+
+		function connect(p, q){
+			return q == null ? 0 : cost(p, q);
+		}
+
+		let improved = true;
+		while(improved){
+			improved = false;
+			for (let i = 0; i < n; i++) {
+				for (let j = i; j < n; j++) {
+					const prevEnd = i == 0 ? entry : order[i-1].b;
+					const nextStart = j == n-1 ? exit : order[j+1].a;
+					const before = cost(prevEnd, order[i].a) + connect(order[j].b, nextStart);
+					const after = cost(prevEnd, order[j].b) + connect(order[i].a, nextStart);
+					if(after < before - 1e-9){
+						const block = order.slice(i, j+1).reverse().map(s => ({a: s.b, b: s.a}));
+						order.splice(i, j - i + 1, ...block);
+						improved = true;
+					}
+				}
+			}
+		}
+	}
+
 	if(segments.length == 0)
 		return [];
 
 	// greedy nearest-neighbor construction over all segments by true transit cost
 	const remaining = segments.slice();
 	const order = [];
+
 	let cur = entry;
 	while(remaining.length > 0){
-		let bestIdx = 0, bestFlip = false, bestCost = Infinity;
+		let bestIdx = 0
+		let bestFlip = false
+		let bestCost = Infinity;
+
 		for (let i = 0; i < remaining.length; i++) {
+
 			const cA = cost(cur, remaining[i].a);
 			const cB = cost(cur, remaining[i].b);
-			if(cA < bestCost){ bestCost = cA; bestIdx = i; bestFlip = false; }
-			if(cB < bestCost){ bestCost = cB; bestIdx = i; bestFlip = true; }
+
+			if(cA < bestCost){
+				bestCost = cA;
+				bestIdx = i;
+				bestFlip = false;
+			}
+
+			if(cB < bestCost){
+				bestCost = cB;
+				bestIdx = i;
+				bestFlip = true;
+			}
 		}
+
 		const seg = remaining.splice(bestIdx, 1)[0];
-		order.push(bestFlip ? {a: seg.b, b: seg.a} : {a: seg.a, b: seg.b});
+		if (bestFlip){
+			order.push({
+				a: seg.b,
+				b: seg.a
+			});
+		}else{
+			order.push({
+				a: seg.a,
+				b: seg.b
+			});
+		}
 		cur = order[order.length-1].b;
 	}
 
 	twoOptImprove(order, entry, exit, cost);
 	return order;
-}
-
-function twoOptImprove(order, entry, exit, cost){
-	// open-path 2-opt with fixed entry and optional exit anchor, run to convergence.
-	// reversing order[i..j] flips each segment inside; transit cost is symmetric so
-	// internal connections keep their cost and only the two boundary connections change
-	const n = order.length;
-
-	function connect(p, q){
-		return q == null ? 0 : cost(p, q);
-	}
-
-	let improved = true;
-	while(improved){
-		improved = false;
-		for (let i = 0; i < n; i++) {
-			for (let j = i; j < n; j++) {
-				const prevEnd = i == 0 ? entry : order[i-1].b;
-				const nextStart = j == n-1 ? exit : order[j+1].a;
-				const before = cost(prevEnd, order[i].a) + connect(order[j].b, nextStart);
-				const after = cost(prevEnd, order[j].b) + connect(order[i].a, nextStart);
-				if(after < before - 1e-9){
-					const block = order.slice(i, j+1).reverse().map(s => ({a: s.b, b: s.a}));
-					order.splice(i, j - i + 1, ...block);
-					improved = true;
-				}
-			}
-		}
-	}
 }
 
 function makeConnectorCheck(poly, turnaround, spacing, tolerance){
@@ -428,10 +534,17 @@ function makeConnectorCheck(poly, turnaround, spacing, tolerance){
 	// vertices
 	let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 	for (const p of poly) {
-		if(p.x < minX) minX = p.x;
-		if(p.y < minY) minY = p.y;
-		if(p.x > maxX) maxX = p.x;
-		if(p.y > maxY) maxY = p.y;
+		if(p.x < minX)
+			minX = p.x;
+
+		if(p.y < minY)
+			minY = p.y;
+
+		if(p.x > maxX)
+			maxX = p.x;
+
+		if(p.y > maxY)
+			maxY = p.y;
 	}
 
 	// metric sample step from the polygon extents so long connectors can't skip
@@ -445,7 +558,11 @@ function makeConnectorCheck(poly, turnaround, spacing, tolerance){
 		const n = Math.max(2, Math.ceil(len / step));
 		for (let i = 1; i < n; i++) {
 			const t = i / n;
-			const s = {x: p1.x + (p2.x - p1.x) * t, y: p1.y + (p2.y - p1.y) * t};
+			const s = {
+				x: p1.x + (p2.x - p1.x) * t,
+				y: p1.y + (p2.y - p1.y) * t
+			};
+
 			if(closestOnPolygon(poly, s).dist > band)
 				return true;
 		}
@@ -486,6 +603,7 @@ function pushUnique(list, p){
 }
 
 function generateSurvey(){
+
 	survey_points = [];
 	transect_labels = [];
 
@@ -538,23 +656,37 @@ function generateSurvey(){
 	survey_points = path;
 }
 
-function ensureMarkers(){
-	if(polygon.length < 3 || (start_marker && end_marker))
-		return;
+function update(){
 
-	let link = {translation: {x: 0, y: 0, z: 0}};
-	if(base_link_frame != ""){
-		link = tf.transformPose(base_link_frame, fixed_frame, {x: 0, y: 0, z: 0}, new Quaternion());
+	if(polygon.length >= 3 && (!start_marker || !end_marker)){
+		let link = {
+			translation: {
+				x: 0, 
+				y: 0,
+				z: 0
+			}
+		};
+
+		if(base_link_frame != ""){
+			link = tf.transformPose(base_link_frame, fixed_frame, {x: 0, y: 0, z: 0}, new Quaternion());
+		}
+
+		if(!start_marker){
+			start_marker = {
+				x: link.translation.x - 2,
+				y: link.translation.y,
+				z: link.translation.z
+			};
+		}
+		if(!end_marker){
+			end_marker = {
+				x: link.translation.x + 2,
+				y: link.translation.y, 
+				z: link.translation.z
+			};
+		}
 	}
 
-	if(!start_marker)
-		start_marker = {x: link.translation.x - 2, y: link.translation.y, z: link.translation.z};
-	if(!end_marker)
-		end_marker = {x: link.translation.x + 2, y: link.translation.y, z: link.translation.z};
-}
-
-function update(){
-	ensureMarkers();
 	generateSurvey();
 	drawSurvey();
 	saveSettings();
@@ -562,36 +694,45 @@ function update(){
 
 // Message sending
 
-function getStamp(){
-	const currentTime = new Date();
-	return {
-		secs: Math.floor(currentTime.getTime() / 1000),
-		nsecs: (currentTime.getTime() % 1000) * 1e6
-	}
-}
-
-function getPoseStamped(index, timeStamp, x, y, z, quat){
-	return new ROSLIB.Message({
-		header: {
-			seq: index,
-			stamp: timeStamp,
-			frame_id: fixed_frame
-		},
-		pose: {
-			position: {x: x, y: y, z: z},
-			orientation: quat
-		}
-	});
-}
-
-function getPose(x, y, z, quat){
-	return new ROSLIB.Message({
-		position: {x: x, y: y, z: z},
-		orientation: quat
-	});
-}
-
 function sendMessage(pointlist){
+
+	function getStamp(){
+		const currentTime = new Date();
+		return {
+			secs: Math.floor(currentTime.getTime() / 1000),
+			nsecs: (currentTime.getTime() % 1000) * 1e6
+		}
+	}
+
+	function getPoseStamped(index, timeStamp, x, y, z, quat){
+		return new ROSLIB.Message({
+			header: {
+				seq: index,
+				stamp: timeStamp,
+				frame_id: fixed_frame
+			},
+			pose: {
+				position: {
+					x: x,
+					y: y,
+					z: z
+				},
+				orientation: quat
+			}
+		});
+	}
+
+	function getPose(x, y, z, quat){
+		return new ROSLIB.Message({
+			position: {
+				x: x,
+				y: y,
+				z: z
+			},
+			orientation: quat
+		});
+	}
+
 	let timeStamp = getStamp();
 	let poseList = [];
 	let stamped = typedict[topic] == "nav_msgs/msg/Path";
@@ -948,8 +1089,10 @@ function drag(event){
 	if(mode == "Z" && drag_target){
 		let z = drag_point_z + linearToStepScale(delta.y * 1.25);
 
-		if(z > 9999.99) z = 9999;
-		else if(z < -9999.99) z = -9999;
+		if(z > 9999.99)
+			z = 9999;
+		else if(z < -9999.99)
+			z = -9999;
 
 		if (Math.abs(z) >= 100)
 			z = parseInt(z);
@@ -960,20 +1103,6 @@ function drag(event){
 		generateSurvey();
 		drawSurvey();
 	}
-}
-
-function distancePointToLineSegment(px, py, x1, y1, x2, y2){
-	const dx = x2 - x1;
-	const dy = y2 - y1;
-	const lengthSquared = dx * dx + dy * dy;
-
-	let t = lengthSquared > 0 ? ((px - x1) * dx + (py - y1) * dy) / lengthSquared : 0;
-	t = Math.max(0, Math.min(1, t));
-
-	const closestX = x1 + t * dx;
-	const closestY = y1 + t * dy;
-
-	return Math.hypot(px - closestX, py - closestY);
 }
 
 function endDrag(event){
