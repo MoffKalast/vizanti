@@ -295,19 +295,19 @@ function tracePerimeter(poly, from, to){
 	return verts;
 }
 
-function generateTransects(poly, angleRad, spacing, turnaround){
-
-	function pointInPolygon(poly, p){
-		let inside = false;
-		for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-			const a = poly[i];
-			const b = poly[j];
-			if(((a.y > p.y) != (b.y > p.y)) && (p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x)){
-				inside = !inside;
-			}
+function pointInPolygon(poly, p){
+	let inside = false;
+	for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+		const a = poly[i];
+		const b = poly[j];
+		if(((a.y > p.y) != (b.y > p.y)) && (p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x)){
+			inside = !inside;
 		}
-		return inside;
 	}
+	return inside;
+}
+
+function generateTransects(poly, angleRad, spacing, turnaround){
 
 	function lineIntersections(poly, lineOrigin, lineDir) {
 		// intersections of infinite line (p0 + t*dir) with polygon edges, z lerped along the edge
@@ -526,12 +526,9 @@ function orderSegments(segments, entry, exit, cost){
 	return order;
 }
 
-function makeConnectorCheck(poly, turnaround, spacing, tolerance){
-	// a connector may only be driven directly if every point stays within the
-	// turnaround band of the polygon boundary, inside or outside: transits neither
-	// cross uncharted gaps nor cut across the survey interior. measured against
-	// the true polygon, not the miter offset, which overshoots at sharp concave
-	// vertices
+function sampleStep(poly, spacing, tolerance){
+	// metric sample step from the polygon extents so long connectors can't skip
+	// over narrow features, fine enough for features at the transect spacing scale
 	let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 	for (const p of poly) {
 		if(p.x < minX)
@@ -547,10 +544,17 @@ function makeConnectorCheck(poly, turnaround, spacing, tolerance){
 			maxY = p.y;
 	}
 
-	// metric sample step from the polygon extents so long connectors can't skip
-	// over narrow features, fine enough for features at the transect spacing scale
 	const diag = Math.hypot(maxX - minX, maxY - minY);
-	const step = Math.max(tolerance, Math.min(spacing, diag / 200) * 0.5);
+	return Math.max(tolerance, Math.min(spacing, diag / 200) * 0.5);
+}
+
+function makeConnectorCheck(poly, turnaround, spacing, tolerance){
+	// a connector may only be driven directly if every point stays within the
+	// turnaround band of the polygon boundary, inside or outside: transits neither
+	// cross uncharted gaps nor cut across the survey interior. measured against
+	// the true polygon, not the miter offset, which overshoots at sharp concave
+	// vertices
+	const step = sampleStep(poly, spacing, tolerance);
 	const band = turnaround + tolerance;
 
 	return function(p1, p2){
@@ -570,9 +574,79 @@ function makeConnectorCheck(poly, turnaround, spacing, tolerance){
 	};
 }
 
-function appendTransects(path, segs, outer, needsRoute){
+function makeInteriorCheck(poly, spacing, tolerance){
+	// approach legs are free to travel outside the polygon, they only may not cut
+	// through the survey interior. the depth tolerance keeps a leg that runs along
+	// the boundary from tripping on floating point when it grazes an edge
+	const step = sampleStep(poly, spacing, tolerance);
+
+	return function(p1, p2){
+		const len = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+		const n = Math.max(2, Math.ceil(len / step));
+		for (let i = 1; i < n; i++) {
+			const t = i / n;
+			const s = {
+				x: p1.x + (p2.x - p1.x) * t,
+				y: p1.y + (p2.y - p1.y) * t
+			};
+
+			if(pointInPolygon(poly, s) && closestOnPolygon(poly, s).dist > tolerance)
+				return true;
+		}
+		return false;
+	};
+}
+
+function shortcutChain(chain, blocked){
+	// greedy string pull: from each surviving point hop as far down the chain as a
+	// direct line allows. collapses to a single hop when the whole detour is
+	// unnecessary, and to corner-then-beeline when it isn't, without ever
+	// producing a link the caller's own rule rejects
+	const result = [chain[0]];
+	let i = 0;
+
+	while(i < chain.length - 1){
+		let next = i + 1;
+		for (let j = chain.length - 1; j > i + 1; j--) {
+			if(!blocked(chain[i], chain[j])){
+				next = j;
+				break;
+			}
+		}
+		result.push(chain[next]);
+		i = next;
+	}
+
+	return result;
+}
+
+function pushApproach(path, cur, target, outer, blocked){
+	const chain = [cur, closestOnPolygon(outer, cur)];
+	const to = closestOnPolygon(outer, target);
+
+	for (const v of tracePerimeter(outer, chain[1], to))
+		chain.push(v);
+
+	chain.push(to);
+	chain.push(target);
+
+	for (const p of shortcutChain(chain, blocked).slice(1))
+		pushUnique(path, {x: p.x, y: p.y, z: p.z, transit: true});
+}
+
+function appendTransects(path, segs, outer, needsRoute, approach){
 	for (const seg of segs) {
 		const cur = path[path.length-1];
+
+		// path holds only the start marker on the first pass, so this is the
+		// approach leg. the crosshatch handoff keeps the band rule
+		if(cur && approach != null && path.length == 1){
+			pushApproach(path, cur, seg.a, outer, approach);
+			pushUnique(path, seg.b);
+			transect_labels.push({x: (seg.a.x + seg.b.x) * 0.5, y: (seg.a.y + seg.b.y) * 0.5});
+			continue;
+		}
+
 		if(cur && needsRoute(cur, seg.a)){
 			if(directTransitCheckbox.checked){
 				pushUnique(path, {x: seg.a.x, y: seg.a.y, z: seg.a.z, transit: true});
@@ -620,6 +694,12 @@ function generateSurvey(){
 	const needsRoute = makeConnectorCheck(poly, turnaround, spacing, tolerance);
 	const cost = makeCostCache(outer, needsRoute);
 
+	// a marker sitting inside the polygon cannot avoid the interior, so it keeps the
+	// band rule and the boundary detour it implies
+	const crossesInterior = makeInteriorCheck(poly, spacing, tolerance);
+	const startApproach = directTransitCheckbox.checked || pointInPolygon(poly, start_marker) ? null : crossesInterior;
+	const endApproach = directTransitCheckbox.checked || pointInPolygon(poly, end_marker) ? null : crossesInterior;
+
 	const mainSegments = generateTransects(poly, angle, spacing, turnaround);
 	if(mainSegments.length == 0)
 		return;
@@ -631,27 +711,31 @@ function generateSurvey(){
 	// since its exit feeds the cross pass, whose own entry is only known afterwards
 	if(crosshatchCheckbox.checked){
 		const pass = orderSegments(mainSegments, start_marker, null, cost);
-		appendTransects(path, pass, outer, needsRoute);
+		appendTransects(path, pass, outer, needsRoute, startApproach);
 
 		const crossSegments = generateTransects(poly, angle + Math.PI/2, spacing, turnaround);
 		const cross = orderSegments(crossSegments, path[path.length-1], end_marker, cost);
-		appendTransects(path, cross, outer, needsRoute);
+		appendTransects(path, cross, outer, needsRoute, null);
 	}else{
 		const pass = orderSegments(mainSegments, start_marker, end_marker, cost);
-		appendTransects(path, pass, outer, needsRoute);
+		appendTransects(path, pass, outer, needsRoute, startApproach);
 	}
 
 	// connect to the end marker, directly when allowed, along the boundary otherwise
 	const last = path[path.length-1];
-	if(!directTransitCheckbox.checked && needsRoute(last, end_marker)){
-		const exit = closestOnPolygon(outer, last);
-		const depart = closestOnPolygon(outer, end_marker);
-		pushUnique(path, exit);
-		for (const v of tracePerimeter(outer, exit, depart))
-			pushUnique(path, v);
-		pushUnique(path, depart);
+	if(endApproach != null){
+		pushApproach(path, last, end_marker, outer, endApproach);
+	}else{
+		if(!directTransitCheckbox.checked && needsRoute(last, end_marker)){
+			const exit = closestOnPolygon(outer, last);
+			const depart = closestOnPolygon(outer, end_marker);
+			pushUnique(path, exit);
+			for (const v of tracePerimeter(outer, exit, depart))
+				pushUnique(path, v);
+			pushUnique(path, depart);
+		}
+		pushUnique(path, end_marker);
 	}
-	pushUnique(path, end_marker);
 
 	survey_points = path;
 }

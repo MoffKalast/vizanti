@@ -79,6 +79,9 @@ async function drawLines(relative, absolute){
 	Object.keys(absolute).forEach(key => {
 
 		let transform = absolute[key];
+		if (!transform || !transform.translation) {
+			return;
+		}
 
 		let point = view.fixedToScreen({
 			x: transform.translation.x,
@@ -119,6 +122,9 @@ async function drawText(absolute){
 	Object.keys(absolute).forEach(key => {
 
 		let transform = absolute[key];
+		if (!transform || !transform.translation) {
+			return;
+		}
 
 		let point = view.fixedToScreen({
 			x: transform.translation.x,
@@ -181,6 +187,9 @@ function drawAxes(absolute) {
 	
 	for (let i = 0; i < frame_keys.length; i++) {
 		const transform = absolute[frame_keys[i]];
+		if (!transform || !transform.translation || !transform.rotation) {
+			continue;
+		}
 		vectors[i] = getBasis(transform.rotation, transform.translation, unit);
 	}
 
