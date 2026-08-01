@@ -495,7 +495,7 @@ function getPose(x, y, z, quat){
 function sendMessage(pointlist){
 	let timeStamp = getStamp();
 	let poseList = [];
-	let stamped = typedict[topic] == "nav_msgs/Path";
+	let stamped = typedict[topic] == "nav_msgs/msg/Path";
 
 	if(pointlist.length > 0)
 	{
@@ -532,7 +532,7 @@ function sendMessage(pointlist){
 	const publisher = new ROSLIB.Topic({
 		ros: rosbridge.ros,
 		name: topic,
-		messageType: stamped ? 'nav_msgs/Path' : 'geometry_msgs/PoseArray',
+		messageType: stamped ? 'nav_msgs/msg/Path' : 'geometry_msgs/msg/PoseArray',
 		latched: true
 	});
 
