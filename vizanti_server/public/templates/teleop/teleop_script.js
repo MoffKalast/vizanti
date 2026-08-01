@@ -675,9 +675,9 @@ function joystickStop(){
 	horiz_vel = 0;
 	vert_target = 0;
 	horiz_target = 0;
-	publishTwist(0, 0, 0, 0, 0, 0);
 
 	if(joy_interval !== undefined){
+		publishTwist(0, 0, 0, 0, 0, 0);
 		clearInterval(joy_interval);
 		joy_interval = undefined;
 	}
@@ -987,8 +987,9 @@ function keyboardStop(){
 	horiz_target = 0;
 	horiz_vel = 0;
 	vert_vel = 0;
-	publishTwist(0, 0, 0, 0, 0, 0);
+
 	if(keyboard_interval !== undefined){
+		publishTwist(0, 0, 0, 0, 0, 0);
 		clearInterval(keyboard_interval);
 		keyboard_interval = undefined;
 	}
