@@ -52,10 +52,10 @@ class Rosbridge {
 
 		document.addEventListener('visibilitychange', () => {
 			if (document.hidden) {
-			this.suspended = true;
-			this.status = "Suspended (tab inactive).";
-			setTimeout(() => this.ros.close(), 5);
-		} else {
+				this.suspended = true;
+				this.status = "Suspended (tab inactive).";
+				setTimeout(() => this.ros.close(), 5);
+			} else {
 				if (this.suspended) {
 					this.suspended = false;
 					this.status = "Reconnecting...";
