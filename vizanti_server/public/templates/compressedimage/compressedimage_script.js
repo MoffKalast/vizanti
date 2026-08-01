@@ -108,12 +108,13 @@ function resetLiveData(){
 	text_frame.innerText = "Frame: ?";
 }
 
-function updateLiveData(msg){
+function updateLiveData(msg, base64Data){
 	const info = parseFormat(msg.format);
-	const bytes = base64ByteLength(msg.data);
-
+	const bytes = base64ByteLength(base64Data);
+	
 	arrival_times.push(performance.now());
 	arrival_bytes.push(bytes);
+
 	if(arrival_times.length > 20){
 		arrival_times.shift();
 		arrival_bytes.shift();
@@ -128,7 +129,6 @@ function updateLiveData(msg){
 		const seconds = (arrival_times[arrival_times.length - 1] - arrival_times[0]) / 1000;
 		const rate = (arrival_times.length - 1) / seconds;
 		const mean_bytes = arrival_bytes.reduce((a, b) => a + b, 0) / arrival_bytes.length;
-
 		text_rate.innerText = "Rate: "+rate.toFixed(1)+" Hz";
 		text_bandwidth.innerText = "Bandwidth: "+formatBytes(mean_bytes * rate)+"/s";
 	}
@@ -258,7 +258,7 @@ function connect(){
 
 		const src = `data:${mime};base64,${base64Data}`;
 
-		updateLiveData(msg);
+		updateLiveData(msg, base64Data);
 
 		getImage(src)
 			.then((img) => {
