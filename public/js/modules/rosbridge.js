@@ -14,9 +14,6 @@ class Rosbridge {
 		this.suspend_timer = undefined;
 		this.status = "Connecting...";
 
-		// created exactly once, roslib Topics auto-resubscribe and re-advertise on
-		// reconnect (reconnect_on_close defaults to true), but only if this instance
-		// is reused, replacing it orphans every Topic object holding a reference
 		this.ros = new ROSLIB.Ros({
 			url: 'ws://' + this.url + ':' + this.port
 		});
@@ -53,16 +50,12 @@ class Rosbridge {
 			}, 1000);
 		});
 
-		// hidden tabs can't keep up with message processing, so the browser queues
-		// incoming websocket data and dumps the entire backlog on refocus, freezing
-		// the tab. Closing the socket while hidden drops everything at the source,
-		// roslib resubscribes all topics on reconnect so state simply repopulates.
 		document.addEventListener('visibilitychange', () => {
 			if (document.hidden) {
-				this.suspended = true;
-				this.status = "Suspended (tab inactive).";
-				this.ros.close();
-			} else {
+			this.suspended = true;
+			this.status = "Suspended (tab inactive).";
+			setTimeout(() => this.ros.close(), 5);
+		} else {
 				if (this.suspended) {
 					this.suspended = false;
 					this.status = "Reconnecting...";
