@@ -782,16 +782,18 @@ function sendMessage(pointlist){
 
 	function getStamp(){
 		const currentTime = new Date();
+		const currentTimeSecs = Math.floor(currentTime.getTime() / 1000);
+		const currentTimeNsecs = (currentTime.getTime() % 1000) * 1e6;
+
 		return {
-			secs: Math.floor(currentTime.getTime() / 1000),
-			nsecs: (currentTime.getTime() % 1000) * 1e6
+			sec: currentTimeSecs,
+			nanosec: currentTimeNsecs
 		}
 	}
 
 	function getPoseStamped(index, timeStamp, x, y, z, quat){
 		return new ROSLIB.Message({
 			header: {
-				seq: index,
 				stamp: timeStamp,
 				frame_id: fixed_frame
 			},
@@ -816,6 +818,7 @@ function sendMessage(pointlist){
 			orientation: quat
 		});
 	}
+
 
 	let timeStamp = getStamp();
 	let poseList = [];
