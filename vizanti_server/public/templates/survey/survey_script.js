@@ -1396,8 +1396,8 @@ function find_base_frame(){
 }
 
 async function loadTopics(){
-	const result_path = await rosbridge.get_topics("nav_msgs/Path");
-	const result_array = await rosbridge.get_topics("geometry_msgs/PoseArray");
+	const result_path = await rosbridge.get_topics("nav_msgs/msg/Path");
+	const result_array = await rosbridge.get_topics("geometry_msgs/msg/PoseArray");
 
 	let topiclist = "";
 	result_path.forEach(element => {
