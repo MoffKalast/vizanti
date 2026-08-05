@@ -352,7 +352,6 @@ function updateGUI(){
 			addSpan('(origin)', 'darkgray');
 		}
 
-
 		const div = document.createElement('div');
 		div.classList.add('tf_label');
 		div.appendChild(checkbox);
@@ -396,16 +395,17 @@ document.getElementById('{uniqueID}_enable_all').addEventListener('click',  asyn
 	updateGUI();
 });
 
-document.getElementById('{uniqueID}_standard_only').addEventListener('click',  async () => {
-	const standard_frames = ["world", "earth", "map", "odom", "base_link", "base_footprint", "laser", "base_stabilized"];
+document.getElementById('{uniqueID}_standard_only').addEventListener('click', async () => {
+	const standard_frames = ["world", "earth", "map", "odom", "base_link", "base_footprint", "base_stabilized"];
 	const hasStandardFrame = (str) => standard_frames.some(frame => str.includes(frame));
 
-	for (const [key, value] of Object.entries(frame_visibility)) {
-		frame_visibility[key] = hasStandardFrame(key);
+	for (const key of Object.keys(frame_visibility)) {
+		const isOrigin = tf.transforms[key] === undefined;
+		frame_visibility[key] = isOrigin || hasStandardFrame(key);
 	}
+
 	saveSettings();
 	updateGUI();
-
 });
 
 document.getElementById('{uniqueID}_disable_all').addEventListener('click',  async () => {
