@@ -183,14 +183,14 @@ function drawAxes(absolute) {
 	const lineWidth = 2 * parseFloat(scaleSlider.value);
 	
 	const frame_keys = Object.keys(absolute);
-	const vectors = new Array(frame_keys.length);
+	const vectors = [];
 	
 	for (let i = 0; i < frame_keys.length; i++) {
 		const transform = absolute[frame_keys[i]];
 		if (!transform || !transform.translation || !transform.rotation) {
 			continue;
 		}
-		vectors[i] = getBasis(transform.rotation, transform.translation, unit);
+		vectors.push(getBasis(transform.rotation, transform.translation, unit));
 	}
 
 	ctx.lineWidth = lineWidth;
