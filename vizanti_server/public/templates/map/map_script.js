@@ -271,7 +271,6 @@ function connect(){
 
 	worker_thread.onmessage = (e) => {
 		setTimeout(()=>{
-
 			const img = e.data.image
 			temp_canvas.width = img.width
 			temp_canvas.height = img.height
@@ -279,7 +278,7 @@ function connect(){
 			map_data = new_map_data;
 			drawMap();
 			status.setOK();
-		},12);
+		},1);
 	};
 	
 	listener = map_topic.subscribe((msg) => {
@@ -326,7 +325,6 @@ function queueWorkerMsg(msg){
 	);
 
 	new_map_data = msg;
-	map_data = undefined;
 
 	worker_thread.postMessage({
 		map_msg: msg,

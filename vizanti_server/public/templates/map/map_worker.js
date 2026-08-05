@@ -1,4 +1,5 @@
-let canvas = undefined
+let canvas = undefined;
+let map_img = undefined;
 
 const COSTMAP_R = new Uint8Array(256);
 const COSTMAP_G = new Uint8Array(256);
@@ -66,10 +67,10 @@ for (let i = 0; i < 256; i++) {
 }
 
 for (let i = 0; i < 256; i++) {
-    FALSECOLOR_R[i] = stretch(i, 0, 128);
+	FALSECOLOR_R[i] = stretch(i, 0, 128);
 	FALSECOLOR_G[i] = stretch(i, 64, 192);
 	FALSECOLOR_B[i] = stretch(i, 128, 255);
-	FALSECOLOR_A[i] = i === 0 ? 0 : 255;
+	FALSECOLOR_A[i] = i >= 10 ? 255 : Math.round(i * 255 / 10);
 }
 
 self.addEventListener('message', function(event) {
@@ -85,14 +86,15 @@ self.addEventListener('message', function(event) {
 	const width = msg.info.width;
 	const height = msg.info.height;
 
-	canvas.width = width;
-	canvas.height = height;
-
 	const mapctx = canvas.getContext('2d', { colorSpace: 'srgb' });
 
 	const data = msg.data;
 
-	let map_img = mapctx.createImageData(width, height);
+	if(!map_img || map_img.width != width || map_img.height != height){
+		canvas.width = width;
+		canvas.height = height;
+		map_img = mapctx.createImageData(width, height);
+	}
 
 	if(colour_scheme == "costmap")
 	{
