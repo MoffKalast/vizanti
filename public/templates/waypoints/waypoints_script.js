@@ -267,8 +267,6 @@ function sendMessage(pointlist){
 		}
 	}
 
-	//unadvertising drops the latch server-side, so keep the newest publisher
-	//alive for late subscribers and only clean up the previous one
 	if(path_publisher !== undefined){
 		path_publisher.unadvertise();
 	}

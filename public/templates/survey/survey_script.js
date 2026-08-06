@@ -30,6 +30,20 @@ let end_marker = null;
 let survey_points = [];
 let transect_labels = [];
 
+let last_vertex_count = 0;
+let survey_error = null;
+
+let survey_seq = 0;
+let survey_pending = null;
+let survey_busy = false;
+
+const INITIAL_MAX_LINES = 30;
+const INITIAL_MIN_LINES = 5;
+const INITIAL_TARGET_LINES = 10;
+const MAX_LINES = 1000;
+
+const worker_thread = new Worker(`${base_url}/templates/survey/survey_worker.js`);
+
 const icon_bar = document.getElementById("icon_bar");
 const icon = document.getElementById("{uniqueID}_icon");
 const dropdown = document.getElementById("{uniqueID}_dropdown");
@@ -91,6 +105,8 @@ if(settings.hasOwnProperty("{uniqueID}")){
 			polygon[i].z = 0;
 		}
 	}
+
+	last_vertex_count = polygon.length;
 }else{
 	saveSettings();
 }
@@ -119,7 +135,7 @@ function saveSettings(){
 	settings.save();
 }
 
-// ---- Survey geometry ----
+// Survey geometry
 
 function getCCWPolygon(poly){
 	let area = 0;
@@ -207,151 +223,18 @@ function offsetPolygon(poly, dist){
 	return result;
 }
 
-function closestOnPolygon(poly, point){
-	let closest = null;
+function roundSpacing(value){
+	if(value >= 100)
+		return Math.round(value);
 
-	for(let i = 0; i < poly.length; i++){
-		const start = poly[i];
-		const end = poly[(i + 1) % poly.length];
+	if(value >= 10)
+		return Math.round(value * 10) / 10;
 
-		const edgeX = end.x - start.x;
-		const edgeY = end.y - start.y;
-		const edgeLenSq = edgeX * edgeX + edgeY * edgeY;
-
-		const relX = point.x - start.x;
-		const relY = point.y - start.y;
-		const dot = relX * edgeX + relY * edgeY;
-
-		let t = edgeLenSq > 0 ? dot / edgeLenSq : 0;
-		t = Math.max(0, Math.min(1, t));
-
-		const closestX = start.x + t * edgeX;
-		const closestY = start.y + t * edgeY;
-		const dist = Math.hypot(point.x - closestX, point.y - closestY);
-
-		if(closest == null || dist < closest.dist){
-			closest = {
-				edge: i,
-				t,
-				x: closestX,
-				y: closestY,
-				z: start.z + t * (end.z - start.z),
-				dist
-			};
-		}
-	}
-
-	return closest;
+	return Math.round(value * 100) / 100;
 }
 
-function tracePerimeter(poly, from, to){
-	// intermediate vertices between two boundary locations, along the shorter perimeter direction
-	const n = poly.length;
-	const edgeLen = [];
-	let perimeter = 0;
-	for (let i = 0; i < n; i++) {
-		const a = poly[i];
-		const b = poly[(i+1) % n];
-		edgeLen.push(Math.hypot(b.x - a.x, b.y - a.y));
-		perimeter += edgeLen[i];
-	}
-	if(perimeter < 1e-9)
-		return [];
-
-	function arclength(loc){
-		let s = 0;
-		for (let i = 0; i < loc.edge; i++)
-			s += edgeLen[i];
-		return s + edgeLen[loc.edge] * loc.t;
-	}
-
-	const sFrom = arclength(from);
-	const sTo = arclength(to);
-	const forward = (sTo - sFrom + perimeter) % perimeter;
-	const backward = perimeter - forward;
-
-	const verts = [];
-	if(forward <= backward){
-		let i = (from.edge + 1) % n;
-		while(true){
-			const sv = arclength({edge: i, t: 0});
-			if(((sv - sFrom + perimeter) % perimeter) >= forward)
-				break;
-			verts.push({x: poly[i].x, y: poly[i].y, z: poly[i].z});
-			i = (i + 1) % n;
-			if(verts.length > n) break;
-		}
-	}else{
-		let i = from.edge;
-		while(true){
-			const sv = arclength({edge: i, t: 0});
-			if(((sFrom - sv + perimeter) % perimeter) >= backward)
-				break;
-			verts.push({x: poly[i].x, y: poly[i].y, z: poly[i].z});
-			i = (i - 1 + n) % n;
-			if(verts.length > n) break;
-		}
-	}
-	return verts;
-}
-
-function pointInPolygon(poly, p){
-	let inside = false;
-	for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-		const a = poly[i];
-		const b = poly[j];
-		if(((a.y > p.y) != (b.y > p.y)) && (p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x)){
-			inside = !inside;
-		}
-	}
-	return inside;
-}
-
-function generateTransects(poly, angleRad, spacing, turnaround){
-
-	function lineIntersections(poly, lineOrigin, lineDir) {
-		// intersections of infinite line (p0 + t*dir) with polygon edges, z lerped along the edge
-		const hits = [];
-
-		for (let i = 0; i < poly.length; i++) {
-			const edgeStart = poly[i];
-			const edgeEnd = poly[(i + 1) % poly.length];
-
-			const edgeDx = edgeEnd.x - edgeStart.x;
-			const edgeDy = edgeEnd.y - edgeStart.y;
-
-			const determinant = lineDir.x * edgeDy - lineDir.y * edgeDx;
-
-			if (Math.abs(determinant) < 1e-12)
-				continue;
-
-			const edgeT = (lineDir.y * (edgeStart.x - lineOrigin.x) - lineDir.x * (edgeStart.y - lineOrigin.y)) / determinant;
-
-			if (edgeT < 0 || edgeT >= 1)
-				continue;
-
-			const useX = Math.abs(lineDir.x) > Math.abs(lineDir.y);
-
-			const intersectionCoord = useX ? edgeStart.x + edgeT * edgeDx : edgeStart.y + edgeT * edgeDy;
-			const lineOriginCoord = useX ? lineOrigin.x : lineOrigin.y;
-			const lineDirCoord = useX ? lineDir.x : lineDir.y;
-
-			const lineT = (intersectionCoord - lineOriginCoord) / lineDirCoord;
-
-			hits.push({
-				t: lineT,
-				x: edgeStart.x + edgeT * edgeDx,
-				y: edgeStart.y + edgeT * edgeDy,
-				z: edgeStart.z + edgeT * (edgeEnd.z - edgeStart.z)
-			});
-		}
-
-		hits.sort((a, b) => a.t - b.t);
-		return hits;
-	}
-
-	const dir = {x: Math.cos(angleRad), y: Math.sin(angleRad)};
-	const nrm = {x: -dir.y, y: dir.x};
+function transectExtent(poly, angleRad){
+	const nrm = {x: -Math.sin(angleRad), y: Math.cos(angleRad)};
 
 	let min = Infinity, max = -Infinity;
 	for (const p of poly) {
@@ -360,387 +243,105 @@ function generateTransects(poly, angleRad, spacing, turnaround){
 		if(c > max) max = c;
 	}
 
-	const segments = [];
-	for (let c = min + spacing * 0.5; c < max; c += spacing) {
-		const p0 = {x: nrm.x * c, y: nrm.y * c};
-		let hits = lineIntersections(poly, p0, dir);
-
-		// drop duplicate hits from lines passing exactly through a vertex shared by two edges
-		hits = hits.filter((h, i) => i == 0 || h.t - hits[i-1].t > 1e-9);
-
-		// keep only spans between consecutive hits whose midpoint lies inside the polygon,
-		// so concave shapes get one transect per interior span instead of garbage pairing
-		for (let i = 0; i + 1 < hits.length; i++) {
-			const a = hits[i];
-			const b = hits[i+1];
-			if(!pointInPolygon(poly, {x: (a.x + b.x) * 0.5, y: (a.y + b.y) * 0.5}))
-				continue;
-			segments.push({
-				a: {x: a.x - dir.x * turnaround, y: a.y - dir.y * turnaround, z: a.z},
-				b: {x: b.x + dir.x * turnaround, y: b.y + dir.y * turnaround, z: b.z}
-			});
-		}
-	}
-	return segments;
+	const extent = max - min;
+	return extent > 0 ? extent : 0;
 }
 
-function makeCostCache(outer, needsRoute){
+function countTransects(poly, angleRad, spacing){
+	const extent = transectExtent(poly, angleRad);
+	if(extent == 0 || !(spacing > 0))
+		return 0;
 
-	function transitCost(p, q){
-		const euclid = Math.hypot(q.x - p.x, q.y - p.y);
-		if(directTransitCheckbox.checked || !needsRoute(p, q))
-			return euclid;
-
-		const from = closestOnPolygon(outer, p);
-		const to = closestOnPolygon(outer, q);
-
-		const n = outer.length;
-		const edgeLen = [];
-		let perimeter = 0;
-		for (let i = 0; i < n; i++) {
-			const a = outer[i];
-			const b = outer[(i+1) % n];
-			edgeLen.push(Math.hypot(b.x - a.x, b.y - a.y));
-			perimeter += edgeLen[i];
-		}
-
-		if(perimeter < 1e-9)
-			return from.dist + to.dist;
-
-		let sFrom = 0, sTo = 0, s = 0;
-		for (let i = 0; i < n; i++) {
-			if(i == from.edge)
-				sFrom = s + edgeLen[i] * from.t;
-
-			if(i == to.edge)
-				sTo = s + edgeLen[i] * to.t;
-
-			s += edgeLen[i];
-		}
-
-		const forward = (sTo - sFrom + perimeter) % perimeter;
-		return from.dist + Math.min(forward, perimeter - forward) + to.dist;
-	}
-
-	const ids = new WeakMap();
-	let nextId = 0;
-	const cache = new Map();
-
-	return function(p, q){
-		if(!ids.has(p))
-			ids.set(p, nextId++);
-
-		if(!ids.has(q))
-			ids.set(q, nextId++);
-
-		const i = ids.get(p), j = ids.get(q);
-		const key = i < j ? i * 1000000 + j : j * 1000000 + i;
-
-		let c = cache.get(key);
-		if(c == undefined){
-			c = transitCost(p, q);
-			cache.set(key, c);
-		}
-		return c;
-	};
+	const lines = Math.ceil((extent - spacing * 0.5) / spacing);
+	return lines > 0 ? lines : 0;
 }
 
-function orderSegments(segments, entry, exit, cost){
-
-	function twoOptImprove(order, entry, exit, cost){
-		// open-path 2-opt with fixed entry and optional exit anchor, run to convergence.
-		// reversing order[i..j] flips each segment inside; transit cost is symmetric so
-		// internal connections keep their cost and only the two boundary connections change
-		const n = order.length;
-
-		function connect(p, q){
-			return q == null ? 0 : cost(p, q);
-		}
-
-		let improved = true;
-		while(improved){
-			improved = false;
-			for (let i = 0; i < n; i++) {
-				for (let j = i; j < n; j++) {
-					const prevEnd = i == 0 ? entry : order[i-1].b;
-					const nextStart = j == n-1 ? exit : order[j+1].a;
-					const before = cost(prevEnd, order[i].a) + connect(order[j].b, nextStart);
-					const after = cost(prevEnd, order[j].b) + connect(order[i].a, nextStart);
-					if(after < before - 1e-9){
-						const block = order.slice(i, j+1).reverse().map(s => ({a: s.b, b: s.a}));
-						order.splice(i, j - i + 1, ...block);
-						improved = true;
-					}
-				}
-			}
-		}
-	}
-
-	if(segments.length == 0)
-		return [];
-
-	// greedy nearest-neighbor construction over all segments by true transit cost
-	const remaining = segments.slice();
-	const order = [];
-
-	let cur = entry;
-	while(remaining.length > 0){
-		let bestIdx = 0
-		let bestFlip = false
-		let bestCost = Infinity;
-
-		for (let i = 0; i < remaining.length; i++) {
-
-			const cA = cost(cur, remaining[i].a);
-			const cB = cost(cur, remaining[i].b);
-
-			if(cA < bestCost){
-				bestCost = cA;
-				bestIdx = i;
-				bestFlip = false;
-			}
-
-			if(cB < bestCost){
-				bestCost = cB;
-				bestIdx = i;
-				bestFlip = true;
-			}
-		}
-
-		const seg = remaining.splice(bestIdx, 1)[0];
-		if (bestFlip){
-			order.push({
-				a: seg.b,
-				b: seg.a
-			});
-		}else{
-			order.push({
-				a: seg.a,
-				b: seg.b
-			});
-		}
-		cur = order[order.length-1].b;
-	}
-
-	twoOptImprove(order, entry, exit, cost);
-	return order;
+function countAllTransects(poly, angleRad, spacing){
+	if(!crosshatchCheckbox.checked)
+		return countTransects(poly, angleRad, spacing);
+	return countTransects(poly, angleRad, spacing) + countTransects(poly, angleRad + Math.PI/2, spacing);
 }
 
-function sampleStep(poly, spacing, tolerance){
-	// metric sample step from the polygon extents so long connectors can't skip
-	// over narrow features, fine enough for features at the transect spacing scale
-	let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-	for (const p of poly) {
-		if(p.x < minX)
-			minX = p.x;
 
-		if(p.y < minY)
-			minY = p.y;
+function requestSurvey(){
 
-		if(p.x > maxX)
-			maxX = p.x;
-
-		if(p.y > maxY)
-			maxY = p.y;
-	}
-
-	const diag = Math.hypot(maxX - minX, maxY - minY);
-	return Math.max(tolerance, Math.min(spacing, diag / 200) * 0.5);
-}
-
-function makeConnectorCheck(poly, turnaround, spacing, tolerance){
-	// a connector may only be driven directly if every point stays within the
-	// turnaround band of the polygon boundary, inside or outside: transits neither
-	// cross uncharted gaps nor cut across the survey interior. measured against
-	// the true polygon, not the miter offset, which overshoots at sharp concave
-	// vertices
-	const step = sampleStep(poly, spacing, tolerance);
-	const band = turnaround + tolerance;
-
-	return function(p1, p2){
-		const len = Math.hypot(p2.x - p1.x, p2.y - p1.y);
-		const n = Math.max(2, Math.ceil(len / step));
-		for (let i = 1; i < n; i++) {
-			const t = i / n;
-			const s = {
-				x: p1.x + (p2.x - p1.x) * t,
-				y: p1.y + (p2.y - p1.y) * t
-			};
-
-			if(closestOnPolygon(poly, s).dist > band)
-				return true;
-		}
-		return false;
-	};
-}
-
-function makeInteriorCheck(poly, spacing, tolerance){
-	// approach legs are free to travel outside the polygon, they only may not cut
-	// through the survey interior. the depth tolerance keeps a leg that runs along
-	// the boundary from tripping on floating point when it grazes an edge
-	const step = sampleStep(poly, spacing, tolerance);
-
-	return function(p1, p2){
-		const len = Math.hypot(p2.x - p1.x, p2.y - p1.y);
-		const n = Math.max(2, Math.ceil(len / step));
-		for (let i = 1; i < n; i++) {
-			const t = i / n;
-			const s = {
-				x: p1.x + (p2.x - p1.x) * t,
-				y: p1.y + (p2.y - p1.y) * t
-			};
-
-			if(pointInPolygon(poly, s) && closestOnPolygon(poly, s).dist > tolerance)
-				return true;
-		}
-		return false;
-	};
-}
-
-function shortcutChain(chain, blocked){
-	// greedy string pull: from each surviving point hop as far down the chain as a
-	// direct line allows. collapses to a single hop when the whole detour is
-	// unnecessary, and to corner-then-beeline when it isn't, without ever
-	// producing a link the caller's own rule rejects
-	const result = [chain[0]];
-	let i = 0;
-
-	while(i < chain.length - 1){
-		let next = i + 1;
-		for (let j = chain.length - 1; j > i + 1; j--) {
-			if(!blocked(chain[i], chain[j])){
-				next = j;
-				break;
-			}
-		}
-		result.push(chain[next]);
-		i = next;
-	}
-
-	return result;
-}
-
-function pushApproach(path, cur, target, outer, blocked){
-	const chain = [cur, closestOnPolygon(outer, cur)];
-	const to = closestOnPolygon(outer, target);
-
-	for (const v of tracePerimeter(outer, chain[1], to))
-		chain.push(v);
-
-	chain.push(to);
-	chain.push(target);
-
-	for (const p of shortcutChain(chain, blocked).slice(1))
-		pushUnique(path, {x: p.x, y: p.y, z: p.z, transit: true});
-}
-
-function appendTransects(path, segs, outer, needsRoute, approach){
-	for (const seg of segs) {
-		const cur = path[path.length-1];
-
-		// path holds only the start marker on the first pass, so this is the
-		// approach leg. the crosshatch handoff keeps the band rule
-		if(cur && approach != null && path.length == 1){
-			pushApproach(path, cur, seg.a, outer, approach);
-			pushUnique(path, seg.b);
-			transect_labels.push({x: (seg.a.x + seg.b.x) * 0.5, y: (seg.a.y + seg.b.y) * 0.5});
-			continue;
-		}
-
-		if(cur && needsRoute(cur, seg.a)){
-			if(directTransitCheckbox.checked){
-				pushUnique(path, {x: seg.a.x, y: seg.a.y, z: seg.a.z, transit: true});
-			}else{
-				// route along the turnaround boundary instead of crossing uncharted
-				// area or cutting through the survey interior
-				const from = closestOnPolygon(outer, cur);
-				const to = closestOnPolygon(outer, seg.a);
-				pushUnique(path, from);
-				for (const v of tracePerimeter(outer, from, to))
-					pushUnique(path, v);
-				pushUnique(path, to);
-				pushUnique(path, seg.a);
-			}
-		}else{
-			pushUnique(path, seg.a);
-		}
-		pushUnique(path, seg.b);
-		transect_labels.push({x: (seg.a.x + seg.b.x) * 0.5, y: (seg.a.y + seg.b.y) * 0.5});
-	}
-}
-
-function pushUnique(list, p){
-	const last = list[list.length-1];
-	if(last && Math.hypot(last.x - p.x, last.y - p.y) < 1e-6)
+	if(polygon.length < 3 || !start_marker || !end_marker){
+		survey_points = [];
+		transect_labels = [];
+		survey_error = null;
+		survey_pending = null;
 		return;
-	list.push({x: p.x, y: p.y, z: p.z, transit: p.transit === true});
+	}
+
+	survey_pending = {
+		polygon: polygon,
+		start_marker: start_marker,
+		end_marker: end_marker,
+		spacing: Math.max(parseFloat(spacingBox.value) || 1.0, 0.05),
+		angle: (parseInt(angleBox.value) || 0) * Math.PI / 180.0,
+		turnaround: Math.max(parseFloat(turnaroundBox.value) || 0, 0),
+		crosshatch: crosshatchCheckbox.checked,
+		direct_transit: directTransitCheckbox.checked
+	};
+
+	dispatchSurvey();
 }
 
-function generateSurvey(){
+function dispatchSurvey(){
 
-	survey_points = [];
-	transect_labels = [];
-
-	if(polygon.length < 3 || !start_marker || !end_marker)
+	if(survey_busy || !survey_pending)
 		return;
 
-	const spacing = Math.max(parseFloat(spacingBox.value) || 1.0, 0.05);
-	const angle = (parseInt(angleBox.value) || 0) * Math.PI / 180.0;
-	const turnaround = Math.max(parseFloat(turnaroundBox.value) || 0, 0);
+	const job = survey_pending;
+	survey_pending = null;
+	survey_busy = true;
+	job.seq = ++survey_seq;
 
+	worker_thread.postMessage(job);
+}
+
+worker_thread.onmessage = (e) => {
+
+	survey_busy = false;
+
+	if(e.data.seq == survey_seq){
+		survey_points = e.data.survey_points;
+		transect_labels = e.data.transect_labels;
+		survey_error = e.data.error;
+	}
+
+	dispatchSurvey();
+	drawSurvey();
+};
+
+function autosizeSpacing(){
 	const poly = getCCWPolygon(polygon);
-	const outer = offsetPolygon(poly, turnaround);
-	const tolerance = Math.max(0.01, turnaround * 0.05);
-	const needsRoute = makeConnectorCheck(poly, turnaround, spacing, tolerance);
-	const cost = makeCostCache(outer, needsRoute);
+	const angle = (parseInt(angleBox.value) || 0) * Math.PI / 180.0;
+	const spacing = Math.max(parseFloat(spacingBox.value) || 1.0, 0.05);
 
-	// a marker sitting inside the polygon cannot avoid the interior, so it keeps the
-	// band rule and the boundary detour it implies
-	const crossesInterior = makeInteriorCheck(poly, spacing, tolerance);
-	const startApproach = directTransitCheckbox.checked || pointInPolygon(poly, start_marker) ? null : crossesInterior;
-	const endApproach = directTransitCheckbox.checked || pointInPolygon(poly, end_marker) ? null : crossesInterior;
-
-	const mainSegments = generateTransects(poly, angle, spacing, turnaround);
-	if(mainSegments.length == 0)
+	const lines = countAllTransects(poly, angle, spacing);
+	if(lines >= INITIAL_MIN_LINES && lines <= INITIAL_MAX_LINES)
 		return;
 
-	const path = [];
-	pushUnique(path, start_marker);
+	const extent = transectExtent(poly, angle);
+	if(extent == 0)
+		return;
 
-	// the end marker anchors the final pass; with crosshatch the main pass ends free
-	// since its exit feeds the cross pass, whose own entry is only known afterwards
-	if(crosshatchCheckbox.checked){
-		const pass = orderSegments(mainSegments, start_marker, null, cost);
-		appendTransects(path, pass, outer, needsRoute, startApproach);
+	const newspacing = Math.max(0.05, roundSpacing(extent / INITIAL_TARGET_LINES));
+	if(newspacing == spacing)
+		return;
 
-		const crossSegments = generateTransects(poly, angle + Math.PI/2, spacing, turnaround);
-		const cross = orderSegments(crossSegments, path[path.length-1], end_marker, cost);
-		appendTransects(path, cross, outer, needsRoute, null);
-	}else{
-		const pass = orderSegments(mainSegments, start_marker, end_marker, cost);
-		appendTransects(path, pass, outer, needsRoute, startApproach);
-	}
-
-	// connect to the end marker, directly when allowed, along the boundary otherwise
-	const last = path[path.length-1];
-	if(endApproach != null){
-		pushApproach(path, last, end_marker, outer, endApproach);
-	}else{
-		if(!directTransitCheckbox.checked && needsRoute(last, end_marker)){
-			const exit = closestOnPolygon(outer, last);
-			const depart = closestOnPolygon(outer, end_marker);
-			pushUnique(path, exit);
-			for (const v of tracePerimeter(outer, exit, depart))
-				pushUnique(path, v);
-			pushUnique(path, depart);
-		}
-		pushUnique(path, end_marker);
-	}
-
-	survey_points = path;
+	spacingBox.value = newspacing;
+	status.setWarn("Line spacing set to "+newspacing+" m to suit the size of the marked area.");
 }
 
 function update(){
+
+	const was_polygon = last_vertex_count >= 3;
+	last_vertex_count = polygon.length;
+
+	if(polygon.length >= 3 && !was_polygon)
+		autosizeSpacing();
 
 	if(polygon.length >= 3 && (!start_marker || !end_marker)){
 		let link = {
@@ -771,7 +372,7 @@ function update(){
 		}
 	}
 
-	generateSurvey();
+	requestSurvey();
 	drawSurvey();
 	saveSettings();
 }
@@ -852,9 +453,7 @@ function sendMessage(pointlist){
 			});
 		}
 	}
-
-	//unadvertising drops the latch server-side, so keep the newest publisher
-	//alive for late subscribers and only clean up the previous one
+	
 	if(path_publisher !== undefined){
 		path_publisher.unadvertise();
 	}
@@ -919,6 +518,56 @@ const TRANSIT_COLOR = "rgba(200, 200, 200, 0.75)";
 const START_COLOR = "#3ecf5e";
 const END_COLOR = "#e0483e";
 
+function polygonCentroid(pts){
+	let area = 0, cx = 0, cy = 0;
+
+	for (let i = 0; i < pts.length; i++) {
+		const a = pts[i];
+		const b = pts[(i+1) % pts.length];
+		const cross = a.x * b.y - b.x * a.y;
+		area += cross;
+		cx += (a.x + b.x) * cross;
+		cy += (a.y + b.y) * cross;
+	}
+
+	if(Math.abs(area) < 1e-9){
+		let sx = 0, sy = 0;
+		for (const p of pts) {
+			sx += p.x;
+			sy += p.y;
+		}
+		return {x: sx / pts.length, y: sy / pts.length};
+	}
+
+	return {x: cx / (3 * area), y: cy / (3 * area)};
+}
+
+function drawHourglass(pos){
+
+	ctx.fillStyle = "rgba(41, 41, 41, 0.85)";
+	ctx.beginPath();
+	ctx.arc(pos.x, pos.y, 15, 0, 2 * Math.PI, false);
+	ctx.fill();
+
+	ctx.fillStyle = "#e8e8e8";
+	ctx.fillRect(pos.x - 6, pos.y - 8, 12, 1.5);
+	ctx.fillRect(pos.x - 6, pos.y + 6.5, 12, 1.5);
+
+	ctx.beginPath();
+	ctx.moveTo(pos.x - 5, pos.y - 6.5);
+	ctx.lineTo(pos.x + 5, pos.y - 6.5);
+	ctx.lineTo(pos.x, pos.y);
+	ctx.closePath();
+	ctx.fill();
+
+	ctx.beginPath();
+	ctx.moveTo(pos.x - 5, pos.y + 6.5);
+	ctx.lineTo(pos.x + 5, pos.y + 6.5);
+	ctx.lineTo(pos.x, pos.y);
+	ctx.closePath();
+	ctx.fill();
+}
+
 function drawSurvey(){
 	const active = mode != "IDLE";
 	const wid = canvas.width;
@@ -969,7 +618,6 @@ function drawSurvey(){
 	}
 	ctx.setLineDash([]);
 
-	// survey path
 	if(survey_points.length >= 2){
 		const viewSurvey = survey_points.map(pointToScreen);
 
@@ -1080,7 +728,14 @@ function drawSurvey(){
 		drawNode(em, active ? "#ffd2ce" : END_COLOR, mode == "Z" ? formatZ(end_marker.z)+"m" : "", 0.7);
 	}
 
-	status.setOK();
+	if((survey_busy || survey_pending) && polygon.length >= 3){
+		drawHourglass(polygonCentroid(viewPoly));
+		status.setWarn("Generating path...");
+	}else if(survey_error){
+		status.setError(survey_error);
+	}else{
+		status.setOK();
+	}
 }
 
 // Input handling
@@ -1158,7 +813,7 @@ function drag(event){
 		const newpos = screenToPoint({x: clientX, y: clientY});
 		drag_target.point.x = newpos.x;
 		drag_target.point.y = newpos.y;
-		generateSurvey();
+		requestSurvey();
 		drawSurvey();
 	}
 
@@ -1184,7 +839,7 @@ function drag(event){
 			z = parseInt(z*10)/10;
 
 		drag_target.point.z = z;
-		generateSurvey();
+		requestSurvey();
 		drawSurvey();
 	}
 }
@@ -1497,8 +1152,9 @@ const drop_z = document.getElementById("{uniqueID}_editZ");
 const drop_config = document.getElementById("{uniqueID}_config");
 
 drop_start.addEventListener("click", (event) => {
-	generateSurvey();
-	if(survey_points.length == 0){
+	if(survey_busy || survey_pending){
+		status.setWarn("Path is still generating, try again in a moment.");
+	}else if(survey_points.length == 0){
 		status.setWarn("No survey path to send, define a polygon with at least 3 vertices.");
 	}else{
 		sendMessage(survey_points);
@@ -1527,7 +1183,7 @@ drop_config.addEventListener("click", (event) => {
 	dropdown_visibility(false);
 });
 
-generateSurvey();
+requestSurvey();
 resizeScreen();
 
 console.log("Survey Widget Loaded {uniqueID}")
