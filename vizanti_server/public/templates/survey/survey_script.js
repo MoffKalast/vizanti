@@ -393,7 +393,7 @@ function sendMessage(pointlist){
 		}
 	}
 
-	function getPoseStamped(index, timeStamp, x, y, z, quat){
+	function getPoseStamped(timeStamp, x, y, z, quat){
 		return new ROSLIB.Message({
 			header: {
 				stamp: timeStamp,
@@ -430,7 +430,7 @@ function sendMessage(pointlist){
 	{
 		if(pointlist.length == 1){
 			if(stamped){
-				poseList.push(getPoseStamped(0, timeStamp, pointlist[0].x, pointlist[0].y, pointlist[0].z, new Quaternion()));
+				poseList.push(getPoseStamped(timeStamp, pointlist[0].x, pointlist[0].y, pointlist[0].z, new Quaternion()));
 			}else{
 				poseList.push(getPose(pointlist[0].x, pointlist[0].y, pointlist[0].z, new Quaternion()));
 			}
@@ -450,7 +450,7 @@ function sendMessage(pointlist){
 				const rotation = Quaternion.fromEuler(Math.atan2(p1.y - p0.y, p1.x - p0.x), 0, 0, 'ZXY');
 
 				if(stamped){
-					poseList.push(getPoseStamped(index, timeStamp, point.x, point.y, point.z, rotation));
+					poseList.push(getPoseStamped(timeStamp, point.x, point.y, point.z, rotation));
 				}else{
 					poseList.push(getPose(point.x, point.y, point.z, rotation));
 				}
@@ -1061,11 +1061,11 @@ async function loadTopics(){
 	let topiclist = "";
 	result_path.forEach(element => {
 		topiclist += "<option value='"+element+"'>"+element+" (Path)</option>";
-		typedict[element] = "nav_msgs/Path";
+		typedict[element] = "nav_msgs/msgs/Path";
 	});
 	result_array.forEach(element => {
 		topiclist += "<option value='"+element+"'>"+element+" (PoseArray)</option>";
-		typedict[element] = "geometry_msgs/PoseArray";
+		typedict[element] = "geometry_msgs/msgs/PoseArray";
 	});
 	selectionbox.innerHTML = topiclist
 
