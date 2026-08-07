@@ -40,7 +40,6 @@ let survey_busy = false;
 const INITIAL_MAX_LINES = 30;
 const INITIAL_MIN_LINES = 5;
 const INITIAL_TARGET_LINES = 10;
-const MAX_LINES = 1000;
 
 const worker_thread = new Worker(`${base_url}/templates/survey/survey_worker.js`);
 
@@ -332,7 +331,7 @@ function autosizeSpacing(){
 		return;
 
 	spacingBox.value = newspacing;
-	status.setWarn("Line spacing set to "+newspacing+" m to suit the size of the marked area.");
+	turnaroundBox.value = newspacing;
 }
 
 function update(){
@@ -356,16 +355,18 @@ function update(){
 			link = tf.transformPose(base_link_frame, fixed_frame, {x: 0, y: 0, z: 0}, new Quaternion());
 		}
 
+		const marker_offset = Math.max(parseFloat(spacingBox.value) || 2, 0.05);
+
 		if(!start_marker){
 			start_marker = {
-				x: link.translation.x - 2,
+				x: link.translation.x - marker_offset,
 				y: link.translation.y,
 				z: link.translation.z
 			};
 		}
 		if(!end_marker){
 			end_marker = {
-				x: link.translation.x + 2,
+				x: link.translation.x + marker_offset,
 				y: link.translation.y, 
 				z: link.translation.z
 			};
