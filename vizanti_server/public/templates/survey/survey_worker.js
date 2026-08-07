@@ -296,6 +296,22 @@ function generateTransects(poly, angleRad, spacing, turnaround){
 
 function makeCostCache(outer, needsRoute){
 
+	const n = outer.length;
+	const edgeStart = [];
+	let perimeter = 0;
+
+	for (let i = 0; i < n; i++) {
+		const a = outer[i];
+		const b = outer[(i+1) % n];
+		edgeStart.push(perimeter);
+		perimeter += Math.hypot(b.x - a.x, b.y - a.y);
+	}
+
+	function arclength(loc){
+		const next = loc.edge + 1 < n ? edgeStart[loc.edge + 1] : perimeter;
+		return edgeStart[loc.edge] + (next - edgeStart[loc.edge]) * loc.t;
+	}
+
 	function transitCost(p, q){
 		const euclid = Math.hypot(q.x - p.x, q.y - p.y);
 		if(params.direct_transit || !needsRoute(p, q))
@@ -304,31 +320,10 @@ function makeCostCache(outer, needsRoute){
 		const from = closestOnPolygon(outer, p);
 		const to = closestOnPolygon(outer, q);
 
-		const n = outer.length;
-		const edgeLen = [];
-		let perimeter = 0;
-		for (let i = 0; i < n; i++) {
-			const a = outer[i];
-			const b = outer[(i+1) % n];
-			edgeLen.push(Math.hypot(b.x - a.x, b.y - a.y));
-			perimeter += edgeLen[i];
-		}
-
 		if(perimeter < 1e-9)
 			return from.dist + to.dist;
 
-		let sFrom = 0, sTo = 0, s = 0;
-		for (let i = 0; i < n; i++) {
-			if(i == from.edge)
-				sFrom = s + edgeLen[i] * from.t;
-
-			if(i == to.edge)
-				sTo = s + edgeLen[i] * to.t;
-
-			s += edgeLen[i];
-		}
-
-		const forward = (sTo - sFrom + perimeter) % perimeter;
+		const forward = (arclength(to) - arclength(from) + perimeter) % perimeter;
 		return from.dist + Math.min(forward, perimeter - forward) + to.dist;
 	}
 
@@ -344,7 +339,7 @@ function makeCostCache(outer, needsRoute){
 			ids.set(q, nextId++);
 
 		const i = ids.get(p), j = ids.get(q);
-		const key = i < j ? i * 1000000 + j : j * 1000000 + i;
+		const key = i < j ? i+","+j : j+","+i;
 
 		let c = cache.get(key);
 		if(c == undefined){
