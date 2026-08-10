@@ -39,7 +39,6 @@ install(PROGRAMS
   scripts/_test_sphere_list.py
   scripts/_test_triangle_list.py
   scripts/_test_tf.py
-  scripts/particle_cloud_to_pose_array.py
   scripts/path_to_nav2poses.py
   scripts/waypoints_to_simple_goals.py
   DESTINATION lib/${PROJECT_NAME}

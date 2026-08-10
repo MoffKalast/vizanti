@@ -9,6 +9,6 @@
   <node pkg="vizanti_demos" exec="_test_sphere_list.py" name="test_sphere_list" output="screen"/>
   <node pkg="vizanti_demos" exec="_test_tf.py" name="test_tf" output="screen"/>
 
-  <node pkg="tf2_ros" exec="static_transform_publisher" name="test_tf_publisher_1" output="screen" args="10 0 0 0 0 0 map world" />
+  <node pkg="tf2_ros" exec="static_transform_publisher" name="test_tf_publisher_1" output="screen" args="--x 10 --frame-id map --child-frame-id world" />
 
 </launch>

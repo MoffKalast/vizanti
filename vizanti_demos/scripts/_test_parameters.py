@@ -105,7 +105,7 @@ class ParameterDemoNode(Node):
             read_only=False
         ))
         
-        binary_data = [ord(c) for c in 'binary_data']
+        binary_data = [bytes([c]) for c in b'binary_data']
         self.declare_parameter('demo_byte_array', binary_data, ParameterDescriptor(
             name='demo_byte_array',
             type=ParameterType.PARAMETER_BYTE_ARRAY,
@@ -158,7 +158,7 @@ class ParameterDemoNode(Node):
             elif param.name == 'demo_byte_array':
                 if param.type_ == Parameter.Type.BYTE_ARRAY:
                     # Validate that all values are in byte range (0-255)
-                    for byte_val in param.value:
+                    for byte_val in bytes(b''.join(param.value)):
                         if not (0 <= byte_val <= 255):
                             self.get_logger().error(f'Invalid byte value: {byte_val}. Must be 0-255.')
                             result.successful = False
@@ -203,14 +203,15 @@ class ParameterDemoNode(Node):
             byte_array_param = self.get_parameter('demo_byte_array')
             
             # Convert byte array back to string for display (only printable characters)
-            byte_as_string = ''.join([chr(b) for b in byte_array_param.value if 32 <= b <= 126])
+            byte_array_ints = list(b''.join(byte_array_param.value))
+            byte_as_string = ''.join([chr(b) for b in byte_array_ints if 32 <= b <= 126])
             
             arrays_info = {
                 'string_array': string_array_param.value,
                 'bool_array': bool_array_param.value,
                 'int_array': int_array_param.value,
                 'double_array': double_array_param.value,
-                'byte_array_raw': byte_array_param.value,
+                'byte_array_raw': byte_array_ints,
                 'byte_array_as_string': byte_as_string
             }
             
@@ -233,8 +234,9 @@ class ParameterDemoNode(Node):
                 param_type = self.get_parameter(name).type_
                 if name == 'demo_byte_array':
                     # Display byte array in a more readable format
-                    byte_as_string = ''.join([chr(b) for b in value if 32 <= b <= 126])
-                    self.get_logger().info(f'{name} ({param_type.name}): {value} (as string: "{byte_as_string}")')
+                    byte_array_ints = list(b''.join(value))
+                    byte_as_string = ''.join([chr(b) for b in byte_array_ints if 32 <= b <= 126])
+                    self.get_logger().info(f'{name} ({param_type.name}): {byte_array_ints} (as string: "{byte_as_string}")')
                 else:
                     self.get_logger().info(f'{name} ({param_type.name}): {value}')
         except Exception as e:
@@ -261,7 +263,7 @@ class ParameterDemoNode(Node):
                 self.get_logger().info('Successfully updated demo_string parameter')
             
             # Set byte array parameter with new data - use proper method
-            new_byte_data = [72, 101, 108, 108, 111]  # "Hello" in ASCII
+            new_byte_data = [bytes([c]) for c in b'Hello']
             
             # Use set_parameters_atomically for better error handling
             try:

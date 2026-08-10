@@ -35,10 +35,7 @@ class ImageToOccupancyGrid(Node):
         print(absolute_path)
         image = cv2.imread(absolute_path, cv2.IMREAD_GRAYSCALE)
 
-        # Flatten the image and convert to occupancy grid data
-        data = []
-        for pixel in image.flatten():
-            data.append(pixel)
+        data = np.asarray(image, dtype=np.uint8).flatten().view(np.int8)
 
         # Create OccupancyGrid message
         grid = OccupancyGrid()
@@ -53,7 +50,7 @@ class ImageToOccupancyGrid(Node):
         grid.info.origin.position.y = 0.0
         grid.info.origin.position.z = 0.0
         grid.info.origin.orientation.w = 1.0
-        grid.data = np.array(data, dtype=np.int8).tolist()
+        grid.data = data.tolist()
 
         qos_profile = QoSProfile(depth=1)
         qos_profile.durability = QoSDurabilityPolicy.TRANSIENT_LOCAL

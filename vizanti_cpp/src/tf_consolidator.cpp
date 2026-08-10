@@ -7,6 +7,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "tf2_msgs/msg/tf_message.hpp"
 #include "std_msgs/msg/int32.hpp"
+#include "geometry_msgs/msg/transform_stamped.hpp"
 
 class TfConsolidator:public rclcpp::Node{
 	public:

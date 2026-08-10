@@ -3,7 +3,6 @@ import math
 import rclpy
 
 from rclpy.node import Node
-from builtin_interfaces.msg import Duration
 from rclpy.qos import QoSProfile, QoSDurabilityPolicy
 from visualization_msgs.msg import Marker, MarkerArray
 from geometry_msgs.msg import Point
