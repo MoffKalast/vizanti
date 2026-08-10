@@ -2,8 +2,13 @@
 
 import os
 import rclpy
-import cv2
+import sys
 import numpy as np
+
+try:
+    import cv2
+except ImportError:
+    cv2 = None
 
 from rclpy.node import Node
 from nav_msgs.msg import OccupancyGrid
@@ -63,6 +68,9 @@ class ImageToOccupancyGrid(Node):
 
 
 def main(args=None):
+    if cv2 is None:
+        sys.exit("python3-opencv is not installed, cannot run the occupancy grid demo")
+
     rclpy.init(args=args)
     node = ImageToOccupancyGrid()
     try:
