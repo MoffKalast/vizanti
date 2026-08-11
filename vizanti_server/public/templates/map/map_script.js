@@ -14,49 +14,6 @@ let imageToDataURL = utilModule.imageToDataURL;
 let Status = StatusModule.Status;
 let params = paramsModule.default;
 
-
-async function saveMap(save_path, topic) {
-	const saveMapService = new ROSLIB.Service({
-		ros: rosbridge.ros,
-		name: "/vizanti/save_map",
-		serviceType: "vizanti_msgs/srv/SaveMap",
-	});
-
-	const request = new ROSLIB.ServiceRequest({
-		file_path: save_path,
-		topic: topic
-	});
-
-	return new Promise((resolve, reject) => {
-		saveMapService.callService(request, (result) => {
-			resolve(result);
-		}, (error) => {
-			reject(error);
-		});
-	});
-}
-
-async function loadMap(load_path, topic) {
-	const loadMapService = new ROSLIB.Service({
-		ros: rosbridge.ros,
-		name: "/vizanti/load_map",
-		serviceType: "vizanti_msgs/srv/LoadMap",
-	});
-
-	const request = new ROSLIB.ServiceRequest({
-		file_path: load_path,
-		topic: topic,
-	});
-
-	return new Promise((resolve, reject) => {
-		loadMapService.callService(request, (result) => {
-			resolve(result);
-		}, (error) => {
-			reject(error);
-		});
-	});
-}
-
 let topic = getTopic("{uniqueID}");
 let status = new Status(
 	document.getElementById("{uniqueID}_icon"),
@@ -111,8 +68,6 @@ opacitySlider.addEventListener('input', () =>  {
 const loadPathBox = document.getElementById("{uniqueID}_loadpath");
 const loadTopicBox = document.getElementById("{uniqueID}_loadtopic");
 const savePathBox = document.getElementById("{uniqueID}_savepath");
-const loadButton = document.getElementById('{uniqueID}_load');
-const saveButton = document.getElementById('{uniqueID}_save');
 
 const colourSchemeBox = document.getElementById('{uniqueID}_colour_scheme');
 colourSchemeBox.selectedIndex = topic.includes("cost") ? 1 : 0;
@@ -125,44 +80,6 @@ const throttle = document.getElementById('{uniqueID}_throttle');
 throttle.addEventListener("input", (event) =>{
 	saveSettings();
 	connect();
-});
-
-loadButton.addEventListener('click',  async () => {
-	let path = loadPathBox.value;
-
-	if (path.endsWith(".pgm")) {
-		path = path.slice(0, -4) + ".yaml";
-	} else if (!path.endsWith(".yaml")) {
-		path += ".yaml";
-	}
-
-	loadPathBox.value = path;
-
-	try {
-		const result = await loadMap(path, loadTopicBox.value);
-		alert(result.message);
-	} catch (error) {
-		alert(error);
-	}
-});
-
-saveButton.addEventListener('click', async () => {
-	let path = savePathBox.value;
-
-	if (path.endsWith(".pgm")) {
-		path = path.slice(0, -4);
-	} else if (path.endsWith(".yaml")) {
-		path = path.slice(0, -5);
-	}
-
-	savePathBox.value = path;
-
-	try {
-		const result = await saveMap(path, topic);
-		alert(result.message);
-	} catch (error) {
-		alert(error);
-	}
 });
 
 const canvas = document.getElementById('{uniqueID}_canvas');

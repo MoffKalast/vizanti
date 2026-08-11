@@ -10,6 +10,8 @@
 		</select>
 
 		<p>Display a nav_msgs/OccupancyGrid message that typically represents a 2D map or navigational costmap.</p>
+
+		<hr class="dark_hr"/>
 		<div class="spacer"></div>
 
 		<label for="{uniqueID}_colour_scheme">Colour scheme:</label>
@@ -24,6 +26,13 @@
 
 		<div class="spacer"></div>
 
+		<label>Use Timestamp:</label>
+		<input type="checkbox" id="{uniqueID}_use_timestamp">	
+
+		<p class="comment">Rendering maps at their published timestamp causes them to lag behind when focusing on frames other than the map frame. Rviz uses the latest timestamp instead, which this emulates. Enable for technically correct rendering.</p>
+
+		<div class="spacer"></div>
+
 		<label for="{uniqueID}_opacity">Opacity:</label>
 		<span id="{uniqueID}_opacity_value">0.7</span>
 		<input type="range" value="0.7" step="0.05" min="0.0" max="1.0" id="{uniqueID}_opacity">
@@ -32,46 +41,6 @@
 
 		<label for="{uniqueID}_throttle">Socket throttle (ms):</label>
 		<input type="number" value="1000" step="0" min="0" max="10000" id="{uniqueID}_throttle">
-
-		<div class="spacer"></div>
-
-		<label>Use Timestamp:</label>
-		<input type="checkbox" id="{uniqueID}_use_timestamp">	
-
-		<p class="comment">Rendering maps at their published timestamp causes them to lag behind when focusing on frames other than the map frame. Rviz uses the latest timestamp instead, which this emulates. Enable for technically correct rendering.</p>
-
-		<div class="spacer"></div>
-
-		<h4>Management</h4>
-
-		<p class="comment">Relay services for calling map loading and saving nodes.</p>
-
-		<i>💾 map_saver</i>
-		<div class="spacer"></div>
-
-		<label for="{uniqueID}_savepath">Save to path:</label>
-		<input id="{uniqueID}_savepath" type="text" value="~/.ros/map">
-		<div class="spacer"></div>
-
-		<button id="{uniqueID}_save">Save</button>
-
-		<div class="spacer"></div>
-
-		<i>🖶 map_server</i>
-		<div class="spacer"></div>
-
-		<label for="{uniqueID}_loadpath">Load from path:</label>
-		<input id="{uniqueID}_loadpath" type="text" value="~/.ros/map">
-
-		<div class="spacer"></div>
-
-
-		<label for="{uniqueID}_loadtopic">Publish on topic:</label>
-		<input id="{uniqueID}_loadtopic" type="text" value="/map">
-
-		<div class="spacer"></div>
-
-		<button id="{uniqueID}_load">Load</button>
 
 		<div class="spacer"></div>
 

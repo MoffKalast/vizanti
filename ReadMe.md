@@ -8,7 +8,12 @@ Vizanti is a web-based visualization and control tool developed for more conveni
 
 ## Installation
 
-This branch is compatible with [ROS 2 Humble](https://docs.ros.org/en/humble/Installation.html) on 22.04 and [ROS 2 Jazzy](https://docs.ros.org/en/jazzy/Installation.html) on 24.04, for ROS 1 [see here](https://github.com/MoffKalast/vizanti/tree/ros1).
+This branch is compatible with:
+- [ROS 2 Humble](https://docs.ros.org/en/humble/Installation.html) on 22.04 
+- [ROS 2 Jazzy](https://docs.ros.org/en/jazzy/Installation.html) on 24.04
+- [ROS 2 Lyrical](https://docs.ros.org/en/lyrical/Installation.html) on 26.04
+
+For ROS 1 [see here](https://github.com/MoffKalast/vizanti/tree/ros1).
 
 As a field tool, Vizanti is designed to operate just as well without internet access, and as such the intended way is to host it on a robot, with rosbridge autoconnecting to the host IP.
 
@@ -25,7 +30,7 @@ colcon build
 
 Alternatively, you can also containerize Vizanti. For that you need to [install Docker](https://docs.docker.com/engine/install/ubuntu/) and build the container:
 
-In case you're building on a system with a different version of ROS or it's not installed, replace $ROS_DISTRO with either humble or jazzy.
+In case you're building on a system with a different version of ROS or it's not installed, replace `$ROS_DISTRO` with either humble or jazzy.
 
 ```bash
 git clone -b ros2 https://github.com/MoffKalast/vizanti.git
@@ -50,7 +55,7 @@ If you're using a mobile device connected to a robot's hotspot that doesn't have
 
 ## Recommended - RWS Backend
 
-With rosbridge being a Tornado python based package and rclpy being overly CPU heavy, this cpp drop-in replacement server should result in a ~5x lower overhead and faster response times. It works with CycloneDDS out of the box, and for FastDDS it requires the `rmw_fastrtps_dynamic_cpp` version which includes interface introspection.
+With rosbridge being a Tornado python based package and rclpy being overly CPU heavy, this cpp drop-in replacement server should result in a ~5x lower overhead and faster response times. It works with CycloneDDS out of the box, for FastDDS it requires the `rmw_fastrtps_dynamic_cpp` version which includes interface introspection. Zenoh does not support topic introspection at all, so it's not supported at the moment.
 
 ```bash
 cd ~/colcon_ws/src

@@ -37,9 +37,6 @@ class ServiceHandler(Node):
         self.get_node_parameters_service = self.create_service(GetNodeParameters, 'vizanti/get_node_parameters', self.get_node_parameters, callback_group=group)
         self.set_node_parameter_service = self.create_service(SetNodeParameter, 'vizanti/set_node_parameter', self.set_node_parameter, callback_group=group)
 
-        self.load_map_service = self.create_service(LoadMap, 'vizanti/load_map', self.load_map, callback_group=group)
-        self.save_map_service = self.create_service(SaveMap, 'vizanti/save_map', self.save_map, callback_group=group)
-
         self.record_setup_service = self.create_service(RecordRosbag, 'vizanti/bag/setup', self.recording_setup, callback_group=group)
 
         self.kill_service = self.create_service(ManageNode, 'vizanti/node/kill', self.node_kill, callback_group=group)
@@ -174,68 +171,6 @@ class ServiceHandler(Node):
             rosinfo = subprocess.check_output(["ros2", "doctor", "--report"]).decode('utf-8')
             res.success = True
             res.message = rosinfo
-        except Exception as e:
-            res.success = False
-            res.message = str(e)
-        return res
-
-    def load_map(self, req, res):
-        file_path = os.path.expanduser(req.file_path)
-        topic = req.topic
-        try:
-            process = subprocess.Popen(["ros2", "run", "nav2_map_server", "map_server", file_path, "map:=" + topic, "__name:=vizanti_map_server"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            flags = fcntl.fcntl(process.stdout, fcntl.F_GETFL)
-            fcntl.fcntl(process.stdout, fcntl.F_SETFL, flags | os.O_NONBLOCK)
-
-            # Wait for it to either fail or not
-            time.sleep(1)
-
-            # Check if the process is still running
-            if process.poll() is not None:
-                # Process terminated, read the error output
-                error_output = process.stdout.read().decode('utf-8')
-                res.success = False
-                res.message = "Map server failed to load the map: " + error_output
-            else:
-                res.success = True
-                res.message = "Map loaded successfully"
-        except Exception as e:
-            res.success = False
-            res.message = str(e)
-        return res
-
-    def save_map(self, req, res):
-        file_path = os.path.expanduser(req.file_path)
-        topic = req.topic
-        try:
-            process = subprocess.Popen(["ros2", "run", "nav2_map_server", "map_saver_cli", "-f", file_path, "--ros-args", "map:=" + topic], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            flags = fcntl.fcntl(process.stdout, fcntl.F_GETFL)
-            fcntl.fcntl(process.stdout, fcntl.F_SETFL, flags | os.O_NONBLOCK)
-
-            while True:
-                # Check if the process is still running
-                if process.poll() is not None:
-                    break
-
-                while True:
-                    try:
-                        line = process.stdout.readline()
-                        if not line:
-                            break
-
-                        if b"[ERROR]" in line:
-                            process.terminate()
-                            res.success = False
-                            res.message = "Map saver failed to save the map: " + line.decode('utf-8')
-                            return res
-                    except IOError:
-                        break
-
-                # Sleep for a short period of time to avoid excessive CPU usage
-                time.sleep(0.2)
-
-            res.success = True
-            res.message = "Map saved successfully"
         except Exception as e:
             res.success = False
             res.message = str(e)
