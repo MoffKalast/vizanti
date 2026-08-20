@@ -1322,19 +1322,20 @@ li {
 }
 
 .diagnostics_log_entry {
-	padding: 3px 0px;
+	padding: 0px;
 }
 
 .diagnostics_location {
 	font-size: 11px;
 	opacity: 0.85;
+	padding: 3px 0px 0px 0px;
 }
 
 .diagnostics_line {
 	display: flex;
 	align-items: flex-start;
 	gap: 8px;
-	padding: 1px 0px;
+	padding: 1px 0px 3px 0px;
 }
 
 .diagnostics_gutter {

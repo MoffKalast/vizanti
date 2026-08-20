@@ -30,9 +30,9 @@ const DEFAULT_THROTTLE = {};
 DEFAULT_THROTTLE[LOG_TYPE] = 0;
 DEFAULT_THROTTLE[DIAG_TYPE] = 500;
 
-const MAX_HISTORY = 10;
+const MAX_HISTORY = 15;
 const MAX_ENTRIES = 200;
-const MAX_TEXT = 80;
+const MAX_TEXT = 300;
 const REDRAW_MS = 200;
 
 let topic = getTopic("{uniqueID}");
@@ -195,7 +195,9 @@ function pushMessage(group, location, text, level, rank, now){
 		last_seen: now,
 		dom: undefined
 	});
+}
 
+function trimHistory(group){
 	while(group.history.length > MAX_HISTORY){
 		const removed = group.history.shift();
 
@@ -262,8 +264,6 @@ function handleDiagnostics(msg){
 			entry.count++;
 			entry.last_seen = now;
 		}
-
-		trimEntries(group);
 	}
 }
 
@@ -434,6 +434,11 @@ function render(){
 	for(const group of list){
 		total += group.count;
 
+		if(is_log)
+			trimHistory(group);
+		else
+			trimEntries(group);
+
 		if(group.dom === undefined)
 			group.dom = buildGroup(group);
 
@@ -469,6 +474,8 @@ function render(){
 			continue;
 
 		if(is_log){
+			let previous_location = undefined;
+
 			for(const item of group.history){
 				if(item.dom === undefined)
 					item.dom = buildLogRow(group);
@@ -480,6 +487,9 @@ function render(){
 					continue;
 
 				updateLogRow(item);
+
+				item.dom.location.style.display = item.location == previous_location ? "none" : "";
+				previous_location = item.location;
 			}
 
 			continue;
@@ -621,7 +631,10 @@ async function loadTopics(){
 	selectionbox.value = topic;
 
 	setTopicType(types[topic]);
-	connect();
+
+	if(topicobj === undefined){
+		connect();
+	}
 }
 
 throttle.addEventListener("input", () => {
