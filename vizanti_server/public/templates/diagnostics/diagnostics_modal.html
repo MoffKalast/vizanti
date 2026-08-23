@@ -1,0 +1,41 @@
+<div id="{uniqueID}_modal" class="modal_outer noselect">
+	<div class="modal_inner noselect">
+		<h3>Diagnostics</h3>
+		<p id="{uniqueID}_status" class="status">Status: Ok.</p>
+
+		<hr class="dark_hr"/>
+
+		<label for="{uniqueID}_topic">Topic:</label>
+		<select id="{uniqueID}_topic" name="topic">
+		</select>
+
+		<div class="spacer"></div>
+
+		<label for="{uniqueID}_severity">Minimum severity:</label>
+		<select id="{uniqueID}_severity">
+		</select>
+
+		<div class="spacer"></div>
+
+		<div class="diagnostics_toolbar">
+			<button id="{uniqueID}_pause" class="diagnostics_button">Pause</button>
+			<button id="{uniqueID}_clear" class="diagnostics_button delete_button">Clear</button>
+			<span id="{uniqueID}_summary" class="diagnostics_summary"></span>
+		</div>
+
+		<div class="live_data_display diagnostics_display">
+			<p id="{uniqueID}_placeholder">Waiting for data...</p>
+			<div id="{uniqueID}_list"></div>
+		</div>
+
+		<p class="comment">Tap/click on each entry to expand for more info.</p>
+
+		<label for="{uniqueID}_throttle">Socket throttle (ms):</label>
+		<input type="number" value="0" step="1" min="0" max="10000" id="{uniqueID}_throttle">
+
+		<hr class="dark_hr"/>
+
+		<button id="{uniqueID}_remove" class="delete_button" onclick="removeWidget('{uniqueID}')">Remove Widget</button>
+
+	</div>
+</div>
