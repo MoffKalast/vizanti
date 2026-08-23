@@ -4,13 +4,12 @@ import rospy
 import time
 import threading
 
-from rospy.exceptions import ROSTimeMovedBackwardsException
 from tf2_msgs.msg import TFMessage
 
-class TopicHandler:
+class TfConsolidator:
 
 	def __init__(self):
-		rospy.init_node('vizanti_topic_handler')
+		rospy.init_node('vizanti_tf_handler_node')
 
 		self.updated = False
 		self.lock = threading.Lock()
@@ -27,7 +26,7 @@ class TopicHandler:
 	def clear_old_tfs(self):
 		with self.lock:
 			for key in list(self.transforms.keys()):
-				if time.time() - self.transform_timeout[key] > 10.0:
+				if time.monotonic() - self.transform_timeout[key] > 10.0:
 					parent = self.transforms[key].header.frame_id
 					del self.transforms[key]
 					del self.transform_timeout[key]
@@ -54,15 +53,24 @@ class TopicHandler:
 		with self.lock:
 			for transform in msg.transforms:
 				self.transforms[transform.child_frame_id] = transform
-				self.transform_timeout[transform.child_frame_id] = time.time()
+				self.transform_timeout[transform.child_frame_id] = time.monotonic()
 			self.updated = True
 		
 
-odr = TopicHandler()
-rate = rospy.Rate(30)
+odr = TfConsolidator()
+period = 1.0 / 30.0
+deadline = time.monotonic()
+
 while not rospy.is_shutdown():
 	try:
 		odr.publish()
-		rate.sleep()
-	except ROSTimeMovedBackwardsException as e:
-		print(e)
+	except Exception as e:
+		rospy.logerr("Failed to publish consolidated TF: "+str(e))
+
+	deadline += period
+	sleep_time = deadline - time.monotonic()
+
+	if sleep_time > 0:
+		time.sleep(sleep_time)
+	else:
+		deadline = time.monotonic()

@@ -36,7 +36,7 @@
 		<param name="default_widget_config" value="$(arg default_widget_config)"/>
 	</node>
 
-	<node name="vizanti_topic_handler_node" pkg="vizanti" type="topic_handler.py" output="screen"/>
+	<node name="vizanti_tf_handler_node" pkg="vizanti" type="topic_handler.py" output="screen"/>
 	<node name="vizanti_service_handler_node" pkg="vizanti" type="service_handler.py" output="screen"/>
     
 </launch>
