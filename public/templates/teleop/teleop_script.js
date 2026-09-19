@@ -1047,11 +1047,30 @@ function stopAll(){
 	keyboardStop();
 }
 
-window.addEventListener('blur', stopAll);
-document.addEventListener('visibilitychange', () => {
+function onVisibilityChange(){
     if (document.hidden) {
         stopAll();
     }
-});
+}
+
+window.addEventListener('blur', stopAll);
+document.addEventListener('visibilitychange', onVisibilityChange);
+
+window.addEventListener("{uniqueID}_destroy", () => {
+	stopAll();
+
+	if(cmdVelPublisher !== undefined)
+		cmdVelPublisher.unadvertise();
+
+	joystick.destroy();
+	disableKeyboard();
+
+	window.removeEventListener("blur", stopAll);
+	document.removeEventListener("visibilitychange", onVisibilityChange);
+	document.removeEventListener("mousemove", onMove);
+	document.removeEventListener("mouseup", onEnd);
+	document.removeEventListener("touchmove", onMove);
+	document.removeEventListener("touchend", onEnd);
+}, {once: true});
 
 console.log("Teleop Widget Loaded {uniqueID}")

@@ -672,15 +672,6 @@ selectionbox.addEventListener("change", async () => {
 icon.addEventListener("click", loadTopics);
 
 const redraw = setInterval(() => {
-	if(document.getElementById("{uniqueID}_modal") === null){
-		clearInterval(redraw);
-
-		if(topicobj !== undefined)
-			topicobj.unsubscribe(listener);
-
-		return;
-	}
-
 	if(paused)
 		return;
 
@@ -693,5 +684,12 @@ const redraw = setInterval(() => {
 }, REDRAW_MS);
 
 loadTopics();
+
+window.addEventListener("{uniqueID}_destroy", () => {
+	clearInterval(redraw);
+
+	if(topicobj !== undefined)
+		topicobj.unsubscribe(listener);
+}, {once: true});
 
 console.log("Diagnostics Widget Loaded {uniqueID}")

@@ -134,4 +134,9 @@ icon.addEventListener("click", (event) => {
 
 loadTopics();
 
+window.addEventListener("{uniqueID}_destroy", () => {
+	if(temperature_topic !== undefined)
+		temperature_topic.unsubscribe(listener);
+}, {once: true});
+
 console.log("Temperature Widget Loaded {uniqueID}")

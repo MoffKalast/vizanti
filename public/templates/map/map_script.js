@@ -385,16 +385,31 @@ function resizeScreen(){
 }
 
 window.addEventListener("tf_fixed_frame_changed", drawMap);
-window.addEventListener("tf_changed", ()=>{
+function onTFChanged(){
 	if(received_msg && received_msg.header.frame_id != tf.fixed_frame){
 		drawMap();
 	}
-});
+}
+
+window.addEventListener("tf_changed", onTFChanged);
 
 window.addEventListener("view_changed", drawMap);
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);
 
 resizeScreen();
+
+window.addEventListener("{uniqueID}_destroy", () => {
+	if(map_topic !== undefined)
+		map_topic.unsubscribe(listener);
+
+	worker_thread.terminate();
+
+	window.removeEventListener("tf_fixed_frame_changed", drawMap);
+	window.removeEventListener("tf_changed", onTFChanged);
+	window.removeEventListener("view_changed", drawMap);
+	window.removeEventListener("resize", resizeScreen);
+	window.removeEventListener("orientationchange", resizeScreen);
+}, {once: true});
 
 console.log("Map Widget Loaded {uniqueID}")

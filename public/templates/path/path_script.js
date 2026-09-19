@@ -284,5 +284,15 @@ window.addEventListener('orientationchange', resizeScreen);
 
 resizeScreen();
 
+window.addEventListener("{uniqueID}_destroy", () => {
+	if(path_topic !== undefined)
+		path_topic.unsubscribe(listener);
+
+	window.removeEventListener("tf_fixed_frame_changed", connect);
+	window.removeEventListener("view_changed", drawPath);
+	window.removeEventListener("resize", resizeScreen);
+	window.removeEventListener("orientationchange", resizeScreen);
+}, {once: true});
+
 console.log("MarkerArray Widget Loaded {uniqueID}")
 
