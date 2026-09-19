@@ -25,6 +25,9 @@ const selectionbox = document.getElementById("{uniqueID}_topic");
 const click_icon = document.getElementById("{uniqueID}_icon");
 const icon = click_icon.getElementsByTagName('object')[0];
 
+const canvas = document.getElementById('{uniqueID}_canvas');
+const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
+
 const opacitySlider = document.getElementById('{uniqueID}_opacity');
 const opacityValue = document.getElementById('{uniqueID}_opacity_value');
 opacitySlider.addEventListener('input', () =>  {
@@ -116,9 +119,6 @@ function saveSettings(){
 	settings.save();
 	drawCloud();
 }
-
-const canvas = document.getElementById('{uniqueID}_canvas');
-const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
 
 async function drawCloud() {
     const pixel = view.getMapUnitsInPixels(thicknessSlider.value);
