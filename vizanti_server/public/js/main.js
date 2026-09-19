@@ -110,6 +110,8 @@ function loadAll(){
 			const elementIndex = settings.navbar.findIndex((item) => item.id === uniqueID);
 	
 			if (elementIndex !== -1) {
+				window.dispatchEvent(new Event(uniqueID+"_destroy"));
+
 				const elements = document.querySelectorAll(`[data-uniqueid="${uniqueID}"]`);
 				elements.forEach((element) => {
 					element.remove();

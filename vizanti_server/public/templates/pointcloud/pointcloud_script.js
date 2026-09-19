@@ -455,4 +455,14 @@ click_icon.addEventListener("click", loadTopics);
 loadTopics();
 resizeScreen();
 
+window.addEventListener("{uniqueID}_destroy", () => {
+	if(range_topic !== undefined)
+		range_topic.unsubscribe(listener);
+
+	window.removeEventListener("tf_fixed_frame_changed", drawCloud);
+	window.removeEventListener("view_changed", drawCloud);
+	window.removeEventListener("resize", resizeScreen);
+	window.removeEventListener("orientationchange", resizeScreen);
+}, {once: true});
+
 console.log("Point Cloud Widget Loaded {uniqueID}")

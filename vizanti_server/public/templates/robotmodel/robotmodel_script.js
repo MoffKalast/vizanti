@@ -276,11 +276,13 @@ function resizeScreen(){
 }
 
 window.addEventListener("tf_fixed_frame_changed", drawRobot);
-window.addEventListener("tf_changed", ()=>{
+function onTFChanged(){
 	if(frame != tf.fixed_frame){
 		drawRobot();
 	}
-});
+}
+
+window.addEventListener("tf_changed", onTFChanged);
 
 window.addEventListener("view_changed", drawRobot);
 window.addEventListener('resize', resizeScreen);
@@ -325,5 +327,13 @@ frameSelector.addEventListener("change", (event) =>{
 });
 
 resizeScreen();
+
+window.addEventListener("{uniqueID}_destroy", () => {
+	window.removeEventListener("tf_fixed_frame_changed", drawRobot);
+	window.removeEventListener("tf_changed", onTFChanged);
+	window.removeEventListener("view_changed", drawRobot);
+	window.removeEventListener("resize", resizeScreen);
+	window.removeEventListener("orientationchange", resizeScreen);
+}, {once: true});
 
 console.log("Model Widget Loaded {uniqueID}")

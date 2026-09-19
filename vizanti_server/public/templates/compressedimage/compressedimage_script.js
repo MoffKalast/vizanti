@@ -373,9 +373,11 @@ function displayImageOffset(x, y){
 	canvas.style.top  = offset_y + "vh";
 }
 
-window.addEventListener('resize', ()=>{
+function onResize(){
 	displayImageOffset(img_offset_x, img_offset_y);
-});
+}
+
+window.addEventListener('resize', onResize);
 
 function onMove(event) {
 	if (preview_active) {
@@ -406,6 +408,17 @@ imgpreview.addEventListener('mousedown', onStart);
 imgpreview.addEventListener('touchstart', onStart);
 
 displayImageOffset(img_offset_x, img_offset_y);
+
+window.addEventListener("{uniqueID}_destroy", () => {
+	if(image_topic !== undefined)
+		image_topic.unsubscribe(listener);
+
+	window.removeEventListener("resize", onResize);
+	document.removeEventListener("mousemove", onMove);
+	document.removeEventListener("touchmove", onMove);
+	document.removeEventListener("mouseup", onEnd);
+	document.removeEventListener("touchend", onEnd);
+}, {once: true});
 
 console.log("Image Widget Loaded {uniqueID}")
 

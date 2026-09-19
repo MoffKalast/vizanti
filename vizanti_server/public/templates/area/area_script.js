@@ -167,12 +167,14 @@ function resizeScreen(){
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);
 
-view_container.addEventListener("mouseleave", (event) => {
+function onMouseLeave(event){
 	start_point = undefined;
 	end_point = undefined;
 	drawBox();
 	setActive(false);
-});
+}
+
+view_container.addEventListener("mouseleave", onMouseLeave);
 
 function addListeners(){
 	view_container.addEventListener('mousedown', startDrag);
@@ -278,5 +280,13 @@ function cancelLongPress(event) {
 
 resizeScreen();
 loadTopics();
+
+window.addEventListener("{uniqueID}_destroy", () => {
+	removeListeners();
+	view_container.removeEventListener("mouseleave", onMouseLeave);
+
+	window.removeEventListener("resize", resizeScreen);
+	window.removeEventListener("orientationchange", resizeScreen);
+}, {once: true});
 
 console.log("Area Widget Loaded {uniqueID}")

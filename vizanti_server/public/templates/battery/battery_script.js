@@ -195,4 +195,9 @@ icon.addEventListener("click", loadTopics);
 
 loadTopics();
 
+window.addEventListener("{uniqueID}_destroy", () => {
+	if(batterytopic !== undefined)
+		batterytopic.unsubscribe(listener);
+}, {once: true});
+
 console.log("Battery Widget Loaded {uniqueID}")

@@ -253,4 +253,11 @@ function cancelLongPress(event) {
 
 resizeScreen();
 
+window.addEventListener("{uniqueID}_destroy", () => {
+	removeListeners();
+
+	window.removeEventListener("resize", resizeScreen);
+	window.removeEventListener("orientationchange", resizeScreen);
+}, {once: true});
+
 console.log("Simple Goal Widget Loaded {uniqueID}")

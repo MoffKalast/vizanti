@@ -224,4 +224,9 @@ icon.addEventListener("click", setFrameList);
 
 setFrameList();
 
+window.addEventListener("{uniqueID}_destroy", () => {
+	window.removeEventListener("tf_fixed_frame_changed", calculateSpeed);
+	window.removeEventListener("tf_changed", calculateSpeed);
+}, {once: true});
+
 console.log("Speedometer Widget Loaded {uniqueID}")

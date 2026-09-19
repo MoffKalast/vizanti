@@ -923,16 +923,19 @@ window.addEventListener('orientationchange', resizeScreen);
 window.addEventListener("view_changed", drawWaypoints);
 
 window.addEventListener("tf_fixed_frame_changed", drawWaypoints);
-window.addEventListener("tf_changed", ()=>{
+function onTFChanged(){
 	if(fixed_frame != tf.fixed_frame){
 		drawWaypoints();
 	}
-});
+}
 
-view_container.addEventListener("mouseleave", (event) => {
+function onMouseLeave(event){
 	delta = undefined;
 	endDrag(event);
-});
+}
+
+window.addEventListener("tf_changed", onTFChanged);
+view_container.addEventListener("mouseleave", onMouseLeave);
 
 function addListeners(){
 	view_container.addEventListener('mousedown', startDrag);
@@ -1146,11 +1149,13 @@ icon.addEventListener("click", (event) => {
 });
 
 // Close dropdown when clicking outside
-document.addEventListener("click", (event) => {
+function onDocumentClick(event){
 	if (!dropdown.contains(event.target) && !icon.contains(event.target)) {
 		dropdown_visibility(false);
 	}
-});
+}
+
+document.addEventListener("click", onDocumentClick);
 
 const drop_start = document.getElementById("{uniqueID}_sendAction");
 const drop_stop = document.getElementById("{uniqueID}_stopAction");
@@ -1191,5 +1196,23 @@ drop_config.addEventListener("click", (event) => {
 });
 
 resizeScreen();
+
+window.addEventListener("{uniqueID}_destroy", () => {
+	if(path_publisher !== undefined)
+		path_publisher.unadvertise();
+
+	removeListeners();
+
+	view_container.removeEventListener("mouseleave", onMouseLeave);
+	document.removeEventListener("click", onDocumentClick);
+
+	window.removeEventListener("resize", resizeScreen);
+	window.removeEventListener("orientationchange", resizeScreen);
+	window.removeEventListener("view_changed", drawWaypoints);
+	window.removeEventListener("tf_fixed_frame_changed", drawWaypoints);
+	window.removeEventListener("tf_changed", onTFChanged);
+	window.removeEventListener("keydown", handleKeyDown);
+	window.removeEventListener("keyup", handleKeyUp);
+}, {once: true});
 
 console.log("Waypoints Widget Loaded {uniqueID}")
