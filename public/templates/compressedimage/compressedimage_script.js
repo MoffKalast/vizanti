@@ -72,19 +72,6 @@ function parseFormat(format){
 	return {encoding, compression, is_depth};
 }
 
-function base64ByteLength(data){
-	if(data === undefined || data.length == 0)
-		return 0;
-
-	let padding = 0;
-	if(data.endsWith("=="))
-		padding = 2;
-	else if(data.endsWith("="))
-		padding = 1;
-
-	return Math.floor(data.length * 3 / 4) - padding;
-}
-
 function formatBytes(bytes){
 	if(bytes >= 1024 * 1024)
 		return (bytes / (1024 * 1024)).toFixed(2)+" MB";
@@ -110,7 +97,7 @@ function resetLiveData(){
 
 function updateLiveData(msg){
 	const info = parseFormat(msg.format);
-	const bytes = base64ByteLength(msg.data);
+	const bytes = msg.data?.byteLength ?? 0;
 
 	arrival_times.push(performance.now());
 	arrival_bytes.push(bytes);
@@ -194,6 +181,16 @@ function saveSettings(){
 
 //Topic
 
+let blob_url = undefined;
+
+function setCanvasSrc(src){
+	if(blob_url !== undefined)
+		URL.revokeObjectURL(blob_url);
+
+	blob_url = src.startsWith("blob:") ? src : undefined;
+	canvas.src = src;
+}
+
 async function getImage(src) {
     return new Promise((resolve, reject) => {
         let img = new Image();
@@ -207,7 +204,7 @@ function connect(){
 
 	resetLiveData();
 
-	canvas.src = stock_images["loading"];
+	setCanvasSrc(stock_images["loading"]);
 	displayImageOffset(img_offset_x, img_offset_y);
 
 	if(topic == ""){
@@ -226,12 +223,14 @@ function connect(){
 		name : topic,
 		messageType : 'sensor_msgs/CompressedImage',
 		throttle_rate: parseInt(throttle.value),
-		queue_length: 1
+		queue_length: 1,
+		compression: 'cbor'
 	});
 	
 	let received = false;
 	listener = image_topic.subscribe(async (msg) => {  
-		const src = 'data:image/jpeg;base64,' + msg.data
+		const mime = parseFormat(msg.format).compression == "png" ? "image/png" : "image/jpeg";
+		const src = URL.createObjectURL(new Blob([msg.data], {type: mime}));
 
 		updateLiveData(msg);
 
@@ -247,12 +246,13 @@ function connect(){
 			            received = true;
 			        }
 			    };
-			    canvas.src = src;
+			    setCanvasSrc(src);
 			})
 			.catch((e) => {
-				canvas.src = stock_images["error"];
+				URL.revokeObjectURL(src);
+				setCanvasSrc(stock_images["error"]);
 				displayImageOffset(img_offset_x, img_offset_y);
-				status.setError(e.message);
+				status.setError("Failed to decode image.");
 			});
 	});
 
@@ -380,6 +380,9 @@ window.addEventListener("{uniqueID}_destroy", () => {
 	if(image_topic !== undefined)
 		image_topic.unsubscribe(listener);
 
+	if(blob_url !== undefined)
+		URL.revokeObjectURL(blob_url);
+
 	window.removeEventListener("resize", onResize);
 	document.removeEventListener("mousemove", onMove);
 	document.removeEventListener("touchmove", onMove);
@@ -388,4 +391,3 @@ window.addEventListener("{uniqueID}_destroy", () => {
 }, {once: true});
 
 console.log("Image Widget Loaded {uniqueID}")
-

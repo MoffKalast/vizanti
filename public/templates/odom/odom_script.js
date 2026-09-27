@@ -354,7 +354,6 @@ function connect(){
 		name : raw_target,
 		messageType : 'nav_msgs/Odometry',
 		throttle_rate: parseInt(throttle.value),
-		compression: rosbridge.compression,
 		queue_length: 1
 	});
 
