@@ -423,21 +423,34 @@ function resizeScreen(){
 	drawFrames();
 }
 
-window.addEventListener("tf_changed", ()=>{
+function onTFChanged(){
 	status.setOK();
 	drawFrames();
-});
+}
 
-window.addEventListener("tf_fixed_frame_changed", ()=>{
+function onFixedFrameChanged(){
 	drawFrames();
-});
+}
 
-setInterval(updateVisibility, 1000);
+window.addEventListener("tf_changed", onTFChanged);
+window.addEventListener("tf_fixed_frame_changed", onFixedFrameChanged);
+
+const visibility_interval = setInterval(updateVisibility, 1000);
 
 window.addEventListener("view_changed", drawFrames);
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);
 
 resizeScreen();
+
+window.addEventListener("{uniqueID}_destroy", () => {
+	clearInterval(visibility_interval);
+
+	window.removeEventListener("tf_changed", onTFChanged);
+	window.removeEventListener("tf_fixed_frame_changed", onFixedFrameChanged);
+	window.removeEventListener("view_changed", drawFrames);
+	window.removeEventListener("resize", resizeScreen);
+	window.removeEventListener("orientationchange", resizeScreen);
+}, {once: true});
 
 console.log("TF Widget Loaded {uniqueID}")

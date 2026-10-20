@@ -72,19 +72,6 @@ function parseFormat(format){
 	return {encoding, compression, is_depth};
 }
 
-function base64ByteLength(data){
-	if(data === undefined || data.length == 0)
-		return 0;
-
-	let padding = 0;
-	if(data.endsWith("=="))
-		padding = 2;
-	else if(data.endsWith("="))
-		padding = 1;
-
-	return Math.floor(data.length * 3 / 4) - padding;
-}
-
 function formatBytes(bytes){
 	if(bytes >= 1024 * 1024)
 		return (bytes / (1024 * 1024)).toFixed(2)+" MB";
@@ -108,10 +95,9 @@ function resetLiveData(){
 	text_frame.innerText = "Frame: ?";
 }
 
-function updateLiveData(msg, base64Data){
+function updateLiveData(msg, bytes){
 	const info = parseFormat(msg.format);
-	const bytes = base64ByteLength(base64Data);
-	
+
 	arrival_times.push(performance.now());
 	arrival_bytes.push(bytes);
 
@@ -192,22 +178,37 @@ function saveSettings(){
 	displayImageOffset(img_offset_x, img_offset_y);
 }
 
-let isRWSFormat = null;
-function getBase64ImageData(msg) {
-	if (isRWSFormat === null) {
-		isRWSFormat = typeof msg.data !== 'string';
-		console.log(`Detected message format: ${isRWSFormat ? 'RWS' : 'rosbridge'}`);
+const PNG_SIGNATURE = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+
+function getImageBytes(msg){
+	if(typeof msg.data === "string")
+		return Uint8Array.fromBase64(msg.data);
+
+	return msg.data instanceof Uint8Array ? msg.data : new Uint8Array(msg.data);
+}
+
+function findPngStart(bytes){
+	const limit = Math.min(64, bytes.length - PNG_SIGNATURE.length);
+	for(let i = 0; i <= limit; i++){
+		if(PNG_SIGNATURE.every((value, j) => bytes[i + j] == value))
+			return i;
 	}
-	
-	if (isRWSFormat) {
-		const msg_data = new Uint8Array(msg.data);
-		return msg_data.toBase64();
-	} else {
-		return msg.data;
-	}
+
+	return 0;
 }
 
 //Topic
+
+let blob_url = undefined;
+
+function setCanvasSrc(src){
+	if(blob_url !== undefined)
+		URL.revokeObjectURL(blob_url);
+
+	blob_url = src.startsWith("blob:") ? src : undefined;
+	canvas.src = src;
+}
+
 async function getImage(src) {
     return new Promise((resolve, reject) => {
         let img = new Image();
@@ -221,7 +222,7 @@ function connect(){
 
 	resetLiveData();
 
-	canvas.src = stock_images["loading"];
+	setCanvasSrc(stock_images["loading"]);
 	displayImageOffset(img_offset_x, img_offset_y);
 
 	if(topic == ""){
@@ -240,25 +241,22 @@ function connect(){
 		name : topic,
 		messageType : 'sensor_msgs/msg/CompressedImage',
 		throttle_rate: parseInt(throttle.value),
-		queue_length: 1
+		queue_length: 1,
+		compression: "cbor"
 	});
 	
 	let received = false;
 	listener = image_topic.subscribe(async (msg) => {  
 
 		const mime = msg.format.includes("png") ? "image/png" : "image/jpeg";
-		let base64Data = getBase64ImageData(msg);
+		let bytes = getImageBytes(msg);
 
-		if (mime == "image/png") {
-			const pngIndex = base64Data.indexOf("iVBORw0KGgo");
-			if (pngIndex !== -1) {
-				base64Data =  base64Data.substring(pngIndex);
-			}
-		}
+		updateLiveData(msg, typeof msg.data === "string" ? msg.data.length : bytes.byteLength);
 
-		const src = `data:${mime};base64,${base64Data}`;
+		if(mime == "image/png")
+			bytes = bytes.subarray(findPngStart(bytes));
 
-		updateLiveData(msg, base64Data);
+		const src = URL.createObjectURL(new Blob([bytes], {type: mime}));
 
 		getImage(src)
 			.then((img) => {
@@ -280,12 +278,13 @@ function connect(){
 			            received = true;
 			        }
 			    };
-			    canvas.src = src;
+			    setCanvasSrc(src);
 			})
 			.catch((e) => {
-				canvas.src = stock_images["error"];
+				URL.revokeObjectURL(src);
+				setCanvasSrc(stock_images["error"]);
 				displayImageOffset(img_offset_x, img_offset_y);
-				status.setError(e.message);
+				status.setError("Failed to decode image.");
 			});
 	});
 
@@ -373,9 +372,11 @@ function displayImageOffset(x, y){
 	canvas.style.top  = offset_y + "vh";
 }
 
-window.addEventListener('resize', ()=>{
+function onResize(){
 	displayImageOffset(img_offset_x, img_offset_y);
-});
+}
+
+window.addEventListener('resize', onResize);
 
 function onMove(event) {
 	if (preview_active) {
@@ -407,5 +408,18 @@ imgpreview.addEventListener('touchstart', onStart);
 
 displayImageOffset(img_offset_x, img_offset_y);
 
-console.log("Image Widget Loaded {uniqueID}")
+window.addEventListener("{uniqueID}_destroy", () => {
+	if(image_topic !== undefined)
+		image_topic.unsubscribe(listener);
 
+	if(blob_url !== undefined)
+		URL.revokeObjectURL(blob_url);
+
+	window.removeEventListener("resize", onResize);
+	document.removeEventListener("mousemove", onMove);
+	document.removeEventListener("touchmove", onMove);
+	document.removeEventListener("mouseup", onEnd);
+	document.removeEventListener("touchend", onEnd);
+}, {once: true});
+
+console.log("Image Widget Loaded {uniqueID}")

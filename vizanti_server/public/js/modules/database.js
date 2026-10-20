@@ -49,6 +49,12 @@ export class IndexedDatabase {
 		});
 	}
 
+	async deleteObject(key) {
+		await this._performTransaction('readwrite', (store) => {
+			store.delete(key);
+		});
+	}
+
 	async getAllKeys(){
 		return await this._performTransaction('readonly', (store) => {
 			return store.getAllKeys();

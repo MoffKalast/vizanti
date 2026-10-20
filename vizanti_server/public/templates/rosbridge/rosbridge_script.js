@@ -49,8 +49,14 @@ function update_gui(){
 	}
 }
 
-window.addEventListener("rosbridge_change", function(event){
-	update_gui();    
-});
+function onRosbridgeChange(event){
+	update_gui();
+}
+
+window.addEventListener("rosbridge_change", onRosbridgeChange);
 
 update_gui();
+
+window.addEventListener("{uniqueID}_destroy", () => {
+	window.removeEventListener("rosbridge_change", onRosbridgeChange);
+}, {once: true});

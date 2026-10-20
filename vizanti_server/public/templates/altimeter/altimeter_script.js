@@ -338,13 +338,15 @@ async function drawWidget() {
 	}
 }
 
+let render_handle = undefined;
+
 function enqueueRender() {
 	if(Math.abs(meters - meters_smooth) > step * 0.01){
 		meters_smooth = meters_smooth * 0.95 + meters * 0.05;
 		drawWidget();
 	}
 
-	window.requestAnimationFrame(enqueueRender);
+	render_handle = window.requestAnimationFrame(enqueueRender);
 }
 
 function resizeScreen(){
@@ -363,13 +365,15 @@ function resizeScreen(){
 }
 
 window.addEventListener("tf_fixed_frame_changed", drawWidget);
-window.addEventListener("tf_changed", ()=>{
+function onTFChanged(){
 	let new_val = getMeters();
 	if(new_val != meters){
 		meters = new_val;
 		drawWidget();
 	}
-});
+}
+
+window.addEventListener("tf_changed", onTFChanged);
 
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);
@@ -573,9 +577,11 @@ function refreshStyleSetup(){
 	}
 }
 
-window.addEventListener('resize', ()=>{
+function onStyleResize(){
 	refreshStyleSetup();
-});
+}
+
+window.addEventListener('resize', onStyleResize);
 
 function onStart(event) {
 	preview_active = true;
@@ -626,5 +632,27 @@ document.getElementById("{uniqueID}_manual_target").addEventListener("click", as
 		drawWidget();
 	}
 });
+
+window.addEventListener("{uniqueID}_destroy", () => {
+	if(float_topic !== undefined)
+		float_topic.unsubscribe(listener);
+
+	if(render_handle !== undefined)
+		window.cancelAnimationFrame(render_handle);
+
+	window.removeEventListener("tf_fixed_frame_changed", drawWidget);
+	window.removeEventListener("tf_changed", onTFChanged);
+	window.removeEventListener("resize", resizeScreen);
+	window.removeEventListener("orientationchange", resizeScreen);
+	window.removeEventListener("iconbar_height_change", resizeScreen);
+	window.removeEventListener("resize", onStyleResize);
+
+	document.removeEventListener("mouseup", onTargetEnd);
+	document.removeEventListener("touchend", onTargetEnd);
+	document.removeEventListener("mousemove", onMove);
+	document.removeEventListener("touchmove", onMove);
+	document.removeEventListener("mouseup", onEnd);
+	document.removeEventListener("touchend", onEnd);
+}, {once: true});
 
 console.log("Altimeter Widget Loaded {uniqueID}")
