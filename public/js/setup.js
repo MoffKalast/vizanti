@@ -27,6 +27,17 @@ window.addEventListener("load", function(){
 	window.dispatchEvent(new Event('resize'));
 }, false); 
 
+function autoFullscreenEnabled(){
+	return localStorage.getItem('autoFullscreen') !== 'false';
+}
+
+if(isMobile && document.fullscreenEnabled){
+	document.addEventListener('touchend', () => {
+		if(autoFullscreenEnabled() && !document.fullscreenElement)
+			document.documentElement.requestFullscreen().catch(() => {});
+	});
+}
+
 var widgetTarget = "icon_container";
 
 //modal opening
