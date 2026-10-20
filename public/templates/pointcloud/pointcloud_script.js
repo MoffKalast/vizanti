@@ -25,6 +25,9 @@ const selectionbox = document.getElementById("{uniqueID}_topic");
 const click_icon = document.getElementById("{uniqueID}_icon");
 const icon = click_icon.getElementsByTagName('object')[0];
 
+const canvas = document.getElementById('{uniqueID}_canvas');
+const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
+
 const opacitySlider = document.getElementById('{uniqueID}_opacity');
 const opacityValue = document.getElementById('{uniqueID}_opacity_value');
 opacitySlider.addEventListener('input', () =>  {
@@ -116,9 +119,6 @@ function saveSettings(){
 	settings.save();
 	drawCloud();
 }
-
-const canvas = document.getElementById('{uniqueID}_canvas');
-const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
 
 async function drawCloud() {
     const pixel = view.getMapUnitsInPixels(thicknessSlider.value);
@@ -454,5 +454,15 @@ click_icon.addEventListener("click", loadTopics);
 
 loadTopics();
 resizeScreen();
+
+window.addEventListener("{uniqueID}_destroy", () => {
+	if(range_topic !== undefined)
+		range_topic.unsubscribe(listener);
+
+	window.removeEventListener("tf_fixed_frame_changed", drawCloud);
+	window.removeEventListener("view_changed", drawCloud);
+	window.removeEventListener("resize", resizeScreen);
+	window.removeEventListener("orientationchange", resizeScreen);
+}, {once: true});
 
 console.log("Point Cloud Widget Loaded {uniqueID}")

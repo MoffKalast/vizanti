@@ -475,17 +475,30 @@ function resizeScreen(){
 }
 
 window.addEventListener("tf_fixed_frame_changed", drawMarkers);
-window.addEventListener("tf_changed", ()=>{
+function onTFChanged(){
 	if(frame != tf.fixed_frame){
 		drawMarkers();
 	}
-});
+}
+
+window.addEventListener("tf_changed", onTFChanged);
 
 window.addEventListener("view_changed", drawMarkers);
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);
 
 resizeScreen();
+
+window.addEventListener("{uniqueID}_destroy", () => {
+	if(marker_topic !== undefined)
+		marker_topic.unsubscribe(listener);
+
+	window.removeEventListener("tf_fixed_frame_changed", drawMarkers);
+	window.removeEventListener("tf_changed", onTFChanged);
+	window.removeEventListener("view_changed", drawMarkers);
+	window.removeEventListener("resize", resizeScreen);
+	window.removeEventListener("orientationchange", resizeScreen);
+}, {once: true});
 
 console.log("Pose Widget Loaded {uniqueID}")
 

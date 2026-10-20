@@ -623,7 +623,7 @@ function setMode(){
 }
 
 let tf_throttle_stamp = 0;
-window.addEventListener("tf_changed", ()=>{
+function onTFChanged(){
 	if(mode == "tf"){
 		const now = Date.now();
 		if(now - tf_throttle_stamp >= parseInt(throttle.value)){
@@ -642,7 +642,9 @@ window.addEventListener("tf_changed", ()=>{
 			tf_throttle_stamp = now;
 		}
 	}
-});
+}
+
+window.addEventListener("tf_changed", onTFChanged);
 
 //preview for definining position
 let preview_active = false;
@@ -681,9 +683,11 @@ function displayImageOffset(x, y){
 	renderNavball();
 }
 
-window.addEventListener('resize', ()=>{
+function onResize(){
 	displayImageOffset(offset_x, offset_y);
-});
+}
+
+window.addEventListener('resize', onResize);
 
 function onMove(event) {
 	if (preview_active) {
@@ -720,6 +724,21 @@ imgpreview.addEventListener('mousedown', onStart);
 imgpreview.addEventListener('touchstart', onStart);
 
 displayImageOffset(offset_x, offset_y);
+
+window.addEventListener("{uniqueID}_destroy", () => {
+	if(imu_topic !== undefined)
+		imu_topic.unsubscribe(listener);
+
+	clearInterval(updateInteral);
+
+	window.removeEventListener("tf_changed", onTFChanged);
+	window.removeEventListener("resize", onResize);
+
+	document.removeEventListener("mousemove", onMove);
+	document.removeEventListener("touchmove", onMove);
+	document.removeEventListener("mouseup", onEnd);
+	document.removeEventListener("touchend", onEnd);
+}, {once: true});
 
 console.log("Navball Widget Loaded {uniqueID}")
 

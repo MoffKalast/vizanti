@@ -140,11 +140,13 @@ function resizeScreen(){
 }
 
 window.addEventListener("tf_fixed_frame_changed", drawCells);
-window.addEventListener("tf_changed", ()=>{
+function onTFChanged(){
 	if (data && data.msg.frame_id != tf.fixed_frame){
 		drawCells();
 	}
-});
+}
+
+window.addEventListener("tf_changed", onTFChanged);
 
 window.addEventListener("view_changed", drawCells);
 window.addEventListener('resize', resizeScreen);
@@ -252,5 +254,16 @@ click_icon.addEventListener("click", loadTopics);
 
 loadTopics();
 resizeScreen();
+
+window.addEventListener("{uniqueID}_destroy", () => {
+	if(range_topic !== undefined)
+		range_topic.unsubscribe(listener);
+
+	window.removeEventListener("tf_fixed_frame_changed", drawCells);
+	window.removeEventListener("tf_changed", onTFChanged);
+	window.removeEventListener("view_changed", drawCells);
+	window.removeEventListener("resize", resizeScreen);
+	window.removeEventListener("orientationchange", resizeScreen);
+}, {once: true});
 
 console.log("Gridcells Widget Loaded {uniqueID}")

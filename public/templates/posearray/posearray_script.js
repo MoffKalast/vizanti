@@ -272,5 +272,15 @@ window.addEventListener('orientationchange', resizeScreen);
 
 resizeScreen();
 
+window.addEventListener("{uniqueID}_destroy", () => {
+	if(poses_topic !== undefined)
+		poses_topic.unsubscribe(listener);
+
+	window.removeEventListener("tf_fixed_frame_changed", drawArrows);
+	window.removeEventListener("view_changed", drawArrows);
+	window.removeEventListener("resize", resizeScreen);
+	window.removeEventListener("orientationchange", resizeScreen);
+}, {once: true});
+
 console.log("PoseArray Widget Loaded {uniqueID}")
 

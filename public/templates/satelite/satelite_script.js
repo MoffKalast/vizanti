@@ -607,11 +607,13 @@ function resizeScreen(){
 
 window.addEventListener("navsat_tilecache_updated", scheduleDraw);
 window.addEventListener("tf_fixed_frame_changed", scheduleDraw);
-window.addEventListener("tf_changed", ()=>{
+function onTFChanged(){
 	if(map_fix && map_fix.header.frame_id != tf.fixed_frame){
 		scheduleDraw();
 	}
-});
+}
+
+window.addEventListener("tf_changed", onTFChanged);
 
 window.addEventListener("view_changed", scheduleDraw);
 window.addEventListener('resize', resizeScreen);
@@ -649,5 +651,17 @@ document.getElementById("{uniqueID}_import_DB").addEventListener("click", (event
 });
 
 resizeScreen();
+
+window.addEventListener("{uniqueID}_destroy", () => {
+	if(map_topic !== undefined)
+		map_topic.unsubscribe(listener);
+
+	window.removeEventListener("navsat_tilecache_updated", scheduleDraw);
+	window.removeEventListener("tf_fixed_frame_changed", scheduleDraw);
+	window.removeEventListener("tf_changed", onTFChanged);
+	window.removeEventListener("view_changed", scheduleDraw);
+	window.removeEventListener("resize", resizeScreen);
+	window.removeEventListener("orientationchange", resizeScreen);
+}, {once: true});
 
 console.log("Satelite Widget Loaded {uniqueID}")

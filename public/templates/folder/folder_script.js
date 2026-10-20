@@ -122,4 +122,13 @@ remove_button.addEventListener('click', async () => {
 	}
 });
 
+window.addEventListener("{uniqueID}_destroy", () => {
+	observer.disconnect();
+
+	for(const sub_observer of observers) {
+		sub_observer.disconnect();
+	}
+	observers.length = 0;
+}, {once: true});
+
 console.log("Folder Loaded {uniqueID}")

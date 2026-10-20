@@ -205,4 +205,9 @@ icon.addEventListener("click", loadTopics);
 
 loadTopics();
 
+window.addEventListener("{uniqueID}_destroy", () => {
+	if(topicobj !== undefined)
+		topicobj.unsubscribe(listener);
+}, {once: true});
+
 console.log("Inspector Widget Loaded {uniqueID}")

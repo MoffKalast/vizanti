@@ -289,4 +289,9 @@ function cancelLongPress(event) {
 	clearTimeout(longPressTimer);
 }
 
+window.addEventListener("{uniqueID}_destroy", () => {
+	if(booltopic !== undefined)
+		booltopic.unsubscribe(listener);
+}, {once: true});
+
 console.log("Button Widget Loaded {uniqueID}")

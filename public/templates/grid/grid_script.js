@@ -318,10 +318,12 @@ function resizeScreen(){
 
 window.addEventListener("view_changed", drawGrid);
 window.addEventListener("tf_fixed_frame_changed", drawGrid);
-window.addEventListener("tf_changed", () => {
+function onTFChanged(){
 	if (grid_frame !== "" && grid_frame !== tf.fixed_frame)
 		drawGrid();
-});
+}
+
+window.addEventListener("tf_changed", onTFChanged);
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);
 
@@ -399,5 +401,13 @@ subdivisions.addEventListener("input", (event) =>{
 
 updateFrameList();
 resizeScreen();
+
+window.addEventListener("{uniqueID}_destroy", () => {
+	window.removeEventListener("view_changed", drawGrid);
+	window.removeEventListener("tf_fixed_frame_changed", drawGrid);
+	window.removeEventListener("tf_changed", onTFChanged);
+	window.removeEventListener("resize", resizeScreen);
+	window.removeEventListener("orientationchange", resizeScreen);
+}, {once: true});
 
 console.log("Grid Widget Loaded {uniqueID}")

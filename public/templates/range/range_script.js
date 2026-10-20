@@ -304,4 +304,14 @@ icon.addEventListener("click", loadTopics);
 loadTopics();
 resizeScreen();
 
+window.addEventListener("{uniqueID}_destroy", () => {
+	if(range_topic !== undefined)
+		range_topic.unsubscribe(listener);
+
+	window.removeEventListener("tf_fixed_frame_changed", drawRanges);
+	window.removeEventListener("view_changed", drawRanges);
+	window.removeEventListener("resize", resizeScreen);
+	window.removeEventListener("orientationchange", resizeScreen);
+}, {once: true});
+
 console.log("Range Widget Loaded {uniqueID}")

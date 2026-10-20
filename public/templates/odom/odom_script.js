@@ -354,7 +354,6 @@ function connect(){
 		name : raw_target,
 		messageType : 'nav_msgs/Odometry',
 		throttle_rate: parseInt(throttle.value),
-		compression: rosbridge.compression,
 		queue_length: 1
 	});
 
@@ -465,7 +464,7 @@ function resizeScreen(){
 }
 
 let tf_throttle_stamp = 0;
-window.addEventListener("tf_changed", ()=>{
+function onTFChanged(){
 	if(mode == "tf"){
 		const now = Date.now();
 		if(now - tf_throttle_stamp >= parseInt(throttle.value)){
@@ -483,17 +482,33 @@ window.addEventListener("tf_changed", ()=>{
 			}
 		}
 	}
-});
+}
 
-window.addEventListener("tf_fixed_frame_changed", ()=>{
+function onFixedFrameChanged(){
 	sample_array = []; //TODO keep a ref to the old frame and trasform the history
 	drawHistory();
-});
+}
+
+window.addEventListener("tf_changed", onTFChanged);
+window.addEventListener("tf_fixed_frame_changed", onFixedFrameChanged);
 
 window.addEventListener("view_changed", drawHistory);
 window.addEventListener('resize', resizeScreen);
 window.addEventListener('orientationchange', resizeScreen);
 
 resizeScreen();
+
+window.addEventListener("{uniqueID}_destroy", () => {
+	if(odom_topic !== undefined)
+		odom_topic.unsubscribe(listener);
+
+	db.deleteObject(DB_KEY);
+
+	window.removeEventListener("tf_changed", onTFChanged);
+	window.removeEventListener("tf_fixed_frame_changed", onFixedFrameChanged);
+	window.removeEventListener("view_changed", drawHistory);
+	window.removeEventListener("resize", resizeScreen);
+	window.removeEventListener("orientationchange", resizeScreen);
+}, {once: true});
 
 console.log("Odom Pose Tracker Widget Loaded {uniqueID}")
