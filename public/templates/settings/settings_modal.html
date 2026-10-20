@@ -14,17 +14,22 @@
 		<label for="{uniqueID}_colorpicker">Background Color:</label>
 		<input type="color" value="#273444" id="{uniqueID}_colorpicker">
 
-
-		<div class="spacer"></div>
-		<hr class="dark_hr"/>
+		<div id="{uniqueID}_fullscreen_section">
+			<div class="spacer"></div>
+			<label for="{uniqueID}_autofullscreen">Auto fullscreen on mobile touchscreens:</label>
+			<input type="checkbox" checked id="{uniqueID}_autofullscreen">
+			<p class="comment">Enters fullscreen on the next touch whenever the page isn't fullscreen. Saved per device.</p>
+		</div>
 
 		<h4>Manage settings</h4>
 
 		<span><button id="{uniqueID}_export_persistent" class="export_button">⇑ Export</button><button id="{uniqueID}_import_persistent" class="export_button">⇓ Import</button></span>
 		<p class="comment">
 			Exporting the current configuration will save the widget layout, settings, camera pose, and other info, so it can be imported later, 
-			or so it can be <a href="https://github.com/MoffKalast/vizanti/wiki/Advanced-Configuration#adding-a-default-config" class="highlight-link">set as a default config</a>.
+			or so it can be <a href="https://moffkalast.github.io/vizanti_docs/#configuration" class="highlight-link">set as a default config</a>.
 		</p>
+
+		<hr class="dark_hr"/>
 
 		<div class="spacer"></div>
 
