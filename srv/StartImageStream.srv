@@ -1,0 +1,9 @@
+string topic
+string mode
+int32 throttle
+string sdp
+---
+bool success
+string message
+string stream_topic
+string sdp

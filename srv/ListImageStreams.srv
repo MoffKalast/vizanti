@@ -1,0 +1,5 @@
+---
+string[] topics
+string[] types
+string[] modes
+string[] pipelines

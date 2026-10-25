@@ -18,10 +18,13 @@ for (let i = 0; i < widgets.length; i++) {
 	if(topics !== undefined){
 		topics.split(",").forEach(topic => {
 			if(topic !== undefined){
+				const entry = {element: widgets[i], transcoded: topic.endsWith("*")};
+				topic = topic.replace("*", "");
+
 				if(topic in types){
-					types[topic].push(widgets[i]);
+					types[topic].push(entry);
 				}else{
-					types[topic] = [widgets[i]];
+					types[topic] = [entry];
 				}
 			}
 		});
@@ -57,15 +60,18 @@ async function update_topics(){
 	topicDiv.innerHTML = "";
 	for (let i = 0; i < result.types.length; i++) {
 		let type = result.types[i];
+		if(result.topics[i].startsWith("/vizanti/"))
+			continue;
+
 		if(type in types){
-			types[type].forEach(element => {
-				let newnode = element.cloneNode(true);
+			types[type].forEach(entry => {
+				let newnode = entry.element.cloneNode(true);
 				let title = newnode.querySelector('.card_title');
 				let desc = newnode.querySelector('.card_desc');
 				
 				newnode.setAttribute('onclick', newnode.getAttribute("onclick").replace(",\'\')",",\'"+result.topics[i]+"\')"));
 
-				desc.innerText = title.innerText + " ["+type + "]";
+				desc.innerText = title.innerText + " ["+type + (entry.transcoded ? "*" : "") + "]";
 				title.innerText = result.topics[i];
 				topicDiv.appendChild(newnode);
 			});

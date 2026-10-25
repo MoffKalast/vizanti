@@ -29,12 +29,43 @@ stock_images["error"] = await imageToDataURL("assets/img_error.png");
 
 let image_topic = undefined;
 let listener = undefined;
+let peer = undefined;
+let stats_timer = undefined;
+let last_stats = undefined;
+let connection_id = 0;
+let active_stream = undefined;
+let stream_failed = false;
+let stream_received = false;
+let active_throttle = undefined;
+let throttle_timer = undefined;
+
+let mode = "mjpeg";
+let streams = [];
+
+const PIPELINE_DESCRIPTIONS = {
+	passthrough: "passthrough, images are sent exactly as published",
+	repackage: "repackage, the video is rewrapped on the robot without re-encoding",
+	transcode: "transcode, images are re-encoded on the robot, which uses CPU"
+};
+
+const list_service = new ROSLIB.Service({
+	ros : rosbridge.ros,
+	name : "/vizanti/image_streams/list",
+	serviceType : "vizanti/ListImageStreams"
+});
+
+const start_service = new ROSLIB.Service({
+	ros : rosbridge.ros,
+	name : "/vizanti/image_streams/start",
+	serviceType : "vizanti/StartImageStream"
+});
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
 const rotationbox = document.getElementById("{uniqueID}_rotation");
 
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
 const canvas = document.getElementById('{uniqueID}_image');
+const video = document.getElementById('{uniqueID}_video');
 const imgpreview = document.getElementById('{uniqueID}_imgpreview');
 
 const opacitySlider = document.getElementById('{uniqueID}_opacity');
@@ -58,6 +89,7 @@ const text_bandwidth = document.getElementById("{uniqueID}_bandwidth");
 const text_compression = document.getElementById("{uniqueID}_compression");
 const text_type = document.getElementById("{uniqueID}_type");
 const text_frame = document.getElementById("{uniqueID}_frame");
+const text_pipeline = document.getElementById("{uniqueID}_pipeline");
 
 const COMPRESSION_TYPES = ["jpeg", "jpg", "png", "tiff", "webp", "rvl"];
 
@@ -122,9 +154,29 @@ function updateLiveData(msg){
 }
 
 const throttle = document.getElementById('{uniqueID}_throttle');
-throttle.addEventListener("input", (event) =>{
+
+function throttleMs(){
+	return Math.max(0, parseInt(throttle.value) || 0);
+}
+
+function applyThrottle(){
+	clearTimeout(throttle_timer);
+
+	if(throttleMs() == active_throttle)
+		return;
+
 	saveSettings();
 	connect();
+}
+
+throttle.addEventListener("input", (event) =>{
+	clearTimeout(throttle_timer);
+	throttle_timer = setTimeout(applyThrottle, 1000);
+});
+
+throttle.addEventListener("change", (event) =>{
+	throttle.value = throttleMs();
+	applyThrottle();
 });
 
 rotationbox.addEventListener("change", (event) => {
@@ -136,6 +188,7 @@ rotationbox.addEventListener("change", (event) => {
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
 	topic = loaded_data.topic;
+	mode = loaded_data.mode ?? "mjpeg";
 
 	img_offset_x = loaded_data.img_offset_x;
 	img_offset_y = loaded_data.img_offset_y;
@@ -163,6 +216,7 @@ if(settings.hasOwnProperty("{uniqueID}")){
 function saveSettings(){
 	settings["{uniqueID}"] = {
 		topic: topic,
+		mode: mode,
 		opacity: opacitySlider.value,
 		throttle: throttle.value,
 		width: widthSlider.value,
@@ -174,8 +228,10 @@ function saveSettings(){
 	}
 	settings.save();
 
-	canvas.style.opacity = opacitySlider.value;
-	canvas.style.transform = `translate(-50%, -50%) rotate(${rotationbox.value}deg)`;
+	[canvas, video].forEach(element => {
+		element.style.opacity = opacitySlider.value;
+		element.style.transform = `translate(-50%, -50%) rotate(${rotationbox.value}deg)`;
+	});
 	displayImageOffset(img_offset_x, img_offset_y);
 }
 
@@ -200,34 +256,122 @@ async function getImage(src) {
     });
 }
 
-function connect(){
+function callService(service, request){
+	return new Promise((resolve, reject) => {
+		service.callService(new ROSLIB.ServiceRequest(request), resolve, reject);
+	});
+}
 
-	resetLiveData();
+function showVideo(visible){
+	video.style.display = visible ? "" : "none";
+	canvas.style.display = visible ? "none" : "";
+}
 
-	setCanvasSrc(stock_images["loading"]);
+function showStockImage(name){
+	showVideo(false);
+	canvas.onload = null;
+	setCanvasSrc(stock_images[name]);
 	displayImageOffset(img_offset_x, img_offset_y);
+}
 
-	if(topic == ""){
-		status.setError("Empty topic.");
-		return;
-	}
+function updatePipeline(){
+	const stream = streams.find(s => s.topic == topic && s.mode == mode);
+	text_pipeline.innerText = "Pipeline: "+(stream === undefined ? "?" : PIPELINE_DESCRIPTIONS[stream.pipeline] ?? stream.pipeline);
+}
+
+function fail(message){
+	stream_failed = true;
+	status.setError(message);
+}
+
+function streamRunning(){
+	if(stream_failed || active_stream != mode+":"+topic)
+		return false;
+
+	if(mode == "webrtc")
+		return peer !== undefined && ["new", "connecting", "connected"].includes(peer.connectionState);
+
+	return stream_received;
+}
+
+function disconnect(){
+	connection_id++;
+	active_stream = undefined;
 
 	if(image_topic !== undefined){
 		image_topic.unsubscribe(listener);
+		image_topic = undefined;
 	}
+
+	if(peer !== undefined){
+		peer.close();
+		peer = undefined;
+	}
+
+	if(stats_timer !== undefined){
+		clearInterval(stats_timer);
+		stats_timer = undefined;
+	}
+
+	last_stats = undefined;
+	video.srcObject = null;
+}
+
+function connect(){
+	disconnect();
+	active_stream = mode+":"+topic;
+	active_throttle = throttleMs();
+	stream_failed = false;
+	stream_received = false;
+	resetLiveData();
+	updatePipeline();
+	showStockImage("loading");
+	saveSettings();
+
+	if(topic == ""){
+		fail("Empty topic.");
+		return;
+	}
+
+	status.setWarn("Starting stream...");
+
+	if(mode == "webrtc")
+		connectWebrtc(connection_id);
+	else
+		connectMjpeg(connection_id);
+}
+
+async function connectMjpeg(id){
+	let stream_topic = topic;
+
+	try{
+		const result = await callService(start_service, {topic: topic, mode: "mjpeg", throttle: throttleMs(), sdp: ""});
+
+		if(!result.success){
+			if(id == connection_id)
+				fail(result.message);
+			return;
+		}
+
+		stream_topic = result.stream_topic;
+	}catch(error){
+		console.warn("Image stream service unavailable, subscribing directly:", error);
+	}
+
+	if(id != connection_id)
+		return;
 
 	status.setWarn("No data received.");
 
 	image_topic = new ROSLIB.Topic({
 		ros : rosbridge.ros,
-		name : topic,
+		name : stream_topic,
 		messageType : 'sensor_msgs/CompressedImage',
-		throttle_rate: parseInt(throttle.value),
+		throttle_rate: throttleMs(),
 		queue_length: 1,
 		compression: 'cbor'
 	});
 	
-	let received = false;
 	listener = image_topic.subscribe(async (msg) => {  
 		const mime = parseFormat(msg.format).compression == "png" ? "image/png" : "image/jpeg";
 		const src = URL.createObjectURL(new Blob([msg.data], {type: mime}));
@@ -240,53 +384,176 @@ function connect(){
 			        last_natural_width = canvas.naturalWidth;
 			        last_natural_height = canvas.naturalHeight;
 			        text_resolution.innerText = "Resolution: "+canvas.naturalWidth+" x "+canvas.naturalHeight;
-			        if(!received){
+			        if(!stream_received){
 			            displayImageOffset(img_offset_x, img_offset_y);
 			            status.setOK();
-			            received = true;
+			            stream_received = true;
 			        }
 			    };
 			    setCanvasSrc(src);
 			})
 			.catch((e) => {
 				URL.revokeObjectURL(src);
-				setCanvasSrc(stock_images["error"]);
-				displayImageOffset(img_offset_x, img_offset_y);
-				status.setError("Failed to decode image.");
+				showStockImage("error");
+				fail("Failed to decode image.");
 			});
 	});
+}
 
+function waitForIceGathering(pc){
+	return new Promise((resolve) => {
+		if(pc.iceGatheringState == "complete"){
+			resolve();
+			return;
+		}
+
+		const timeout = setTimeout(resolve, 2000);
+		pc.addEventListener("icegatheringstatechange", () => {
+			if(pc.iceGatheringState == "complete"){
+				clearTimeout(timeout);
+				resolve();
+			}
+		});
+	});
+}
+
+async function connectWebrtc(id){
+	const pc = new RTCPeerConnection();
+	peer = pc;
+
+	pc.addTransceiver("video", {direction: "recvonly"});
+
+	pc.addEventListener("track", (event) => {
+		video.srcObject = new MediaStream([event.track]);
+	});
+
+	pc.addEventListener("connectionstatechange", () => {
+		if(id != connection_id)
+			return;
+
+		if(pc.connectionState == "failed"){
+			showStockImage("error");
+			fail("WebRTC connection failed, the robot may not be reachable over UDP.");
+		}else if(pc.connectionState == "disconnected"){
+			status.setWarn("WebRTC connection interrupted.");
+		}
+	});
+
+	try{
+		await pc.setLocalDescription(await pc.createOffer());
+		await waitForIceGathering(pc);
+
+		if(id != connection_id)
+			return;
+
+		const result = await callService(start_service, {topic: topic, mode: "webrtc", throttle: throttleMs(), sdp: pc.localDescription.sdp});
+
+		if(id != connection_id)
+			return;
+
+		if(!result.success){
+			showStockImage("error");
+			fail(result.message);
+			return;
+		}
+
+		await pc.setRemoteDescription({type: "answer", sdp: result.sdp});
+	}catch(error){
+		if(id != connection_id)
+			return;
+
+		showStockImage("error");
+		fail("Failed to start WebRTC stream: "+error);
+		return;
+	}
+
+	if(id != connection_id)
+		return;
+
+	text_compression.innerText = "Compression: H264";
+	text_type.innerText = "Type: Video";
+	status.setWarn("Waiting for video...");
+	stats_timer = setInterval(() => updateWebrtcStats(pc).catch(() => {}), 1000);
+}
+
+async function updateWebrtcStats(pc){
+	const stats = await pc.getStats();
+
+	stats.forEach(report => {
+		if(report.type != "inbound-rtp" || report.kind != "video")
+			return;
+
+		if(last_stats !== undefined){
+			const seconds = (report.timestamp - last_stats.timestamp) / 1000;
+			const frames = report.framesDecoded - last_stats.framesDecoded;
+			const bytes = report.bytesReceived - last_stats.bytesReceived;
+
+			text_rate.innerText = "Rate: "+(frames / seconds).toFixed(1)+" Hz";
+			text_bandwidth.innerText = "Bandwidth: "+formatBytes(bytes / seconds)+"/s";
+			text_datasize.innerText = "Data size: "+(frames > 0 ? formatBytes(bytes / frames)+" per frame" : "?");
+		}
+
+		last_stats = report;
+	});
+}
+
+video.addEventListener("resize", () => {
+	if(video.videoWidth == 0)
+		return;
+
+	last_natural_width = video.videoWidth;
+	last_natural_height = video.videoHeight;
+	text_resolution.innerText = "Resolution: "+video.videoWidth+" x "+video.videoHeight;
+
+	showVideo(true);
+	displayImageOffset(img_offset_x, img_offset_y);
+	status.setOK();
+	stream_received = true;
 	saveSettings();
+});
+
+async function getStreams(){
+	try{
+		const result = await callService(list_service, {});
+		return result.topics.map((stream_topic, i) => ({topic: stream_topic, type: result.types[i], mode: result.modes[i], pipeline: result.pipelines[i]}));
+	}catch(error){
+		const topics = await rosbridge.get_topics("sensor_msgs/CompressedImage");
+		return topics.filter(t => !t.startsWith("/vizanti/")).map(t => ({topic: t, type: "sensor_msgs/CompressedImage", mode: "mjpeg", pipeline: "passthrough"}));
+	}
+}
+
+function optionHTML(stream_topic, stream_mode){
+	return "<option value='"+stream_mode+":"+stream_topic+"'>"+stream_topic+" ("+stream_mode+")</option>";
 }
 
 async function loadTopics(){
-	let result = await rosbridge.get_topics("sensor_msgs/CompressedImage");
-	let topiclist = "";
-	result.forEach(element => {
-		topiclist += "<option value='"+element+"'>"+element+"</option>"
-	});
-	selectionbox.innerHTML = topiclist
+	streams = await getStreams();
 
-	if(topic == "")
-		topic = selectionbox.value;
-	else{
-		if(result.includes(topic)){
-			selectionbox.value = topic;
-		}else{
-			topiclist += "<option value='"+topic+"'>"+topic+"</option>"
-			selectionbox.innerHTML = topiclist
-			selectionbox.value = topic;
-		}
+	let topiclist = "";
+	streams.forEach(stream => {
+		topiclist += optionHTML(stream.topic, stream.mode);
+	});
+
+	if(topic == "" && streams.length > 0){
+		topic = streams[0].topic;
+		mode = streams[0].mode;
+	}else if(topic != "" && !streams.some(s => s.topic == topic && s.mode == mode)){
+		topiclist += optionHTML(topic, mode);
 	}
-	connect();
+
+	selectionbox.innerHTML = topiclist;
+	selectionbox.value = mode+":"+topic;
+
+	if(!streamRunning())
+		connect();
 }
 
 selectionbox.addEventListener("change", (event) => {
-	topic = selectionbox.value;
+	const separator = selectionbox.value.indexOf(":");
+	mode = selectionbox.value.substring(0, separator);
+	topic = selectionbox.value.substring(separator + 1);
 	connect();
 });
-
-selectionbox.addEventListener("click", connect);
 
 icon.addEventListener("click", ()=> {
 	loadTopics();
@@ -326,8 +593,10 @@ function displayImageOffset(x, y){
 	const visual_width  = isSideways ? img_height_vw : img_width;
 	const visual_height = isSideways ? img_width * window.innerWidth / window.innerHeight : img_height;
 
-	canvas.style.width  = img_width  + "vw";
-	canvas.style.height = img_height + "vh";
+	[canvas, video].forEach(element => {
+		element.style.width  = img_width  + "vw";
+		element.style.height = img_height + "vh";
+	});
 
 	// Clamp position using the actual visual extents, not the pre-rotation ones
 	let offset_x = clamp(x, visual_width  / 2, 100 - visual_width  / 2);
@@ -336,8 +605,10 @@ function displayImageOffset(x, y){
 	imgpreview.style.left = offset_x + "vw";
 	imgpreview.style.top  = offset_y + "vh";
 
-	canvas.style.left = offset_x + "vw";
-	canvas.style.top  = offset_y + "vh";
+	[canvas, video].forEach(element => {
+		element.style.left = offset_x + "vw";
+		element.style.top  = offset_y + "vh";
+	});
 }
 
 function onResize(){
@@ -377,8 +648,8 @@ imgpreview.addEventListener('touchstart', onStart);
 displayImageOffset(img_offset_x, img_offset_y);
 
 window.addEventListener("{uniqueID}_destroy", () => {
-	if(image_topic !== undefined)
-		image_topic.unsubscribe(listener);
+	clearTimeout(throttle_timer);
+	disconnect();
 
 	if(blob_url !== undefined)
 		URL.revokeObjectURL(blob_url);

@@ -11,6 +11,9 @@
 	<arg name="delay_between_messages" default="0" />
 	<arg name="max_message_size" default="None" />
 
+	<arg name="stream_jpeg_quality" default="80" />
+	<arg name="stream_webrtc_crf" default="23" />
+
 	<!-- Launch rosbridge without https so it works in AP mode. -->
 	<node name="vizanti_rosbridge" pkg="rosbridge_server" type="rosbridge_websocket" output="screen">
 		<param name="authenticate" value="false" />
@@ -38,5 +41,10 @@
 
 	<node name="vizanti_tf_handler_node" pkg="vizanti" type="topic_handler.py" output="screen"/>
 	<node name="vizanti_service_handler_node" pkg="vizanti" type="service_handler.py" output="screen"/>
+
+	<node name="vizanti_image_streamer_node" pkg="vizanti" type="image_streamer.py" output="screen">
+		<param name="jpeg_quality" value="$(arg stream_jpeg_quality)"/>
+		<param name="webrtc_crf" value="$(arg stream_webrtc_crf)"/>
+	</node>
     
 </launch>
