@@ -32,13 +32,13 @@ docker build -f docker/Dockerfile -t vizanti:1.0 .
 
 ### WebRTC video streaming (optional)
 
-The image widget can also stream camera topics as H.264 video over WebRTC, which uses far less bandwidth than sending individual images, at the cost of video encoding on the robot's CPU. This requires aiortc and PyAV, which are not installed by rosdep:
+The image widget can also stream camera topics as H.264 video over WebRTC, which uses far less bandwidth than sending individual images, at the cost of video encoding on the robot's CPU. This requires aiortc and PyAV, which are not installed by rosdep. To install them into a separate directory that only Vizanti uses, leaving your system Python packages untouched:
 
 ```bash
-pip3 install aiortc
+pip3 install --upgrade --target "${ROS_HOME:-$HOME/.ros}/vizanti/pylib" aiortc
 ```
 
-PyAV is installed along with it. On Ubuntu 24.04 you'll need to add `--break-system-packages`. On Python 3.8 (Noetic on 20.04), pip will automatically pick older compatible versions.
+PyAV is installed along with it. pip may warn about dependency conflicts with system packages, which can be ignored since the directory is only loaded by Vizanti's image streamer node. A regular `pip3 install aiortc` works as well, aiortc 1.4 or newer is required, but not directly compatible with system packages on 22.04 and earlier. The node prints the aiortc and PyAV versions it found on startup. The Docker image installs this automatically, and its `--net=host` option is required for WebRTC since the video is sent over UDP on random ports.
 
 ## Run
   

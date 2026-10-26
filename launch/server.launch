@@ -12,7 +12,8 @@
 	<arg name="max_message_size" default="None" />
 
 	<arg name="stream_jpeg_quality" default="80" />
-	<arg name="stream_webrtc_crf" default="23" />
+	<arg name="stream_webrtc_crf" default="26" />
+	<arg name="stream_debug" default="false" />
 
 	<!-- Launch rosbridge without https so it works in AP mode. -->
 	<node name="vizanti_rosbridge" pkg="rosbridge_server" type="rosbridge_websocket" output="screen">
@@ -45,6 +46,7 @@
 	<node name="vizanti_image_streamer_node" pkg="vizanti" type="image_streamer.py" output="screen">
 		<param name="jpeg_quality" value="$(arg stream_jpeg_quality)"/>
 		<param name="webrtc_crf" value="$(arg stream_webrtc_crf)"/>
+		<param name="debug" value="$(arg stream_debug)"/>
 	</node>
     
 </launch>
