@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
 
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.environ.get("ROS_HOME", os.path.expanduser("~/.ros")), "vizanti", "pylib"))
+
 import re
 import time
 import asyncio
+import logging
 import threading
 import fractions
 
@@ -15,11 +21,15 @@ from vizanti.srv import ListImageStreams, ListImageStreamsResponse, StartImageSt
 
 try:
 	import av
+	import aiortc
 	from aiortc import RTCPeerConnection, RTCSessionDescription, RTCConfiguration, RTCRtpSender, MediaStreamTrack
-	WEBRTC_AVAILABLE = True
+	from aiortc.codecs.h264 import H264Encoder
+	WEBRTC_ERROR = "" if hasattr(H264Encoder, "pack") else "aiortc " + aiortc.__version__ + " is too old, version 1.4 or newer is required"
 except ImportError:
 	MediaStreamTrack = object
-	WEBRTC_AVAILABLE = False
+	WEBRTC_ERROR = "requires aiortc and PyAV"
+
+WEBRTC_AVAILABLE = WEBRTC_ERROR == ""
 
 STREAM_NAMESPACE = "/vizanti/image_streams"
 IMAGE_TYPE = "sensor_msgs/Image"
@@ -64,6 +74,16 @@ def create_encoder(width, height, crf):
 	codec.time_base = TIME_BASE
 	codec.options = {"preset": "ultrafast", "tune": "zerolatency", "forced-idr": "1", "profile": "baseline", "crf": str(crf)}
 	return codec
+
+class RospyLogHandler(logging.Handler):
+
+	def emit(self, record):
+		message = record.name + ": " + record.getMessage()
+
+		if record.levelno >= logging.WARNING:
+			rospy.logwarn(message)
+		else:
+			rospy.loginfo(message)
 
 class JpegStream:
 
@@ -214,7 +234,15 @@ class ImageStreamer:
 		rospy.init_node('vizanti_image_streamer')
 
 		self.jpeg_quality = rospy.get_param('~jpeg_quality', 80)
-		self.webrtc_crf = rospy.get_param('~webrtc_crf', 25)
+		self.webrtc_crf = rospy.get_param('~webrtc_crf', 26)
+		self.debug = rospy.get_param('~debug', False)
+		self.peer_count = 0
+
+		handler = RospyLogHandler()
+		for name in ("aiortc", "aioice"):
+			logger = logging.getLogger(name)
+			logger.setLevel(logging.INFO if self.debug else logging.WARNING)
+			logger.addHandler(handler)
 
 		self.lock = threading.Lock()
 		self.jpeg_streams = {}
@@ -229,9 +257,16 @@ class ImageStreamer:
 		self.cleanup_timer = rospy.Timer(rospy.Duration(1.0), self.cleanup)
 
 		if WEBRTC_AVAILABLE:
-			rospy.loginfo("Image streamer ready, WebRTC streaming available.")
+			rospy.loginfo("Image streamer ready, WebRTC streaming available (aiortc " + aiortc.__version__ + ", PyAV " + av.__version__ + ").")
 		else:
-			rospy.loginfo("Image streamer ready, WebRTC streaming disabled (requires aiortc and PyAV).")
+			rospy.loginfo("Image streamer ready, WebRTC streaming disabled (" + WEBRTC_ERROR + ").")
+
+	def log_debug(self, message):
+		if self.debug:
+			rospy.loginfo(message)
+
+	def log_clients(self, stream):
+		self.log_debug(stream.topic + ": " + str(len(stream.tracks)) + " WebRTC client(s), encoding every " + str(stream.interval) + " s")
 
 	def published_image_topics(self):
 		return {topic: message_type for topic, message_type in rospy.get_published_topics() if message_type in (IMAGE_TYPE, COMPRESSED_TYPE) and not topic.startswith("/vizanti/")}
@@ -267,7 +302,7 @@ class ImageStreamer:
 			return StartImageStreamResponse(success=False, message="Unknown stream mode: " + req.mode, stream_topic="", sdp="")
 
 		if not WEBRTC_AVAILABLE:
-			return StartImageStreamResponse(success=False, message="WebRTC streaming requires aiortc and PyAV on the robot.", stream_topic="", sdp="")
+			return StartImageStreamResponse(success=False, message="WebRTC streaming is unavailable on the robot: " + WEBRTC_ERROR, stream_topic="", sdp="")
 
 		if message_type is None:
 			return StartImageStreamResponse(success=False, message="Topic is not published: " + req.topic, stream_topic="", sdp="")
@@ -310,14 +345,25 @@ class ImageStreamer:
 			stream = WebrtcStream(topic, message_type, self.webrtc_crf, self.loop)
 			self.webrtc_streams[topic] = stream
 
+		self.peer_count += 1
+		label = topic + " client " + str(self.peer_count)
+		self.log_debug(label + ": offer received, throttle " + str(interval) + " s")
+
 		track = PacketTrack(interval)
 		stream.add_track(track)
+		self.log_clients(stream)
 		peer = RTCPeerConnection(RTCConfiguration(iceServers=[]))
 
 		@peer.on("connectionstatechange")
 		async def on_connection_state_change():
+			self.log_debug(label + ": connection " + peer.connectionState)
+
 			if peer.connectionState in ("failed", "closed"):
 				await self.remove_peer(peer, stream, track)
+
+		@peer.on("iceconnectionstatechange")
+		async def on_ice_connection_state_change():
+			self.log_debug(label + ": ICE " + peer.iceConnectionState)
 
 		try:
 			sender = peer.addTrack(track)
@@ -326,26 +372,33 @@ class ImageStreamer:
 
 			await peer.setRemoteDescription(RTCSessionDescription(sdp=re.sub(r"a=end-of-candidates\r?\n", "", sdp), type="offer"))
 			await peer.setLocalDescription(await peer.createAnswer())
-		except Exception:
+		except Exception as e:
+			self.log_debug(label + ": negotiation failed: " + str(e))
 			await self.remove_peer(peer, stream, track)
 			raise
 
-		asyncio.ensure_future(self.expire_peer(peer, stream, track))
+		self.log_debug(label + ": answer sent")
+		asyncio.ensure_future(self.expire_peer(peer, stream, track, label))
 		return peer.localDescription.sdp
 
-	async def expire_peer(self, peer, stream, track):
+	async def expire_peer(self, peer, stream, track, label):
 		await asyncio.sleep(CONNECT_TIMEOUT)
 
-		if peer.connectionState != "connected":
+		if peer.connectionState in ("new", "connecting"):
+			self.log_debug(label + ": not connected after " + str(CONNECT_TIMEOUT) + " s, closing")
 			await self.remove_peer(peer, stream, track)
 
 	async def remove_peer(self, peer, stream, track):
-		stream.remove_track(track)
+		if track in stream.tracks:
+			stream.remove_track(track)
+			self.log_clients(stream)
+
 		await peer.close()
 
 		if not stream.tracks and self.webrtc_streams.get(stream.topic) is stream:
 			stream.close()
 			del self.webrtc_streams[stream.topic]
+			self.log_debug(stream.topic + ": no WebRTC clients left, stream closed")
 
 ImageStreamer()
 rospy.spin()
