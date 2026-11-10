@@ -68,6 +68,7 @@ function sendMessage(start, end){
 
 	const polygonMsg = new ROSLIB.Message({
 		header:{
+			stamp: tf.getLatestStamp(),
 			frame_id: tf.fixed_frame
 		},
 		polygon: {

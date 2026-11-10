@@ -382,14 +382,6 @@ function update(){
 
 function sendMessage(pointlist){
 
-	function getStamp(){
-		const currentTime = new Date();
-		return {
-			secs: Math.floor(currentTime.getTime() / 1000),
-			nsecs: (currentTime.getTime() % 1000) * 1e6
-		}
-	}
-
 	function getPoseStamped(index, timeStamp, x, y, z, quat){
 		return new ROSLIB.Message({
 			header: {
@@ -419,7 +411,7 @@ function sendMessage(pointlist){
 		});
 	}
 
-	let timeStamp = getStamp();
+	let timeStamp = tf.getLatestStamp();
 	let poseList = [];
 	let stamped = typedict[topic] == "nav_msgs/Path";
 

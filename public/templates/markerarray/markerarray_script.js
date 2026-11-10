@@ -400,8 +400,8 @@ async function drawMarkers(){
 
 
 		//skip old markers (only if lifetime is not 0/infinite)
-        const isInfiniteLifetime = marker.lifetime.sec === 0 && marker.lifetime.nanosec === 0;
-        if (!isInfiniteLifetime && (current_time - marker.stamp) / 1000.0 > marker.lifetime.sec + marker.lifetime.nanosec * 1e-9)
+        const isInfiniteLifetime = marker.lifetime.secs === 0 && marker.lifetime.nsecs === 0;
+        if (!isInfiniteLifetime && (current_time - marker.stamp) / 1000.0 > marker.lifetime.secs + marker.lifetime.nsecs * 1e-9)
             continue;
 
 		const pos = view.fixedToScreen({

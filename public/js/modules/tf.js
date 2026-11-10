@@ -63,6 +63,7 @@ export class TF {
 		this.frame_list = new Set();
 		this.frame_timestamps = {};
 		this.frame_headerstamps = {};
+		this.stamp_offset = undefined;
 
 		this.tf_topic = new ROSLIB.Topic({
 			ros: rosbridge.ros,
@@ -75,11 +76,17 @@ export class TF {
 
 		this.tf_listener = this.tf_topic.subscribe((msg) => {
 			const time_stamp = new Date();
+			let newest = 0;
+
 			msg.transforms.forEach((pose) => {
 				this.frame_timestamps[pose.child_frame_id] = time_stamp;
 				this.frame_timestamps[pose.header.frame_id] = time_stamp;
 				this.updateFrameTimestamp(pose.child_frame_id, pose.header.stamp);
+				newest = Math.max(newest, pose.header.stamp.secs * 1000 + pose.header.stamp.nsecs / 1e6);
 			});
+
+			if (newest > 0)
+				this.stamp_offset = newest - performance.now();
 
 			this.updateTransforms(msg.transforms);
 		});
@@ -277,6 +284,18 @@ export class TF {
 		}
 
 		return { translation: outputVector, rotation: outputQuat };
+	}
+
+	getLatestStamp() {
+		if (this.stamp_offset === undefined)
+			return { secs: 0, nsecs: 0 };
+
+		const ms = performance.now() + this.stamp_offset;
+
+		return {
+			secs: Math.floor(ms / 1000),
+			nsecs: Math.floor((ms % 1000) * 1e6)
+		};
 	}
 
 	getTimeStampDelta(timestamp1, timestamp2) {
