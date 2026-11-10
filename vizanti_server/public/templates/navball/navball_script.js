@@ -480,7 +480,7 @@ function connect(){
 		const gz = msg.angular_velocity.z;
 
 		if(!isQuaternionValid(msg_quat)){
-			const now = msg.header.stamp.secs + msg.header.stamp.nsecs * 1e-9; 
+			const now = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9; 
 			let dt = stamp ? (now - stamp) : 0.05;
 			dt = Math.min(dt, 0.05);
 			stamp = now;

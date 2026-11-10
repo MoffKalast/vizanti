@@ -8,7 +8,7 @@ export function applyRotation(vector, r, inverse) {
 	return { x: v[0], y: v[1], z: v[2] };
 }
 
-// Fixed-size ring buffer storing { secs, nsecs, transform } entries per frame.
+// Fixed-size ring buffer storing { sec, nanosec, transform } entries per frame.
 // Oldest entry is overwritten once capacity is reached.
 class TransformRingBuffer {
 	constructor(capacity) {
@@ -18,8 +18,8 @@ class TransformRingBuffer {
 		this.size = 0;
 	}
 
-	push(secs, nsecs, transform) {
-		this.buf[this.head] = { t: secs + nsecs * 1e-9, transform };
+	push(sec, nanosec, transform) {
+		this.buf[this.head] = { t: sec + nanosec * 1e-9, transform };
 		this.head = (this.head + 1) % this.capacity;
 		if (this.size < this.capacity) this.size++;
 	}
@@ -27,16 +27,16 @@ class TransformRingBuffer {
 	// Returns the transform whose timestamp is closest to the given stamp.
 	// Falls back to the most recently pushed entry if called with no arguments.
 	// Full scan (no early exit) handles non-monotonic clocks (e.g. rosbag restart).
-	nearest(secs, nsecs) {
+	nearest(sec, nanosec) {
 		if (this.size === 0)
 			return null;
 
 		const latest = (this.head - 1 + this.capacity) % this.capacity;
 
-		if (secs == null || nsecs == null)
+		if (sec == null || nanosec == null)
 			return this.buf[latest].transform;
 
-		const target = secs + nsecs * 1e-9;
+		const target = sec + nanosec * 1e-9;
 		let bestIdx = latest;
 		let bestDist = Infinity;
 
@@ -63,6 +63,7 @@ export class TF {
 		this.frame_list = new Set();
 		this.frame_timestamps = {};
 		this.frame_headerstamps = {};
+		this.stamp_offset = undefined;
 
 		this.tf_topic = new ROSLIB.Topic({
 			ros: rosbridge.ros,
@@ -75,11 +76,17 @@ export class TF {
 
 		this.tf_listener = this.tf_topic.subscribe((msg) => {
 			const time_stamp = new Date();
+			let newest = 0;
+
 			msg.transforms.forEach((pose) => {
 				this.frame_timestamps[pose.child_frame_id] = time_stamp;
 				this.frame_timestamps[pose.header.frame_id] = time_stamp;
 				this.updateFrameTimestamp(pose.child_frame_id, pose.header.stamp);
+				newest = Math.max(newest, pose.header.stamp.sec * 1000 + pose.header.stamp.nanosec / 1e6);
 			});
+
+			if (newest > 0)
+				this.stamp_offset = newest - performance.now();
 
 			this.updateTransforms(msg.transforms);
 		});
@@ -202,7 +209,7 @@ export class TF {
 
 			const stamp = this.frame_headerstamps[key];
 			if (stamp)
-				this.absoluteTransformBuffers[key].push(stamp.secs, stamp.nsecs, transform);
+				this.absoluteTransformBuffers[key].push(stamp.sec, stamp.nanosec, transform);
 		}
 	}
 
@@ -217,7 +224,7 @@ export class TF {
 		const buf = this.absoluteTransformBuffers[header.frame_id];
 		if (!buf)
 			return this.absoluteTransforms[header.frame_id];
-		return buf.nearest(header.stamp?.secs, header.stamp?.nsecs) ?? this.absoluteTransforms[header.frame_id];
+		return buf.nearest(header.stamp?.sec, header.stamp?.nanosec) ?? this.absoluteTransforms[header.frame_id];
 	}
 
 	// Timestamp-aware drop-in for transformPose(frame, fixed_frame, position, orientation).
@@ -278,6 +285,18 @@ export class TF {
 		}
 
 		return { translation: outputVector, rotation: outputQuat };
+	}
+
+	getLatestStamp() {
+		if (this.stamp_offset === undefined)
+			return { sec: 0, nanosec: 0 };
+
+		const ms = performance.now() + this.stamp_offset;
+
+		return {
+			sec: Math.floor(ms / 1000),
+			nanosec: Math.floor((ms % 1000) * 1e6)
+		};
 	}
 
 	getTimeStampDelta(timestamp1, timestamp2) {

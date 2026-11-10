@@ -442,17 +442,6 @@ function publishTwist(x, y, z, wx, wy, wz) {
 	if(joy_locked)
 		return;
 
-	function getStamp(){
-		const currentTime = new Date();
-		const currentTimeSecs = Math.floor(currentTime.getTime() / 1000);
-		const currentTimeNsecs = (currentTime.getTime() % 1000) * 1e6;
-
-		return {
-			sec: currentTimeSecs,
-			nanosec: currentTimeNsecs
-		}
-	}
-
 	function getTwist(x, y, z, wx, wy, wz){
 		return new ROSLIB.Message({
 			linear: {
@@ -471,7 +460,7 @@ function publishTwist(x, y, z, wx, wy, wz) {
 	function getTwistStamped(x, y, z, wx, wy, wz){
 		return new ROSLIB.Message({
 			header: {
-				stamp: getStamp(),
+				stamp: tf.getLatestStamp(),
 				frame_id: tf.fixed_frame
 			},
 			twist: getTwist(x, y, z, wx, wy, wz)
