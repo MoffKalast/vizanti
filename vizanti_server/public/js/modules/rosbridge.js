@@ -81,25 +81,25 @@ class Rosbridge {
 		this.publishers_client = new ROSLIB.Service({
 			ros : this.ros,
 			name : '/rosapi/publishers',
-			serviceType : 'rosapi/Publishers',
+			serviceType : 'rosapi_msgs/srv/Publishers',
 		});
 
 		this.subscribers_client = new ROSLIB.Service({
 			ros : this.ros,
 			name : '/rosapi/subscribers',
-			serviceType : 'rosapi/Subscribers',
+			serviceType : 'rosapi_msgs/srv/Subscribers',
 		});
 
 		this.services_client = new ROSLIB.Service({
 			ros : this.ros,
 			name : '/rosapi/services',
-			serviceType : 'rosapi/Services',
+			serviceType : 'rosapi_msgs/srv/Services',
 		});
 		
 		this.services_for_type_client = new ROSLIB.Service({
 			ros : this.ros,
 			name : '/rosapi/services_for_type',
-			serviceType : 'rosapi/ServicesForType',
+			serviceType : 'rosapi_msgs/srv/ServicesForType',
 		});
 
 		window.dispatchEvent(new Event('rosbridge_change'));

@@ -1051,11 +1051,11 @@ async function loadTopics(){
 	let topiclist = "";
 	result_path.forEach(element => {
 		topiclist += "<option value='"+element+"'>"+element+" (Path)</option>";
-		typedict[element] = "nav_msgs/msgs/Path";
+		typedict[element] = "nav_msgs/msg/Path";
 	});
 	result_array.forEach(element => {
 		topiclist += "<option value='"+element+"'>"+element+" (PoseArray)</option>";
-		typedict[element] = "geometry_msgs/msgs/PoseArray";
+		typedict[element] = "geometry_msgs/msg/PoseArray";
 	});
 	selectionbox.innerHTML = topiclist
 
