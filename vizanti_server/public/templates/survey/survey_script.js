@@ -19,7 +19,6 @@ let status = new Status(
 let typedict = {};
 let fixed_frame = tf.fixed_frame;
 let base_link_frame = find_base_frame();
-let seq = 0;
 let path_publisher = undefined;
 let mode = "IDLE";
 let shift_pressed = false;
@@ -111,8 +110,8 @@ if(settings.hasOwnProperty("{uniqueID}")){
 }
 
 if(topic == ""){
-	topic = "/move_base_simple/waypoints";
-	status.setWarn("No topic found, defaulting to /move_base_simple/waypoints");
+	topic = "/goal_poses";
+	status.setWarn("No topic found, defaulting to /goal_poses");
 	saveSettings();
 }
 
@@ -460,7 +459,6 @@ function sendMessage(pointlist){
 
 	const pathMessage = new ROSLIB.Message({
 		header: {
-			seq: seq++,
 			stamp: timeStamp,
 			frame_id: fixed_frame
 		},

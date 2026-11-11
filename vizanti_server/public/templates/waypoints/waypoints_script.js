@@ -169,8 +169,8 @@ if(settings.hasOwnProperty("{uniqueID}")){
 }
 
 if(topic == ""){
-	topic = "/waypoints";
-	status.setWarn("No topic found, defaulting to /waypoints");
+	topic = "/goal_poses";
+	status.setWarn("No topic found, defaulting to /goal_poses");
 	saveSettings();
 }
 
