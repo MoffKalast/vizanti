@@ -5,12 +5,14 @@ import os
 import fcntl
 import sys
 import rclpy
+import signal
 import json
 import time
 
 from rclpy.node import Node
 
-from rclpy.executors import  MultiThreadedExecutor
+from rclpy.executors import ExternalShutdownException, MultiThreadedExecutor
+from rclpy.signals import SignalHandlerOptions
 from rclpy.callback_groups import ReentrantCallbackGroup
 
 from ros2lifecycle.api import get_node_names
@@ -288,19 +290,29 @@ class ServiceHandler(Node):
         return response
 
 def main(args=None):
-    rclpy.init(args=args)
+    stop_requested = False
+
+    def request_stop(_signum, _frame):
+        nonlocal stop_requested
+        stop_requested = True
+
+    rclpy.init(args=args, signal_handler_options=SignalHandlerOptions.NO)
+    signal.signal(signal.SIGINT, request_stop)
+    signal.signal(signal.SIGTERM, request_stop)
 
     service_handler = ServiceHandler(group=ReentrantCallbackGroup())
     executor = MultiThreadedExecutor(num_threads=20)
     executor.add_node(service_handler)
 
     try:
-        executor.spin()
-    except rclpy.executors.ExternalShutdownException:
+        while not stop_requested and rclpy.ok():
+            executor.spin_once(timeout_sec=0.25)
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
-
-    service_handler.destroy_node()
-    rclpy.shutdown()
+    finally:
+        executor.shutdown()
+        service_handler.destroy_node()
+        rclpy.try_shutdown()
 
 if __name__ == "__main__":
     main()

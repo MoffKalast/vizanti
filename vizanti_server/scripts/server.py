@@ -7,8 +7,12 @@ import json
 import gzip
 import hashlib
 import rclpy
+import signal
 
 from flask import Flask, render_template, send_from_directory, make_response, request
+from rclpy.executors import ExternalShutdownException
+from rclpy.signals import SignalHandlerOptions
+from waitress import wasyncore
 from waitress.server import create_server
 from ament_index_python.packages import get_package_share_directory
 
@@ -176,33 +180,35 @@ class ServerThread(threading.Thread):
 		))
 		self.log.addHandler(handler)
 
-		self.app = app
-		self.host = host
-		self.port = port
-		self.ctx = app.app_context()
-		self.ctx.push()
-		
-		self._server = None
+		self._socket_map = {}
+		self._server = create_server(app, host=host, port=port, map=self._socket_map)
 		self._stop_event = threading.Event()
 
 	def run(self):
-		self._server = create_server(self.app, host=self.host, port=self.port)
 		try:
-			self._server.run()
-		except KeyboardInterrupt:
-			self.shutdown()
-		
+			while not self._stop_event.is_set() and self._socket_map:
+				wasyncore.loop(timeout=0.25, count=1, map=self._socket_map)
+		finally:
+			try:
+				self._server.task_dispatcher.shutdown(timeout=1)
+			finally:
+				wasyncore.close_all(self._socket_map)
+
 	def shutdown(self):
-		if self._server:
-			self._server.close()  # This triggers waitress to stop accepting new connections
-			self._stop_event.set()  # Signal that we're stopping
-			if node is not None:
-				node.get_logger().info("Waitress server shutting down...")
+		self._stop_event.set()
 
 def main(args=None):
 	global node, param_base_url, param_port, param_port_rosbridge, param_compression, param_default_widget_config
 
-	rclpy.init(args=args)
+	stop_requested = False
+
+	def request_stop(_signum, _frame):
+		nonlocal stop_requested
+		stop_requested = True
+
+	rclpy.init(args=args, signal_handler_options=SignalHandlerOptions.NO)
+	signal.signal(signal.SIGINT, request_stop)
+	signal.signal(signal.SIGTERM, request_stop)
 	node = rclpy.create_node('vizanti_flask_node')
 
 	node.declare_parameter('host', '0.0.0.0')
@@ -235,18 +241,24 @@ def main(args=None):
 	app.add_url_rule(param_base_url + '/default_widget_config', 'get_default_widget_config', get_default_widget_config)
 	app.add_url_rule(param_base_url + '/<path:path>', 'serve_static', serve_static)
 
-	server = ServerThread(app, param_host, param_port)
-	server.start()
+	server = None
+	try:
+		server = ServerThread(app, param_host, param_port)
+		server.start()
 
-	node.get_logger().info(f"Flask server running at http://{param_host}:{param_port}{param_base_url}")
-	node.get_logger().info(f"Public directory set as {get_public_dir()}")
-
-	rclpy.spin(node)
-
-	server.shutdown()
-	server.join()
-	node.destroy_node()
-	rclpy.shutdown()
+		node.get_logger().info(f"Flask server running at http://{param_host}:{param_port}{param_base_url}")
+		node.get_logger().info(f"Public directory set as {get_public_dir()}")
+		while not stop_requested and rclpy.ok():
+			rclpy.spin_once(node, timeout_sec=0.25)
+	except (KeyboardInterrupt, ExternalShutdownException):
+		pass
+	finally:
+		if server is not None:
+			server.shutdown()
+			if server.ident is not None:
+				server.join()
+		node.destroy_node()
+		rclpy.try_shutdown()
 
 if __name__ == '__main__':
 	main()
