@@ -49,10 +49,6 @@ function sendMessage(pos, delta){
 
 	let map_pos = view.screenToFixed(pos);
 
-	const currentTime = new Date();
-	const currentTimeSecs = Math.floor(currentTime.getTime() / 1000);
-	const currentTimeNsecs = (currentTime.getTime() % 1000) * 1e6;
-
 	const publisher = new ROSLIB.Topic({
 		ros: rosbridge.ros,
 		name: topic,
@@ -62,10 +58,7 @@ function sendMessage(pos, delta){
 	const poseMessage = new ROSLIB.Message({
 		header: {
 			seq: seq++,
-			stamp: {
-				secs: currentTimeSecs,
-      			nsecs: currentTimeNsecs
-			},
+			stamp: tf.getLatestStamp(),
 			frame_id: tf.fixed_frame
 		},
 		pose: {
