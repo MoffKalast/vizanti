@@ -30,6 +30,9 @@ icons["sonar"] = await imageToDataURL("assets/sonar.svg");
 
 let listener = undefined;
 let map_topic = undefined;
+let retryTimer;
+let loadingTopics = false;
+let destroyed = false;
 let map_data = undefined;
 let new_map_data = undefined;
 
@@ -87,7 +90,7 @@ const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
 
 if(settings.hasOwnProperty("{uniqueID}")){
 	const loaded_data  = settings["{uniqueID}"];
-	topic = loaded_data.topic;
+	topic = loaded_data.topic ?? topic;
 
 	opacitySlider.value = loaded_data.opacity;
 	setOpacityText(loaded_data.opacity);
@@ -164,15 +167,32 @@ async function drawMap(){
 
 //Topic
 
+// Retry while waiting for the first map. Rosbridge may subscribe before
+// DDS discovers the publisher and miss its retained map.
+function scheduleRetry(){
+	clearTimeout(retryTimer);
+	retryTimer = setTimeout(() => {
+		if(!rosbridge.connected){
+			scheduleRetry();
+		}else if(topic){
+			connect();
+		}else{
+			loadTopics();
+		}
+	}, 3000);
+}
+
 function connect(){
-
-	if(topic == ""){
-		status.setError("Empty topic.");
-		return;
-	}
-
+	clearTimeout(retryTimer);
 	if(map_topic !== undefined){
 		map_topic.unsubscribe(listener);
+		map_topic = undefined;
+	}
+
+	if(!topic){
+		status.setWarn("Waiting for an occupancy grid topic.");
+		scheduleRetry();
+		return;
 	}
 
 	map_topic = new ROSLIB.Topic({
@@ -198,7 +218,7 @@ function connect(){
 		},1);
 	};
 	
-	listener = map_topic.subscribe((msg) => {
+	listener = (msg) => {
 
 		if(msg.info.width == 0 || msg.info.height == 0){
 			status.setWarn("Received empty map.");
@@ -229,7 +249,10 @@ function connect(){
 
 		queueWorkerMsg(msg);
 		received_msg = msg;
-	});
+		clearTimeout(retryTimer);
+	};
+	map_topic.subscribe(listener);
+	scheduleRetry();
 
 	saveSettings();
 }
@@ -249,32 +272,41 @@ function queueWorkerMsg(msg){
 	});
 }
 
+function updateTopicOptions(topics){
+	const options = [...topics];
+	if(topic && !options.includes(topic))
+		options.push(topic);
+
+	selectionbox.replaceChildren(...options.map(name => new Option(name, name)));
+	selectionbox.value = topic;
+}
+
 async function loadTopics(){
-	let result = await rosbridge.get_topics("nav_msgs/msg/OccupancyGrid");
+	if(loadingTopics)
+		return;
 
-	let topiclist = "";
-	result.forEach(element => {
-		topiclist += "<option value='"+element+"'>"+element+"</option>"
-	});
-	selectionbox.innerHTML = topiclist
+	loadingTopics = true;
+	try{
+		const topics = await rosbridge.get_topics("nav_msgs/msg/OccupancyGrid");
+		if(destroyed)
+			return;
 
-	if(topic == "")
-		topic = selectionbox.value;
-	else{
-		if(result.includes(topic)){
-			selectionbox.value = topic;
-		}else{
-			topiclist += "<option value='"+topic+"'>"+topic+"</option>"
-			selectionbox.innerHTML = topiclist
-			selectionbox.value = topic;
+		if(!topic && topics.length){
+			topic = topics[0];
+			connect();
 		}
+		updateTopicOptions(topics);
+	}finally{
+		loadingTopics = false;
+		if(!destroyed && !topic)
+			scheduleRetry();
 	}
-	connect();
 }
 
 colourSchemeBox.addEventListener("change", (event) => {
 	icon.src = icons[colourSchemeBox.value];
-	queueWorkerMsg(received_msg);
+	if(received_msg)
+		queueWorkerMsg(received_msg);
 });
 
 selectionbox.addEventListener("change", (event) => {
@@ -287,15 +319,14 @@ selectionbox.addEventListener("change", (event) => {
 	connect();
 });
 
-selectionbox.addEventListener("click", (event) => {
-	connect();
-});
-
 icon.addEventListener("click", (event) => {
 	loadTopics();
 });
 
-loadTopics();
+updateTopicOptions([]);
+connect();
+if(rosbridge.connected)
+	loadTopics();
 
 function resizeScreen(){
 	canvas.height = window.innerHeight;
@@ -319,6 +350,8 @@ window.addEventListener('orientationchange', resizeScreen);
 resizeScreen();
 
 window.addEventListener("{uniqueID}_destroy", () => {
+	destroyed = true;
+	clearTimeout(retryTimer);
 	if(map_topic !== undefined)
 		map_topic.unsubscribe(listener);
 

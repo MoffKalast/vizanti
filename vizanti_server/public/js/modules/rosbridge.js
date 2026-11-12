@@ -126,7 +126,7 @@ class Rosbridge {
 	}
 	
 	async get_topics(requested_type) {
-		return new Promise(async (resolve) => {
+		return new Promise((resolve) => {
 			this.topics_client.callService(new ROSLIB.ServiceRequest({}), function (result) {
 	
 				let topics = result.topics;
@@ -141,7 +141,7 @@ class Rosbridge {
 					
 				matching.sort();
 				resolve(matching);
-			});
+			}, () => resolve([]));
 		});
 	}
 	
