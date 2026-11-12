@@ -31,17 +31,6 @@ function saveSettings(){
 	settings.save();
 }
 
-function getStamp(){
-	const currentTime = new Date();
-	const currentTimeSecs = Math.floor(currentTime.getTime() / 1000);
-	const currentTimeNsecs = (currentTime.getTime() % 1000) * 1e6;
-
-	return {
-		sec: currentTimeSecs,
-		nanosec: currentTimeNsecs
-	}
-}
-
 function sendMessage(start, end){
 	if(!start || !end){
 		status.setError("Could not send message, area invalid.");
@@ -80,7 +69,7 @@ function sendMessage(start, end){
 
 	const polygonMsg = new ROSLIB.Message({
 		header: {
-			stamp: getStamp(),
+			stamp: tf.getLatestStamp(),
 			frame_id: tf.fixed_frame
 		},
 		polygon: {

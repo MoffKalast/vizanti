@@ -19,7 +19,6 @@ let status = new Status(
 let typedict = {};
 let fixed_frame = tf.fixed_frame;
 let base_link_frame = find_base_frame();
-let seq = 0;
 let path_publisher = undefined;
 let mode = "IDLE";
 let shift_pressed = false;
@@ -111,8 +110,8 @@ if(settings.hasOwnProperty("{uniqueID}")){
 }
 
 if(topic == ""){
-	topic = "/move_base_simple/waypoints";
-	status.setWarn("No topic found, defaulting to /move_base_simple/waypoints");
+	topic = "/goal_poses";
+	status.setWarn("No topic found, defaulting to /goal_poses");
 	saveSettings();
 }
 
@@ -382,17 +381,6 @@ function update(){
 
 function sendMessage(pointlist){
 
-	function getStamp(){
-		const currentTime = new Date();
-		const currentTimeSecs = Math.floor(currentTime.getTime() / 1000);
-		const currentTimeNsecs = (currentTime.getTime() % 1000) * 1e6;
-
-		return {
-			sec: currentTimeSecs,
-			nanosec: currentTimeNsecs
-		}
-	}
-
 	function getPoseStamped(timeStamp, x, y, z, quat){
 		return new ROSLIB.Message({
 			header: {
@@ -422,7 +410,7 @@ function sendMessage(pointlist){
 	}
 
 
-	let timeStamp = getStamp();
+	let timeStamp = tf.getLatestStamp();
 	let poseList = [];
 	let stamped = typedict[topic] == "nav_msgs/msg/Path";
 
@@ -471,7 +459,6 @@ function sendMessage(pointlist){
 
 	const pathMessage = new ROSLIB.Message({
 		header: {
-			seq: seq++,
 			stamp: timeStamp,
 			frame_id: fixed_frame
 		},
@@ -1064,11 +1051,11 @@ async function loadTopics(){
 	let topiclist = "";
 	result_path.forEach(element => {
 		topiclist += "<option value='"+element+"'>"+element+" (Path)</option>";
-		typedict[element] = "nav_msgs/msgs/Path";
+		typedict[element] = "nav_msgs/msg/Path";
 	});
 	result_array.forEach(element => {
 		topiclist += "<option value='"+element+"'>"+element+" (PoseArray)</option>";
-		typedict[element] = "geometry_msgs/msgs/PoseArray";
+		typedict[element] = "geometry_msgs/msg/PoseArray";
 	});
 	selectionbox.innerHTML = topiclist
 

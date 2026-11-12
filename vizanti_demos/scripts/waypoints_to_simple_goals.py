@@ -57,10 +57,10 @@ class WaypointsToSimpleGoals(Node):
         self.timer = None
 
         self.goal_pub = self.create_publisher(PoseStamped, '/goal_pose', 10)
-        self.state_pub = self.create_publisher(Bool, '/waypoints/state', 10)
+        self.state_pub = self.create_publisher(Bool, '/goal_poses/state', 10)
 
-        self.create_subscription(PoseArray, '/waypoints', self.waypoints_callback, 10)
-        self.create_subscription(Empty, '/waypoints/estop', self.estop_callback, 10)
+        self.create_subscription(PoseArray, '/goal_poses', self.waypoints_callback, 10)
+        self.create_subscription(Empty, '/goal_poses/estop', self.estop_callback, 10)
 
         # Check for any other goals being sent, abort on preempt
         self.create_subscription(PoseStamped, '/goal_pose', self.goal_pose_callback, 10)

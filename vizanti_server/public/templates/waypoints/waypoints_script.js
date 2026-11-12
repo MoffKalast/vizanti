@@ -169,8 +169,8 @@ if(settings.hasOwnProperty("{uniqueID}")){
 }
 
 if(topic == ""){
-	topic = "/waypoints";
-	status.setWarn("No topic found, defaulting to /waypoints");
+	topic = "/goal_poses";
+	status.setWarn("No topic found, defaulting to /goal_poses");
 	saveSettings();
 }
 
@@ -188,17 +188,6 @@ function saveSettings(){
 }
 
 // Message sending
-
-function getStamp(){
-	const currentTime = new Date();
-	const currentTimeSecs = Math.floor(currentTime.getTime() / 1000);
-	const currentTimeNsecs = (currentTime.getTime() % 1000) * 1e6;
-
-	return {
-		sec: currentTimeSecs,
-		nanosec: currentTimeNsecs
-	}
-}
 
 function getPoseStamped(index, timeStamp, x, y, z, quat){
 	return new ROSLIB.Message({
@@ -229,7 +218,7 @@ function getPose(x, y, z, quat){
 }
 
 function sendMessage(pointlist){
-	let timeStamp = getStamp();
+	let timeStamp = tf.getLatestStamp();
 	let poseList = [];
 	let stamped = typedict[topic] == "nav_msgs/msg/Path";
 
