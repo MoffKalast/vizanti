@@ -197,8 +197,7 @@ class ServerThread(threading.Thread):
 		if self._server:
 			self._server.close()  # This triggers waitress to stop accepting new connections
 			self._stop_event.set()  # Signal that we're stopping
-			if node is not None:
-				node.get_logger().info("Waitress server shutting down...")
+			self.log.info("Waitress server shutting down...")
 
 def main(args=None):
 	global node, param_base_url, param_port, param_port_rosbridge, param_compression, param_default_widget_config
