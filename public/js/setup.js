@@ -57,8 +57,14 @@ function yieldToMainThread () {
   }
 
 //modal closing
+let press_target = null;
+
+document.addEventListener("pointerdown", function(event){
+	press_target = event.target;
+}, true);
+
 document.addEventListener("click", function(event){
-	if(event.target.classList.contains("modal_outer")) {
+	if(event.target.classList.contains("modal_outer") && press_target === event.target) {
 		event.target.style.display = "none";
 	}
 }, false); 

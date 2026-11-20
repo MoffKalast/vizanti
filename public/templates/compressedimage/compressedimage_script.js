@@ -8,13 +8,15 @@ let settings = persistentModule.settings;
 let imageToDataURL = utilModule.imageToDataURL;
 let Status = StatusModule.Status;
 
-let img_offset_x = "-999";
-let img_offset_y = "-999";
+let img_pos_x = 0;
+let img_pos_y = 1;
 let last_natural_width = 400;
 let last_natural_height = 250;
 
 const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
 const vwToVh = vw => (vw * window.innerWidth) / window.innerHeight;
+
+const SNAP_MARGIN = 10;
 
 let topic = getTopic("{uniqueID}");
 let status = new Status(
@@ -36,16 +38,23 @@ let connection_id = 0;
 let active_stream = undefined;
 let stream_failed = false;
 let stream_received = false;
+let managed_stream = false;
+let stale = false;
+let last_progress = 0;
+let last_attempt = 0;
 let active_throttle = undefined;
 let throttle_timer = undefined;
 
-let mode = "mjpeg";
+let mode = undefined;
 let streams = [];
+let webrtc_available = false;
+
+const RETRY_INTERVAL = 10000;
 
 const PIPELINE_DESCRIPTIONS = {
-	passthrough: "passthrough, images are sent exactly as published",
-	repackage: "repackage, the video is rewrapped on the robot without re-encoding",
-	transcode: "transcode, images are re-encoded on the robot, which uses CPU"
+	passthrough: "passthrough",
+	repackage: "repackage without re-encoding",
+	transcode: "transcode (CPU)"
 };
 
 const list_service = new ROSLIB.Service({
@@ -61,6 +70,8 @@ const start_service = new ROSLIB.Service({
 });
 
 const selectionbox = document.getElementById("{uniqueID}_topic");
+const webrtcbox = document.getElementById("{uniqueID}_webrtc");
+const webrtc_note = document.getElementById("{uniqueID}_webrtc_note");
 const rotationbox = document.getElementById("{uniqueID}_rotation");
 
 const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('img')[0];
@@ -190,8 +201,6 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	topic = loaded_data.topic;
 	mode = loaded_data.mode ?? "mjpeg";
 
-	img_offset_x = loaded_data.img_offset_x;
-	img_offset_y = loaded_data.img_offset_y;
 
 	throttle.value = loaded_data.throttle;
 
@@ -206,10 +215,18 @@ if(settings.hasOwnProperty("{uniqueID}")){
 	last_natural_width = loaded_data.last_natural_width ?? 400;
 	last_natural_height = loaded_data.last_natural_height ?? 300;
 
+	if(loaded_data.img_pos_x !== undefined){
+		img_pos_x = loaded_data.img_pos_x;
+		img_pos_y = loaded_data.img_pos_y;
+	}else if(loaded_data.img_offset_x !== undefined){
+		const size = imageSize();
+		img_pos_x = toFraction(parseFloat(loaded_data.img_offset_x), size.visual_width, window.innerWidth);
+		img_pos_y = toFraction(parseFloat(loaded_data.img_offset_y), size.visual_height, window.innerHeight);
+	}
+
 	canvas.style.transform = `translate(-50%, -50%) rotate(${loaded_data.rotation}deg)`;
-	displayImageOffset(img_offset_x, img_offset_y);
+	displayImage();
 }else{
-	displayImageOffset(0, 100);
 	saveSettings();
 }
 
@@ -220,8 +237,8 @@ function saveSettings(){
 		opacity: opacitySlider.value,
 		throttle: throttle.value,
 		width: widthSlider.value,
-		img_offset_x: img_offset_x,
-		img_offset_y: img_offset_y,
+		img_pos_x: img_pos_x,
+		img_pos_y: img_pos_y,
 		rotation: rotationbox.value,
 		last_natural_width: last_natural_width,
 		last_natural_height: last_natural_height
@@ -232,7 +249,7 @@ function saveSettings(){
 		element.style.opacity = opacitySlider.value;
 		element.style.transform = `translate(-50%, -50%) rotate(${rotationbox.value}deg)`;
 	});
-	displayImageOffset(img_offset_x, img_offset_y);
+	displayImage();
 }
 
 //Topic
@@ -271,11 +288,28 @@ function showStockImage(name){
 	showVideo(false);
 	canvas.onload = null;
 	setCanvasSrc(stock_images[name]);
-	displayImageOffset(img_offset_x, img_offset_y);
+	displayImage();
+}
+
+function activeMode(){
+	return mode == "webrtc" && webrtc_available ? "webrtc" : "mjpeg";
+}
+
+function frameTimeout(){
+	return Math.max(2000, 2 * throttleMs());
+}
+
+function markProgress(){
+	last_progress = performance.now();
+
+	if(stale){
+		stale = false;
+		status.setOK();
+	}
 }
 
 function updatePipeline(){
-	const stream = streams.find(s => s.topic == topic && s.mode == mode);
+	const stream = streams.find(s => s.topic == topic && s.mode == activeMode());
 	text_pipeline.innerText = "Pipeline: "+(stream === undefined ? "?" : PIPELINE_DESCRIPTIONS[stream.pipeline] ?? stream.pipeline);
 }
 
@@ -285,13 +319,7 @@ function fail(message){
 }
 
 function streamRunning(){
-	if(stream_failed || active_stream != mode+":"+topic)
-		return false;
-
-	if(mode == "webrtc")
-		return peer !== undefined && ["new", "connecting", "connected"].includes(peer.connectionState);
-
-	return stream_received;
+	return !stream_failed && active_stream == activeMode()+":"+topic && performance.now() - last_progress <= frameTimeout();
 }
 
 function disconnect(){
@@ -319,10 +347,14 @@ function disconnect(){
 
 function connect(){
 	disconnect();
-	active_stream = mode+":"+topic;
+	active_stream = activeMode()+":"+topic;
 	active_throttle = throttleMs();
 	stream_failed = false;
 	stream_received = false;
+	managed_stream = false;
+	stale = false;
+	last_progress = performance.now();
+	last_attempt = last_progress;
 	resetLiveData();
 	updatePipeline();
 	showStockImage("loading");
@@ -335,7 +367,7 @@ function connect(){
 
 	status.setWarn("Starting stream...");
 
-	if(mode == "webrtc")
+	if(activeMode() == "webrtc")
 		connectWebrtc(connection_id);
 	else
 		connectMjpeg(connection_id);
@@ -361,6 +393,7 @@ async function connectMjpeg(id){
 	if(id != connection_id)
 		return;
 
+	managed_stream = stream_topic != topic;
 	status.setWarn("No data received.");
 
 	image_topic = new ROSLIB.Topic({
@@ -373,6 +406,8 @@ async function connectMjpeg(id){
 	});
 	
 	listener = image_topic.subscribe(async (msg) => {  
+		markProgress();
+
 		const mime = parseFormat(msg.format).compression == "png" ? "image/png" : "image/jpeg";
 		const src = URL.createObjectURL(new Blob([msg.data], {type: mime}));
 
@@ -385,7 +420,7 @@ async function connectMjpeg(id){
 			        last_natural_height = canvas.naturalHeight;
 			        text_resolution.innerText = "Resolution: "+canvas.naturalWidth+" x "+canvas.naturalHeight;
 			        if(!stream_received){
-			            displayImageOffset(img_offset_x, img_offset_y);
+			            displayImage();
 			            status.setOK();
 			            stream_received = true;
 			        }
@@ -420,6 +455,7 @@ function waitForIceGathering(pc){
 async function connectWebrtc(id){
 	const pc = new RTCPeerConnection();
 	peer = pc;
+	managed_stream = true;
 
 	pc.addTransceiver("video", {direction: "recvonly"});
 
@@ -491,6 +527,9 @@ async function updateWebrtcStats(pc){
 			text_rate.innerText = "Rate: "+(frames / seconds).toFixed(1)+" Hz";
 			text_bandwidth.innerText = "Bandwidth: "+formatBytes(bytes / seconds)+"/s";
 			text_datasize.innerText = "Data size: "+(frames > 0 ? formatBytes(bytes / frames)+" per frame" : "?");
+
+			if(frames > 0)
+				markProgress();
 		}
 
 		last_stats = report;
@@ -506,9 +545,10 @@ video.addEventListener("resize", () => {
 	text_resolution.innerText = "Resolution: "+video.videoWidth+" x "+video.videoHeight;
 
 	showVideo(true);
-	displayImageOffset(img_offset_x, img_offset_y);
+	displayImage();
 	status.setOK();
 	stream_received = true;
+	markProgress();
 	saveSettings();
 });
 
@@ -522,38 +562,75 @@ async function getStreams(){
 	}
 }
 
-function optionHTML(stream_topic, stream_mode){
-	return "<option value='"+stream_mode+":"+stream_topic+"'>"+stream_topic+" ("+stream_mode+")</option>";
+function optionHTML(stream_topic, stream_type){
+	return "<option value='"+stream_topic+"'>"+stream_topic+(stream_type == "" ? "" : " ("+stream_type.split("/").pop()+")")+"</option>";
 }
 
 async function loadTopics(){
 	streams = await getStreams();
+	webrtc_available = streams.some(s => s.mode == "webrtc");
+
+	if(mode === undefined){
+		mode = webrtc_available ? "webrtc" : "mjpeg";
+		throttle.value = webrtc_available ? 200 : 500;
+	}
+
+	webrtcbox.checked = activeMode() == "webrtc";
+	webrtcbox.disabled = !webrtc_available;
+	webrtc_note.style.display = webrtc_available ? "none" : "";
+
+	const topics = streams.filter(s => s.mode == "mjpeg");
 
 	let topiclist = "";
-	streams.forEach(stream => {
-		topiclist += optionHTML(stream.topic, stream.mode);
+	topics.forEach(stream => {
+		topiclist += optionHTML(stream.topic, stream.type);
 	});
 
-	if(topic == "" && streams.length > 0){
-		topic = streams[0].topic;
-		mode = streams[0].mode;
-	}else if(topic != "" && !streams.some(s => s.topic == topic && s.mode == mode)){
-		topiclist += optionHTML(topic, mode);
+	if(topic == "" && topics.length > 0){
+		topic = topics[0].topic;
+	}else if(topic != "" && !topics.some(s => s.topic == topic)){
+		topiclist += optionHTML(topic, "");
 	}
 
 	selectionbox.innerHTML = topiclist;
-	selectionbox.value = mode+":"+topic;
+	selectionbox.value = topic;
 
 	if(!streamRunning())
 		connect();
 }
 
 selectionbox.addEventListener("change", (event) => {
-	const separator = selectionbox.value.indexOf(":");
-	mode = selectionbox.value.substring(0, separator);
-	topic = selectionbox.value.substring(separator + 1);
+	topic = selectionbox.value;
 	connect();
 });
+
+webrtcbox.addEventListener("change", (event) => {
+	mode = webrtcbox.checked ? "webrtc" : "mjpeg";
+	connect();
+});
+
+const watchdog_timer = setInterval(() => {
+	if(topic == "" || !rosbridge.connected || !(stream_failed || managed_stream))
+		return;
+
+	const now = performance.now();
+	const silent = now - last_progress;
+
+	if(!stream_failed && silent <= frameTimeout())
+		return;
+
+	const retry_in = RETRY_INTERVAL - (now - last_attempt);
+
+	if(retry_in <= 0){
+		connect();
+		return;
+	}
+
+	if(!stream_failed){
+		stale = true;
+		status.setWarn("No data for "+Math.floor(silent / 1000)+" s, retrying in "+Math.ceil(retry_in / 1000)+" s.");
+	}
+}, 1000);
 
 icon.addEventListener("click", ()=> {
 	loadTopics();
@@ -572,11 +649,7 @@ function onStart(event) {
 	document.addEventListener('touchend', onEnd);
 }
 
-function displayImageOffset(x, y){
-
-	if(canvas.naturalWidth == 0)
-		return;
-
+function imageSize(){
 	const rotation = ((parseFloat(rotationbox.value) % 360) + 360) % 360;
 	const isSideways = (rotation === 90 || rotation === 270);
 
@@ -589,30 +662,52 @@ function displayImageOffset(x, y){
 	    img_height = (vwToVh(img_width) * last_natural_height) / last_natural_width;
 	}
 
-	const img_height_vw = img_height * window.innerHeight / window.innerWidth;
-	const visual_width  = isSideways ? img_height_vw : img_width;
+	const visual_width = isSideways ? img_height * window.innerHeight / window.innerWidth : img_width;
 	const visual_height = isSideways ? img_width * window.innerWidth / window.innerHeight : img_height;
 
-	[canvas, video].forEach(element => {
-		element.style.width  = img_width  + "vw";
-		element.style.height = img_height + "vh";
-	});
+	return {img_width, img_height, visual_width, visual_height};
+}
 
-	// Clamp position using the actual visual extents, not the pre-rotation ones
-	let offset_x = clamp(x, visual_width  / 2, 100 - visual_width  / 2);
-	let offset_y = clamp(y, visual_height / 2, 100 - visual_height / 2);
+function toFraction(center, extent, length){
+	const free = 100 - extent;
+
+	if(free <= 0)
+		return 0.5;
+
+	const fraction = clamp((center - extent / 2) / free, 0, 1);
+	const snap = SNAP_MARGIN / length * 100;
+
+	if(fraction * free < snap)
+		return 0;
+
+	if((1 - fraction) * free < snap)
+		return 1;
+
+	return fraction;
+}
+
+function displayImage(){
+
+	if(canvas.naturalWidth == 0)
+		return;
+
+	const size = imageSize();
+	const offset_x = size.visual_width / 2 + img_pos_x * (100 - size.visual_width);
+	const offset_y = size.visual_height / 2 + img_pos_y * (100 - size.visual_height);
 
 	imgpreview.style.left = offset_x + "vw";
 	imgpreview.style.top  = offset_y + "vh";
 
 	[canvas, video].forEach(element => {
+		element.style.width  = size.img_width  + "vw";
+		element.style.height = size.img_height + "vh";
 		element.style.left = offset_x + "vw";
 		element.style.top  = offset_y + "vh";
 	});
 }
 
 function onResize(){
-	displayImageOffset(img_offset_x, img_offset_y);
+	displayImage();
 }
 
 window.addEventListener('resize', onResize);
@@ -628,8 +723,9 @@ function onMove(event) {
 			currentX = event.clientX;
 			currentY = event.clientY;
 		}
-		img_offset_x = currentX / window.innerWidth  * 100;
-		img_offset_y = currentY / window.innerHeight * 100;
+		const size = imageSize();
+		img_pos_x = toFraction(currentX / window.innerWidth * 100, size.visual_width, window.innerWidth);
+		img_pos_y = toFraction(currentY / window.innerHeight * 100, size.visual_height, window.innerHeight);
 		saveSettings();
 	}
 }
@@ -645,10 +741,11 @@ function onEnd() {
 imgpreview.addEventListener('mousedown', onStart);
 imgpreview.addEventListener('touchstart', onStart);
 
-displayImageOffset(img_offset_x, img_offset_y);
+displayImage();
 
 window.addEventListener("{uniqueID}_destroy", () => {
 	clearTimeout(throttle_timer);
+	clearInterval(watchdog_timer);
 	disconnect();
 
 	if(blob_url !== undefined)

@@ -36,6 +36,7 @@ IMAGE_TYPE = "sensor_msgs/Image"
 COMPRESSED_TYPE = "sensor_msgs/CompressedImage"
 IMAGE_ENCODINGS = ("bgr8", "rgb8", "mono8")
 
+MIN_INTERVAL = 1.0 / 30
 IDLE_GRACE = 5.0
 CONNECT_TIMEOUT = 15.0
 KEYFRAME_INTERVAL = 2.0
@@ -75,6 +76,23 @@ def create_encoder(width, height, crf):
 	codec.options = {"preset": "ultrafast", "tune": "zerolatency", "forced-idr": "1", "profile": "baseline", "crf": str(crf)}
 	return codec
 
+class RateLimiter:
+
+	def __init__(self):
+		self.tokens = 2.0
+		self.last = time.monotonic()
+
+	def allow(self, interval):
+		now = time.monotonic()
+		self.tokens = min(2.0, self.tokens + (now - self.last) / interval)
+		self.last = now
+
+		if self.tokens < 1.0:
+			return False
+
+		self.tokens -= 1.0
+		return True
+
 class RospyLogHandler(logging.Handler):
 
 	def emit(self, record):
@@ -92,7 +110,7 @@ class JpegStream:
 		self.output_topic = STREAM_NAMESPACE + topic
 		self.interval = interval
 		self.quality = quality
-		self.last_encode = 0.0
+		self.limiter = RateLimiter()
 		self.requested = time.monotonic()
 
 		self.publisher = rospy.Publisher(self.output_topic, CompressedImage, queue_size=1)
@@ -106,11 +124,8 @@ class JpegStream:
 		return self.publisher.get_num_connections() == 0 and time.monotonic() - self.requested > IDLE_GRACE
 
 	def callback(self, msg):
-		now = time.monotonic()
-		if now - self.last_encode < self.interval:
+		if not self.limiter.allow(self.interval):
 			return
-
-		self.last_encode = now
 
 		try:
 			array = image_to_array(msg)
@@ -164,14 +179,14 @@ class WebrtcStream:
 
 	def __init__(self, topic, message_type, crf, loop):
 		self.topic = topic
-		self.interval = 0.0
+		self.interval = MIN_INTERVAL
 		self.crf = crf
 		self.loop = loop
 		self.tracks = set()
 
 		self.codec = None
+		self.limiter = RateLimiter()
 		self.start_time = time.monotonic()
-		self.last_encode = 0.0
 		self.last_keyframe = 0.0
 		self.force_keyframe = True
 
@@ -189,11 +204,10 @@ class WebrtcStream:
 			self.interval = min(t.interval for t in self.tracks)
 
 	def callback(self, msg):
-		now = time.monotonic()
-		if now - self.last_encode < self.interval:
+		if not self.limiter.allow(self.interval):
 			return
 
-		self.last_encode = now
+		now = time.monotonic()
 
 		try:
 			array = image_to_array(msg)
@@ -289,7 +303,7 @@ class ImageStreamer:
 		return response
 
 	def start_stream(self, req):
-		interval = max(req.throttle, 0) / 1000.0
+		interval = max(req.throttle / 1000.0, MIN_INTERVAL)
 		message_type = self.published_image_topics().get(req.topic)
 
 		if req.mode == "mjpeg":
