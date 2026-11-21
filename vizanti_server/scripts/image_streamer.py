@@ -49,7 +49,6 @@ CONNECT_TIMEOUT = 15.0
 KEYFRAME_INTERVAL = 2.0
 MAX_QUEUED_PACKETS = 30
 TIME_BASE = fractions.Fraction(1, 90000)
-SOURCE_QOS = QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT)
 
 def image_to_array(msg):
     if isinstance(msg, CompressedImage):
@@ -73,6 +72,10 @@ def image_to_array(msg):
         return cv2.cvtColor(array, cv2.COLOR_RGB2BGR)
 
     return array
+
+def source_qos(node, topic):
+    best_effort = any(info.qos_profile.reliability == ReliabilityPolicy.BEST_EFFORT for info in node.get_publishers_info_by_topic(topic))
+    return QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT if best_effort else ReliabilityPolicy.RELIABLE)
 
 def create_encoder(width, height, crf):
     codec = av.CodecContext.create("libx264", "w")
@@ -127,7 +130,7 @@ class JpegStream:
         self.requested = time.monotonic()
 
         self.publisher = node.create_publisher(CompressedImage, self.output_topic, 1)
-        self.subscription = node.create_subscription(Image, topic, self.callback, SOURCE_QOS, callback_group=MutuallyExclusiveCallbackGroup(), raw=True)
+        self.subscription = node.create_subscription(Image, topic, self.callback, source_qos(node, topic), callback_group=MutuallyExclusiveCallbackGroup(), raw=True)
 
     def request(self, interval):
         self.interval = min(self.interval, interval)
@@ -207,7 +210,7 @@ class WebrtcStream:
         self.force_keyframe = True
 
         self.message_class = Image if message_type == IMAGE_TYPE else CompressedImage
-        self.subscription = node.create_subscription(self.message_class, topic, self.callback, SOURCE_QOS, callback_group=MutuallyExclusiveCallbackGroup(), raw=True)
+        self.subscription = node.create_subscription(self.message_class, topic, self.callback, source_qos(node, topic), callback_group=MutuallyExclusiveCallbackGroup(), raw=True)
 
     def add_track(self, track):
         self.tracks.add(track)
