@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
 
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.environ.get("ROS_HOME", os.path.expanduser("~/.ros")), "vizanti", "pylib"))
+
 import re
 import time
 import array
 import asyncio
+import logging
 import threading
 import fractions
 
@@ -22,11 +28,15 @@ from vizanti_msgs.srv import ListImageStreams, StartImageStream
 
 try:
     import av
+    import aiortc
     from aiortc import RTCPeerConnection, RTCSessionDescription, RTCConfiguration, RTCRtpSender, MediaStreamTrack
-    WEBRTC_AVAILABLE = True
+    from aiortc.codecs.h264 import H264Encoder
+    WEBRTC_ERROR = "" if hasattr(H264Encoder, "pack") else "aiortc " + aiortc.__version__ + " is too old, version 1.4 or newer is required"
 except ImportError:
     MediaStreamTrack = object
-    WEBRTC_AVAILABLE = False
+    WEBRTC_ERROR = "requires aiortc and PyAV"
+
+WEBRTC_AVAILABLE = WEBRTC_ERROR == ""
 
 STREAM_NAMESPACE = "/vizanti/image_streams"
 IMAGE_TYPE = "sensor_msgs/msg/Image"
@@ -72,6 +82,20 @@ def create_encoder(width, height, crf):
     codec.time_base = TIME_BASE
     codec.options = {"preset": "ultrafast", "tune": "zerolatency", "forced-idr": "1", "profile": "baseline", "crf": str(crf)}
     return codec
+
+class RclpyLogHandler(logging.Handler):
+
+    def __init__(self, logger):
+        super().__init__()
+        self.logger = logger
+
+    def emit(self, record):
+        message = record.name + ": " + record.getMessage()
+
+        if record.levelno >= logging.WARNING:
+            self.logger.warning(message)
+        else:
+            self.logger.info(message)
 
 class JpegStream:
 
@@ -225,7 +249,15 @@ class ImageStreamer(Node):
         super().__init__("vizanti_image_streamer")
 
         self.jpeg_quality = self.declare_parameter("jpeg_quality", 80).value
-        self.webrtc_crf = self.declare_parameter("webrtc_crf", 25).value
+        self.webrtc_crf = self.declare_parameter("webrtc_crf", 26).value
+        self.debug = self.declare_parameter("debug", False).value
+        self.peer_count = 0
+
+        handler = RclpyLogHandler(self.get_logger())
+        for name in ("aiortc", "aioice"):
+            logger = logging.getLogger(name)
+            logger.setLevel(logging.INFO if self.debug else logging.WARNING)
+            logger.addHandler(handler)
 
         self.lock = threading.Lock()
         self.jpeg_streams = {}
@@ -241,9 +273,16 @@ class ImageStreamer(Node):
         self.cleanup_timer = self.create_timer(1.0, self.cleanup, callback_group=group)
 
         if WEBRTC_AVAILABLE:
-            self.get_logger().info("Image streamer ready, WebRTC streaming available.")
+            self.get_logger().info("Image streamer ready, WebRTC streaming available (aiortc " + aiortc.__version__ + ", PyAV " + av.__version__ + ").")
         else:
-            self.get_logger().info("Image streamer ready, WebRTC streaming disabled (requires aiortc and PyAV).")
+            self.get_logger().info("Image streamer ready, WebRTC streaming disabled (" + WEBRTC_ERROR + ").")
+
+    def log_debug(self, message):
+        if self.debug:
+            self.get_logger().info(message)
+
+    def log_clients(self, stream):
+        self.log_debug(stream.topic + ": " + str(len(stream.tracks)) + " WebRTC client(s), encoding every " + str(stream.interval) + " s")
 
     def published_image_topics(self):
         topics = {}
@@ -292,7 +331,7 @@ class ImageStreamer(Node):
             return res
 
         if not WEBRTC_AVAILABLE:
-            res.message = "WebRTC streaming requires aiortc and PyAV on the robot."
+            res.message = "WebRTC streaming is unavailable on the robot: " + WEBRTC_ERROR
             return res
 
         if message_type is None:
@@ -340,14 +379,25 @@ class ImageStreamer(Node):
             stream = WebrtcStream(self, topic, message_type, self.webrtc_crf, self.loop)
             self.webrtc_streams[topic] = stream
 
+        self.peer_count += 1
+        label = topic + " client " + str(self.peer_count)
+        self.log_debug(label + ": offer received, throttle " + str(interval) + " s")
+
         track = PacketTrack(interval)
         stream.add_track(track)
+        self.log_clients(stream)
         peer = RTCPeerConnection(RTCConfiguration(iceServers=[]))
 
         @peer.on("connectionstatechange")
         async def on_connection_state_change():
+            self.log_debug(label + ": connection " + peer.connectionState)
+
             if peer.connectionState in ("failed", "closed"):
                 await self.remove_peer(peer, stream, track)
+
+        @peer.on("iceconnectionstatechange")
+        async def on_ice_connection_state_change():
+            self.log_debug(label + ": ICE " + peer.iceConnectionState)
 
         try:
             sender = peer.addTrack(track)
@@ -356,26 +406,33 @@ class ImageStreamer(Node):
 
             await peer.setRemoteDescription(RTCSessionDescription(sdp=re.sub(r"a=end-of-candidates\r?\n", "", sdp), type="offer"))
             await peer.setLocalDescription(await peer.createAnswer())
-        except Exception:
+        except Exception as e:
+            self.log_debug(label + ": negotiation failed: " + str(e))
             await self.remove_peer(peer, stream, track)
             raise
 
-        asyncio.ensure_future(self.expire_peer(peer, stream, track))
+        self.log_debug(label + ": answer sent")
+        asyncio.ensure_future(self.expire_peer(peer, stream, track, label))
         return peer.localDescription.sdp
 
-    async def expire_peer(self, peer, stream, track):
+    async def expire_peer(self, peer, stream, track, label):
         await asyncio.sleep(CONNECT_TIMEOUT)
 
-        if peer.connectionState != "connected":
+        if peer.connectionState in ("new", "connecting"):
+            self.log_debug(label + ": not connected after " + str(CONNECT_TIMEOUT) + " s, closing")
             await self.remove_peer(peer, stream, track)
 
     async def remove_peer(self, peer, stream, track):
-        stream.remove_track(track)
+        if track in stream.tracks:
+            stream.remove_track(track)
+            self.log_clients(stream)
+
         await peer.close()
 
         if not stream.tracks and self.webrtc_streams.get(stream.topic) is stream:
             stream.close()
             del self.webrtc_streams[stream.topic]
+            self.log_debug(stream.topic + ": no WebRTC clients left, stream closed")
 
 def main(args=None):
     rclpy.init(args=args)

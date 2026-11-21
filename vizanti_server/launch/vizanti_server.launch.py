@@ -11,7 +11,8 @@ def generate_launch_description():
     default_widget_config = launch.substitutions.LaunchConfiguration('default_widget_config', default='') #e.g. ~/your_custom_config.json
 
     stream_jpeg_quality = launch.substitutions.LaunchConfiguration('stream_jpeg_quality', default='80')
-    stream_webrtc_crf = launch.substitutions.LaunchConfiguration('stream_webrtc_crf', default='23')
+    stream_webrtc_crf = launch.substitutions.LaunchConfiguration('stream_webrtc_crf', default='26')
+    stream_debug = launch.substitutions.LaunchConfiguration('stream_debug', default='false')
 
     #rosbridge internal params
     send_action_goals_in_new_thread = launch.substitutions.LaunchConfiguration('send_action_goals_in_new_thread', default='true')
@@ -93,7 +94,8 @@ def generate_launch_description():
         output='screen',
         parameters=[
             {'jpeg_quality': stream_jpeg_quality},
-            {'webrtc_crf': stream_webrtc_crf}
+            {'webrtc_crf': stream_webrtc_crf},
+            {'debug': stream_debug}
         ]
     )
 
