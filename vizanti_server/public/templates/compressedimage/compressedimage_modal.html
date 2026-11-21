@@ -15,6 +15,12 @@
 			<!-- add topics here-->
 		</select>
 
+		<div class="spacer"></div>
+
+		<label for="{uniqueID}_webrtc">Use WebRTC compression:</label>
+		<input type="checkbox" id="{uniqueID}_webrtc">
+		<p id="{uniqueID}_webrtc_note" style="display: none;" class="comment">WebRTC requires aiortc to be installed, see the readme for instructions.</p>
+
 		<div class="live_data_display">
 			<p id="{uniqueID}_resolution">Resolution: ?</p>
 			<p id="{uniqueID}_frame">Frame: ?</p>
@@ -57,7 +63,7 @@
 
 		<div class="spacer"></div>
 
-		<p>Sending images through rosbridge may cause TCP congestion. Lower the socket throttle rate to get faster data updates, but note that other visualizers may stutter.</p>
+		<p class="comment">Lower the socket throttle rate to get faster data updates, but note that other visualizers may stutter due to network congestion if the images are large and the framerate high.</p>
 
 		<hr class="dark_hr"/>
 
