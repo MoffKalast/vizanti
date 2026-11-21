@@ -38,6 +38,7 @@ let connection_id = 0;
 let active_stream = undefined;
 let stream_failed = false;
 let stream_received = false;
+let has_frame = false;
 let managed_stream = false;
 let stale = false;
 let last_progress = 0;
@@ -284,7 +285,26 @@ function showVideo(visible){
 	canvas.style.display = visible ? "none" : "";
 }
 
+function freezeVideo(){
+	if(!has_frame || video.style.display == "none" || video.videoWidth == 0)
+		return;
+
+	const snapshot = document.createElement("canvas");
+	snapshot.width = video.videoWidth;
+	snapshot.height = video.videoHeight;
+	snapshot.getContext("2d").drawImage(video, 0, 0);
+
+	canvas.onload = null;
+	setCanvasSrc(snapshot.toDataURL("image/jpeg", 0.95));
+	showVideo(false);
+}
+
 function showStockImage(name){
+	if(has_frame){
+		freezeVideo();
+		return;
+	}
+
 	showVideo(false);
 	canvas.onload = null;
 	setCanvasSrc(stock_images[name]);
@@ -323,6 +343,7 @@ function streamRunning(){
 }
 
 function disconnect(){
+	freezeVideo();
 	connection_id++;
 	active_stream = undefined;
 
@@ -423,6 +444,7 @@ async function connectMjpeg(id){
 			            displayImage();
 			            status.setOK();
 			            stream_received = true;
+			            has_frame = true;
 			        }
 			    };
 			    setCanvasSrc(src);
@@ -471,6 +493,7 @@ async function connectWebrtc(id){
 			showStockImage("error");
 			fail("WebRTC connection failed, the robot may not be reachable over UDP.");
 		}else if(pc.connectionState == "disconnected"){
+			stale = true;
 			status.setWarn("WebRTC connection interrupted.");
 		}
 	});
@@ -548,6 +571,7 @@ video.addEventListener("resize", () => {
 	displayImage();
 	status.setOK();
 	stream_received = true;
+	has_frame = true;
 	markProgress();
 	saveSettings();
 });
@@ -601,6 +625,7 @@ async function loadTopics(){
 
 selectionbox.addEventListener("change", (event) => {
 	topic = selectionbox.value;
+	has_frame = false;
 	connect();
 });
 
