@@ -28,7 +28,7 @@ window.addEventListener("load", function(){
 }, false); 
 
 function autoFullscreenEnabled(){
-	return localStorage.getItem('autoFullscreen') !== 'false';
+	return localStorage.getItem('autoFullscreen') === 'true';
 }
 
 if(isMobile && document.fullscreenEnabled){
