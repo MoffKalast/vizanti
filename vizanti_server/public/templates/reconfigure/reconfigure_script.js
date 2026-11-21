@@ -48,11 +48,27 @@ async function setNodeParameter(node, param, newValue) {
 		serviceType: 'vizanti_msgs/srv/SetNodeParameter',
 	});
 
+	function serializeParamValue(value) {
+		if (typeof value === "number") {
+			if (!Number.isFinite(value)) {
+				throw new Error("Parameter value must be a finite number");
+			}
+			// Do not use locale formatting (e.g. 1,000), ROS side expects plain numeric text.
+			return String(value);
+		}
+
+		if (typeof value === "boolean") {
+			return value ? "true" : "false";
+		}
+
+		return String(value);
+	}
+
 	return new Promise((resolve, reject) => {
 		const request = new ROSLIB.ServiceRequest({
 			 node: node+"",
-			 param: param.toLocaleString('en-US'),
-			 value: newValue.toLocaleString('en-US')
+			 param: String(param),
+			 value: serializeParamValue(newValue)
 		});
 		setParamClient.callService(request, (response) => {
 			resolve(response);

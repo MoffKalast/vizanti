@@ -1,4 +1,6 @@
 __pycache__/
 *.py[cod]
-
+vizanti_server/build/*
+vizanti_server/install/*
+vizanti_server/log/*
 .vscode/*

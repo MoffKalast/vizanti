@@ -41,7 +41,7 @@ class WaypointsToSimpleGoals(Node):
 
         self.declare_parameter('rate', 10)
         self.declare_parameter('robot_link', 'base_link')
-        self.declare_parameter('goal_reached_range', 0.3)
+        self.declare_parameter('goal_reached_range', 15.3)
 
         self.rate = self.get_parameter('rate').get_parameter_value().integer_value
         self.robot_link = self.get_parameter('robot_link').get_parameter_value().string_value
