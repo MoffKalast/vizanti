@@ -38,6 +38,16 @@ cd vizanti
 docker build -f docker/Dockerfile -t vizanti:2.0 . --build-arg ROS_VERSION=$ROS_DISTRO
 ```
 
+### WebRTC video streaming (optional)
+
+The image widget can also stream camera topics as H.264 video over WebRTC, which uses far less bandwidth than sending individual images, at the cost of video encoding on the robot's CPU. This requires aiortc and PyAV, which are not installed by rosdep:
+
+```bash
+pip3 install aiortc
+```
+
+PyAV is installed along with it. On Ubuntu 24.04 and newer you'll need to add `--break-system-packages`.
+
 ## Run
 ```bash
 ros2 launch vizanti_server vizanti_server.launch.py

@@ -33,6 +33,7 @@ install(PROGRAMS
   scripts/server.py
   scripts/service_handler.py
   scripts/rqt_reconfigure_param_api.py
+  scripts/image_streamer.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

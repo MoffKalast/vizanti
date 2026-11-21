@@ -19,6 +19,8 @@ set(srv_files
     "srv/ListPackages.srv"
     "srv/ListExecutables.srv"
     "srv/ListLifecycles.srv"
+    "srv/ListImageStreams.srv"
+    "srv/StartImageStream.srv"
 )
 
 # Generate messages / actions /  services

@@ -10,6 +10,9 @@ def generate_launch_description():
     flask_debug = launch.substitutions.LaunchConfiguration('flask_debug', default=False)
     default_widget_config = launch.substitutions.LaunchConfiguration('default_widget_config', default='') #e.g. ~/your_custom_config.json
 
+    stream_jpeg_quality = launch.substitutions.LaunchConfiguration('stream_jpeg_quality', default='80')
+    stream_webrtc_crf = launch.substitutions.LaunchConfiguration('stream_webrtc_crf', default='23')
+
     #rosbridge internal params
     send_action_goals_in_new_thread = launch.substitutions.LaunchConfiguration('send_action_goals_in_new_thread', default='true')
     call_services_in_new_thread = launch.substitutions.LaunchConfiguration('call_services_in_new_thread', default='true')
@@ -83,12 +86,24 @@ def generate_launch_description():
         output='screen'
     )
 
+    image_streamer_node = launch_ros.actions.Node(
+        name='vizanti_image_streamer_node',
+        package='vizanti_server',
+        executable='image_streamer.py',
+        output='screen',
+        parameters=[
+            {'jpeg_quality': stream_jpeg_quality},
+            {'webrtc_crf': stream_webrtc_crf}
+        ]
+    )
+
     return launch.LaunchDescription([
         rosbridge_node,
         rosapi_node,
         flask_node,
         tf_handler_node,
-        service_handler_node
+        service_handler_node,
+        image_streamer_node
     ])
 
 if __name__ == '__main__':
