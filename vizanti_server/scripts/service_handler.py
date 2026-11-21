@@ -10,7 +10,7 @@ import time
 
 from rclpy.node import Node
 
-from rclpy.executors import  MultiThreadedExecutor
+from rclpy.executors import  MultiThreadedExecutor, ExternalShutdownException
 from rclpy.callback_groups import ReentrantCallbackGroup
 
 from ros2lifecycle.api import get_node_names
@@ -296,11 +296,12 @@ def main(args=None):
 
     try:
         executor.spin()
-    except rclpy.executors.ExternalShutdownException:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
 
+    executor.shutdown()
     service_handler.destroy_node()
-    rclpy.shutdown()
+    rclpy.try_shutdown()
 
 if __name__ == "__main__":
     main()

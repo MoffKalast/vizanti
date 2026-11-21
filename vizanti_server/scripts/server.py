@@ -8,6 +8,7 @@ import gzip
 import hashlib
 import rclpy
 
+from rclpy.executors import ExternalShutdownException
 from flask import Flask, render_template, send_from_directory, make_response, request
 from waitress.server import create_server
 from ament_index_python.packages import get_package_share_directory
@@ -196,8 +197,7 @@ class ServerThread(threading.Thread):
 		if self._server:
 			self._server.close()  # This triggers waitress to stop accepting new connections
 			self._stop_event.set()  # Signal that we're stopping
-			if node is not None:
-				node.get_logger().info("Waitress server shutting down...")
+			self.log.info("Waitress server shutting down...")
 
 def main(args=None):
 	global node, param_base_url, param_port, param_port_rosbridge, param_compression, param_default_widget_config
@@ -241,12 +241,14 @@ def main(args=None):
 	node.get_logger().info(f"Flask server running at http://{param_host}:{param_port}{param_base_url}")
 	node.get_logger().info(f"Public directory set as {get_public_dir()}")
 
-	rclpy.spin(node)
+	try:
+		rclpy.spin(node)
+	except (KeyboardInterrupt, ExternalShutdownException):
+		pass
 
 	server.shutdown()
-	server.join()
 	node.destroy_node()
-	rclpy.shutdown()
+	rclpy.try_shutdown()
 
 if __name__ == '__main__':
 	main()
