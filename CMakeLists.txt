@@ -19,6 +19,8 @@ add_service_files(
     ManageNode.srv
     ListPackages.srv
     ListExecutables.srv
+    ListImageStreams.srv
+    StartImageStream.srv
 )
 
 generate_messages(

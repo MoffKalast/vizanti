@@ -26,6 +26,9 @@
     <exec_depend>actionlib_msgs</exec_depend>
     <exec_depend>move_base_msgs</exec_depend>
     <exec_depend>std_msgs</exec_depend>
+    <exec_depend>sensor_msgs</exec_depend>
+    <exec_depend>python3-numpy</exec_depend>
+    <exec_depend>python3-opencv</exec_depend>
     <exec_depend>python3-flask</exec_depend>
     <exec_depend>python3-waitress</exec_depend>
     <exec_depend>rosbridge_suite</exec_depend>

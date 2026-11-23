@@ -18,6 +18,17 @@ const icon = document.getElementById("{uniqueID}_icon").getElementsByTagName('im
 const selectionbox = document.getElementById("{uniqueID}_fixedframe");
 const colourpicker = document.getElementById("{uniqueID}_colorpicker");
 
+const autofullscreen = document.getElementById("{uniqueID}_autofullscreen");
+
+if(document.fullscreenEnabled){
+	autofullscreen.checked = autoFullscreenEnabled();
+	autofullscreen.addEventListener("change", () => {
+		localStorage.setItem('autoFullscreen', autofullscreen.checked);
+	});
+}else{
+	document.getElementById("{uniqueID}_fullscreen_section").style.display = "none";
+}
+
 colourpicker.addEventListener("input", (event) =>{
 	document.body.style.backgroundColor = colourpicker.value;
 	saveSettings();
