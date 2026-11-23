@@ -41,37 +41,112 @@ WEBRTC_AVAILABLE = WEBRTC_ERROR == ""
 STREAM_NAMESPACE = "/vizanti/image_streams"
 IMAGE_TYPE = "sensor_msgs/msg/Image"
 COMPRESSED_TYPE = "sensor_msgs/msg/CompressedImage"
-IMAGE_ENCODINGS = ("bgr8", "rgb8", "mono8")
-
 MIN_INTERVAL = 1.0 / 30
 IDLE_GRACE = 5.0
 CONNECT_TIMEOUT = 15.0
 KEYFRAME_INTERVAL = 2.0
 MAX_QUEUED_PACKETS = 30
 TIME_BASE = fractions.Fraction(1, 90000)
+DEPTH_RANGE = 10.0
+
+COLOR_ENCODINGS = {
+    "bgr8": (np.uint8, 3, None),
+    "8uc3": (np.uint8, 3, None),
+    "rgb8": (np.uint8, 3, cv2.COLOR_RGB2BGR),
+    "bgra8": (np.uint8, 4, cv2.COLOR_BGRA2BGR),
+    "8uc4": (np.uint8, 4, cv2.COLOR_BGRA2BGR),
+    "rgba8": (np.uint8, 4, cv2.COLOR_RGBA2BGR),
+    "mono8": (np.uint8, 1, None),
+    "8uc1": (np.uint8, 1, None),
+    "yuv422": (np.uint8, 2, cv2.COLOR_YUV2BGR_UYVY),
+    "uyvy": (np.uint8, 2, cv2.COLOR_YUV2BGR_UYVY),
+    "yuv422_yuy2": (np.uint8, 2, cv2.COLOR_YUV2BGR_YUYV),
+    "yuyv": (np.uint8, 2, cv2.COLOR_YUV2BGR_YUYV),
+    "bayer_rggb8": (np.uint8, 1, cv2.COLOR_BayerBG2BGR),
+    "bayer_bggr8": (np.uint8, 1, cv2.COLOR_BayerRG2BGR),
+    "bayer_gbrg8": (np.uint8, 1, cv2.COLOR_BayerGR2BGR),
+    "bayer_grbg8": (np.uint8, 1, cv2.COLOR_BayerGB2BGR),
+    "bgr16": (np.uint16, 3, None),
+    "rgb16": (np.uint16, 3, cv2.COLOR_RGB2BGR),
+    "bgra16": (np.uint16, 4, cv2.COLOR_BGRA2BGR),
+    "rgba16": (np.uint16, 4, cv2.COLOR_RGBA2BGR),
+    "bayer_rggb16": (np.uint16, 1, cv2.COLOR_BayerBG2BGR),
+    "bayer_bggr16": (np.uint16, 1, cv2.COLOR_BayerRG2BGR),
+    "bayer_gbrg16": (np.uint16, 1, cv2.COLOR_BayerGR2BGR),
+    "bayer_grbg16": (np.uint16, 1, cv2.COLOR_BayerGB2BGR)
+}
+
+DEPTH_ENCODINGS = {
+    "16uc1": (np.uint16, 0.001),
+    "32fc1": (np.float32, 1.0)
+}
+
+def pixel_array(msg, dtype, channels, rows):
+    dtype = np.dtype(dtype)
+    source_dtype = dtype.newbyteorder(">" if msg.is_bigendian else "<")
+    image = np.ndarray((rows, msg.width, channels), source_dtype, msg.data, strides=(msg.step, channels * dtype.itemsize, dtype.itemsize)).astype(dtype, copy=False)
+    return image[:, :, 0] if channels == 1 else image
+
+def depth_to_mono(depth, scale):
+    return cv2.convertScaleAbs(depth, alpha=scale * 255.0 / DEPTH_RANGE)
+
+def compressed_depth_to_array(msg):
+    data = bytes(msg.data)
+    start = data.find(b"\x89PNG")
+
+    if start < 12:
+        raise ValueError("Unsupported compressedDepth format, only PNG is supported: " + msg.format)
+
+    image = cv2.imdecode(np.frombuffer(data, dtype=np.uint8, offset=start), cv2.IMREAD_UNCHANGED)
+    if image is None:
+        raise ValueError("Failed to decode compressedDepth image with format: " + msg.format)
+
+    if not msg.format.lower().startswith("32fc1"):
+        return depth_to_mono(image, 0.001)
+
+    quant_a, quant_b = np.frombuffer(data, dtype="<f4", count=2, offset=start - 8)
+    depth = np.zeros(image.shape, dtype=np.float32)
+    valid = image > 0
+    depth[valid] = quant_a / (image[valid] - quant_b)
+    return depth_to_mono(depth, 1.0)
 
 def image_to_array(msg):
     if isinstance(msg, CompressedImage):
-        array = cv2.imdecode(np.frombuffer(msg.data, dtype=np.uint8), cv2.IMREAD_COLOR)
-        if array is None:
-            raise ValueError("Failed to decode compressed image with format: " + msg.format)
-        return array
+        if "compresseddepth" in msg.format.lower():
+            return compressed_depth_to_array(msg)
 
-    if msg.encoding not in IMAGE_ENCODINGS:
+        image = cv2.imdecode(np.frombuffer(msg.data, dtype=np.uint8), cv2.IMREAD_COLOR)
+        if image is None:
+            raise ValueError("Failed to decode compressed image with format: " + msg.format)
+        return image
+
+    encoding = msg.encoding.lower()
+
+    if encoding in DEPTH_ENCODINGS:
+        dtype, scale = DEPTH_ENCODINGS[encoding]
+        return depth_to_mono(pixel_array(msg, dtype, 1, msg.height), scale)
+
+    if encoding == "mono16":
+        image = pixel_array(msg, np.uint16, 1, msg.height)
+        low, high = cv2.minMaxLoc(image)[:2]
+        return cv2.convertScaleAbs(image, alpha=255.0 / max(high - low, 1), beta=-low * 255.0 / max(high - low, 1))
+
+    if encoding == "nv21":
+        return cv2.cvtColor(pixel_array(msg, np.uint8, 1, msg.height * 3 // 2), cv2.COLOR_YUV2BGR_NV21)
+
+    if encoding not in COLOR_ENCODINGS:
         raise ValueError("Unsupported image encoding: " + msg.encoding)
 
-    channels = 1 if msg.encoding == "mono8" else 3
-    array = np.frombuffer(msg.data, dtype=np.uint8).reshape(msg.height, msg.step)[:, :msg.width * channels]
+    dtype, channels, conversion = COLOR_ENCODINGS[encoding]
+    image = pixel_array(msg, dtype, channels, msg.height)
 
-    if channels == 1:
-        return array
+    if dtype == np.uint16:
+        image = cv2.convertScaleAbs(image, alpha=1.0 / 256)
 
-    array = array.reshape(msg.height, msg.width, 3)
+    return image if conversion is None else cv2.cvtColor(image, conversion)
 
-    if msg.encoding == "rgb8":
-        return cv2.cvtColor(array, cv2.COLOR_RGB2BGR)
-
-    return array
+def transcoded(topic, message_type):
+    return message_type == IMAGE_TYPE or topic.endswith("/compressedDepth")
 
 def source_qos(node, topic):
     best_effort = any(info.qos_profile.reliability == ReliabilityPolicy.BEST_EFFORT for info in node.get_publishers_info_by_topic(topic))
@@ -120,17 +195,20 @@ class RclpyLogHandler(logging.Handler):
 
 class JpegStream:
 
-    def __init__(self, node, topic, interval, quality):
+    def __init__(self, node, topic, message_type, interval, quality):
         self.node = node
         self.topic = topic
+        self.message_class = Image if message_type == IMAGE_TYPE else CompressedImage
         self.output_topic = STREAM_NAMESPACE + topic
         self.interval = interval
         self.quality = quality
         self.limiter = RateLimiter()
         self.requested = time.monotonic()
+        self.lock = threading.Lock()
+        self.closed = False
 
         self.publisher = node.create_publisher(CompressedImage, self.output_topic, 1)
-        self.subscription = node.create_subscription(Image, topic, self.callback, source_qos(node, topic), callback_group=MutuallyExclusiveCallbackGroup(), raw=True)
+        self.subscription = node.create_subscription(self.message_class, topic, self.callback, source_qos(node, topic), callback_group=MutuallyExclusiveCallbackGroup(), raw=True)
 
     def request(self, interval):
         self.interval = min(self.interval, interval)
@@ -143,11 +221,11 @@ class JpegStream:
         if not self.limiter.allow(self.interval):
             return
 
-        msg = deserialize_message(data, Image)
+        msg = deserialize_message(data, self.message_class)
 
         try:
             image = image_to_array(msg)
-        except ValueError as e:
+        except Exception as e:
             self.node.get_logger().warning(self.topic + ": " + str(e), throttle_duration_sec=10)
             return
 
@@ -158,13 +236,19 @@ class JpegStream:
 
         output = CompressedImage()
         output.header = msg.header
-        output.format = msg.encoding + "; jpeg compressed " + ("mono8" if image.ndim == 2 else "bgr8")
+        encoding = msg.encoding if self.message_class == Image else msg.format.split(";")[0].strip()
+        output.format = encoding + "; jpeg compressed " + ("mono8" if image.ndim == 2 else "bgr8")
         output.data = array.array("B", encoded.tobytes())
-        self.publisher.publish(output)
+
+        with self.lock:
+            if not self.closed:
+                self.publisher.publish(output)
 
     def close(self):
-        self.node.destroy_subscription(self.subscription)
-        self.node.destroy_publisher(self.publisher)
+        with self.lock:
+            self.closed = True
+            self.node.destroy_subscription(self.subscription)
+            self.node.destroy_publisher(self.publisher)
 
 class PacketTrack(MediaStreamTrack):
 
@@ -230,7 +314,7 @@ class WebrtcStream:
 
         try:
             array = image_to_array(deserialize_message(data, self.message_class))
-        except ValueError as e:
+        except Exception as e:
             self.node.get_logger().warning(self.topic + ": " + str(e), throttle_duration_sec=10)
             return
 
@@ -317,7 +401,7 @@ class ImageStreamer(Node):
 
     def list_streams(self, req, res):
         for topic, message_type in sorted(self.published_image_topics().items()):
-            options = [("mjpeg", "passthrough" if message_type == COMPRESSED_TYPE else "transcode")]
+            options = [("mjpeg", "transcode" if transcoded(topic, message_type) else "passthrough")]
 
             if WEBRTC_AVAILABLE:
                 options.append(("webrtc", "transcode"))
@@ -337,10 +421,10 @@ class ImageStreamer(Node):
         if req.mode == "mjpeg":
             res.success = True
 
-            if message_type != IMAGE_TYPE:
-                res.stream_topic = req.topic
+            if transcoded(req.topic, message_type):
+                res.stream_topic = self.start_jpeg(req.topic, message_type, interval)
             else:
-                res.stream_topic = self.start_jpeg(req.topic, interval)
+                res.stream_topic = req.topic
 
             return res
 
@@ -371,12 +455,12 @@ class ImageStreamer(Node):
         res.success = True
         return res
 
-    def start_jpeg(self, topic, interval):
+    def start_jpeg(self, topic, message_type, interval):
         with self.lock:
             stream = self.jpeg_streams.get(topic)
 
             if stream is None:
-                stream = JpegStream(self, topic, interval, self.jpeg_quality)
+                stream = JpegStream(self, topic, message_type, interval, self.jpeg_quality)
                 self.jpeg_streams[topic] = stream
             else:
                 stream.request(interval)
