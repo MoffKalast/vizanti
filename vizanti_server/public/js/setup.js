@@ -27,6 +27,17 @@ window.addEventListener("load", function(){
 	window.dispatchEvent(new Event('resize'));
 }, false); 
 
+function autoFullscreenEnabled(){
+	return localStorage.getItem('autoFullscreen') === 'true';
+}
+
+if(isMobile && document.fullscreenEnabled){
+	document.addEventListener('touchend', () => {
+		if(autoFullscreenEnabled() && !document.fullscreenElement)
+			document.documentElement.requestFullscreen().catch(() => {});
+	});
+}
+
 var widgetTarget = "icon_container";
 
 //modal opening
@@ -46,8 +57,14 @@ function yieldToMainThread () {
   }
 
 //modal closing
+let press_target = null;
+
+document.addEventListener("pointerdown", function(event){
+	press_target = event.target;
+}, true);
+
 document.addEventListener("click", function(event){
-	if(event.target.classList.contains("modal_outer")) {
+	if(event.target.classList.contains("modal_outer") && press_target === event.target) {
 		event.target.style.display = "none";
 	}
 }, false); 

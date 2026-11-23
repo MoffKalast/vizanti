@@ -11,6 +11,7 @@ RUN apt-get update
 RUN apt-get install openssh-client -y
 RUN apt-get install ros-$ROS_DISTRO-rmw-fastrtps-dynamic-cpp -y
 RUN apt-get install ros-$ROS_DISTRO-rmw-cyclonedds-cpp -y
+RUN apt-get install python3-pip -y
 
 # Only add our user if does not exist.
 RUN id -u $user &>/dev/null || useradd -ms /bin/bash $user
@@ -32,6 +33,7 @@ RUN cd /home/$user/colcon_ws && rosdep install -i --from-path src -y ;
 USER $user
 
 RUN source /opt/ros/${ROS_DISTRO}/setup.bash && cd /home/$user/colcon_ws && colcon build
+RUN pip3 install --no-cache-dir --target /home/$user/.ros/vizanti/pylib aiortc
 
 # Launch the Vizanti with RWS or ROSBridge
 CMD source /home/$user/colcon_ws/install/setup.bash \
